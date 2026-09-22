@@ -17,9 +17,52 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
   600-line split rule.
 - [`audits/2026-09/audit-9-21.md`](../../audits/2026-09/audit-9-21.md):
   rams, whole site, rams-2 to rams-15 (4 HIGH / 5 MEDIUM / 5 LOW; rams-1
-  retired as a false positive), Adverse at review.
+  retired as a false positive), Adverse at review, Clean after two apply
+  passes (`ac3758d`) and two smoke runs. Workflow changes in `2522402`: review
+  model by scope, full-read proof, `npm run smoke`.
 
 ## Sections & surfaces
+
+### rams whole-site audit applied: 14 items, rams-2 to rams-15 (`pages/*`, `components/ui/icon-cross-fade.tsx`, `layouts/DashboardChrome.tsx`) · [ac3758d]
+
+- Before: LimitsFree Create limit kept the last submission's fields on
+  reopen (rams-11); Team row-actions menu hand-built on raw Base UI
+  (rams-5); TeamDefault "Invite member" and Billing "Continue to checkout"
+  had no handler (rams-6, rams-8); Policies and Token Savings jumped h1 to
+  h3 (rams-2); Messages cost tooltip triggers were 14px targets (rams-4);
+  Invitations menu items did nothing (rams-7); Billing field errors were
+  hand-rolled `<p aria-live>` at two voices (rams-9, rams-10); Setup docs
+  links were buttons calling `window.open` (rams-12); SignIn/SignUp arrow
+  absolutely positioned (rams-13); ApiKeys `max-w-5xl` without the container
+  prefix (rams-14); TeamDetail "Team not found" h2 at label voice (rams-15);
+  theme-toggle and sidebar cross-fade duplicated (rams-3).
+- After: `resetForm()` on submit and cancel; shared `Menu` primitives; the
+  Invite dialog opens on Default; checkout closes and clears the dialog;
+  `SectionTitle as="h2"` on first sections (Policies raw h3 becomes h2 at
+  the same 16 voice); `p-1 -m-1` on the triggers; resend / copy / revoke
+  wired with the site toast; `FieldError` in both Billing twins;
+  `Button render={<a/>} nativeButton={false}`; `data-icon="inline-end"`;
+  `@5xl:max-w-5xl`; `type-heading-16`; one `IconCrossFade` primitive.
+  Residue: PoliciesEnterprise still h1 to h3 via the shared pane (decision
+  pending). Audit: `audits/2026-09/audit-9-21.md` (rams-1 retired as a
+  reviewer false positive).
+
+### Chart tooltips portal to body; recipe enforced by design.md, lint check 7 and a test (`components/ui/chart.tsx`, `compact-kpi.tsx`, `pages/Security.tsx`, `pages/requests/HeroMetric.tsx`) · [ef71075]
+
+- Before: `ChartTooltip` was the raw Recharts Tooltip rendered inside the
+  chart container; Cards are `overflow-hidden`, so the Security Overview
+  four-row box (130px in a 96px band) clipped at the card edge. Three sites
+  pinned `position={{ y }}` to nudge it, which only moved the clipping.
+- After: `ChartTooltip` passes `portal={document.body}`; `ChartTooltipContent`
+  positions itself (`usePortalPosition`: fixed, cursor + 12px, left-flip
+  near the right viewport edge, 8px clamp) because Recharts 3 gives a portal
+  no position. Pins and their comments removed. Visual recipe byte-identical.
+  Verified in Playwright on `/security`, `/overview`, `/activity`.
+  Enforcement: design.md "Chart tooltip & legend" Positioning paragraph;
+  `lint:design` check 7 `[chart-tooltip]` (no waiver) fails a recharts
+  `Tooltip` import or `position=` / `wrapperStyle=` / `allowEscapeViewBox`
+  on `ChartTooltip`; `design-invariants.test.ts` asserts the portal and
+  sweeps all six chart sites. Probe: re-adding the pin failed both.
 
 ### Limits, Settings and Teams copy grounded in the PRDs (`pages/Limits.tsx`, `pages/LimitsFree.tsx`, `pages/Upgrade.tsx`, `pages/Settings.tsx`, `pages/TeamDetailEnterprise.tsx`, `pages/teams/dialogs.tsx`) · [f34ca3d]
 

@@ -10,7 +10,7 @@ to `src/`. Already decided, not re-flagged: see the settled table in
 
 - Why: end-to-end pipeline test (audit skill, day file, test tiers, lint) with rams over the whole site, plus the morning rbp close-out.
 - Tested: test-smoke after the rbp apply pass; rams on the whole site (shared primitives, page set A, page set B re-run as two full-read agents after a Disclaimer); test-smoke after each of the two rams apply passes.
-- Found: 14 items, 4 HIGH / 5 MEDIUM / 5 LOW; 14 applied (hashes pending commit), 0 skipped, 0 open. rams-1 was a reviewer false positive against the wash ladder and was removed at the user's direction; the ID is retired, not reused.
+- Found: 14 items, 4 HIGH / 5 MEDIUM / 5 LOW; 14 applied (`ac3758d`), 0 skipped, 0 open. rams-1 was a reviewer false positive against the wash ladder and was removed at the user's direction; the ID is retired, not reused.
 - Opinion: Clean. Every rams item is applied and both suites are green; one residue (rams-2 on PoliciesEnterprise) awaits a decision.
 - Next: user decides the rams-2 PoliciesEnterprise heading residue by 2026-09-22; lint-hook plan off audit-9-20 Patterns plus today's `missing-handler` and `heading-order` candidates.
 
@@ -41,80 +41,80 @@ Verdict (run 4): Clean. The rams MEDIUM / LOW apply pass introduced no regressio
 
 ### Global
 
-- [x] **rams-2 MEDIUM** `heading-order` pages/Policies.tsx:174,338, pages/TokenSavings.tsx:151,206, pages/token-savings/SummaryCard.tsx:75
+- [x] **rams-2 MEDIUM** `heading-order` pages/Policies.tsx:174,338, pages/TokenSavings.tsx:151,206, pages/token-savings/SummaryCard.tsx:75 `ac3758d`
   - Before: page `<h1>` then straight to `<h3>`; `SectionTitle` defaults to h3 and Policies.tsx:338 hand-rolls a raw `<h3>`.
   - After: `<SectionTitle as="h2">` on the first section under the page title, mirror Notifications.tsx:405.
   - Why: skipped heading level (WCAG 1.3.1 / 2.4.6), so heading navigation misses the section.
-- [x] **rams-3 LOW** `duplicate-recipe` layouts/DashboardChrome.tsx:414-435, components/ui/theme-toggle.tsx:28-49
+- [x] **rams-3 LOW** `duplicate-recipe` layouts/DashboardChrome.tsx:414-435, components/ui/theme-toggle.tsx:28-49 `ac3758d`
   - Before: identical 20-line `transition-[opacity,scale,filter]` icon cross-fade block in two files.
   - After: one `IconCrossFade` primitive in `components/ui/` taking two icon nodes and a boolean.
   - Why: two hand copies of one recipe is the drift pattern `no-handrolling.md` names; a third site diverges unnoticed.
 
 ### Messages
 
-- [x] **rams-4 MEDIUM** `touch-target` pages/requests/RequestsTable.tsx:964, pages/requests/RequestsTable.tsx:988
+- [x] **rams-4 MEDIUM** `touch-target` pages/requests/RequestsTable.tsx:964, pages/requests/RequestsTable.tsx:988 `ac3758d`
   - Before: focusable tooltip `<span className="inline-flex cursor-help ...">` around a `size-3.5` icon, about 14px hit area.
   - After: `p-1 -m-1` on both spans, matching the third trigger at RequestsTable.tsx:672.
   - Why: keyboard-focusable target under 44px (WCAG 2.5.8) on the demo table.
 
 ### Teams
 
-- [x] **rams-5 HIGH** `no-handrolling` pages/Team.tsx:801-877
+- [x] **rams-5 HIGH** `no-handrolling` pages/Team.tsx:801-877 `ac3758d`
   - Before: `RowActionsMenu` built on raw `MenuPrimitive` from `@base-ui/react/menu`, comment claims no shared wrapper exists.
   - After: `Menu` / `MenuTrigger` / `MenuContent` / `MenuItem` from `components/ui/menu`, mirror TeamsEnterprise.tsx:687-731.
   - Why: the wrapper exists and is in correct use one file over, so this copy drifts on its own.
-- [x] **rams-6 HIGH** `missing-handler` pages/TeamDefault.tsx:59
+- [x] **rams-6 HIGH** `missing-handler` pages/TeamDefault.tsx:59 `ac3758d`
   - Before: header `<Button size="default" variant="default">Invite member</Button>` with no `onClick`.
   - After: open `InviteMemberDialog` as Team.tsx does, or mark the no-op with a comment and skip by decision.
   - Why: primary CTA on the demo path does nothing when clicked; no comment marks it intentional.
-- [x] **rams-7 MEDIUM** `dead-control` pages/Team.tsx:622-816
+- [x] **rams-7 MEDIUM** `dead-control` pages/Team.tsx:622-816 `ac3758d`
   - Before: Invitations `RowActionsMenu` items `resend` / `copy` / `revoke` passed with no `onSelect`.
   - After: wire `onSelect` on each `RowActionItem` (type already allows it), or skip by decision.
   - Why: the menu opens and selection does nothing.
 
 ### Billing
 
-- [x] **rams-8 HIGH** `missing-handler` pages/billing/CreditsCard.tsx:364, pages/BillingFree.tsx:492
+- [x] **rams-8 HIGH** `missing-handler` pages/billing/CreditsCard.tsx:364, pages/BillingFree.tsx:492 `ac3758d`
   - Before: `<Button disabled={!canSubmit} size="sm" type="button">Continue to checkout</Button>` with no `onClick`.
   - After: close the dialog on click, as `AutoRechargeDialog` Save does, or comment the no-op like BillingEnterprise.tsx:374 and skip by decision.
   - Why: the Add-credits flow ends in a dead button in both twins, while the other Billing no-ops are commented as intentional.
-- [x] **rams-9 MEDIUM** `no-handrolling` pages/billing/CreditsCard.tsx:343,487,528,573, pages/BillingFree.tsx:471,618,657,704
+- [x] **rams-9 MEDIUM** `no-handrolling` pages/billing/CreditsCard.tsx:343,487,528,573, pages/BillingFree.tsx:471,618,657,704 `ac3758d`
   - Before: hand-rolled `<p aria-live="polite" className="type-copy-12 m-0 text-destructive">` field errors.
   - After: `<FieldError>` from `components/ui/field`, mirror pages/teams/dialogs.tsx.
   - Why: a shared error primitive exists; two dialogs duplicate its markup by hand.
-- [x] **rams-10 LOW** `type-voice-drift` pages/billing/CreditsCard.tsx:343, pages/BillingFree.tsx:471
+- [x] **rams-10 LOW** `type-voice-drift` pages/billing/CreditsCard.tsx:343, pages/BillingFree.tsx:471 `ac3758d`
   - Before: error text `type-copy-12` in CreditsCard, `type-copy-14` in BillingFree for the same field ids.
   - After: `type-copy-14` in both.
   - Why: byte-identical dialogs have drifted on one voice.
 
 ### Limits
 
-- [x] **rams-11 HIGH** `dialog-form-reset` pages/LimitsFree.tsx:502-527
+- [x] **rams-11 HIGH** `dialog-form-reset` pages/LimitsFree.tsx:502-527 `ac3758d`
   - Before: `handleSubmit` calls `onCreate(...)` then `onOpenChange(false)` with no field reset; the only reset sits in the Dialog `onOpenChange` cancel path, which does not fire on a controlled close.
   - After: extract `resetForm()` and call it from `handleSubmit` after `onCreate`, mirror Limits.tsx:707-731.
   - Why: reopening Create limit shows the previous submission's values on the Free twin; the Pro twin already carries the fix.
 
 ### Onboarding
 
-- [x] **rams-12 MEDIUM** `link-as-button` pages/SetupManual.tsx:139-152, pages/SetupGateConnect.tsx:63-80
+- [x] **rams-12 MEDIUM** `link-as-button` pages/SetupManual.tsx:139-152, pages/SetupGateConnect.tsx:63-80 `ac3758d`
   - Before: `<Button onClick={() => window.open("https://docs.constellationgate.ai", "_blank", "noopener,noreferrer")} variant="outline">API docs</Button>`.
   - After: `<a href="https://docs.constellationgate.ai" target="_blank" rel="noopener noreferrer">` in the Button recipe (`Button render={<a/>} nativeButton={false}`).
   - Why: a button has no href, so cmd-click, middle-click, copy link and status-bar preview are all lost on a docs link.
-- [x] **rams-13 LOW** `icon-position` pages/SignUp.tsx:75-81, pages/SignIn.tsx:92-98
+- [x] **rams-13 LOW** `icon-position` pages/SignUp.tsx:75-81, pages/SignIn.tsx:92-98 `ac3758d`
   - Before: `<ArrowRight className="absolute top-1/2 right-3 -translate-y-1/2" />` inside a `relative w-full` Button.
   - After: `<ArrowRight aria-hidden data-icon="inline-end" />`, mirror onboarding-shared.tsx:114-119.
   - Why: every other button icon uses the data-icon slot; absolute positioning crowds the label at narrow widths.
 
 ### API keys
 
-- [x] **rams-14 LOW** `container-max-width` pages/ApiKeys.tsx:147
+- [x] **rams-14 LOW** `container-max-width` pages/ApiKeys.tsx:147 `ac3758d`
   - Before: `flex w-full max-w-5xl flex-col gap-6`.
   - After: `flex w-full @5xl:max-w-5xl flex-col gap-6`, matching Limits.tsx:139 and Settings.tsx:92.
   - Why: caps on viewport width instead of the column width inside `<main>`.
 
 ### Team detail
 
-- [x] **rams-15 LOW** `heading-voice` pages/TeamDetailEnterprise.tsx:317
+- [x] **rams-15 LOW** `heading-voice` pages/TeamDetailEnterprise.tsx:317 `ac3758d`
   - Before: `<h2 className="type-label-14 m-0 text-balance text-foreground">Team not found</h2>` inside the `role="alert"` empty state.
   - After: confirm intent, or `type-heading-16` on the h2.
   - Why: label voice on a heading tag reads as a mistag to the next reviewer.
