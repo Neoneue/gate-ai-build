@@ -23,7 +23,7 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
 
 1. Resolve the skill file: `agents/front-end-developer/skills/<review-skill>/SKILL.md`.
    Exception: `<review-skill>` = `test-smoke` (alias `smk`) has no skill
-   file. It means: run `npx vitest run` and `npx playwright test` against the
+   file. It means: run `npm run smoke` (vitest then Playwright) against the
    live dev server (`lsof -ti :3000` first, never a second Vite), and file
    every failing case as an item under `## test-smoke`, page = the surface
    the test drives, slug = the rule the failure breaks, `Why:` = the
@@ -35,11 +35,26 @@ Arguments: `$ARGUMENTS` = `<review-skill> <scope>`.
    `.claude/rules/no-thrash.md` twins rule (Free / Default / Pro are separate
    files); "project" means `src/` with the blob exclusions.
 3. Fill [brief-review.md](brief-review.md) and spawn
-   `subagent_type: front-end-developer` with `model: sonnet` (user rule
-   2026-09-20: audits run on Sonnet; the orchestrator runs on whatever model
-   the user set). Do not add constraints the template already covers; the
-   agent's standing rules handle gates and scope.
-4. Relay FIRST, then write. Relay in chat: the new items as a CHECKLIST,
+   `subagent_type: front-end-developer`. Model by scope (user 2026-09-21,
+   "do what you would change"): **Opus** when the scope holds shared
+   primitives (`components/ui`, `layouts`), tokens, or any design.md table
+   judgment (wash ladder, radius, motion); **Sonnet** for page sweeps under
+   `src/pages`. The 2026-09-21 rams run lost one HIGH to a Sonnet misread of
+   the wash ladder and one page set to a grep-only pass. The orchestrator
+   runs on whatever model the user set.
+   Scope cap: about 10k lines per agent; split a bigger scope into parallel
+   agents by area, each numbering from 1, and renumber into one `<alias>-N`
+   sequence BEFORE writing (renumbering is forbidden only after the file
+   holds the IDs). Every review must end with a "Files read in full" list;
+   a report that grepped instead of reading, or returns Disclaimer, is
+   re-run at once on a smaller scope, never written up as-is. Do not add
+   constraints the template already covers.
+4. Relay FIRST, then write, in the SAME turn. The relay is for the user to
+   read; it is not a gate. Do not wait for confirmation before writing the
+   day file (2026-09-21: waiting cost a round trip and the user asked why
+   the audit was not in the doc). Corrections after the fact use rule 9
+   (re-severity, skip) or, on the user's word, deletion. Relay in chat: the
+   new items as a CHECKLIST,
    never a table (user rule 2026-09-17), each `- [ ] **<skill>-N SEVERITY**
    `rule-slug` path:line` with `Before:`, `After:`, `Why:` sub-bullets; the
    opinion; then "Decision needed" for every item that conflicts with
@@ -73,8 +88,8 @@ Trigger: the user names item IDs ("do the highs", "apply rams-1 to rams-4").
    model.
 3. Relay before / after per file and the gate results. Name anything the
    agent skipped and why.
-4. Verify with the suites before ticking: `npx vitest run` and
-   `npx playwright test`. Any new failure is filed as an `smk-N` item in the
+4. Verify with the suites before ticking: `npm run smoke` (one command,
+   one Runs row). Any new failure is filed as an `smk-N` item in the
    same day file (same shape as a test-smoke run, with the apply item's ID
    in `Why:`) and the apply item stays unticked until it is green. Add the
    run to the Runs table as `test-smoke (after <ids>)` with the counts.

@@ -1,5 +1,11 @@
 READ-ONLY REVIEW. Edit no files. Deliverable is a report.
 
+HARD REQUIREMENT: read every file in scope END TO END with the Read tool
+(offset/limit chunks for long files). Grep is a supplement, never the pass.
+End the report with "Files read in full" (path and line count, every file).
+If a file was not finished, name it and the line you stopped at and mark the
+Opinion Disclaimer; the orchestrator will re-run that scope.
+
 Run the `<review-skill>` skill from
 `agents/front-end-developer/skills/<review-skill>/SKILL.md` (read it and the
 supporting files it links, in full) against:
@@ -41,4 +47,7 @@ them). The user owns the final severity and opinion; propose, do not decide.
 `After` is the exact class string or CSS value. Every sub-bullet is one line,
 backticked inline, never a fenced block; if a fix needs more, name the pattern
 and a precedent file:line instead of pasting code. Then "Not verified" (you have
-no browser). End with the skill's verdict or closing line. Under 120 lines.
+no browser). Then "Compliant, checked and clean": one line per rule swept
+that produced nothing. Do NOT list "checked, not a defect" notes as
+numbered items; they belong under Compliant. End with "Files read in full".
+Under 110 lines: reports over that truncate in transit.
