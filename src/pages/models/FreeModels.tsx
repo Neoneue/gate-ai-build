@@ -97,11 +97,12 @@ export function FreeModels({ onSelect }: { onSelect: (model: Model) => void }) {
 function UpgradeBanner() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  // Same rule DashboardChrome uses for `upgradePath`: `?manage=1` lands the
-  // user on the plan picker rather than on Billing to hunt for it.
+  // Same rule DashboardChrome uses for `upgradePath`: the nested Manage
+  // subscription page lands the user on the plan ladder rather than on
+  // Billing to hunt for it.
   const upgradePath = isDefaultSurface(pathname)
-    ? "/billing-default?manage=1"
-    : "/billing-free?manage=1";
+    ? "/billing-default/plans"
+    : "/billing-free/plans";
   return (
     <Card
       aria-label="Upgrade to Pro"

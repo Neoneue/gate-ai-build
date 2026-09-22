@@ -1,9 +1,9 @@
 import {
   BookOpen,
+  BotMessageSquare,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  Sparkles,
 } from "lucide-react";
 import { domAnimation, LazyMotion } from "motion/react";
 import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
@@ -145,13 +145,13 @@ export function DashboardChrome({
   // badge (see lib/plan.ts): shown on the two non-PRO surfaces, absent on PRO.
   // It lands on that tier's own Billing page rather than the PRO one, so the
   // CTA never jumps the user across workspaces.
-  // `?manage=1` opens the plan-comparison dialog on arrival (BillingFree's
-  // PlanCard reads and strips it) so one click reaches the plan picker
-  // instead of dropping the user on the page to hunt for the button.
+  // It lands on the nested Manage subscription page rather than Billing
+  // itself, so one click reaches the plan ladder instead of dropping the
+  // user on the page to hunt for the button.
   const upgradePath = isDefault
-    ? "/billing-default?manage=1"
+    ? "/billing-default/plans"
     : isFree
-      ? "/billing-free?manage=1"
+      ? "/billing-free/plans"
       : undefined;
   // Ask AI panel state is hoisted to App.tsx's Layout (localStorage-backed)
   // and read via the outlet context, so it survives navigation (each page
@@ -466,7 +466,7 @@ function DashTopBar({
           size="icon"
           variant="ghost"
         >
-          <Sparkles aria-hidden className="size-5" size={20} />
+          <BotMessageSquare aria-hidden className="size-5" size={20} />
         </Button>
         <Button
           aria-expanded={askAiOpen}
@@ -475,7 +475,7 @@ function DashTopBar({
           size="default"
           variant="outline"
         >
-          <Sparkles aria-hidden data-icon="inline-start" size={16} />
+          <BotMessageSquare aria-hidden data-icon="inline-start" size={16} />
           Ask AI
         </Button>
         {hideDocsButton ? null : (

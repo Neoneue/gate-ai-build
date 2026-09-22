@@ -620,8 +620,9 @@ A plan tier is **not a status**. It says which plan a workspace is on; it never 
 | `--tier-enterprise-foreground` | violet-700 | violet-300 | `text-tier-enterprise-foreground` — ink on a tier wash |
 | `--tier-enterprise-wash` | violet-100 | violet-500 @ 15% | `bg-tier-enterprise-wash` — Badge `enterprise` |
 | `--tier-enterprise-border` | violet-200 | violet-500 @ 30% | `border-tier-enterprise-border` — Card `tone="enterprise"` |
+| `--tier-enterprise-surface-wash` *(added 2026-09-22)* | `violet-50 → violet-50 mixed 50% to white`, downward | `violet-500 @ 10% → 5%`, downward | `bg-[image:var(--tier-enterprise-surface-wash)]`, the focal Enterprise card on Manage subscription |
 
-These ten are **the only sanctioned way to paint a plan tier.** Same contract as `--promo-*`: `--tier-pro-surface-wash` holds the whole gradient rather than its stops, and takes no `--color-*` alias because no colour utility reads it. Enterprise has no surface or surface-wash — nothing consumes one yet; add the pair here first if a tinted Enterprise banner ever ships. The dark alphas are the 15% / 30% rungs the status washes already use, so no new alpha rung enters the system.
+These eleven are **the only sanctioned way to paint a plan tier.** Same contract as `--promo-*`: `--tier-pro-surface-wash` and `--tier-enterprise-surface-wash` hold the whole gradient rather than its stops, and take no `--color-*` alias because no colour utility reads them. The Enterprise wash's lower stop is violet-50 mixed half-way to white rather than a violet-25: `index.css` declares no violet ramp and Tailwind's violet starts at 50, and that mix reproduces exactly what blue-25 is to blue-50 (0.970 → 0.985 lightness, chroma halved), so no new ramp step enters the system. `--tier-enterprise-surface-wash` is read by the Manage subscription page, which tints exactly one FOCAL card per view: the Pro rung on the Free-org and Pro-org views, the Enterprise rung on the Enterprise-org view, each in its own tier's ink. Enterprise still has no flat `surface`; add it here first if one is ever needed. The dark alphas are the 10% / 15% / 30% rungs the status washes already use, so no new alpha rung enters the system.
 
 **Typography ramp tokens with no current semantic alias** (`text-neutral-800` body-data, `text-neutral-600` table-header, `text-neutral-400` placeholder / missing-data dash) — use the ramp token directly until corresponding semantic aliases are added to `:root {}`. These are identified gaps, not free passes; close them when touching the token layer.
 
@@ -847,7 +848,7 @@ Heading voices resolve through the semantic `type-heading-*` utilities (see "Sem
 | `h4` | Geist | 18 | 500 | 28 | snug | RETIRED from the UI 2026-09-04: every `type-heading-18` consumer (dialog titles, empty-state titles, plan-card titles, the Overview feed CardTitle) moved to `type-heading-20`, so block titles, table titles and dialog titles share one 20px voice next to 24px sections and 32px page titles. The class stays defined for the lint allowlist; do not reintroduce it. | `type-heading-18` (text-lg/7, tracking-snug), unused. |
 | `body` | Geist | 16 | 400 | 24 | normal | Card subtitles, button labels, body in spacious surfaces. | text-base. |
 | `body-sm` | Geist | 14 | 400 | 20 | normal | Modal field labels, body in compact surfaces, eyebrow default. | text-sm. |
-| `body-xs` | Geist | 12 | 400 | 16 | normal | Eyebrow sm, table column heads, breadcrumbs, dense metadata. | text-xs. |
+| `body-xs` | Geist | 12 | 400 | 16 | normal | Eyebrow sm, table column heads, breadcrumbs, dense metadata. | text-xs. **The COPY voice at this size is 12/18, not 12/16; see `type-copy-12` below.** |
 | `label` | Geist | 14 | 500 | 16 | normal | Form labels (Label primitive). | leading-none. |
 | `eyebrow-sm` | Geist Mono | 12 | 500 | 16 | 0.1em | KPI labels, card section eyebrows, top-bar strips. | UPPERCASE TRACKED. |
 | `eyebrow-default` | Geist Mono | 14 | 500 | 20 | 0.1em | Modal eyebrows, drawer headers, hero strips. | UPPERCASE TRACKED. |
@@ -879,15 +880,15 @@ heading/label/copy classes over ad-hoc `text-*` mixes in route files.
 | Label 18 | `type-label-18` | `font-sans text-lg/5 font-medium tracking-tight` |
 | Label 16 | `type-label-16` | `font-sans text-base font-medium tracking-tight` |
 | Label 14 | `type-label-14` | `font-sans text-sm font-medium` |
-| Label 12 | `type-label-12` | `font-sans text-xs font-medium` |
+| Label 12 | `type-label-12` | `font-sans text-xs/[18px] font-medium` (**12/18, see the extension below**) |
 | Copy 18 | `type-copy-18` | `font-sans text-lg font-normal tracking-snug` |
 | Copy 16 | `type-copy-16` | `font-sans text-base font-normal tracking-snug` |
 | Copy 14 | `type-copy-14` | `font-sans text-sm font-normal` |
-| Copy 12 | `type-copy-12` | `font-sans text-xs font-normal` |
+| Copy 12 | `type-copy-12` | `font-sans text-xs/[18px] font-normal` (**12/18, a documented extension, see below**) |
 | Copy 10 | `type-copy-10` | `font-sans text-2xs font-normal` — **fenced, see "Micro tier"** |
 | Mono 16 | `type-mono-16` | `font-mono text-base font-normal tabular-nums` |
 | Mono 14 | `type-mono-14` | `font-mono text-sm font-normal tabular-nums` |
-| Mono 12 | `type-mono-12` | `font-mono text-xs font-normal tabular-nums` |
+| Mono 12 | `type-mono-12` | `font-mono text-xs/[18px] font-normal tabular-nums` (**12/18, see the extension below**) |
 
 **Data-voice rule (mono).** The `type-mono-*` utilities are the codified
 `data` voice (see the taxonomy below). **Every data value — number, count,
@@ -947,6 +948,14 @@ type, added to the Badge primitive for the positioning tagline on the Models
 page's Featured cards ("Most capable", "Fastest"; labels come from the backoffice CMS), where the default
 12px badge outweighed the model name beside it. Reached only through the
 `size` prop on `badge.tsx`; still never a call-site `text-2xs`.
+
+**All three 12px voices run 12/18, not the `text-xs` default of 12/16 *(extension, 2026-09-22, user direction)*.** `type-copy-12`, `type-label-12` and `type-mono-12` share ONE line box, so a caption, a label and a data value sitting in the same row occupy the same vertical space. 18px is a new number in the closed line-height set, so it is recorded here the way `--text-2xs` and the `--promo-*` family were: documented first, then used.
+
+The reason copy moved first is grouping. `type-copy-12` carries the densest prose on the site (plan-card feature details, card captions, menu sub-lines, empty-state body), and at a 1.333 ratio a two-line detail sat close enough to the row beneath it that title/detail pairs stopped reading as units. The label and mono voices followed so a mixed row keeps one baseline rather than three.
+
+The value is 1.5, which is where the rest of the copy ladder already lives: 10/14 is 1.40, 14/20 is 1.43, 16/24 is 1.50, 18/28 is 1.56. **12/20 (`text-xs/5`) was measured and rejected**: it would be 1.667, the loosest ratio in the whole set and looser than the 18px voice, it grouped marginally worse, and it cost 14px of card height on the plan ladder for no legibility gain.
+
+**Nothing else moved.** `type-copy-10`, `-14`, `-16` and `-18`, and the 14px label and mono voices, are unchanged. Row and control heights are unaffected because they are set by their own `h-*` (`TableHead` is `h-10`, `Badge` is `h-5`, the table-row floor is `h-12`), not by the 12px line box. Reaching for a fourth 12px leading needs the same justification, in writing, in this paragraph.
 
 **Global input-helper rule:** all helper text under inputs uses
 `type-input-helper` (locked recipe: `font-sans text-xs font-normal` = 12px,

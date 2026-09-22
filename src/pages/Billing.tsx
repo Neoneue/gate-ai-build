@@ -1,5 +1,7 @@
 import { useState } from "react";
 import {
+  Link,
+  useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -18,11 +20,11 @@ import { PRO_SEAT_RATE_USD } from "@/data/billing-pro";
 import { MEMBER_ROWS } from "@/data/team-members";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency, formatDateNumeric } from "@/lib/formatters";
+import { withTierOf } from "@/lib/plan";
 import { CreditStatRow, CreditsCard } from "@/pages/billing/CreditsCard";
 import { HistoryLedger } from "@/pages/billing/HistorySection";
 import { PaymentMethodCard } from "@/pages/billing/PaymentMethodCard";
 import { CancelPlanDialog } from "@/pages/cancel-plan-dialog";
-import { PlanComparisonDialogPro } from "@/pages/plan-comparison-dialog-pro";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Billing page (route: /billing, sidebar: "Billing")
@@ -116,7 +118,11 @@ function PageHeader() {
 }
 
 function PlanCard() {
-  const [compareOpen, setCompareOpen] = useState(false);
+  const { pathname } = useLocation();
+  // Kept mounted with no trigger on this page since 2026-09-22: the plan
+  // ladder moved to `/billing/plans`, and the Free card's "Downgrade plan"
+  // there owns this dialog now. Left in place so the Billing-side entry
+  // point is a one-line re-add rather than a re-import.
   const [cancelOpen, setCancelOpen] = useState(false);
   return (
     <Card className="min-w-0 pb-0!" tone="pro">
@@ -168,7 +174,8 @@ function PlanCard() {
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">
         <Button
-          onClick={() => setCompareOpen(true)}
+          nativeButton={false}
+          render={<Link to={withTierOf(pathname, "/billing/plans")} />}
           size="sm"
           variant="outline"
         >
@@ -176,12 +183,6 @@ function PlanCard() {
           Manage subscription
         </Button>
       </CardFooter>
-      <PlanComparisonDialogPro
-        onDowngrade={() => setCancelOpen(true)}
-        onOpenChange={setCompareOpen}
-        onUpgrade={() => setCompareOpen(false)}
-        open={compareOpen}
-      />
       <CancelPlanDialog onOpenChange={setCancelOpen} open={cancelOpen} />
     </Card>
   );

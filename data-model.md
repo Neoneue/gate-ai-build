@@ -54,10 +54,11 @@ graph LR
     LAYOUT --> SET["/settings → Settings.tsx"]
     LAYOUT --> KEYS["/api-keys → ApiKeys.tsx"]
     LAYOUT --> BILL["/billing → Billing.tsx"]
+    LAYOUT --> PLANS["/billing/plans → ManageSubscription.tsx"]
     LAYOUT --> BILLENT["/billing-enterprise → BillingEnterprise.tsx"]
 ```
 
-- The graph shows the **PRO** surfaces only. `App.tsx` declares 61 paths in
+- The graph shows the **PRO** surfaces only. `App.tsx` declares 89 paths in
   total: nearly every nav base also has a `-default` and a `-free` twin, and
   five `/setup-*-default` pages carry the onboarding flow. Both sets are
   inventoried under "Tier & onboarding variants" below.
@@ -138,12 +139,13 @@ The two variant sidebars are **derived**, not hand-maintained:
 **Upgrade promo (2026-08-04).** `SidebarPanel` renders a `<SidebarUpgradeCard>`
 between the `<nav>` and the user area when — and only when — it receives an
 `upgradePath`. `DashboardChrome` derives that path from the same tier signal as
-the nav locks (`lib/plan.ts`): `/billing-default?manage=1` on `-default`
-surfaces, `/billing-free?manage=1` on `-free`, and `undefined` on PRO, where the
-card does not render at all. It lands on that tier's OWN Billing page, never the
-PRO one, so the CTA cannot jump the user across workspaces, and `?manage=1`
-opens the plan-comparison dialog on arrival (§7) so one click reaches the plan
-picker instead of dropping the user on the page to hunt for the button. The prop
+the nav locks (`lib/plan.ts`): `/billing-default/plans` on `-default`
+surfaces, `/billing-free/plans` on `-free`, and `undefined` on PRO, where the
+card does not render at all. It lands on that tier's OWN Manage subscription
+page, never the PRO one, so the CTA cannot jump the user across workspaces, and
+the nested page IS the plan picker, so one click reaches it instead of dropping
+the user on Billing to hunt for the button (retargeted 2026-09-22, replacing
+`?manage=1` on the Billing route). The prop
 threads to both `SidebarPanel` mounts — the desktop
 rail via `<Sidebar>`, and the mobile Sheet via `DashTopBar → MobileNav` — so
 the two never drift. The collapsed 64px rail has no variant of it.
@@ -1344,8 +1346,12 @@ rotating decorative events ticker, plus a `PlanComparisonDialog`. All of it is
 gone; the ticker constants (`SLIDE_MS`, `SLIDE_DELAY`, `FADE_DURATION`,
 `ROW_HEIGHT`) no longer exist anywhere in `src/`. The 48-event array that fed
 it now sits unused at `src/pages/security-feed.ts` as `SECURITY_FEED` (see
-§5.4). `PlanComparisonDialog` still lives at
-`src/pages/plan-comparison-dialog.tsx` for the surfaces that do upsell.
+§5.4). `PlanComparisonDialog` and `PlanComparisonDialogPro` are retained on
+disk at `src/pages/plan-comparison-dialog.tsx` and
+`src/pages/plan-comparison-dialog-pro.tsx` but are **no longer mounted
+anywhere**: since 2026-09-22 the plan ladder is the nested
+`ManageSubscription` page, and their plan data moved verbatim to
+`src/data/plans.ts`.
 
 ---
 
@@ -2084,7 +2090,31 @@ text. The primitive contract lives in `design.md` §7 "Skeleton".
 
 ### Billing page (`/billing` → `Billing.tsx`)
 
-Billing-specific layout (does not use `DashboardChrome`). Details TBD. The plan card's "Manage subscription" opens `plan-comparison-dialog-pro.tsx`, whose Free-plan CTA ("Cancel Pro plan") closes it and opens the shared `CancelPlanDialog` (`pages/cancel-plan-dialog.tsx`) — the same controlled dialog the Settings Cancel plan card uses, so the cancellation copy has one source. Shared `BILLING_PERIOD_END` constant lives in that dialog file and feeds Billing's renewal line.
+Billing-specific layout (does not use `DashboardChrome`). Details TBD. The plan card's "Manage subscription" is a `Button render={<Link>}` to `withTierOf(pathname, "/billing/plans")`, the nested Manage subscription page below (2026-09-22; it used to open `plan-comparison-dialog-pro.tsx`). The Free rung's "Downgrade plan" there (the ticket's wording) opens the shared `CancelPlanDialog` (`pages/cancel-plan-dialog.tsx`), the same controlled dialog the Settings Cancel plan card uses, so the cancellation copy has one source. Shared `BILLING_PERIOD_END` constant lives in that dialog file and feeds Billing's renewal line.
+
+### Manage subscription page (`/billing/plans` + `-free` / `-default` / `-enterprise` twins → `ManageSubscription.tsx`, added 2026-09-22)
+
+**Purpose:** the plan ladder, promoted out of the plan-comparison dialog into a nested page under Billing. `DashboardChrome activeNavId="billing"`, a `BackLink` to that tier's Billing page, `PageTitle` "Manage subscription".
+
+ONE component behind all four routes: the tier comes from `tierSuffixOf(pathname)` (`""` → Pro, `-free` → Free, `-default` → Free, since the Default workspace is on the Free plan, `-enterprise` → Enterprise), so there is no twin to drift.
+
+Three `<article>` cards in fixed ladder order (Free, Pro, Enterprise), laid out `grid @4xl:grid-cols-3 grid-cols-1 grid-rows-[auto_auto_auto_1fr_auto] gap-4`, each card `row-span-5 grid grid-rows-subgrid`. Five shared slots: header, price, `Separator`, body, caption; only the body is `1fr`, and the card carries exactly ONE rule, above the benefits label. The CTA buttons are deliberately NOT a shared row: they sit inside the body, bottom-anchored with `mt-auto`, so each card's action band is sized by its own buttons. That puts the last button of all three cards on one baseline with no dead space under a single-control card; `pt-6` on the band compounds with the body's `gap-4` for a 40px minimum off the list. Outline controls take a call-site `bg-transparent` so they read as true outlines over the focal card's tier wash; the `Button` primitive is unchanged. No mount animation. Below `@4xl` (896px inline-size; 288px per card at the threshold) it is one column, never two: a two-up step would orphan the third rung.
+
+**Focal-card rule:** exactly ONE card per view is tinted, in its own tier's ink (wash, border, `CircleCheck` glyphs). It is the PRO rung on the Free-org and Pro-org views (including when Pro is the org's own plan) and the ENTERPRISE rung on the Enterprise-org view, which has no plan above it and so marks the one it is on. The Free card is never focal, and Enterprise is never focal on the other two views. Every other card is plain `border-border bg-card` with muted icons.
+
+**Fill rule:** at most ONE filled control per view, and it need not be on the focal card. "Upgrade to Pro" (`promo`) on the Free-org and Default views; "Contact support" (`default`) on the Enterprise card on the Pro-org view, which has no upgrade left to sell. The Enterprise-org view has NO filled control on purpose: the violet tint and the "Current plan" badge already mark that card. Everything else is `outline`, and outline controls carry a call-site `bg-transparent` so they read as true outlines over a tinted card.
+
+**Badge rule:** "Most popular" where the view still has an upsell to make, "Current plan" where it names the rung the org is already on. Per view: Free-org and Default carry TWO, "Current plan" on Free plus "Most popular" on Pro; Pro-org one, "Current plan" on Pro; Enterprise-org one, "Current plan" on Enterprise. The badge takes its CARD's tier tone (Badge `pro`, Badge `enterprise`, both primitive variants unchanged, no call-site override) so the pill belongs to the wash under it; Free is the exception at `neutral`, having no tier colour of its own and sitting on a plain card. The header row carries `min-h-7` so an unbadged card keeps the badged card's height.
+
+**The org's own rung** carries an `outline` "Back to Billing" link (`Button render={<Link to={withTierOf(pathname, "/billing")}>} nativeButton={false}`) on every view: Free card on the Free-org view, Pro card on the Pro-org view, Enterprise card on the Enterprise-org view. It replaced a disabled "Your current plan" label, so there is no dead control on the page.
+
+**Enterprise org:** nothing is featured and no slot is empty. The Free and Pro rungs each take an `outline` "Contact support" with the Headset glyph, opening the contact dialog, which is the PRD's "Support routing in place of self-serve upgrade"; the Enterprise rung takes the "Back to Billing" link. There are no `ghost` buttons and no disabled buttons on the page.
+
+Plan data lives in `src/data/plans.ts` (`plansFor(tier)`), moved verbatim from the two dialogs; the per-org label differences they carried ("Included in your Free plan:" vs "Included with the Free plan:") are preserved as per-tier variants. Enterprise is the new rung: a bare "Custom" price with no unit (the card renders a `priceSuffix` only when the plan names one), four features (org and team forced settings, private cloud deployment, custom retention, procurement support), actions "Contact support" (the site `Headset` glyph, one label for every route to a human) + "Book a demo" (no glyph, no site precedent for one) on the Free and Pro views. Caption "Billed per seat, changes go through Support." on those two views; the Enterprise-org view reads "Plan changes go through Support.", dropping the seat half because its Billing page already shows the seat charge.
+
+Benefits rows sit `gap-4` apart with the title and its detail line flush, so each pair reads as one unit. Every row renders ONE shared glyph, lucide `CircleCheck` (`size-4 mt-1 shrink-0`, stroke 1.75, `aria-hidden`), tinted `text-tier-pro` on the featured Pro card and `text-muted-foreground` elsewhere. `PlanFeature` is `{ title, detail }`; the per-feature icons the dialogs carried are gone.
+
+The Contact support / Book a demo actions open ONE dialog whose body is a bordered `rounded-md` placeholder frame (one rung down from the dialog's `rounded-xl`) standing in for the embedded HubSpot form and scheduler. Four states off the one-way `?form=` preview param (see §7): `ready` (mock form), `loading` (`Skeleton`), `error` (the site's `OctagonAlert` inline pattern plus a no-op "Try again"), `done` (confirmation plus a "Done" close). No network, no analytics.
 
 `?state=revoked` (one-way preview param, not stripped) renders a `Callout` under the header: the notice an admin sees after Constellation Support removes the Enterprise entitlement and the org falls back to Pro. Absent the param the Pro page is unchanged.
 
@@ -2110,7 +2140,12 @@ pattern:
   Conversations row click navigates to. Renders `ConversationDetailBody`; back
   breadcrumb returns to `/conversations`.
 - `/upgrade` → `Upgrade.tsx` — plan cards; Pro CTA carries the animated
-  SparklesIcon.
+  SparklesIcon. **Unmounted by link since 2026-09-22:** the route is still
+  declared and still renders, but nothing in `src/` navigates to it; the
+  Manage subscription page below is what every Billing surface links to.
+- `/billing/plans`, `/billing-free/plans`, `/billing-default/plans`,
+  `/billing-enterprise/plans` → `ManageSubscription.tsx`: the nested plan
+  ladder (see the Billing section).
 - `/overview-default` → `DashboardDefault.tsx` — also exports `ConnectTabs` /
   `CodePanel` reused by ApiKeys and Models.
 - `/api-keys-default` → `ApiKeysDefault.tsx` — reuses ApiKeys page components.
@@ -2170,7 +2205,7 @@ on item click.
 - `Limits.tsx?create=1` (and `LimitsFree.tsx`) — opens the Create Limit dialog on mount. Param is stripped on dialog close via `setSearchParams(..., { replace: true })` so back-button doesn't reopen and URL reflects state.
 - `Notifications.tsx?tab=archive` — selects the feed's Archive tab. Uses the `?open=`-style render-phase compare (NOT the mount-only `?range=` shape) because a producer can fire on the already-mounted route (the bell lives in this page's own top bar); a manual tab click strips the param via `setSearchParams(..., { replace: true })`, re-arming it for the next click. **No in-app producer since 2026-08-25** (the bell's archived-empty explainer was removed) — the param stays supported because the URL remains valid and shareable.
 - `Notifications.tsx?view=feed` — scrolls the Recent-notifications section into view. Produced by the bell's "View all notifications" footer row, since the page opens at the top and the feed is its last section. Same render-phase-compare + strip contract as `?tab=archive`, and for the same reason: the common case is a param change on the already-mounted route. `scrollIntoView({ block: "start" })` on the section wrapper, `behavior` gated by the house `REDUCE_MOTION` snapshot (`src/lib/reduce-motion.ts`). The header gear deliberately navigates to bare `/notifications` — it is the settings link, so it lands on the catalog.
-- `BillingFree.tsx?manage=1` — opens the plan-comparison dialog on mount, stripped on close via `setSearchParams(..., { replace: true })`, same contract as `?create=1`. Fed by the sidebar upgrade CTA (§2). `BillingDefault.tsx` renders `BillingFree`, so the param works on both `-default` and `-free`.
+- `ManageSubscription.tsx?form=loading|error|done`: one-way preview param for the Contact support / Book a demo dialog's embed frame (the HubSpot form + scheduler placeholder). Read on every render, never written back and never stripped, the same contract `?state=` has on Billing; absent or unknown → `ready`. **Replaced `BillingFree.tsx?manage=1`** on 2026-09-22: the plan-comparison dialog it opened is now a page, so the sidebar upgrade CTA and the Free Models banner navigate to `/billing-free/plans` / `/billing-default/plans` directly and no param is needed.
 - `SetupManual.tsx?bill=byok|payg` — the only param that selects page CONTENT rather than opening a surface. Read on every render (not just mount), defaults to `byok` for any other value, and drives title/subtitle/context strip/back target. Both values are live entry points: `/overview-default` links to `payg`, `/setup-connect-default` to `byok`.
 
 **Both of the last two are currently orphaned entry points.** They were fed by

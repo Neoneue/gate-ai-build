@@ -528,6 +528,18 @@ and (pointer: fine)) and (&:hover));
   --tier-enterprise-foreground: var(--color-violet-700);
   --tier-enterprise-wash: var(--color-violet-100);
   --tier-enterprise-border: var(--color-violet-200);
+  /* Violet twin of --tier-pro-surface-wash, added 2026-09-22 for the
+     promoted Enterprise card on the Manage subscription page. Same
+     contract: the whole gradient, not its stops, so it takes no --color-*
+     alias. index.css declares no violet ramp (see the note above) and
+     Tailwind's violet starts at 50, so the lower stop is violet-50 mixed
+     half-way to white, which is exactly the relationship blue-25 has to
+     blue-50 (0.970 → 0.985 lightness, chroma halved), not a new rung. */
+  --tier-enterprise-surface-wash: linear-gradient(
+    to bottom,
+    var(--color-violet-50),
+    color-mix(in oklch, var(--color-violet-50) 50%, white)
+  );
 
   /* ─── Auth panel (fixed dark) ───────────────────────────────────────────
      The marketing half of the sign-in / sign-up split (AuthLayout). It is
@@ -638,7 +650,7 @@ body {
      --tier-pro-surface-wash is a gradient read as
      `bg-[image:var(--tier-pro-surface-wash)]`, so it gets no alias; one
      would offer `bg-tier-pro-surface-wash` as a plausible-looking class
-     that means nothing. */
+     that means nothing. Same for its enterprise twin. */
   --color-tier-pro: var(--tier-pro);
   --color-tier-pro-foreground: var(--tier-pro-foreground);
   --color-tier-pro-wash: var(--tier-pro-wash);
@@ -947,6 +959,11 @@ body {
     var(--color-violet-500) 30%,
     transparent
   );
+  --tier-enterprise-surface-wash: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--color-violet-500) 10%, transparent),
+    color-mix(in oklch, var(--color-violet-500) 5%, transparent)
+  );
 
   /* Syntax palette re-points to the ramp light-end on dark: the :root values
      (blue-700/success-700 + burnt-orange/amber hex) are tuned for code on
@@ -1074,8 +1091,9 @@ body {
     @apply font-sans text-sm font-medium;
   }
 
+  /* 12/18, the shared 12px line box. See the note on `.type-copy-12`. */
   .type-label-12 {
-    @apply font-sans text-xs font-medium;
+    @apply font-sans text-xs/[18px] font-medium;
   }
 
   .type-copy-18 {
@@ -1090,8 +1108,22 @@ body {
     @apply font-sans text-sm font-normal;
   }
 
+  /* ─── The 12px line box: 12/18 on all three voices ──────────────────
+     An EXPLICIT 18px rather than the 16px `text-xs` supplies by default.
+     Extension 2026-09-22 (user direction), documented in design.md §3: 18px
+     is a new number in a closed set, so it is written down before it is
+     used. Ratio 1.5, which is where the rest of the copy ladder already
+     lives (10/14 is 1.40, 14/20 is 1.43, 16/24 is 1.50, 18/28 is 1.56).
+
+     Copy moved first: it carries the densest prose on the site (feature
+     details, card captions, menu sub-lines) and at 1.333 a two-line detail
+     sat close enough to the row beneath that title/detail pairs stopped
+     reading as units. `type-label-12` and `type-mono-12` followed so all
+     three 12px voices share ONE line box: a label, a data value and a
+     caption sitting in the same row now occupy the same vertical space,
+     which is what keeps a mixed row on a single baseline. */
   .type-copy-12 {
-    @apply font-sans text-xs font-normal;
+    @apply font-sans text-xs/[18px] font-normal;
   }
 
   /* Micro copy — 10/14, the one voice below the 12px body floor. FENCED to
@@ -1116,8 +1148,9 @@ body {
     @apply font-mono text-sm font-normal tabular-nums;
   }
 
+  /* 12/18, the shared 12px line box. See the note on `.type-copy-12`. */
   .type-mono-12 {
-    @apply font-mono text-xs font-normal tabular-nums;
+    @apply font-mono text-xs/[18px] font-normal tabular-nums;
   }
 
   /* Form/input helper copy: 12px tier + 8px separation from control. */
