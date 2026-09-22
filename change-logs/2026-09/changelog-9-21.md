@@ -20,8 +20,40 @@ Prior day: [`changelog-9-20.md`](./changelog-9-20.md)
   retired as a false positive), Adverse at review, Clean after two apply
   passes (`ac3758d`) and two smoke runs. Workflow changes in `2522402`: review
   model by scope, full-read proof, `npm run smoke`.
+- [`audits/2026-09/audit-9-21.md`](../../audits/2026-09/audit-9-21.md):
+  impeccable, Models and Token Savings, imp-1 to imp-20 (3 HIGH / 10 MEDIUM
+  / 7 LOW), all applied in `2bb392b`. Workflow changes in `0b70d8f`: agents
+  write a report and run `check-report.mjs` to PASS, the orchestrator runs it
+  once and bounces FAILs at most three rounds; `verify-twins` resolves a route
+  to every file that renders on it; `triage-copy` sources rewrites from Notion
+  top down; `/promote` command and two skill indexes.
 
 ## Sections & surfaces
+
+### Models and Token Savings impeccable polish: 20 items, imp-1 to imp-20 (`pages/Models.tsx`, `models/FreeModels.tsx`, `models/ModelShelves.tsx`, `TokenSavings*.tsx`, `token-savings/SummaryCard.tsx`, `Policies.tsx`, `teams/PoliciesPane.tsx`, `teams/TokenSavingsPane.tsx`, `teams/budget.tsx`, `requests/RequestsTable.tsx`, `components/ui/card.tsx`, `hooks/use-is-truncated.ts`) · [2bb392b]
+
+- Before: the Free Token Savings upsell headline claimed a literal "~20%"
+  while the Compression KPI beside it read 13.7% (imp-1); cost tooltip
+  triggers on Token Savings, Messages and the budget banner were plain
+  spans no keyboard could reach (imp-2, imp-3); Models and Token Savings
+  jumped h1 to h3; a custom range showed a delta with nothing to compare
+  against; 14 nested panels hand-rolled their own inset surface classes;
+  the Summary figures each set their own baseline so the numbers drifted
+  row to row; the Default rail tile, the radius ladder and the meter fill
+  were off the ladder (the meter animated `width`); the Providers table
+  carried a Context column it had no value for; "Show more" rendered
+  whether or not the text actually clipped; the filter triggers overflowed
+  below 390px.
+- After: the headline derives from the same Compression constant the KPI
+  reads, so the two can never disagree; every tooltip trigger takes
+  `tabIndex`; `SectionTitle as="h2"` on first sections; the custom-range
+  note says what the delta is measured against; a `Card` `inset` variant
+  replaces the 14 hand-rolled panels; the Summary figures share a subgrid
+  so the baselines line up; the meter fills with `scaleX`; the Providers
+  Context column is dropped; `useIsTruncated` now measures height as well
+  as width so "Show more" is gated on real clipping; the filter triggers
+  stack at 390. LOWs: heading voices, grid breakpoints, dead classes,
+  margins, `cn()`. Enterprise pane twins fixed alongside.
 
 ### rams whole-site audit applied: 14 items, rams-2 to rams-15 (`pages/*`, `components/ui/icon-cross-fade.tsx`, `layouts/DashboardChrome.tsx`) · [ac3758d]
 
