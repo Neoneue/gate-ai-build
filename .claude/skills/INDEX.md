@@ -18,6 +18,7 @@ indexed at `agents/front-end-developer/skills/INDEX.md`.
 | `/commit-push` | `/commit` then push the current branch only | User |
 | `/promote` | dev to main: divergence check, test-merge, PR, merge commit, one CI watch, sync back | User; the only path that pushes main |
 | `/handoff` | Rewrite `handoff.md` LATEST for the next session; OPEN items carry | User, end of session |
+| `/end-session` | `/commit-push`, then `/promote` (only if commit passed), then `/handoff` (even if promote failed, so the failure is the first OPEN item); ends with one `SAFE TO /clear` line or `NOT SAFE` naming the step | User, end of session; the user clears by hand on the safe line |
 
 ## Chains that recur
 
@@ -28,6 +29,7 @@ indexed at `agents/front-end-developer/skills/INDEX.md`.
 - **Copy change:** `triage-copy` -> proposal with source -> user go ->
   edit -> `lint:copy` re-run -> `/commit`.
 - **Ship:** `/commit-push` on dev -> user says promote -> `/promote`.
+- **End of day:** `/end-session` -> `SAFE TO /clear` -> user clears.
 
 ## Scripts these skills own
 
