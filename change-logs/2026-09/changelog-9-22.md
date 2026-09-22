@@ -366,7 +366,48 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   in their place, and gains three cases asserting the two CTAs land on the
   `/plans` paths.
 
+### Payment method: the action moves into the card-on-file row (`pages/billing/PaymentMethodCard.tsx`, `pages/BillingFree.tsx`) · [8e26eb6]
+
+- Before: the row inside `CardContent` held only the brand badge and the card
+  digits, with the right half of it empty, and the action sat below in a
+  `CardFooter` with a `border-t`. Both states did this: `Update card` on the
+  paid tiers and `Add card` on the `empty` state and on the Free page's own
+  copy of the card.
+- After: the button is the last child of the row, pushed right with
+  `ml-auto shrink-0`, and the footer is gone from both files (the shared
+  component no longer imports `CardFooter`). Vercel's placement, and the
+  reason it is right here: the action operates on THIS card on file, not on
+  the section, so a second saved card would take its own row action instead
+  of one footer button that cannot say which card it means. Labels, variants,
+  glyphs and `size="sm"` are untouched.
+- The row is `flex flex-wrap items-center gap-4 rounded-xs border
+  border-border bg-card-muted px-4 py-3`. `flex-wrap` plus `ml-auto` is what
+  holds it together under pressure: one line wherever it fits, and the button
+  drops to its own right-aligned line when the text and the button run out of
+  room, rather than squeezing either. The badge gained `shrink-0` and the text
+  column `min-w-0` so the badge never squashes and the copy wraps first.
+- Vertical padding went `p-4` to `px-4 py-3` (user direction): the inset read
+  too airy against a 40px badge. Measured at 1440 and 390 on `/billing`,
+  `/billing-free` and `/billing-enterprise`: row 66px in every case except
+  Free at 390, where the longer "No payment method on file" wraps the button
+  to a second line at 114px. No card overflow anywhere, no `card-footer` left
+  in the DOM, and the button's right edge sits on the row's 16px inset.
+- Removing the footer also gives the card its bottom padding back:
+  `has-data-[slot=card-footer]:pb-0!` on `Card` no longer matches, so the
+  surface closes on the same `py-4` it opens with.
+
 ## Tests
+
+### Payment method card placement (`test/payment-method-card.test.tsx`) · [8e26eb6]
+
+- New suite, 4 cases, `render` under happy-dom: in both the default and the
+  `empty` state the action is a descendant of the `bg-card-muted` row, that
+  row also carries the badge and the card text, and the card renders no
+  `[data-slot="card-footer"]` at all. A third case pins the two classes the
+  layout rests on, `ml-auto` on the button and `flex-wrap` on the row. The
+  fourth reads `BillingFree.tsx` and asserts its local copy of the card has
+  the same shape, since the Free page owns its own markup and the two tiers
+  have drifted before.
 
 ### Manage subscription ladder (`test/manage-subscription.test.tsx`) · [48aa4a8]
 

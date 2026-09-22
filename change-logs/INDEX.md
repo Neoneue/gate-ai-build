@@ -12,6 +12,8 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-22](./2026-09/changelog-9-22.md)
 
 - Manage subscription is a page, and Enterprise is the third rung
+- Payment method: the action moves into the card-on-file row
+- Payment method card placement test, 4 cases
 - Contact and Book a demo: one modal, our own form
 - A four-rung lift ramp, and a Button family that uses it
 - Plan cards get the Card tier elevation they never had
