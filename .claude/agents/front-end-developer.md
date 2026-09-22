@@ -75,7 +75,7 @@ pattern, one token swap) needs none of these; make it.
 | needs a route, a type, the mock-data model or the page inventory | `data-model.md` (repo root), the matching section only |
 | implements a feature | the PRD and ticket in `docs/prds/` and `docs/tickets/` (local only) |
 | writes or edits UI markup | `agents/front-end-developer/skills/web-design-guidelines/SKILL.md`; apply as you write |
-| matches a specific intent in the skills table below | that one skill only |
+| matches a specific intent in the skills table below | that one skill only; `agents/front-end-developer/skills/INDEX.md` says which skill fits which job and which to pick for design judgment |
 
 **Stack, do not re-detect it:** Vite + React 19, TypeScript, Tailwind v4,
 Base UI primitives (`@base-ui/react`, never Radix) wrapped shadcn-style in

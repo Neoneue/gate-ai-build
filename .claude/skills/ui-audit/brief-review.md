@@ -32,6 +32,14 @@ property, duration and easing literally; check nested radius, icon stroke vs
 text weight, unnamed transition properties, icon toggles by mount / unmount,
 optical alignment of icon + text, stagger on any entrance.
 
+PROOF, per item. Every item carries the evidence the orchestrator can
+re-run without you: for a code claim, the exact `Before:` string so a grep
+reproduces it; for a design.md claim, the design.md line number quoted in
+`Why:`; for a measured claim (clipping, hit area, contrast, focus), the
+`page.evaluate` expression or DOM measurement and its value; for a
+"twins" or "every site" claim, the grep you ran and its hit list. An item
+without proof is dropped by the orchestrator, not relayed.
+
 Output a CHECKLIST, not a table, even if the skill defines a table format:
 a `### Global` group first (shared primitives, tokens, anything reached from
 more than one page), then one `### <Page>` group per page in scope; inside
@@ -51,3 +59,10 @@ no browser). Then "Compliant, checked and clean": one line per rule swept
 that produced nothing. Do NOT list "checked, not a defect" notes as
 numbered items; they belong under Compliant. End with "Files read in full".
 Under 110 lines: reports over that truncate in transit.
+
+REPORT AND PROOF. Write the report to `<report path>` (given by the
+orchestrator, in the session scratchpad). Then run
+`node .claude/skills/ui-audit/check-report.mjs review <report path> <routes>`
+from the repo root and fix the report (or the work) until it prints PASS.
+Hand back only the report path and the checker's PASS line; the orchestrator
+runs the same command and sends the FAIL list back if it differs.

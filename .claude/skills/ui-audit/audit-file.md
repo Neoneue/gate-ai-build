@@ -159,6 +159,10 @@ Verdict (run 1): Qualified. <one sentence>
    never more than one statement. If the fix needs more than a line to
    show, name the pattern and the precedent file instead ("mirror
    EventsTable.tsx:136"). No other sub-bullets except `Severity:` per rule 9.
+   The `Why:` line ends with the proof in parentheses: the grep or DOM
+   measurement the orchestrator re-ran, or the design.md line cited
+   (`(grep: 6 hits)`, `(scrollHeight 42 = clientHeight 42)`,
+   `(design.md:524)`). No proof, no item.
    Open items under `### Decision needed` end with `(owner, by date)`.
 9. **Item lifecycle lives on the item.** Applied: tick the box and append the
    short commit hash to the first line. Skipped: leave unticked and add one
