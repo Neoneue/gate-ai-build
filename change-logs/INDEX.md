@@ -9,6 +9,15 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-22](./2026-09/changelog-9-22.md)
+
+- Manage subscription is a page, and Enterprise is the third rung
+- Contact support / Book a demo placeholder dialog with four `?form=` states
+- `?manage=1` retired; upgrade CTAs point at the `/plans` page
+- Enterprise gets a tinted surface wash token
+- The 12px line box goes to 12/18 across copy, label and mono
+- Manage subscription ladder test, 15 cases
+
 ### [2026-09-21](./2026-09/changelog-9-21.md)
 
 - Models and Token Savings impeccable polish: 20 items, imp-1 to imp-20
