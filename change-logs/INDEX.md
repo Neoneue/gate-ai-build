@@ -9,6 +9,18 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-23](./2026-09/changelog-9-23.md)
+
+- The page-link strip renders only past one page
+- Page sizes split into two buckets, 10 on Teams and 25 everywhere else
+- Five Teams tables gain a pagination footer
+- Eight tables take the 25-row floor
+- Policies: the nested inset cards are gone and the type hierarchy steps
+- Conversations: the count is real and the range pills filter
+- The pagination footer's two gates
+- The rows-per-page floor
+- The conversations headline count
+
 ### [2026-09-22](./2026-09/changelog-9-22.md)
 
 - Manage subscription is a page, and Enterprise is the third rung

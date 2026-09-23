@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Timestamp } from "@/components/ui/timestamp";
 import {
@@ -52,9 +53,11 @@ import { withTierOf } from "@/lib/plan";
 import {
   type CustomRange,
   effectiveScale,
+  inRangeWindow,
   type PresetRange,
   RANGE_OPTIONS,
   type Range,
+  rangeWindow,
 } from "@/lib/range";
 import { ConversationDetailDialog } from "./conversations/ConversationDetail";
 import { MODEL_FILTER_OPTIONS } from "./conversations/data";
@@ -65,6 +68,23 @@ import { inScope, useViewScope, type ViewScope } from "./teams/view-scope";
  *  Manager or Member those their own keys initiated (view-scope.ts). */
 function scopedSeeds(scope: ViewScope): ConversationRow[] {
   return CONVERSATION_ROWS.filter((c) => inScope(scope, c.initiator));
+}
+
+/** Those same conversations, narrowed to the selected range.
+ *
+ *  The range pills are a FILTER on each conversation's real `updated` date, not
+ *  a multiplier. This one array is the single source for the KPI count, all
+ *  three sparklines, the table and the pagination footer, so those numbers
+ *  cannot disagree with each other. Until 2026-09-23 the pills changed nothing
+ *  here — they scaled a synthetic total by `RANGE_SCALE`, which is how the page
+ *  came to advertise 850 conversations over a table that owned 8. */
+function rangedSeeds(
+  scope: ViewScope,
+  range: Range,
+  customRange: CustomRange | null
+): ConversationRow[] {
+  const window = rangeWindow(range, customRange);
+  return scopedSeeds(scope).filter((c) => inRangeWindow(c.updated, window));
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -78,68 +98,19 @@ function scopedSeeds(scope: ViewScope): ConversationRow[] {
  * KpiRail, ConversationsTableSection.
  * ───────────────────────────────────────────────────────────────────────── */
 
-const SPARK: Record<
-  Range,
-  { conversations: number[]; avgTurns: number[]; avgCost: number[] }
-> = {
-  all: {
-    conversations: [280, 340, 310, 380, 350, 410, 385, 415, 420],
-    avgTurns: [11.2, 12.8, 11.6, 13.4, 12.9, 14.1, 13.5, 14.0, 14.2],
-    avgCost: [0.101, 0.095, 0.098, 0.091, 0.093, 0.087, 0.089, 0.083, 0.082],
-  },
-  "30d": {
-    conversations: [348, 368, 382, 371, 395, 383, 408, 398, 420],
-    avgTurns: [13.1, 13.6, 13.4, 13.8, 13.6, 14.1, 13.9, 14.1, 14.2],
-    avgCost: [0.091, 0.088, 0.09, 0.086, 0.088, 0.084, 0.086, 0.083, 0.082],
-  },
-  "7d": {
-    conversations: [10, 12, 9, 11, 13, 10, 12, 11, 12],
-    avgTurns: [13.4, 14.8, 13.1, 14.2, 14.9, 13.6, 14.5, 13.9, 14.2],
-    avgCost: [0.087, 0.082, 0.09, 0.083, 0.085, 0.08, 0.084, 0.079, 0.082],
-  },
-  "24h": {
-    conversations: [11, 13, 10, 12, 14, 11, 13, 12, 12],
-    avgTurns: [14.0, 14.5, 13.8, 14.3, 14.7, 14.1, 14.4, 14.0, 14.2],
-    avgCost: [0.083, 0.081, 0.084, 0.082, 0.08, 0.083, 0.081, 0.082, 0.082],
-  },
-  custom: {
-    conversations: [380, 395, 410, 405, 415, 408, 418, 412, 420],
-    avgTurns: [13.6, 14.0, 13.8, 14.2, 14.0, 14.4, 14.1, 14.3, 14.2],
-    avgCost: [0.088, 0.085, 0.087, 0.084, 0.086, 0.083, 0.085, 0.082, 0.082],
-  },
-};
-
-// Sparkline tooltip dates. These KPI sparklines are illustrative trends
-// (authored as fixed 9-point arrays) with no real timestamps. We derive
-// evenly-spaced bucket dates ending at the demo clock's "now" so the hover
-// card can show a date beside each value. The values themselves stay
-// illustrative. Consumers copy this Date before stepping it; never mutate it.
+// Sparkline bucket anchors. Nine evenly-spaced instants ending at the demo
+// clock's "now", spanning the selected range. The rail buckets its rows against
+// this array and labels that same array with `labelDates`, so the value a hover
+// card shows belongs to the day the hover card names. There is deliberately no
+// separate label function to drift out of step with it. Consumers copy these
+// Dates before stepping them; never mutate.
 const SPARK_POINTS = 9;
 const SPARK_TODAY = DEMO_NOW;
 
-/** Avg Cost / Conv — the mean of what these conversations actually cost,
- *  Gate-metered rows only. Every term is a `costOf` sum over one
- *  conversation's request rows, so the tile agrees with the Cost column two
- *  inches below it and with the Models page's per-1M rates. It was hardcoded
- *  at "$0.082" until 2026-08-03, which no row on the page added up to. */
-const AVG_COST_PER_CONVERSATION = avgCostPerConversation(
-  CONVERSATION_ROWS,
-  REQUEST_ROWS_ALL
-);
-
-/** The authored `avgCost` arrays are trend SHAPE, not money — all five ranges
- *  land on the same terminal point. Rescale so that terminal point IS the
- *  derived KPI: the sparkline's last dot and the number beside it are the same
- *  fact, and a reader hovering the tile cannot be shown two different answers. */
-function avgCostSeries(shape: number[], avgCost: number): number[] {
-  const last = shape.at(-1) ?? 0;
-  if (last === 0) {
-    return shape;
-  }
-  return shape.map((v) => (v / last) * avgCost);
-}
-
-function sparkDates(range: Range, customRange: CustomRange | null): string[] {
+function sparkBucketDates(
+  range: Range,
+  customRange: CustomRange | null
+): Date[] {
   const last = SPARK_POINTS - 1;
   const dates: Date[] = [];
 
@@ -148,7 +119,7 @@ function sparkDates(range: Range, customRange: CustomRange | null): string[] {
     for (let i = 0; i < SPARK_POINTS; i++) {
       dates.push(new Date(customRange.from.getTime() + (span * i) / last));
     }
-    return labelDates(dates, "day");
+    return dates;
   }
 
   const preset: PresetRange = range === "custom" ? "all" : range;
@@ -164,12 +135,14 @@ function sparkDates(range: Range, customRange: CustomRange | null): string[] {
     }
     dates.push(d);
   }
-  return labelDates(dates, preset === "24h" ? "hour" : "day");
+  return dates;
 }
 
 /** Tooltip date strings for a bucket list — one shape site-wide (design.md
  *  "Chart tooltip & legend"); the year appears only when the window spans
- *  two of them, which the lifetime range does. */
+ *  two of them, which the lifetime range does. The rail labels the very same
+ *  array it buckets its rows against, so a point's date and its value can
+ *  never describe different slices of time. */
 function labelDates(dates: Date[], granularity: "hour" | "day"): string[] {
   const span = {
     start: dates[0] ?? new Date(),
@@ -180,27 +153,65 @@ function labelDates(dates: Date[], granularity: "hour" | "day"): string[] {
 
 // The Conversations KPI is the COUNT of conversations in the range; its
 // sparkline shows per-bucket volume that must SUM to that KPI total (mirrors the
-// backend getStats, where the daily buckets and the count agree). Each range's
-// authored array is treated as the bucket *shape* and rescaled to the total via
-// largest-remainder rounding, so the integer buckets sum to the total exactly.
-function distributeTotal(total: number, shape: number[]): number[] {
-  const shapeSum = shape.reduce((sum, w) => sum + w, 0);
-  if (shapeSum <= 0) {
-    return shape.map(() => 0);
+// backend getStats, where the daily buckets and the count agree). That used to
+// be forced — an authored 9-point trend shape rescaled onto the total by
+// largest-remainder rounding. It is now free, because the buckets ARE the
+// count: every conversation is dropped into the bucket its real `updated` date
+// falls in, and the bucket heights are how many landed there.
+//
+// `boundaries[i]` is the END of bucket i. Anything older than the first
+// boundary lands in bucket 0 and anything newer than the last lands in the
+// last; those two clamps are what guarantee the sum, whatever window the row
+// filter used.
+function bucketOf(d: Date, boundaries: Date[]): number {
+  const t = d.getTime();
+  for (let i = 0; i < boundaries.length; i += 1) {
+    if (t <= boundaries[i].getTime()) {
+      return i;
+    }
   }
-  const exact = shape.map((w) => (total * w) / shapeSum);
-  const floored = exact.map((v) => Math.floor(v));
-  let remainder = total - floored.reduce((sum, v) => sum + v, 0);
-  const byFraction = exact
-    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
-    .sort((a, b) => b.frac - a.frac);
-  const result = [...floored];
-  for (let k = 0; remainder > 0 && k < byFraction.length; k += 1) {
-    result[byFraction[k].i] += 1;
-    remainder -= 1;
-  }
-  return result;
+  return boundaries.length - 1;
 }
+
+/** The filtered rows split across the sparkline's buckets, oldest bucket first. */
+function bucketRows(
+  rows: ConversationRow[],
+  boundaries: Date[]
+): ConversationRow[][] {
+  const buckets: ConversationRow[][] = boundaries.map(() => []);
+  for (const row of rows) {
+    buckets[bucketOf(row.updated, boundaries)].push(row);
+  }
+  return buckets;
+}
+
+/** A running statistic across those buckets: point i is `stat` applied to every
+ *  row up to and including bucket i. The LAST point is therefore the KPI beside
+ *  it, by construction — the tile's number and the end of its line are one
+ *  fact. `avgCostSeries` used to fake that by rescaling an authored shape until
+ *  its terminal point landed on the KPI.
+ *
+ *  `stat` returns null while it has nothing to average: no rows yet, or no
+ *  Gate-metered row yet. Leading nulls hold at the first value the data can
+ *  prove rather than drawing a zero nothing recorded. If the window never
+ *  yields one, the series is flat at 0 and the tooltip reads "—". */
+function runningSeries(
+  buckets: ConversationRow[][],
+  stat: (rows: ConversationRow[]) => number | null
+): number[] {
+  const seen: ConversationRow[] = [];
+  const points = buckets.map((bucket) => {
+    seen.push(...bucket);
+    return stat(seen);
+  });
+  const first = points.find((v) => v !== null) ?? 0;
+  return points.map((v) => v ?? first);
+}
+
+/** A mean with no rows behind it is not 0, it is unknown — the tiles and their
+ *  tooltips print an em dash for it, the same mark the Cost column already uses
+ *  for a conversation Gate could not meter. */
+const NO_VALUE = "—";
 
 export function Conversations() {
   const navigate = useNavigate();
@@ -308,92 +319,101 @@ function KpiRail({
   customRange: CustomRange | null;
 }) {
   const scope = useViewScope();
-  const conversationsTotal = Math.round(
-    CONVERSATIONS_TOTAL *
-      scope.requestShare *
-      effectiveScale(range, customRange)
-  );
-  const conversationsValue = formatCompactCount(conversationsTotal);
-  // Admin reads the org canon; a scoped user reads their own conversations'
-  // arithmetic (mean turns, mean metered cost), so the tiles and the table
-  // below describe the same rows.
-  const own = scope.scoped
-    ? scopedSeeds(scope).map((seed) =>
-        getConversationView(seed, REQUEST_ROWS_ALL)
-      )
-    : null;
-  const avgTurns = own
-    ? own.length === 0
-      ? 0
-      : own.reduce((a, v) => a + v.turns, 0) / own.length
-    : 14.2;
-  const avgCost = own
-    ? avgCostPerConversation(scopedSeeds(scope), REQUEST_ROWS_ALL)
-    : AVG_COST_PER_CONVERSATION;
-  const spark = SPARK[range];
-  const sparkLabels = sparkDates(range, customRange);
-  const conversationsSpark = distributeTotal(
-    conversationsTotal,
-    spark.conversations
-  );
+  // ONE read of the conversations this viewer may see IN THIS RANGE, shared by
+  // the count, by the per-conversation means, and by all three sparklines. The
+  // table below filters the same array, so the headline cannot advertise rows
+  // the table does not own — it used to multiply a synthetic 100 by the range
+  // scale and claim 850 over 8 rows.
+  //
+  // Every role reads the same arithmetic now. Admin used to fall back to a
+  // literal 14.2 turns and a lifetime-wide cost constant, which is why its
+  // tiles described a workspace the table never showed.
+  const rail = useMemo(() => {
+    const seeds = rangedSeeds(scope, range, customRange);
+    const rows = seeds.map((seed) =>
+      getConversationView(seed, REQUEST_ROWS_ALL)
+    );
+    const boundaries = sparkBucketDates(range, customRange);
+    const buckets = bucketRows(rows, boundaries);
+    const meanTurns = (of: ConversationRow[]) =>
+      of.length === 0 ? null : of.reduce((a, r) => a + r.turns, 0) / of.length;
+    // BYOK sessions carry no Gate-metered cost at all, so a window holding only
+    // BYOK conversations has no mean to report — `avgCostPerConversation`
+    // returns 0 for an empty metered set, and $0.000 is not what happened.
+    const meanCost = (of: ConversationRow[]) =>
+      of.some((r) => r.cost.trim() !== NO_VALUE)
+        ? avgCostPerConversation(of, REQUEST_ROWS_ALL)
+        : null;
+    return {
+      count: rows.length,
+      avgTurns: meanTurns(rows),
+      avgCost: meanCost(rows),
+      labels: labelDates(boundaries, range === "24h" ? "hour" : "day"),
+      countSpark: buckets.map((b) => b.length),
+      turnsSpark: runningSeries(buckets, meanTurns),
+      costSpark: runningSeries(buckets, meanCost),
+    };
+  }, [scope, range, customRange]);
   return (
     <KpiRailShell columns={3}>
+      {/* No deltas anywhere on this rail. The three tiles used to carry a
+          hardcoded "+6.4%", "+1.8" and "-3.1%" — against a range-filtered count
+          of 1 or 8 those imply prior periods this mock has no rows for, and the
+          real build shows none. Each tile states what it can prove.
+
+          The sparks are real histograms now: every conversation is dropped into
+          the bucket its own `updated` date falls in, so the buckets sum to the
+          count because they ARE the count, and the hover names the day the row
+          actually landed on. A sparse window reads sparse — 24H is one dot,
+          because one conversation ran. */}
       <CompactKpi
-        delta={scope.scoped ? undefined : "+6.4%"}
         flat
         spark={
           <CompactSpark
             colorVar="var(--color-chart-7)"
-            data={conversationsSpark}
-            labels={sparkLabels}
+            data={rail.countSpark}
+            labels={rail.labels}
             tooltip
             valueFormatter={(v) => formatNumber(Math.round(v))}
           />
         }
         title="Conversations"
-        value={conversationsValue}
+        value={formatCompactCount(rail.count)}
       />
       <CompactKpi
-        delta={scope.scoped ? undefined : "+1.8"}
         flat
         spark={
           <CompactSpark
             colorVar="var(--color-chart-3)"
-            data={spark.avgTurns}
-            labels={sparkLabels}
+            data={rail.turnsSpark}
+            labels={rail.labels}
             tooltip
-            valueFormatter={(v) => v.toFixed(1)}
+            valueFormatter={(v) => (v === 0 ? NO_VALUE : v.toFixed(1))}
           />
         }
         title="Avg turns"
-        value={avgTurns.toFixed(1)}
+        value={rail.avgTurns === null ? NO_VALUE : rail.avgTurns.toFixed(1)}
       />
       <CompactKpi
-        delta={scope.scoped ? undefined : "-3.1%"}
-        deltaInverted
         flat
         spark={
           <CompactSpark
             colorVar="var(--color-chart-1)"
-            data={avgCostSeries(spark.avgCost, avgCost)}
+            data={rail.costSpark}
             endDot
-            labels={sparkLabels}
+            labels={rail.labels}
             tooltip
-            valueFormatter={(v) => `$${v.toFixed(3)}`}
+            valueFormatter={(v) => (v === 0 ? NO_VALUE : `$${v.toFixed(3)}`)}
           />
         }
         title="Avg cost / conv"
-        value={`$${avgCost.toFixed(3)}`}
+        value={rail.avgCost === null ? NO_VALUE : `$${rail.avgCost.toFixed(3)}`}
       />
     </KpiRailShell>
   );
 }
 
 /* ─── Conversations table section (toolbar + table + pagination) ─────── */
-
-// Synthetic total — held at module scope so pagination math reconciles
-// with the KPI rail's "Conversations: 100" figure.
-const CONVERSATIONS_TOTAL = 100;
 
 // Sort accessor for the conversations table. Numeric columns parse the raw
 // (unscaled) row value — the proportional scale applied at render preserves
@@ -468,14 +488,27 @@ function ConversationsTableSection({
   const [model, setModel] = useState("all");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState("25");
-  const isFiltered = keyId !== "all" || model !== "all";
+  // Reset to page 1 whenever a filter changes — render-time derived state, not
+  // a useEffect (see security/EventsTable for the canonical shape). Without it
+  // a narrowing filter can strand the user on a page that no longer exists.
+  // The range belongs in this key now that it narrows rows rather than scaling
+  // them: pressing 24H from page 2 of the lifetime list would otherwise land on
+  // an empty page.
+  const [prevResetKey, setPrevResetKey] = useState("");
+  const resetKey = `${range}|${customRange?.from.getTime() ?? ""}|${customRange?.to.getTime() ?? ""}|${keyId}|${model}`;
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
+    setPage(1);
+  }
   const { sort, toggle: toggleSort } = useTableSort();
+  // The range filter runs FIRST, so the Key and Model selects narrow what the
+  // range already left standing — and the rail above reads the identical array.
   const viewRows = useMemo(
     () =>
-      scopedSeeds(scope).map((seed) =>
+      rangedSeeds(scope, range, customRange).map((seed) =>
         getConversationView(seed, REQUEST_ROWS_ALL)
       ),
-    [scope]
+    [scope, range, customRange]
   );
   const filteredRows = useMemo(
     () =>
@@ -495,9 +528,13 @@ function ConversationsTableSection({
     () => sortRows(filteredRows, sort, conversationSortValue),
     [filteredRows, sort]
   );
-  const paginationTotal = isFiltered
-    ? visibleRows.length
-    : Math.round(CONVERSATIONS_TOTAL * scope.requestShare * scale);
+  const paginationTotal = visibleRows.length;
+  // Slice for the current page. `resolveRowsPerPage` owns the page math, the
+  // same helper the footer uses for its "Showing N–M of T" line, so the two
+  // cannot drift. Until this landed the table rendered every row regardless
+  // of the Rows select, which made the control a no-op.
+  const perPage = resolveRowsPerPage(rowsPerPage, paginationTotal);
+  const pagedRows = visibleRows.slice((page - 1) * perPage, page * perPage);
   const isEmpty = visibleRows.length === 0;
   // Row-click drill-in. `selectedRow` doubles as the sheet's `open` signal —
   // null = closed, a row = open. Mirrors CMP-013's RequestDetailSheet.
@@ -519,9 +556,12 @@ function ConversationsTableSection({
   if (openId !== prevOpenId) {
     setPrevOpenId(openId);
     if (openId) {
-      const match = viewRows.find((r) => r.conversationId === openId);
-      if (match) {
-        setSelectedRow(match);
+      // Searched against the viewer's whole scoped set, not the ranged one: a
+      // deep link names one conversation by id and must open it whatever the
+      // range pills happen to be showing.
+      const seed = scopedSeeds(scope).find((r) => r.conversationId === openId);
+      if (seed) {
+        setSelectedRow(getConversationView(seed, REQUEST_ROWS_ALL));
       }
     }
   }
@@ -682,7 +722,7 @@ function ConversationsTableSection({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleRows.map((row) => (
+                  {pagedRows.map((row) => (
                     <TableRow
                       className="cursor-pointer transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
                       key={row.conversationId}
@@ -743,6 +783,7 @@ function ConversationsTableSection({
               </Table>
 
               <TablePaginationFooter
+                minRowsPerPage={25}
                 onPageChange={setPage}
                 onRowsPerPageChange={setRowsPerPage}
                 page={page}

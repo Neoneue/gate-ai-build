@@ -1,7 +1,7 @@
 import { ChevronDown, Info } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { IconActionButton } from "@/components/ui/icon-action-button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -136,29 +136,25 @@ function PolicyCard({
     ? undefined
     : "pointer-events-none select-none opacity-50";
   const actionPanel = (
-    <Card className={cn("rounded-sm", optionsDim)} variant="inset">
-      <CardContent>
-        <ActionHalf
-          config={config}
-          locked={locked}
-          onChange={onActionChange}
-          value={state.action}
-        />
-      </CardContent>
-    </Card>
+    <div className={optionsDim}>
+      <ActionHalf
+        config={config}
+        locked={locked}
+        onChange={onActionChange}
+        value={state.action}
+      />
+    </div>
   );
   const settingsPanel = (
-    <Card className={cn("rounded-sm", optionsDim)} variant="inset">
-      <CardContent>
-        <SettingsHalf
-          config={config}
-          locked={locked}
-          onScanDirectionChange={onScanDirectionChange}
-          onSensitivityChange={onSensitivityChange}
-          state={state}
-        />
-      </CardContent>
-    </Card>
+    <div className={optionsDim}>
+      <SettingsHalf
+        config={config}
+        locked={locked}
+        onScanDirectionChange={onScanDirectionChange}
+        onSensitivityChange={onSensitivityChange}
+        state={state}
+      />
+    </div>
   );
 
   return (
@@ -167,7 +163,13 @@ function PolicyCard({
     // gutter below the tray. Must match the `data-[density=default]:`
     // variant or tailwind-merge won't override the Card's `py-4`.
     // Collapsed cards keep the default py-4.
-    <Card className={bodyOpen ? "data-[density=default]:pb-0" : undefined}>
+    <Card
+      className={
+        bodyOpen
+          ? "data-[density=default]:gap-6 data-[density=default]:pb-0"
+          : undefined
+      }
+    >
       {/* Header — top row (icon + title + badge + chevron), then the
           description on its own full-width row below. */}
       <div className="flex flex-col gap-3 px-4">
@@ -210,9 +212,11 @@ function PolicyCard({
       </div>
 
       {/* Expanded settings body. The panels (enable toggle, Action,
-          Sensitivity) are flat siblings. */}
+          Sensitivity) are flat siblings — no inset Card around any of them
+          (user direction 2026-09-23), matching the org Policies page. A
+          hairline between siblings carries the grouping instead. */}
       {bodyOpen ? (
-        <div className="flex flex-col gap-3 border-border border-t bg-card p-4">
+        <div className="flex flex-col gap-4 border-border border-t bg-card px-4 pt-6 pb-4 [&>*+*]:border-border [&>*+*]:border-t [&>*+*]:pt-4">
           <PolicyEnableCard
             description={
               config.id === "prompt-injection"
@@ -255,32 +259,28 @@ function PolicyEnableCard({
   onToggle: () => void;
 }) {
   return (
-    <Card className="rounded-sm" variant="inset">
-      <CardContent>
-        <div className="flex items-center gap-3">
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <SectionHeading as="h4" className="type-heading-16">
-                {title}
-              </SectionHeading>
-            </div>
-            {description ? (
-              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-                {description}
-              </p>
-            ) : null}
-          </div>
-          <Switch
-            aria-label={`${title} — ${enabled ? "enabled" : "disabled"}`}
-            checked={enabled}
-            className="shrink-0"
-            disabled={locked}
-            onCheckedChange={onToggle}
-            size="lg"
-          />
+    <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <SectionHeading as="h4" className="type-heading-14">
+            {title}
+          </SectionHeading>
         </div>
-      </CardContent>
-    </Card>
+        {description ? (
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
+      </div>
+      <Switch
+        aria-label={`${title} — ${enabled ? "enabled" : "disabled"}`}
+        checked={enabled}
+        className="shrink-0"
+        disabled={locked}
+        onCheckedChange={onToggle}
+        size="lg"
+      />
+    </div>
   );
 }
 
@@ -313,7 +313,7 @@ function SettingsHalf({
     return (
       <div className="flex flex-col">
         <div className="flex flex-col gap-1">
-          <SectionHeading as="h4" className="type-heading-16">
+          <SectionHeading as="h4" className="type-heading-14">
             Sensitivity
           </SectionHeading>
           <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
@@ -403,7 +403,7 @@ function SettingsHalf({
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4" className="type-heading-16">
+        <SectionHeading as="h4" className="type-heading-14">
           Scan direction
         </SectionHeading>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
@@ -476,7 +476,7 @@ function ActionHalf({
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-1">
-        <SectionHeading as="h4" className="type-heading-16" id={headingId}>
+        <SectionHeading as="h4" className="type-heading-14" id={headingId}>
           Action on detection
         </SectionHeading>
         <p className="type-copy-14 m-0 text-pretty text-muted-foreground">

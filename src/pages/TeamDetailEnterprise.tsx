@@ -51,6 +51,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { Timestamp } from "@/components/ui/timestamp";
@@ -1217,6 +1219,25 @@ function UsageBreakdown({
       ),
     [visible, sort, range, customRange]
   );
+  // One pair per instance: the by-user, by-past-user and by-model tables page
+  // independently. 10 is the Teams-surface default (Team.tsx, TeamDefault.tsx).
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
+  // Searching shrinks the list, so a held page can land past the end. Reset at
+  // render time, not in an effect — the EventsTable pattern. Sorting reorders
+  // the same row count, so it needs no reset.
+  const [prevResetKey, setPrevResetKey] = useState("");
+  if (prevResetKey !== q) {
+    setPrevResetKey(q);
+    setPage(1);
+  }
+  // `resolveRowsPerPage` owns the page math for every consumer, so this slice
+  // and the footer's “Showing” line cannot drift.
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
+  const pagedRows = useMemo(
+    () => sortedRows.slice((page - 1) * perPage, page * perPage),
+    [sortedRows, page, perPage]
+  );
   const isEmpty = rows.length === 0;
   const noMatches = !isEmpty && visible.length === 0;
 
@@ -1241,122 +1262,131 @@ function UsageBreakdown({
             title="No matches"
           />
         ) : (
-          <Table className="min-w-[560px] table-fixed">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <SortableTableHead
-                  className={cn(
-                    "whitespace-nowrap",
-                    tokens ? "w-[20%]" : "w-[52%]"
-                  )}
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="label"
-                >
-                  {firstColumn}
-                </SortableTableHead>
-                <SortableTableHead
-                  className={cn(
-                    "whitespace-nowrap",
-                    tokens ? "w-[16%]" : "w-[24%]"
-                  )}
-                  numeric
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="requests"
-                >
-                  Messages
-                </SortableTableHead>
-                {tokens ? (
-                  <>
-                    <SortableTableHead
-                      className="w-[16%] whitespace-nowrap"
-                      numeric
-                      onSort={toggleSort}
-                      sort={sort}
-                      sortKey="tokensIn"
-                    >
-                      Tokens in
-                    </SortableTableHead>
-                    <SortableTableHead
-                      className="w-[16%] whitespace-nowrap"
-                      numeric
-                      onSort={toggleSort}
-                      sort={sort}
-                      sortKey="tokensOut"
-                    >
-                      Tokens out
-                    </SortableTableHead>
-                    {/* Mirrors Activity's Saved column — the member's own
+          <>
+            <Table className="min-w-[560px] table-fixed">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <SortableTableHead
+                    className={cn(
+                      "whitespace-nowrap",
+                      tokens ? "w-[20%]" : "w-[52%]"
+                    )}
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="label"
+                  >
+                    {firstColumn}
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className={cn(
+                      "whitespace-nowrap",
+                      tokens ? "w-[16%]" : "w-[24%]"
+                    )}
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="requests"
+                  >
+                    Messages
+                  </SortableTableHead>
+                  {tokens ? (
+                    <>
+                      <SortableTableHead
+                        className="w-[16%] whitespace-nowrap"
+                        numeric
+                        onSort={toggleSort}
+                        sort={sort}
+                        sortKey="tokensIn"
+                      >
+                        Tokens in
+                      </SortableTableHead>
+                      <SortableTableHead
+                        className="w-[16%] whitespace-nowrap"
+                        numeric
+                        onSort={toggleSort}
+                        sort={sort}
+                        sortKey="tokensOut"
+                      >
+                        Tokens out
+                      </SortableTableHead>
+                      {/* Mirrors Activity's Saved column — the member's own
                         savings RATE for the selected window, one decimal. */}
-                    <SortableTableHead
-                      className="w-[16%] whitespace-nowrap"
-                      numeric
-                      onSort={toggleSort}
-                      sort={sort}
-                      sortKey="saved"
-                    >
-                      Saved
-                    </SortableTableHead>
-                  </>
-                ) : null}
-                <SortableTableHead
-                  className={cn(
-                    "whitespace-nowrap",
-                    tokens ? "w-[16%]" : "w-[24%]"
-                  )}
-                  numeric
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="spend"
-                >
-                  Spend
-                </SortableTableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading
-                ? skeletonRowIds(rows.length).map((id) => (
-                    <UsageSkeletonRow key={id} tokens={tokens} />
-                  ))
-                : sortedRows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                        <div className="flex min-w-0 items-center gap-2">
-                          {avatarFor(row)}
-                          <span
-                            className="min-w-0 flex-1 truncate"
-                            title={row.label}
-                          >
-                            {row.label}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                        {formatNumber(row.requests)}
-                      </TableCell>
-                      {tokens ? (
-                        <>
-                          <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                            {formatNumber(row.tokensIn ?? 0)}
-                          </TableCell>
-                          <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                            {formatNumber(row.tokensOut ?? 0)}
-                          </TableCell>
-                          <SavedCell
-                            customRange={customRange}
-                            range={range}
-                            saved={row.saved}
-                          />
-                        </>
-                      ) : null}
-                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                        {formatCurrency(row.spend)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-            </TableBody>
-          </Table>
+                      <SortableTableHead
+                        className="w-[16%] whitespace-nowrap"
+                        numeric
+                        onSort={toggleSort}
+                        sort={sort}
+                        sortKey="saved"
+                      >
+                        Saved
+                      </SortableTableHead>
+                    </>
+                  ) : null}
+                  <SortableTableHead
+                    className={cn(
+                      "whitespace-nowrap",
+                      tokens ? "w-[16%]" : "w-[24%]"
+                    )}
+                    numeric
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="spend"
+                  >
+                    Spend
+                  </SortableTableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading
+                  ? skeletonRowIds(pagedRows.length).map((id) => (
+                      <UsageSkeletonRow key={id} tokens={tokens} />
+                    ))
+                  : pagedRows.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                          <div className="flex min-w-0 items-center gap-2">
+                            {avatarFor(row)}
+                            <span
+                              className="min-w-0 flex-1 truncate"
+                              title={row.label}
+                            >
+                              {row.label}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                          {formatNumber(row.requests)}
+                        </TableCell>
+                        {tokens ? (
+                          <>
+                            <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                              {formatNumber(row.tokensIn ?? 0)}
+                            </TableCell>
+                            <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                              {formatNumber(row.tokensOut ?? 0)}
+                            </TableCell>
+                            <SavedCell
+                              customRange={customRange}
+                              range={range}
+                              saved={row.saved}
+                            />
+                          </>
+                        ) : null}
+                        <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                          {formatCurrency(row.spend)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+              </TableBody>
+            </Table>
+            <TablePaginationFooter
+              onPageChange={setPage}
+              onRowsPerPageChange={setRowsPerPage}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              total={sortedRows.length}
+            />
+          </>
         )}
       </Card>
     </div>
@@ -1464,6 +1494,26 @@ function MembersPane({
     [rows, query, roleFilter, team.managerIds]
   );
 
+  // 10 is the Teams-surface default (Team.tsx, TeamDefault.tsx).
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
+  // Both the search and the role filter shrink the list, so a held page can
+  // land past the end. Reset at render time, not in an effect — the
+  // EventsTable pattern.
+  const [prevResetKey, setPrevResetKey] = useState("");
+  const resetKey = `${query}|${roleFilter}`;
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
+    setPage(1);
+  }
+  // `resolveRowsPerPage` owns the page math for every consumer, so this slice
+  // and the footer's “Showing” line cannot drift.
+  const perPage = resolveRowsPerPage(rowsPerPage, visible.length);
+  const pagedRows = useMemo(
+    () => visible.slice((page - 1) * perPage, page * perPage),
+    [visible, page, perPage]
+  );
+
   const isEmpty = rows.length === 0;
   const noMatches = !isEmpty && visible.length === 0;
 
@@ -1566,115 +1616,130 @@ function MembersPane({
           />
         )}
         {(visible.length > 0 || loading) && (
-          // Wider than the other two tables, and re-proportioned when the role
-          // cell became a control: the cell has to clear the 112px trigger
-          // plus its 24px of padding, which 26% of 620px does and 22% of
-          // 560px did not.
-          <Table className="min-w-[620px] table-fixed">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[42%] whitespace-nowrap">
-                  Member
-                </TableHead>
-                <TableHead className="w-[26%] whitespace-nowrap">
-                  Role
-                </TableHead>
-                <TableHead className="w-[16%] whitespace-nowrap">
-                  Joined
-                </TableHead>
-                <TableHead aria-label="Actions" className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading
-                ? skeletonRowIds(visible.length).map((id) => (
-                    <MemberSkeletonRow key={id} showActions={!team.isDefault} />
-                  ))
-                : visible.map((member) => (
-                    <TableRow key={member.id}>
-                      {/* py-0 on the two control-bearing cells (Monogram row,
+          <>
+            {/* Wider than the other two tables, and re-proportioned when the
+                role cell became a control: the cell has to clear the 112px
+                trigger plus its 24px of padding, which 26% of 620px does and
+                22% of 560px did not. */}
+            <Table className="min-w-[620px] table-fixed">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[42%] whitespace-nowrap">
+                    Member
+                  </TableHead>
+                  <TableHead className="w-[26%] whitespace-nowrap">
+                    Role
+                  </TableHead>
+                  <TableHead className="w-[16%] whitespace-nowrap">
+                    Joined
+                  </TableHead>
+                  <TableHead aria-label="Actions" className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading
+                  ? skeletonRowIds(pagedRows.length).map((id) => (
+                      <MemberSkeletonRow
+                        key={id}
+                        showActions={!team.isDefault}
+                      />
+                    ))
+                  : pagedRows.map((member) => (
+                      <TableRow key={member.id}>
+                        {/* py-0 on the two control-bearing cells (Monogram row,
                       role Select): the 28-32px controls would otherwise add
                       their height on top of py-3 and run this table's rows
                       8px taller than the Keys tab's. The actions cell's icon
                       button now governs both tables at the same height. */}
-                      <TableCell className="whitespace-nowrap py-0">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <Monogram
-                            initials={firstInitial(member.name)}
-                            size="sm"
-                            tone={member.avatarTone}
-                          />
-                          <span
-                            className="type-copy-14 truncate text-foreground"
-                            title={member.name}
-                          >
-                            {member.name}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="type-copy-14 whitespace-nowrap py-0 text-foreground">
-                        {/* Owner renders static; everyone else gets the role
+                        <TableCell className="whitespace-nowrap py-0">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Monogram
+                              initials={firstInitial(member.name)}
+                              size="sm"
+                              tone={member.avatarTone}
+                            />
+                            <span
+                              className="type-copy-14 truncate text-foreground"
+                              title={member.name}
+                            >
+                              {member.name}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="type-copy-14 whitespace-nowrap py-0 text-foreground">
+                          {/* Owner renders static; everyone else gets the role
                         select. Manager returned to the options 2026-09-01
                         (reversing the 8-31 org-roles-only ruling): the value
                         both reads and writes the team's managerIds, the same
                         source the list's Manager column and this tab's role
                         filter read, so the three can never disagree. */}
-                        {member.role === "owner" ? (
-                          "Owner"
-                        ) : archived || !canAssignRoles ? (
-                          team.managerIds.includes(member.id) ? (
-                            "Manager"
+                          {member.role === "owner" ? (
+                            "Owner"
+                          ) : archived || !canAssignRoles ? (
+                            team.managerIds.includes(member.id) ? (
+                              "Manager"
+                            ) : (
+                              "Member"
+                            )
                           ) : (
-                            "Member"
-                          )
-                        ) : (
-                          <MemberRoleSelect
-                            isManager={team.managerIds.includes(member.id)}
-                            member={member}
-                            onChange={(role) => {
-                              const without = team.managerIds.filter(
-                                (id) => id !== member.id
-                              );
-                              onPatch({
-                                managerIds:
-                                  role === "manager"
-                                    ? [...without, member.id]
-                                    : without,
-                              });
-                            }}
-                          />
-                        )}
-                      </TableCell>
-                      {/* When they joined THIS team (not the org): the Members
-                      page's Joined cell recipe, same Timestamp format. */}
-                      <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                        <Timestamp
-                          date={memberJoinedAt(team, member.id)}
-                          format="dateNumeric"
-                        />
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
-                        {/* The Default team is where removed members LAND, so there
-                        is nowhere to remove them to from here. */}
-                        {team.isDefault || frozen ? null : (
-                          <IconActionButton
-                            aria-label={`Remove ${member.name} from ${team.name}`}
-                            onClick={() =>
-                              setRemoving({ id: member.id, name: member.name })
-                            }
-                          >
-                            <UserMinus
-                              aria-hidden
-                              className="size-5"
-                              strokeWidth={1.75}
+                            <MemberRoleSelect
+                              isManager={team.managerIds.includes(member.id)}
+                              member={member}
+                              onChange={(role) => {
+                                const without = team.managerIds.filter(
+                                  (id) => id !== member.id
+                                );
+                                onPatch({
+                                  managerIds:
+                                    role === "manager"
+                                      ? [...without, member.id]
+                                      : without,
+                                });
+                              }}
                             />
-                          </IconActionButton>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-            </TableBody>
-          </Table>
+                          )}
+                        </TableCell>
+                        {/* When they joined THIS team (not the org): the Members
+                      page's Joined cell recipe, same Timestamp format. */}
+                        <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                          <Timestamp
+                            date={memberJoinedAt(team, member.id)}
+                            format="dateNumeric"
+                          />
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap pr-4 pl-0 text-right">
+                          {/* The Default team is where removed members LAND, so there
+                        is nowhere to remove them to from here. */}
+                          {team.isDefault || frozen ? null : (
+                            <IconActionButton
+                              aria-label={`Remove ${member.name} from ${team.name}`}
+                              onClick={() =>
+                                setRemoving({
+                                  id: member.id,
+                                  name: member.name,
+                                })
+                              }
+                            >
+                              <UserMinus
+                                aria-hidden
+                                className="size-5"
+                                strokeWidth={1.75}
+                              />
+                            </IconActionButton>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+              </TableBody>
+            </Table>
+            <TablePaginationFooter
+              onPageChange={setPage}
+              onRowsPerPageChange={setRowsPerPage}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              total={visible.length}
+            />
+          </>
         )}
       </Card>
 
@@ -1807,6 +1872,21 @@ function KeysPane({ team, loading }: { team: TeamRow; loading: boolean }) {
     );
   });
 
+  // 10 is the Teams-surface default (Team.tsx, TeamDefault.tsx).
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
+  // Searching shrinks the list, so a held page can land past the end. Reset at
+  // render time, not in an effect — the EventsTable pattern.
+  const [prevResetKey, setPrevResetKey] = useState("");
+  if (prevResetKey !== query) {
+    setPrevResetKey(query);
+    setPage(1);
+  }
+  // `resolveRowsPerPage` owns the page math for every consumer, so this slice
+  // and the footer's “Showing” line cannot drift.
+  const perPage = resolveRowsPerPage(rowsPerPage, visible.length);
+  const pagedRows = visible.slice((page - 1) * perPage, page * perPage);
+
   const isEmpty = rows.length === 0;
   const noMatches = !isEmpty && visible.length === 0;
 
@@ -1855,99 +1935,111 @@ function KeysPane({ team, loading }: { team: TeamRow; loading: boolean }) {
           />
         )}
         {(visible.length > 0 || loading) && (
-          // Five columns now carry content (name, member, prefix, status,
-          // last used), so the min-width steps up from 640 to 760 — the
-          // Member cell carries a Monogram plus a full name and cannot take
-          // its share out of the prefix or the date without clipping them.
-          <Table className="min-w-[760px] table-fixed">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[22%] whitespace-nowrap">Key</TableHead>
-                <TableHead className="w-[22%] whitespace-nowrap">
-                  Prefix
-                </TableHead>
-                <TableHead className="w-[22%] whitespace-nowrap">
-                  Member
-                </TableHead>
-                <TableHead className="w-[14%] whitespace-nowrap">
-                  Status
-                </TableHead>
-                <TableHead className="w-[20%] whitespace-nowrap">
-                  Last used
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading
-                ? skeletonRowIds(visible.length).map((id) => (
-                    <KeySkeletonRow key={id} />
-                  ))
-                : visible.map((row) => {
-                    // Who the key belongs to. `ownerId` is a MEMBER_ROWS id, the
-                    // same source the Members tab reads, so the two tabs can
-                    // never name the same person differently.
-                    const owner = memberById(row.ownerId);
-                    return (
-                      <TableRow key={row.id}>
-                        <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                          <span className="block truncate" title={row.name}>
-                            {row.name}
-                          </span>
-                        </TableCell>
-                        {/* py-0 for the same reason the Members tab uses it: the
+          <>
+            {/* Five columns now carry content (name, member, prefix, status,
+                last used), so the min-width steps up from 640 to 760 — the
+                Member cell carries a Monogram plus a full name and cannot
+                take its share out of the prefix or the date without clipping
+                them. */}
+            <Table className="min-w-[760px] table-fixed">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[22%] whitespace-nowrap">
+                    Key
+                  </TableHead>
+                  <TableHead className="w-[22%] whitespace-nowrap">
+                    Prefix
+                  </TableHead>
+                  <TableHead className="w-[22%] whitespace-nowrap">
+                    Member
+                  </TableHead>
+                  <TableHead className="w-[14%] whitespace-nowrap">
+                    Status
+                  </TableHead>
+                  <TableHead className="w-[20%] whitespace-nowrap">
+                    Last used
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading
+                  ? skeletonRowIds(pagedRows.length).map((id) => (
+                      <KeySkeletonRow key={id} />
+                    ))
+                  : pagedRows.map((row) => {
+                      // Who the key belongs to. `ownerId` is a MEMBER_ROWS id, the
+                      // same source the Members tab reads, so the two tabs can
+                      // never name the same person differently.
+                      const owner = memberById(row.ownerId);
+                      return (
+                        <TableRow key={row.id}>
+                          <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                            <span className="block truncate" title={row.name}>
+                              {row.name}
+                            </span>
+                          </TableCell>
+                          {/* py-0 for the same reason the Members tab uses it: the
                       Monogram's 32px height would otherwise stack on py-3 and
                       run these rows taller than every other table here. */}
-                        <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
-                          {row.masked}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap py-0">
-                          {owner ? (
-                            <div className="flex min-w-0 items-center gap-2">
-                              <Monogram
-                                initials={firstInitial(owner.name)}
-                                size="sm"
-                                tone={owner.avatarTone}
-                              />
-                              <span
-                                className="type-copy-14 truncate text-foreground"
-                                title={owner.name}
-                              >
-                                {owner.name}
+                          <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
+                            {row.masked}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap py-0">
+                            {owner ? (
+                              <div className="flex min-w-0 items-center gap-2">
+                                <Monogram
+                                  initials={firstInitial(owner.name)}
+                                  size="sm"
+                                  tone={owner.avatarTone}
+                                />
+                                <span
+                                  className="type-copy-14 truncate text-foreground"
+                                  title={owner.name}
+                                >
+                                  {owner.name}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="type-copy-14 text-muted-foreground">
+                                —
                               </span>
-                            </div>
-                          ) : (
-                            <span className="type-copy-14 text-muted-foreground">
-                              —
-                            </span>
-                          )}
-                        </TableCell>
-                        {/* Same Badge + variant pair the org API Keys table
+                            )}
+                          </TableCell>
+                          {/* Same Badge + variant pair the org API Keys table
                       uses for key status, so the two surfaces read
                       identically. The 20px badge sits inside the default
                       py-3 rhythm, so no py-0 is needed here. */}
-                        <TableCell className="whitespace-nowrap">
-                          {row.revoked ? (
-                            <Badge variant="neutral">Revoked</Badge>
-                          ) : (
-                            <Badge variant="success">Active</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
-                          <Timestamp
-                            className={
-                              row.lastUsed === null
-                                ? "text-muted-foreground"
-                                : undefined
-                            }
-                            date={row.lastUsed}
-                            format="dateNumeric"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-            </TableBody>
-          </Table>
+                          <TableCell className="whitespace-nowrap">
+                            {row.revoked ? (
+                              <Badge variant="neutral">Revoked</Badge>
+                            ) : (
+                              <Badge variant="success">Active</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="type-mono-14 whitespace-nowrap text-foreground">
+                            <Timestamp
+                              className={
+                                row.lastUsed === null
+                                  ? "text-muted-foreground"
+                                  : undefined
+                              }
+                              date={row.lastUsed}
+                              format="dateNumeric"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+              </TableBody>
+            </Table>
+            <TablePaginationFooter
+              onPageChange={setPage}
+              onRowsPerPageChange={setRowsPerPage}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              total={visible.length}
+            />
+          </>
         )}
       </Card>
     </div>

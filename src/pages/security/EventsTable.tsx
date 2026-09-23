@@ -632,6 +632,7 @@ export function EventsTableSection({
               </Table>
 
               <TablePaginationFooter
+                minRowsPerPage={25}
                 onPageChange={setPage}
                 onRowsPerPageChange={setRowsPerPage}
                 page={page}

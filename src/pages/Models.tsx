@@ -389,6 +389,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                 <ModelsTable onSelect={onSelect} rows={pageRows} />
 
                 <TablePaginationFooter
+                  minRowsPerPage={25}
                   onPageChange={setPage}
                   onRowsPerPageChange={setRowsPerPage}
                   page={page}

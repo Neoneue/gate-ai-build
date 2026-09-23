@@ -24,6 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabsCount } from "@/components/ui/tabs-count";
 import { Timestamp } from "@/components/ui/timestamp";
@@ -423,6 +425,17 @@ function TeamsTable({
       sortRows(teams, sort, (row, key) => teamSortValue(row, spendByTeam, key)),
     [teams, sort, spendByTeam]
   );
+  // No search or filter on this table, so there is no trigger to reset the
+  // page on. 10 is the Teams-surface default (Team.tsx, TeamDefault.tsx).
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
+  // `resolveRowsPerPage` owns the page math for every consumer, so this slice
+  // and the footer's “Showing” line cannot drift.
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
+  const pagedRows = useMemo(
+    () => sortedRows.slice((page - 1) * perPage, page * perPage),
+    [sortedRows, page, perPage]
+  );
 
   // The empty state is a CONCLUSION — "there are no teams" — and the page
   // has not reached it yet. While loading, the table renders its skeleton
@@ -493,10 +506,10 @@ function TeamsTable({
         </TableHeader>
         <TableBody>
           {loading
-            ? skeletonRowIds(teams.length).map((id) => (
+            ? skeletonRowIds(pagedRows.length).map((id) => (
                 <TeamSkeletonRow key={id} />
               ))
-            : sortedRows.map((row) => {
+            : pagedRows.map((row) => {
                 const spend = spendByTeam.get(row.id) ?? 0;
                 return (
                   <TeamTableRow
@@ -511,6 +524,13 @@ function TeamsTable({
               })}
         </TableBody>
       </Table>
+      <TablePaginationFooter
+        onPageChange={setPage}
+        onRowsPerPageChange={setRowsPerPage}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={sortedRows.length}
+      />
     </Card>
   );
 }

@@ -37,6 +37,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { resolveRowsPerPage } from "@/components/ui/table-pagination";
+import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { memberById, type TeamRow } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import {
@@ -738,6 +740,26 @@ function MemberFindingsTable({
     () => sortRows(visible, sort, memberSortValue),
     [visible, sort]
   );
+  // One pair per instance, so the current and past tables page independently.
+  // 10 is the Teams-surface default (Team.tsx, TeamDefault.tsx); a roster is a
+  // short list and 25 would page nothing.
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState("10");
+  // Searching shrinks the list, so a held page can land past the end. Reset at
+  // render time, not in an effect — the EventsTable pattern. Sorting reorders
+  // the same row count, so it needs no reset.
+  const [prevResetKey, setPrevResetKey] = useState("");
+  if (prevResetKey !== q) {
+    setPrevResetKey(q);
+    setPage(1);
+  }
+  // `resolveRowsPerPage` owns the page math for every consumer, so this slice
+  // and the footer's “Showing” line cannot drift.
+  const perPage = resolveRowsPerPage(rowsPerPage, sortedRows.length);
+  const pagedRows = useMemo(
+    () => sortedRows.slice((page - 1) * perPage, page * perPage),
+    [sortedRows, page, perPage]
+  );
   const isEmpty = rows.length === 0;
   const noMatches = !isEmpty && visible.length === 0;
 
@@ -762,10 +784,11 @@ function MemberFindingsTable({
             title="No matches"
           />
         ) : (
-          <Table className="min-w-[1000px] table-fixed">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                {/* Six columns, so the floor is design.md's canonical
+          <>
+            <Table className="min-w-[1000px] table-fixed">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  {/* Six columns, so the floor is design.md's canonical
                     `min-w-[1000px]` for a 6-8 column table (ApiKeys,
                     AuditTrail, Activity, Limits). Measured with canvas
                     `measureText` against each cell's computed font, plus the
@@ -785,119 +808,128 @@ function MemberFindingsTable({
                     they are a comparison set. The floor stays 1000, which is
                     under the 1022px desktop content width, so desktop still
                     never side-scrolls. */}
-                <SortableTableHead
-                  className="w-[17%] whitespace-nowrap"
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="label"
-                >
-                  Member
-                </SortableTableHead>
-                {/* Second, beside the name it belongs to. Read off the same
+                  <SortableTableHead
+                    className="w-[17%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="label"
+                  >
+                    Member
+                  </SortableTableHead>
+                  {/* Second, beside the name it belongs to. Read off the same
                     roster row as the Monogram tone, never composed. */}
-                <SortableTableHead
-                  className="w-[28%] whitespace-nowrap"
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="email"
-                >
-                  Email
-                </SortableTableHead>
-                {/* One column per threat type, ATTACK_MIX order: each column
+                  <SortableTableHead
+                    className="w-[28%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="email"
+                  >
+                    Email
+                  </SortableTableHead>
+                  {/* One column per threat type, ATTACK_MIX order: each column
                     sums to the Attack types card above; Findings is the
                     row total, the balance being uncategorized. */}
-                {ATTACK_MIX.map((c) => (
+                  {ATTACK_MIX.map((c) => (
+                    <SortableTableHead
+                      className="w-[15%] whitespace-nowrap"
+                      key={c.key}
+                      numeric
+                      onSort={toggleSort}
+                      sort={sort}
+                      sortKey={c.key}
+                    >
+                      {c.label}
+                    </SortableTableHead>
+                  ))}
                   <SortableTableHead
-                    className="w-[15%] whitespace-nowrap"
-                    key={c.key}
+                    className="w-[10%] whitespace-nowrap"
                     numeric
                     onSort={toggleSort}
                     sort={sort}
-                    sortKey={c.key}
+                    sortKey="count"
                   >
-                    {c.label}
+                    Events
                   </SortableTableHead>
-                ))}
-                <SortableTableHead
-                  className="w-[10%] whitespace-nowrap"
-                  numeric
-                  onSort={toggleSort}
-                  sort={sort}
-                  sortKey="count"
-                >
-                  Events
-                </SortableTableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading
-                ? skeletonRowIds(rows.length).map((id) => (
-                    <MemberFindingsSkeletonRow key={id} />
-                  ))
-                : sortedRows.map((row) => {
-                    // One roster read per row, shared by the Monogram tone and
-                    // the Email cell: both are the member's own record, not a
-                    // value derived from the events table.
-                    const member = memberById(row.id);
-                    return (
-                      <TableRow key={row.id}>
-                        <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                          <div className="flex min-w-0 items-center gap-2">
-                            {/* Single first initial + the member's own tone — the
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading
+                  ? skeletonRowIds(pagedRows.length).map((id) => (
+                      <MemberFindingsSkeletonRow key={id} />
+                    ))
+                  : pagedRows.map((row) => {
+                      // One roster read per row, shared by the Monogram tone and
+                      // the Email cell: both are the member's own record, not a
+                      // value derived from the events table.
+                      const member = memberById(row.id);
+                      return (
+                        <TableRow key={row.id}>
+                          <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                            <div className="flex min-w-0 items-center gap-2">
+                              {/* Single first initial + the member's own tone — the
                           Activity Top-users treatment the Usage tab also
                           uses, so the same person looks the same on both
                           tabs. */}
-                            <Monogram
-                              initials={(
-                                row.label.trim().split(WHITESPACE_RE)[0]?.[0] ??
-                                "?"
-                              ).toUpperCase()}
-                              size="sm"
-                              tone={member?.avatarTone ?? "ink"}
-                            />
-                            <span
-                              className="min-w-0 flex-1 truncate"
-                              title={row.label}
-                            >
-                              {row.label}
-                            </span>
-                          </div>
-                        </TableCell>
-                        {/* Copy voice + truncate + `title`, the treatment the
+                              <Monogram
+                                initials={(
+                                  row.label
+                                    .trim()
+                                    .split(WHITESPACE_RE)[0]?.[0] ?? "?"
+                                ).toUpperCase()}
+                                size="sm"
+                                tone={member?.avatarTone ?? "ink"}
+                              />
+                              <span
+                                className="min-w-0 flex-1 truncate"
+                                title={row.label}
+                              >
+                                {row.label}
+                              </span>
+                            </div>
+                          </TableCell>
+                          {/* Copy voice + truncate + `title`, the treatment the
                             Team page's pending-invitations Email column already
                             uses: an address is contact text, not the machine
                             identifier the mono data voice is for (design.md
                             data-voice carve-out). An id with no roster row
                             reads as the site's absent-value dash rather than a
                             composed address. */}
-                        <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                          {member ? (
-                            <span
-                              className="block truncate"
-                              title={member.email}
-                            >
-                              {member.email}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        {ATTACK_MIX.map((c) => (
-                          <TableCell
-                            className="type-mono-14 whitespace-nowrap text-right text-foreground"
-                            key={c.key}
-                          >
-                            {formatNumber(row.byCategory[c.key])}
+                          <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                            {member ? (
+                              <span
+                                className="block truncate"
+                                title={member.email}
+                              >
+                                {member.email}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
-                        ))}
-                        <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                          {formatNumber(row.count)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-            </TableBody>
-          </Table>
+                          {ATTACK_MIX.map((c) => (
+                            <TableCell
+                              className="type-mono-14 whitespace-nowrap text-right text-foreground"
+                              key={c.key}
+                            >
+                              {formatNumber(row.byCategory[c.key])}
+                            </TableCell>
+                          ))}
+                          <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                            {formatNumber(row.count)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+              </TableBody>
+            </Table>
+            <TablePaginationFooter
+              onPageChange={setPage}
+              onRowsPerPageChange={setRowsPerPage}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              total={sortedRows.length}
+            />
+          </>
         )}
       </Card>
     </div>
