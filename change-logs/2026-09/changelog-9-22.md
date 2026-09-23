@@ -534,6 +534,31 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   folded into that one, because the data change stands on its own and the
   column would need the same widths whoever the members were.
 
+### The team security chart gets the org chart's four-row tooltip (`pages/teams/SecurityOverviewPane.tsx`) · [45315c8]
+
+- Before: hovering the team hero chart gave one unlabelled row, the bucket
+  total and nothing else, while the org Security page's hero chart breaks the
+  same measure into Total, Blocked, Flagged and Redacted with a colour dot
+  each. Same data and same question, answered differently depending on which
+  page you had open.
+- After: the org chart's recipe, mirrored rather than reinvented.
+  `splitEventMix` runs per bucket, which is the same largest-remainder
+  allocator the Action-types bars already use, so the four rows sum to their
+  bucket and the bars still sum to the headline and the file's reconciliation
+  contract holds. `hideIndicator` drops and `className="min-w-36"` lands on
+  `ChartTooltipContent`, so the dots render and the rows have room.
+- The three extra `Area` series are tooltip-only: `strokeWidth={0}` and
+  `fill="none"`, so nothing paints and no active dot appears, but each row can
+  read its dot colour from the series stroke. `strokeWidth={0}` rather than
+  `stroke="none"` on purpose, or the dot has no colour left to read.
+- No `position=` or `wrapperStyle`, so the portal recipe is intact and
+  `lint:design` check 7 passes.
+- NOT verified in a browser. The change is a literal mirror of a chart known
+  to work and every static gate passes, but the Playwright probe used to check
+  it could not trigger a tooltip on the ORG chart either, which a screenshot
+  proves does work, so the probe is unreliable rather than the code. Carried
+  as an open item in `handoff.md`; first person on this page should hover it.
+
 ### Email joins the team "Events by …" member tables (`pages/teams/SecurityOverviewPane.tsx`) · [ecdf892]
 
 - Before: `MemberFindingsTable` listed Member, one column per threat type in

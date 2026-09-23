@@ -29,6 +29,7 @@ tokens; this index exists so nothing has to glob the directory.
 - The default team's Settings tab hides where it held one sentence; the notice moves to Overview
 - Settings tab presence test, 12 cases
 - Every seeded person moves to the company domain, eight addresses
+- The team security chart gets the org chart's four-row tooltip (unverified in browser)
 - Email joins the team "Events by …" member tables, second after Member
 - Member table Email column test, 8 cases
 
