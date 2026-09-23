@@ -22,6 +22,15 @@ tokens; this index exists so nothing has to glob the directory.
 - The 12px line box goes to 12/18 across copy, label and mono
 - Manage subscription ladder test, 15 cases
 - Contact dialog behaviour, and the ladder suite grows
+- Nothing is clipped by an ancestor's bounding box: the standing contract, lint:design checks 8 and 9, and the new lint:clipping browser pass
+- The contact modal's fields lost 4px of focus ring to the scroll body
+- The rest of the sweep: five more clips across tabs, rows, plan cards and four scrollports
+- Clipping invariants test, 7 cases
+- The default team's Settings tab hides where it held one sentence; the notice moves to Overview
+- Settings tab presence test, 12 cases
+- Every seeded person moves to the company domain, eight addresses
+- Email joins the team "Events by …" member tables, second after Member
+- Member table Email column test, 8 cases
 
 ### [2026-09-21](./2026-09/changelog-9-21.md)
 
