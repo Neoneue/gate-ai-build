@@ -58,6 +58,7 @@
     "build:previews": "node scripts/build-request-previews.mjs",
     "lint": "eslint . && ultracite check && npm run lint:design",
     "lint:design": "node scripts/check-design-tokens.mjs",
+    "lint:clipping": "node scripts/check-clipping.mjs",
     "lint:copy": "node scripts/lint-copy.mjs",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
     "lint:md:fix": "markdownlint-cli2 --fix \"**/*.md\"",

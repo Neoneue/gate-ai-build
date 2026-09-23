@@ -611,7 +611,12 @@ function EventLog({ rows }: { rows: EventRow[] }) {
                 <TableBody>
                   {pageRows.map((row) => (
                     <TableRow
-                      className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&_td]:align-top"
+                      // `ring-inset`: a row is full-bleed inside the table
+                      // scrollport (`overflow-x-auto`) and the Card's
+                      // `overflow-hidden`, so an outset ring loses its left
+                      // and right edges. Same remedy as SortableTableHead
+                      // (design.md, Focus ring / Clipping).
+                      className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&_td]:align-top"
                       key={row.id}
                       onClick={() => setSelectedRow(row)}
                       onKeyDown={(e) => {

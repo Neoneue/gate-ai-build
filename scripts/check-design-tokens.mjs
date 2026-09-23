@@ -70,6 +70,40 @@
  *     a tooltip drawn inside the chart container clips the moment it is
  *     taller than the chart band. No waiver: the recipe is the only shape.
  *
+ *  8. SCROLLPORT WITH NO FOCUS-RING GUTTER, design.md §"Focus ring",
+ *     Clipping (2026-09-22). Setting `overflow-y` (or `-x`) to anything but
+ *     `visible` computes the OTHER axis to `auto` as well (CSS Overflow 3 §3),
+ *     so a box that only meant to scroll vertically clips horizontally too.
+ *     The site ring is `ring-2` + `ring-offset-2` = 4px outside the control's
+ *     border box, so a full-width control flush inside a scrollport loses all
+ *     4px on both edges, permanently: there is no horizontal scroll to
+ *     recover it. Every scrolling container therefore reserves >= 4px of
+ *     inline padding (`px-1` / `p-1` or larger, or `pl-*` + `pr-*`).
+ *     Waiver: `design-allow-clip` with a reason within the 5 lines above,
+ *     for a scrollport whose children are all inset-ringed, or which holds no
+ *     focusable content at all. This is the check that would have caught the
+ *     ManageSubscription contact dialog, whose body was a bare
+ *     `min-h-0 overflow-y-auto overscroll-contain`.
+ *
+ *     WHAT IT CANNOT SEE: whether the container actually holds a focusable
+ *     descendant (the contact dialog's fields arrive through a `<ContactBody/>`
+ *     component, invisible to a text scan), the BLOCK axis (a scrollport
+ *     parks a tabbed-to control flush against its top or bottom edge whatever
+ *     its padding; that wants `scroll-py-1`, which only real geometry can
+ *     confirm), and `overflow-hidden` clip-only boxes (47 of them are
+ *     progress-bar tracks, corner-rounders and layout columns; a static rule
+ *     there is ~90% waivers, which is a rule nobody reads). Those three are
+ *     `npm run lint:clipping`'s job: it drives the real DOM.
+ *
+ *  9. FLOATING LAYER NOT PORTALLED, design.md §"Focus ring", Clipping.
+ *     A popup that renders inside its trigger's DOM position is clipped by
+ *     every `overflow-hidden` Card and every scrollport between them. Every
+ *     floating primitive in `src/components/ui` (tooltip, popover, menu,
+ *     select, notifications menu) wraps its `*.Positioner` in a `*.Portal`
+ *     so the layer escapes to the body. Flagged: a file under
+ *     `src/components/ui` that renders a `Positioner` with no `Portal`
+ *     anywhere in it. Same waiver marker as 8.
+ *
  * Tracking / width / translate arbitrary values are NOT linted here — those
  * have legitimate documented uses (PageTitle `-tracking-[1px]`, container-query
  * layout clamps). The closed-set rule still governs them by discipline.
@@ -158,8 +192,75 @@ const RECHARTS_TOOLTIP_IMPORT_RE =
 const CHART_TOOLTIP_PROP_RE =
   /\b(?:position=\{|wrapperStyle=|allowEscapeViewBox)/;
 
+// --- 8. scrollport with no focus-ring gutter -----------------------------
+// A SCROLLING overflow only. `overflow-hidden` / `overflow-clip` are left to
+// `npm run lint:clipping` (see the header note): a static rule over those is
+// almost all waiver.
+const SCROLLPORT_RE =
+  /(?:^|[\s"'`:])(?:@?[a-z0-9-]+:)*overflow-(?:x-|y-)?(?:auto|scroll)(?=[\s"'`\]/]|$)/;
+/* `src/test` is exempt for the same reason `CHART_TOOLTIP_OWNER` exempts it:
+   the invariant suite quotes the class strings it bans, and a test renders
+   nothing a user can see. */
+const SCROLLPORT_SKIP = /^src\/test\//;
+// >= 4px on the inline axis: `p-1`+, `px-1`+, or `pl-1`+ AND `pr-1`+.
+// Variant prefixes (`sm:`, `lg:`, `group-hover:`) are allowed through: a
+// gutter that exists only at one breakpoint still beats none, and the browser
+// check is what proves the rest.
+const inlinePad = (s) => {
+  const has = (axis) =>
+    new RegExp(
+      `(?:^|[\\s"'\`:])(?:@?[a-z0-9-]+:)*${axis}-(\\d+)(?=[\\s"'\`\\]/]|$)`
+    ).exec(s);
+  const all = has("p");
+  if (all && Number(all[1]) >= 1) {
+    return true;
+  }
+  const x = has("px");
+  if (x && Number(x[1]) >= 1) {
+    return true;
+  }
+  const l = has("pl") ?? has("ps");
+  const r = has("pr") ?? has("pe");
+  return Boolean(l && r && Number(l[1]) >= 1 && Number(r[1]) >= 1);
+};
+
+// --- 9. floating layer not portalled -------------------------------------
+const FLOATING_SCOPE = /^src\/components\/ui\//;
+const POSITIONER_RE = /<[A-Z][\w.]*\.Positioner\b/;
+const PORTAL_RE = /<[A-Z][\w.]*\.Portal\b/;
+
 // A line that is only a comment never paints anything.
 const COMMENT_LINE_RE = /^\s*(?:\/\/|\*|\/\*|\{\/\*)/;
+
+/* Lines that sit INSIDE a `/* … *\/` block, including the continuation lines
+   that carry no leading `*`. `COMMENT_LINE_RE` cannot see those, and the
+   header blocks in this codebase quote class strings in prose (`Override the
+   body's default \`overflow-y-auto\``), which check 8 would otherwise read as
+   markup. Deliberately naive about `/*` inside a string literal: a false
+   "this is a comment" only ever suppresses a check, never invents one. */
+function blockCommentLines(lines) {
+  const inBlock = new Array(lines.length).fill(false);
+  let open = false;
+  lines.forEach((line, i) => {
+    if (open) {
+      inBlock[i] = true;
+    }
+    let idx = 0;
+    while (idx < line.length) {
+      if (!open && line.startsWith("/*", idx)) {
+        open = true;
+        inBlock[i] = true;
+        idx += 2;
+      } else if (open && line.startsWith("*/", idx)) {
+        open = false;
+        idx += 2;
+      } else {
+        idx += 1;
+      }
+    }
+  });
+  return inBlock;
+}
 
 function waivedAbove(lines, i, marker) {
   for (let j = i - 1; j >= 0 && j > i - 6; j--) {
@@ -201,6 +302,7 @@ for (const rawFile of files) {
   // against the repo-relative form (`src/...`), so normalise first.
   const file = isAbsolute(rawFile) ? relative(process.cwd(), rawFile) : rawFile;
   const lines = readFileSync(rawFile, "utf8").split("\n");
+  const inBlockComment = blockCommentLines(lines);
   lines.forEach((line, i) => {
     const colorM = line.match(COLOR_RE);
     if (colorM) {
@@ -389,7 +491,42 @@ for (const rawFile of files) {
         text: `${jsFontM[0].trim()} — ${jsFontM[1]} is off-scale; use ${[...TYPE_SCALE].join(" / ")}`,
       });
     }
+
+    if (
+      !(
+        COMMENT_LINE_RE.test(line) ||
+        inBlockComment[i] ||
+        SCROLLPORT_SKIP.test(file)
+      ) &&
+      SCROLLPORT_RE.test(line) &&
+      !inlinePad(line) &&
+      !waivedAbove(lines, i, "design-allow-clip")
+    ) {
+      violations.push({
+        file,
+        line: i + 1,
+        kind: "ring-clip",
+        text: "scrolling container with no inline padding: a non-visible overflow on ONE axis computes the other to auto, so the 4px focus ring (ring-2 + ring-offset-2) is clipped on both edges. Reserve it with px-1 (pull the box back with -mx-1 if the content must not shift), or waive with design-allow-clip + a reason. design.md, Focus ring / Clipping",
+      });
+    }
   });
+
+  if (FLOATING_SCOPE.test(file)) {
+    const body = lines.join("\n");
+    const posLine = lines.findIndex((l) => POSITIONER_RE.test(l));
+    if (
+      posLine !== -1 &&
+      !PORTAL_RE.test(body) &&
+      !waivedAbove(lines, posLine, "design-allow-clip")
+    ) {
+      violations.push({
+        file,
+        line: posLine + 1,
+        kind: "float-clip",
+        text: "floating layer rendered with no <*.Portal>: the popup stays in the trigger's DOM position, where every overflow-hidden Card and every scrollport above it clips the surface. design.md, Focus ring / Clipping",
+      });
+    }
+  }
 }
 
 if (violations.length > 0) {
@@ -407,5 +544,5 @@ if (violations.length > 0) {
 }
 
 console.log(
-  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label, no raw type utility on a page, no raw color literal or palette atom with a semantic twin, no chart tooltip outside the portal recipe."
+  "✓ design-token guard: no invented colors or type sizes, no copy voice on a label, no raw type utility on a page, no raw color literal or palette atom with a semantic twin, no chart tooltip outside the portal recipe, no scrollport without a focus-ring gutter, no floating layer outside a portal."
 );

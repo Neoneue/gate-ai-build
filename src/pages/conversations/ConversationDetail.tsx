@@ -763,9 +763,14 @@ function ConversationMessagesPanel({
             : "turns"}
         </span>
       </div>
+      {/* `scroll-py-1` is the focus-ring allowance: the bubbles carry the
+          outset ring (`ring-2` + `ring-offset-2` = 4px) and tabbing scrolls
+          the next one flush to this scrollport's edge, where `py-4` no longer
+          helps. 4px of scroll-padding makes the browser stop that much short.
+          (design.md, Focus ring / Clipping.) */}
       <div
         aria-labelledby="conv-messages-eyebrow"
-        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-6 py-4"
+        className="flex min-h-0 flex-1 scroll-py-1 flex-col gap-4 overflow-y-auto overscroll-contain px-6 py-4"
         ref={scrollRef}
         role="region"
       >

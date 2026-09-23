@@ -328,6 +328,36 @@ components:
   # offset pair for `focus-visible:ring-inset` instead. Inset sites as of
   # 2026-09-17: Tabs triggers (scrolling tab list) and the SortableTableHead
   # button (table scrollport), both clipped the offset by 0.5 to 1.5px.
+  #
+  # CLIPPING, standing contract (2026-09-22). NOTHING may be cut off by an
+  # ancestor's bounding box: not a focus ring, not a tooltip or any floating
+  # layer, not a drop shadow on a raised surface, not a scaled or translated
+  # state. Three facts drive it. (1) Setting `overflow` on ONE axis computes
+  # the other to `auto`, never `visible` (CSS Overflow 3 §3), so a box that
+  # only meant to scroll vertically clips horizontally too. (2) The ring is a
+  # box-shadow: 4px outside the border box, and box-shadow contributes nothing
+  # to scrollable overflow, so a clipped ring is gone, not scrolled away.
+  # (3) On the inline axis of a vertical scrollport there is no scrolling that
+  # could ever bring it back, which is why that axis is the hard one.
+  # TWO REMEDIES, and only these two:
+  #   - RESERVE the room inside the container: `px-1` / `p-1` (4px, the exact
+  #     ring extent) with `-mx-1` / `-m-1` so the content does not shift. Where
+  #     the clip only appears once Tab has scrolled a control flush to an edge,
+  #     the allowance is `scroll-py-1` instead, on the scrollport.
+  #   - PORTAL the layer out. Every floating surface (tooltip, popover, menu,
+  #     select, chart tooltip) renders through a Portal to the body and is
+  #     never subject to its trigger's clip chain. That is the contract, not a
+  #     workaround: it is what keeps a tooltip legible over the Card edge it
+  #     is anchored inside.
+  # Where the control is full-bleed by design and cannot be given room (table
+  # rows, tab triggers), the ring goes INSET instead: `focus-visible:ring-inset`,
+  # plus `focus-visible:-outline-offset-1` on anything that also paints an
+  # outline. Removing the scroll or the overflow is NOT a remedy.
+  # Enforced by `lint:design` checks 8 (scrollport with no gutter) and 9
+  # (floating layer outside a portal), by `npm run lint:clipping` (the browser
+  # pass that measures real geometry across rings, shadows and popups), and by
+  # the `design-invariants` suite. Legitimate exceptions carry a
+  # `design-allow-clip` comment stating the measured reason.
   input:
     backgroundColor: "{colors.neutral-50}"
     textColor: "{colors.neutral-800}"

@@ -1451,6 +1451,8 @@ function BodySection({
     <section className="flex shrink-0 flex-col gap-2">
       <PanelHeading title={label} />
       <CodeCard className="rounded-xs border border-border shadow-none">
+        {/* design-allow-clip: a code payload well. No focusable descendant;
+            the highlight tooltip portals out. */}
         <div
           className="max-h-80 overflow-auto overscroll-contain bg-card"
           ref={codeRef}
@@ -1636,6 +1638,8 @@ function FullRequestCollapsible({
         />
       </Collapsible.Trigger>
       <Collapsible.Panel className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-150 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
+        {/* design-allow-clip: a code payload well. No focusable descendant;
+            the highlight tooltip portals out. */}
         <div
           className="max-h-80 overflow-auto overscroll-contain bg-background"
           ref={panelRef}

@@ -43,6 +43,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
       className="relative w-full [&:not(:first-child)>div>table>thead>tr]:border-border [&:not(:first-child)>div>table>thead>tr]:border-t"
       data-slot="table-wrapper"
     >
+      {/* Cell controls measure 16px of inline slack. Only a full-bleed <tr>
+          reaches this edge, and every focusable row rings inset for exactly
+          that reason, as does SortableTableHead.
+          design-allow-clip */}
       <div
         className="relative w-full overflow-x-auto"
         data-slot="table-container"

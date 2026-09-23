@@ -128,9 +128,13 @@ export function RequestTracePanel({
           and last node centers, accounting for the row's vertical padding.
           The wrapper carries the scroll so long traces flow without
           forcing the modal itself to scroll. */}
+      {/* `scroll-py-1`: same focus-ring allowance as the message list on
+          ConversationDetail: the bubbles ring at 4px outset and tabbing
+          parks them flush against this edge (design.md, Focus ring /
+          Clipping). */}
       <div
         aria-labelledby="conv-trace-eyebrow"
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-4"
+        className="min-h-0 flex-1 scroll-py-1 overflow-y-auto overscroll-contain px-6 py-4"
         ref={scrollRef}
         role="region"
       >

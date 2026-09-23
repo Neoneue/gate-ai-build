@@ -351,6 +351,8 @@ function NotificationsMenuBody({
           <p className="type-copy-14 m-0 text-muted-foreground">{emptyLabel}</p>
         </div>
       ) : (
+        /* design-allow-clip: each row carries its own inline padding, so no
+           item reaches this edge; the open menu measures clear. */
         <div
           className="max-h-96 divide-y divide-border overflow-y-auto"
           ref={setScrollNode}
