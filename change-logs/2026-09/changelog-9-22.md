@@ -618,6 +618,21 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
 
 ## Tests
 
+### The route-mount wait matches its sibling helper (`test/render.tsx`) · [eaf81bc]
+
+- Before: `renderRoute` hard-coded a 5s `waitFor` timeout while
+  `mount-with-location.tsx` beside it already waited 20s. The two helpers do
+  the same job and disagreed by 4x.
+- After: 20s in both. Closes a CI flake rather than changing behaviour:
+  `team-security-member-email` failed on run `35804242975` at 5059ms with
+  "route /teams/team_platform never resolved a page root", while the same
+  commit passed locally and in a sibling CI run on the identical sha. Route
+  mounts pay a lazy chunk's transform and that overran 5s under CI's parallel
+  load. The per-test `MOUNT_TIMEOUT` the tests set is vitest's own test budget
+  and never reaches inside `waitFor`, so it could not have helped.
+- The wait is a ceiling, not a delay, so a healthy mount still resolves at once
+  and only a genuinely dead route pays the full budget. No assertion moved.
+
 ### Payment method card placement (`test/payment-method-card.test.tsx`) · [8e26eb6]
 
 - New suite, 4 cases, `render` under happy-dom: in both the default and the

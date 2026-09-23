@@ -32,6 +32,7 @@ tokens; this index exists so nothing has to glob the directory.
 - The team security chart gets the org chart's four-row tooltip (unverified in browser)
 - Email joins the team "Events by …" member tables, second after Member
 - Member table Email column test, 8 cases
+- Route-mount wait matches its sibling helper, closing a CI flake
 
 ### [2026-09-21](./2026-09/changelog-9-21.md)
 
