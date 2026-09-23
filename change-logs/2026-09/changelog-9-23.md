@@ -52,9 +52,10 @@ Prior day: [`changelog-9-22.md`](./changelog-9-22.md)
 - After: `MemberFindingsTable` (`teams/SecurityOverviewPane`), `UsageBreakdown`,
   `MembersPane` and `KeysPane` (`TeamDetailEnterprise`) and `TeamsTable`
   (`TeamsEnterprise`) each take page state, slice through
-  `resolveRowsPerPage` and render `TablePaginationFooter`. Nine render sites in
-  total across the three files, since `MemberFindingsTable` is used twice and
-  `UsageBreakdown` three times.
+  `resolveRowsPerPage` and render `TablePaginationFooter`. Eight render sites
+  across the three files, since `MemberFindingsTable` is used twice and
+  `UsageBreakdown` three times. The `MembersPane` in `pages/Team.tsx` is a
+  different component that happens to share the name, and did not move.
 - All five keep the default floor of 10 rather than passing `minRowsPerPage`:
   these are the short lists the Teams bucket exists for. In practice most of
   them sit on one page today, so what the reader sees is the count line alone,
