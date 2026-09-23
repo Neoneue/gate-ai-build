@@ -107,6 +107,9 @@ export function AskAiComposer({
       )}
       ref={rootRef}
     >
+      {/* design-allow-clip: the scrollport IS the control. An element's own
+          overflow never clips its own ring, which paints outside its border
+          box; measured 0 focusable descendants. */}
       <textarea
         aria-label="Ask Gatekeeper"
         className="type-copy-14 field-sizing-content block max-h-20 min-h-5 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-foreground outline-none placeholder:text-muted-foreground"

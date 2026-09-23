@@ -57,6 +57,7 @@ import {
   ATTACK_MIX,
   HERO_CHART_CONFIG,
   RANGE_DELTA_NOTE,
+  splitEventMix,
 } from "@/pages/security/events-data";
 import {
   GuardrailEmptyState,
@@ -392,11 +393,18 @@ function HeroEventsCard({
     start: rangeDates[0] ?? new Date(),
     end: rangeDates.at(-1) ?? new Date(),
   };
-  const data = rangeDates.map((d, i) => ({
-    time: formatSparkLabel(d, true),
-    label: formatChartTooltipDate(d, hourly ? "hour" : "day", tipSpan),
-    requests: series[i] ?? 0,
-  }));
+  const data = rangeDates.map((d, i) => {
+    const requests = series[i] ?? 0;
+    return {
+      time: formatSparkLabel(d, true),
+      label: formatChartTooltipDate(d, hourly ? "hour" : "day", tipSpan),
+      requests,
+      // Per-bucket action split, the SAME largest-remainder allocator the
+      // Action-types bars use (reconciliation contract above), so the four
+      // tooltip rows sum to the bucket and the bars sum to the headline.
+      ...splitEventMix(requests),
+    };
+  });
   const domainTop = Math.max(...data.map((d) => d.requests), 1) + 1;
 
   // 4–7 evenly spaced ticks, same rule as the org hero; recharts thins them
@@ -505,7 +513,7 @@ function HeroEventsCard({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    hideIndicator
+                    className="min-w-36"
                     labelFormatter={(_label, items) =>
                       (items?.[0]?.payload as { label?: string } | undefined)
                         ?.label ?? ""
@@ -525,6 +533,36 @@ function HeroEventsCard({
                 stroke="var(--color-danger-500)"
                 strokeWidth={1.5}
                 type="linear"
+              />
+              {/* Tooltip-only series, the org Security hero recipe: zero-width
+                  stroke and no fill, so nothing draws and no active dot
+                  appears, but the tooltip reads each row's dot colour from
+                  the series stroke. `strokeWidth={0}`, never `stroke="none"`,
+                  or the dot has no colour to read. Labels and colours come
+                  from HERO_CHART_CONFIG. */}
+              <Area
+                activeDot={false}
+                dataKey="blocked"
+                fill="none"
+                isAnimationActive={false}
+                stroke="var(--color-danger-500)"
+                strokeWidth={0}
+              />
+              <Area
+                activeDot={false}
+                dataKey="flagged"
+                fill="none"
+                isAnimationActive={false}
+                stroke="var(--color-warning-500)"
+                strokeWidth={0}
+              />
+              <Area
+                activeDot={false}
+                dataKey="redacted"
+                fill="none"
+                isAnimationActive={false}
+                stroke="var(--color-neutral-400)"
+                strokeWidth={0}
               />
             </AreaChart>
           </ChartContainer>
@@ -650,6 +688,12 @@ function memberSortValue(
   if (key === "label") {
     return row.label;
   }
+  // Same roster lookup the cell renders from, so the sort orders exactly what
+  // the column shows. An id with no roster row sorts last (`sortRows` parks
+  // nulls at the bottom in both directions).
+  if (key === "email") {
+    return memberById(row.id)?.email ?? null;
+  }
   if (key === "count") {
     return row.count;
   }
@@ -718,23 +762,53 @@ function MemberFindingsTable({
             title="No matches"
           />
         ) : (
-          <Table className="min-w-[640px] table-fixed">
+          <Table className="min-w-[1000px] table-fixed">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                {/* Six columns, so the floor is design.md's canonical
+                    `min-w-[1000px]` for a 6-8 column table (ApiKeys,
+                    AuditTrail, Activity, Limits). Measured with canvas
+                    `measureText` against each cell's computed font, plus the
+                    real horizontal padding (28px on the first / last column,
+                    24px elsewhere) and, for a header, the 14px sort glyph and
+                    its gap-1. Need vs available at the floor, 17/28/15/15/15/10:
+                    Member 148.8px needed (20px Monogram + gap-2 +
+                    "Chad Ponticas") vs 170, Email 265 needed
+                    (mateus.silva@constellationnetwork.io, the longest seeded
+                    address since the 2026-09-22 move to the company domain)
+                    vs 280, each threat type 134.4 ("Prompt injection", the
+                    widest header, and the binding one) vs 150, Events 84.1 vs
+                    100. Every column clears its content at the floor with
+                    15-21px to spare, so nothing truncates on current data.
+                    Member gave the 3 points Email needed because it had the
+                    most slack; the three threat columns stay equal because
+                    they are a comparison set. The floor stays 1000, which is
+                    under the 1022px desktop content width, so desktop still
+                    never side-scrolls. */}
                 <SortableTableHead
-                  className="w-[36%] whitespace-nowrap"
+                  className="w-[17%] whitespace-nowrap"
                   onSort={toggleSort}
                   sort={sort}
                   sortKey="label"
                 >
                   Member
                 </SortableTableHead>
+                {/* Second, beside the name it belongs to. Read off the same
+                    roster row as the Monogram tone, never composed. */}
+                <SortableTableHead
+                  className="w-[28%] whitespace-nowrap"
+                  onSort={toggleSort}
+                  sort={sort}
+                  sortKey="email"
+                >
+                  Email
+                </SortableTableHead>
                 {/* One column per threat type, ATTACK_MIX order: each column
                     sums to the Attack types card above; Findings is the
                     row total, the balance being uncategorized. */}
                 {ATTACK_MIX.map((c) => (
                   <SortableTableHead
-                    className="w-[16%] whitespace-nowrap"
+                    className="w-[15%] whitespace-nowrap"
                     key={c.key}
                     numeric
                     onSort={toggleSort}
@@ -745,7 +819,7 @@ function MemberFindingsTable({
                   </SortableTableHead>
                 ))}
                 <SortableTableHead
-                  className="w-[16%] whitespace-nowrap"
+                  className="w-[10%] whitespace-nowrap"
                   numeric
                   onSort={toggleSort}
                   sort={sort}
@@ -760,43 +834,68 @@ function MemberFindingsTable({
                 ? skeletonRowIds(rows.length).map((id) => (
                     <MemberFindingsSkeletonRow key={id} />
                   ))
-                : sortedRows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
-                        <div className="flex min-w-0 items-center gap-2">
-                          {/* Single first initial + the member's own tone — the
+                : sortedRows.map((row) => {
+                    // One roster read per row, shared by the Monogram tone and
+                    // the Email cell: both are the member's own record, not a
+                    // value derived from the events table.
+                    const member = memberById(row.id);
+                    return (
+                      <TableRow key={row.id}>
+                        <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                          <div className="flex min-w-0 items-center gap-2">
+                            {/* Single first initial + the member's own tone — the
                           Activity Top-users treatment the Usage tab also
                           uses, so the same person looks the same on both
                           tabs. */}
-                          <Monogram
-                            initials={(
-                              row.label.trim().split(WHITESPACE_RE)[0]?.[0] ??
-                              "?"
-                            ).toUpperCase()}
-                            size="sm"
-                            tone={memberById(row.id)?.avatarTone ?? "ink"}
-                          />
-                          <span
-                            className="min-w-0 flex-1 truncate"
-                            title={row.label}
-                          >
-                            {row.label}
-                          </span>
-                        </div>
-                      </TableCell>
-                      {ATTACK_MIX.map((c) => (
-                        <TableCell
-                          className="type-mono-14 whitespace-nowrap text-right text-foreground"
-                          key={c.key}
-                        >
-                          {formatNumber(row.byCategory[c.key])}
+                            <Monogram
+                              initials={(
+                                row.label.trim().split(WHITESPACE_RE)[0]?.[0] ??
+                                "?"
+                              ).toUpperCase()}
+                              size="sm"
+                              tone={member?.avatarTone ?? "ink"}
+                            />
+                            <span
+                              className="min-w-0 flex-1 truncate"
+                              title={row.label}
+                            >
+                              {row.label}
+                            </span>
+                          </div>
                         </TableCell>
-                      ))}
-                      <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                        {formatNumber(row.count)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        {/* Copy voice + truncate + `title`, the treatment the
+                            Team page's pending-invitations Email column already
+                            uses: an address is contact text, not the machine
+                            identifier the mono data voice is for (design.md
+                            data-voice carve-out). An id with no roster row
+                            reads as the site's absent-value dash rather than a
+                            composed address. */}
+                        <TableCell className="type-copy-14 whitespace-nowrap text-foreground">
+                          {member ? (
+                            <span
+                              className="block truncate"
+                              title={member.email}
+                            >
+                              {member.email}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        {ATTACK_MIX.map((c) => (
+                          <TableCell
+                            className="type-mono-14 whitespace-nowrap text-right text-foreground"
+                            key={c.key}
+                          >
+                            {formatNumber(row.byCategory[c.key])}
+                          </TableCell>
+                        ))}
+                        <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
+                          {formatNumber(row.count)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
             </TableBody>
           </Table>
         )}
@@ -861,10 +960,10 @@ function MemberFindingsSection({
   );
 }
 
-/** Loading twin of a By-member row: the 16px Monogram disc, the name, one
- *  column per threat type in `ATTACK_MIX` order, then the Events total. The
- *  column count comes from the same constant the header maps, so the two can
- *  never disagree. */
+/** Loading twin of a By-member row: the 16px Monogram disc, the name, the
+ *  email, one column per threat type in `ATTACK_MIX` order, then the Events
+ *  total. The column count comes from the same constant the header maps, so
+ *  the two can never disagree. */
 function MemberFindingsSkeletonRow() {
   return (
     <TableRow className="hover:bg-transparent">
@@ -873,6 +972,9 @@ function MemberFindingsSkeletonRow() {
           <Skeleton className="size-4 shrink-0 rounded-full" />
           <SkeletonText className="w-32" />
         </div>
+      </TableCell>
+      <TableCell className="whitespace-nowrap">
+        <SkeletonText className="w-40" />
       </TableCell>
       {ATTACK_MIX.map((c) => (
         <TableCell

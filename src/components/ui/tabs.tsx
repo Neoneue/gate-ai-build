@@ -89,7 +89,16 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
         // naming `transform` (or the `colors` shorthand) never covers.
         // `z-10` keeps trigger labels above the sliding TabsIndicator
         // (which sits at z-0 inside the list).
-        "relative z-10 inline-flex h-[calc(100%-1px)] items-center justify-center gap-2 whitespace-nowrap rounded-xs border border-transparent font-medium text-sm transition-[color,background-color,border-color,scale] duration-150 ease-out focus-visible:border-ring focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        //
+        // The ring is `ring-inset` and the outline carries
+        // `-outline-offset-1` for the same reason: the `line` list is a
+        // scrollport (`overflow-x-auto`) and every call site passes `px-0`
+        // so the tabs align to the page gutter, which leaves the first
+        // trigger flush against the clip edge. At offset 0 the 1px outline
+        // painted outside the border box and the scrollport cut it.
+        // Pulling it 1px inward makes the whole focus treatment inset, so
+        // nothing can be clipped (design.md, Focus ring / Clipping).
+        "relative z-10 inline-flex h-[calc(100%-1px)] items-center justify-center gap-2 whitespace-nowrap rounded-xs border border-transparent font-medium text-sm transition-[color,background-color,border-color,scale] duration-150 ease-out focus-visible:border-ring focus-visible:outline-1 focus-visible:outline-ring focus-visible:-outline-offset-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start motion-reduce:transition-none motion-reduce:active:scale-100 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         "group-data-[variant=default]/tabs-list:flex-1 group-data-[variant=default]/tabs-list:px-2 group-data-[variant=default]/tabs-list:py-1 group-data-[variant=default]/tabs-list:text-foreground/60 group-data-[variant=default]/tabs-list:hover:text-foreground dark:group-data-[variant=default]/tabs-list:text-muted-foreground dark:group-data-[variant=default]/tabs-list:hover:text-foreground",
         // Default variant active text only — bg + shadow now live on
         // the sliding TabsIndicator.

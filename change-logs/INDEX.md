@@ -12,6 +12,8 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-22](./2026-09/changelog-9-22.md)
 
 - Manage subscription is a page, and Enterprise is the third rung
+- Payment method: the action moves into the card-on-file row
+- Payment method card placement test, 4 cases
 - Contact and Book a demo: one modal, our own form
 - A four-rung lift ramp, and a Button family that uses it
 - Plan cards get the Card tier elevation they never had
@@ -20,6 +22,17 @@ tokens; this index exists so nothing has to glob the directory.
 - The 12px line box goes to 12/18 across copy, label and mono
 - Manage subscription ladder test, 15 cases
 - Contact dialog behaviour, and the ladder suite grows
+- Nothing is clipped by an ancestor's bounding box: the standing contract, lint:design checks 8 and 9, and the new lint:clipping browser pass
+- The contact modal's fields lost 4px of focus ring to the scroll body
+- The rest of the sweep: five more clips across tabs, rows, plan cards and four scrollports
+- Clipping invariants test, 7 cases
+- The default team's Settings tab hides where it held one sentence; the notice moves to Overview
+- Settings tab presence test, 12 cases
+- Every seeded person moves to the company domain, eight addresses
+- The team security chart gets the org chart's four-row tooltip (unverified in browser)
+- Email joins the team "Events by …" member tables, second after Member
+- Member table Email column test, 8 cases
+- Route-mount wait matches its sibling helper, closing a CI flake
 
 ### [2026-09-21](./2026-09/changelog-9-21.md)
 

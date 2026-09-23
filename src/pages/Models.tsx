@@ -1064,8 +1064,9 @@ function ModelDetailPage({
                 </TabsList>
               </div>
               {/* tabIndex so the snippet can be scrolled from the keyboard:
-                  Chrome and Safari only focus a scrollport that opts in. Ring
-                  is inset because the flush Card clips an outset one. */}
+                  Chrome and Safari only focus a scrollport that opts in.
+                  design-allow-clip: the ring is already inset because the
+                  flush Card clips an outset one. */}
               <div
                 aria-label="Code sample"
                 className="h-[256px] overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
@@ -1480,7 +1481,8 @@ export function PaygToolConfigCard({ handle }: { handle: string }) {
             {PAYG_TOOL_CAPTIONS[tool]}
           </span>
         </div>
-        {/* Same keyboard-scroll opt-in as the Example request snippet. */}
+        {/* Same keyboard-scroll opt-in as the Example request snippet.
+            design-allow-clip: the ring is already inset. */}
         <div
           aria-label="Setup configuration"
           className="h-[216px] overflow-y-auto outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"

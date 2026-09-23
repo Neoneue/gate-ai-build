@@ -270,8 +270,13 @@ export function PlanComparisonDialogPro({
             Manage subscription
           </DialogTitle>
         </DialogHeader>
+        {/* `px-1 -mx-1` is the overflow allowance, same as the Free twin in
+            `plan-comparison-dialog.tsx`: the plan cards are direct children
+            of this scrollport, so their `shadow-xs` sat flush against a clip
+            edge with no scrolling that could ever bring it back. 4px in, 4px
+            back out, so nothing moves. (design.md, Focus ring / Clipping.) */}
         <div
-          className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2"
+          className="-mx-1 grid min-h-0 flex-1 scroll-py-1 grid-cols-1 gap-4 overflow-y-auto px-1 md:grid-cols-2"
           ref={cardsRef}
         >
           {/* Free card's CTA opens the shared Cancel plan dialog via the

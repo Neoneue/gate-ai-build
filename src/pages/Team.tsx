@@ -491,7 +491,7 @@ type InvitationRow = {
 const INVITATION_ROWS: InvitationRow[] = [
   {
     id: "inv_01",
-    email: "marcus.cho@acme.io",
+    email: "marcus.cho@constellationnetwork.io",
     invitedBy: "Chad Ponticas",
     sent: INV_01_SENT,
     role: "member",
@@ -499,7 +499,7 @@ const INVITATION_ROWS: InvitationRow[] = [
   },
   {
     id: "inv_02",
-    email: "priya.iyer@ebux.com",
+    email: "priya.iyer@constellationnetwork.io",
     invitedBy: "Kira Tan",
     sent: INV_02_SENT,
     role: "admin",

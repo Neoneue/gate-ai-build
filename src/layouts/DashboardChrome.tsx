@@ -284,8 +284,15 @@ export function DashboardChrome({
             {/* Content locks at 1920px wide (the 3xl breakpoint). Beyond that
               the extra space falls to the right as margin; the DashTopBar
               sibling above stays full-bleed. */}
+            {/* `lg:scroll-py-1` is the focus-ring allowance on the block axis.
+              This pane is the page scrollport at lg+, and Tab scrolls the next
+              control flush to its top or bottom edge, where the 4px ring
+              (`ring-2` + `ring-offset-2`) was being cut. 4px of scroll-padding
+              makes the browser stop exactly that much short. The inline axis
+              needs nothing: `px-4` / `sm:px-6` already clear it. (design.md,
+              Focus ring / Clipping.) */}
             <main
-              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 focus:outline-none sm:px-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
+              className="@container flex max-w-[1920px] flex-col gap-6 px-4 pt-6 pb-8 focus:outline-none sm:px-6 lg:min-h-0 lg:flex-1 lg:scroll-py-1 lg:overflow-y-auto lg:pb-20 [&>*]:shrink-0"
               id="main-content"
               ref={mainRef}
               /* tabIndex={-1} is required, not belt-and-braces: per the HTML

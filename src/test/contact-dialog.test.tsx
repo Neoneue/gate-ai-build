@@ -197,8 +197,8 @@ describe("the contact form is ours: four fields, prefilled and editable", () => 
     }
     const email = within(dialog).getByLabelText("Work email");
     await u.clear(email);
-    await u.type(email, "kira.tan@acme.io");
-    expect(email).toHaveProperty("value", "kira.tan@acme.io");
+    await u.type(email, "kira.tan@constellationnetwork.io");
+    expect(email).toHaveProperty("value", "kira.tan@constellationnetwork.io");
   });
 
   it("marks the three required fields with a word, not colour alone", async () => {

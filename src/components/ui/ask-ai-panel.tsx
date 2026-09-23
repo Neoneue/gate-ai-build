@@ -373,6 +373,9 @@ export function AskAiPanel({
               decouple them, move the dim boundary on every keystroke, and lose
               the lead-in the fade needs to stay ahead of the field as it
               grows. Not a constant waiting to be improved. */}
+          {/* design-allow-clip: reply thread, measured 0 focusable
+              descendants and no raised child; the mask, not a border, is what
+              meets the edge here. */}
           <div
             className="mask-b-from-[calc(100%-174px)] mask-b-to-[calc(100%+24px)] h-full overflow-y-auto pt-4 [-webkit-mask-image:var(--tw-mask-linear)]"
             ref={scrollRef}

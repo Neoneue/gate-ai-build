@@ -1925,11 +1925,21 @@ Security page (HeroNumeric + Blocked/Flagged/Redacted BreakdownRow legend
 plus an area chart, NO delta chip) whose series is `teamSparkSeries` settled
 onto the findings headline, so sum(chart) = the hero number and range
 shapes share one backbone; Action types and Attack types as org-style
-horizontal-bar cards; By member as a table with one column per threat type
-(ATTACK_MIX order) plus an Events total: `TeamMemberSlice.byCategory`, each
+horizontal-bar cards; By member as a table of Member / **Email** / one column
+per threat type (ATTACK_MIX order) / an Events total, at `table-fixed` widths
+17/28/15/15/15/10 over a `min-w-[1000px]` floor (Email added 2026-09-22;
+rebalanced from 20/25 the same day, after the seeded addresses moved to the
+company domain made `mateus.silva@constellationnetwork.io` the longest one at
+265px needed against the 250px that 25% of the floor gave it):
+`TeamMemberSlice.byCategory`, each
 column allocated by member request weight so it sums EXACTLY to the Attack
 types card; the row total IS the sum of its three columns, so rows, columns
-and the headline all reconcile (test-guarded in `teams.test.ts`). The
+and the headline all reconcile (test-guarded in `teams.test.ts`). Email is
+not on the slice: it is read per row from the roster (`memberById(row.id)`),
+the same lookup the Monogram tone uses, so the cell can only ever show a real
+member's address; an id that resolves to nobody renders a dash. Sortable on
+`sortKey="email"` like every other column here, with an unresolved id sorting
+last. The
 by-member block is TWO of that table (2026-09-02), mirroring the Usage tab:
 "Events by current members" (`!former`) then, only when a former member has
 events, "Events by past members" — PRD 3's immutable history, so a member
@@ -2006,6 +2016,19 @@ Pro and Default the Teams list has no org Settings tab (`OrgSettingsPane`) and
 the team's Settings tab drops to the General block (rename / delete) with no
 `LockSettingsCard` — no plan-comparison dialog, no upsell card. Both panes are
 live and editable wherever they render.
+
+**When the team Settings tab renders at all (2026-09-22).** One expression,
+`showSettings = entitled || (!manager && !team.isDefault)`, decides the
+trigger, the panel and the render-time fallback that pushes a stale
+`tab === "settings"` back to Overview. Two cases hide it, for the same
+reason: the tab would hold no action. An unentitled MANAGER has no forced
+settings to read and no write beyond membership (PRD §5). An unentitled
+DEFAULT team can be neither renamed nor deleted (PRD 3 / 8.1), so General
+collapses to an informational `Callout`; that notice renders as the first
+block of the Overview panel instead, above the "Team overview" heading.
+Entitled keeps the tab in both cases, because Lock settings, Policies and
+Token savings are real content there, and Enterprise therefore keeps the
+default-team notice inside Settings rather than on Overview.
 
 **Loading states (2026-09-02, AG-695 item 10).** `src/pages/teams/use-theatre-loading.ts`
 holds the whole mechanism:

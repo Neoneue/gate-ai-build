@@ -262,6 +262,8 @@ export function CodeBlock({
     <div
       className={cn(
         "flex flex-col font-mono",
+        // design-allow-clip: a code payload well. No focusable and no
+        // raised child inside; the scrollport holds text only.
         wrap
           ? "whitespace-pre-wrap break-words"
           : "overflow-x-auto whitespace-pre",

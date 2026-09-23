@@ -106,6 +106,39 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   nothing different. A test now asserts the elevation so it cannot be
   dropped again.
 
+### Nothing is clipped by an ancestor's bounding box (`design.md` §Focus ring, `scripts/check-design-tokens.mjs`, `scripts/check-clipping.mjs`) · [b9152a2]
+
+- Before: design.md carried the focus-ring recipe and a one-line note that a
+  control flush inside an `overflow-hidden` parent swaps the offset pair for
+  `ring-inset`. Nothing said what happens on a scrollport, nothing covered
+  tooltips or shadows, and nothing enforced any of it.
+- After: a standing Clipping contract in the same block. Three facts drive it:
+  setting `overflow` on one axis computes the other to `auto` rather than
+  `visible` (CSS Overflow 3 §3); the ring is a box-shadow 4px outside the
+  border box and box-shadow adds nothing to scrollable overflow, so a clipped
+  ring is gone rather than scrolled away; and on the inline axis of a vertical
+  scrollport no amount of scrolling brings it back. Two remedies and only two:
+  reserve the room (`p-1` / `px-1` with `-m-1` / `-mx-1`, or `scroll-py-1`
+  where the clip only appears after Tab scrolls a control flush), or portal
+  the layer out. Where the control is full-bleed by design the ring goes
+  inset instead. Removing the scroll or overflow is not a remedy.
+- Enforcement is three mechanisms because no one of them spans the class.
+  `lint:design` check 8 fails a scrolling container with no inline padding,
+  the exact shape of the contact-dialog bug, and check 9 fails a
+  `*.Positioner` rendered with no `*.Portal` in `components/ui`. Both waive
+  per site with a `design-allow-clip` comment stating the measured reason,
+  matching the `design-allow-raw-type` convention. `npm run lint:clipping`
+  (new, `scripts/check-clipping.mjs`, Playwright against a dev server on
+  3000) is what actually spans rings, shadows, floating layers and transforms:
+  it measures painted extent against every clipping ancestor's padding box,
+  tab-walks each route with real keypresses so `:focus-visible` genuinely
+  applies, and opens the four dialog and menu surfaces that do not exist in
+  the static DOM. It is not in `npm run lint` or CI because it needs a server.
+- Check 8 also gained block-comment tracking: the header blocks in this
+  codebase quote class strings in prose, and `COMMENT_LINE_RE` only sees a
+  line that starts with a comment marker, not the continuation lines. Three
+  false positives disappeared with it.
+
 ## Sections & surfaces
 
 ### Manage subscription is a page, and Enterprise is the third rung (`pages/ManageSubscription.tsx`, `data/plans.ts`, `App.tsx`, `pages/Billing.tsx`, `pages/BillingFree.tsx`, `pages/BillingEnterprise.tsx`) · [48aa4a8]
@@ -366,7 +399,250 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   in their place, and gains three cases asserting the two CTAs land on the
   `/plans` paths.
 
+### Payment method: the action moves into the card-on-file row (`pages/billing/PaymentMethodCard.tsx`, `pages/BillingFree.tsx`) · [8e26eb6]
+
+- Before: the row inside `CardContent` held only the brand badge and the card
+  digits, with the right half of it empty, and the action sat below in a
+  `CardFooter` with a `border-t`. Both states did this: `Update card` on the
+  paid tiers and `Add card` on the `empty` state and on the Free page's own
+  copy of the card.
+- After: the button is the last child of the row, pushed right with
+  `ml-auto shrink-0`, and the footer is gone from both files (the shared
+  component no longer imports `CardFooter`). Vercel's placement, and the
+  reason it is right here: the action operates on THIS card on file, not on
+  the section, so a second saved card would take its own row action instead
+  of one footer button that cannot say which card it means. Labels, variants,
+  glyphs and `size="sm"` are untouched.
+- The row is `flex flex-wrap items-center gap-4 rounded-xs border
+  border-border bg-card-muted px-4 py-3`. `flex-wrap` plus `ml-auto` is what
+  holds it together under pressure: one line wherever it fits, and the button
+  drops to its own right-aligned line when the text and the button run out of
+  room, rather than squeezing either. The badge gained `shrink-0` and the text
+  column `min-w-0` so the badge never squashes and the copy wraps first.
+- Vertical padding went `p-4` to `px-4 py-3` (user direction): the inset read
+  too airy against a 40px badge. Measured at 1440 and 390 on `/billing`,
+  `/billing-free` and `/billing-enterprise`: row 66px in every case except
+  Free at 390, where the longer "No payment method on file" wraps the button
+  to a second line at 114px. No card overflow anywhere, no `card-footer` left
+  in the DOM, and the button's right edge sits on the row's 16px inset.
+- Removing the footer also gives the card its bottom padding back:
+  `has-data-[slot=card-footer]:pb-0!` on `Card` no longer matches, so the
+  surface closes on the same `py-4` it opens with.
+
+### The contact modal's fields lost 4px of focus ring to the scroll body (`pages/ManageSubscription.tsx`) · [b9152a2]
+
+- Before: the dialog body was `min-h-0 overflow-y-auto overscroll-contain`
+  with no padding, and the four fields are full-width. Measured with the Name
+  input focused: ring extent 4px (`ring-2` 2px + `ring-offset-2` 2px), inline
+  slack 0px on both edges, computed `overflow-x: auto`. Every pixel of the
+  ring's left and right edge was cut, on all four fields, permanently: the
+  body scrolls vertically, so nothing ever brought it back.
+- After: `-m-1 … p-1`. 4px in on all four sides is the exact reserve, 4px of
+  negative margin back out into `DialogContent`'s `p-6` so the content sits
+  where it always did and the header, footer and 560px cap are untouched. The
+  block axis needs the padding too, not `scroll-py-1`: Notes is the last field
+  and scrolls flush to the bottom edge, where scroll-padding has no scroll
+  left to give. Re-measured: 4px slack on both axes, clear.
+
+### The rest of the sweep: five more clips, four surfaces (`components/ui/tabs.tsx`, `components/ui/table.tsx`, `pages/AuditTrail.tsx`, `pages/security/EventsTable.tsx`, `pages/plan-comparison-dialog.tsx`, `pages/plan-comparison-dialog-pro.tsx`, `layouts/DashboardChrome.tsx`, `components/ui/sidebar.tsx`, `pages/conversations/ConversationDetail.tsx`, `pages/conversations/RequestTracePanel.tsx`) · [b9152a2]
+
+- `TabsTrigger` carried `focus-visible:outline-1 outline-ring` at offset 0
+  alongside its inset ring. The `line` list is a scrollport and all 11 call
+  sites pass `px-0` so the tabs align to the page gutter, which leaves the
+  first trigger at 0px slack: the outline's 1px was cut on every tabbed page.
+  Now `-outline-offset-1`, so the whole focus treatment is inset and nothing
+  can be clipped. One primitive, 11 call sites.
+- The two focusable table rows on the site both rang outset inside the table
+  scrollport and the Card's `overflow-hidden`, at 0px slack. Audit trail's row
+  lost 2px of ring on each edge; the Security events row had no site ring at
+  all and was showing the browser default outline, also clipped. Both now
+  `focus-visible:ring-inset`, the same remedy `SortableTableHead` already
+  carried. Cell controls were measured clear at 16px of slack, so only the
+  full-bleed row needed it.
+- Both plan-comparison dialogs scroll a grid whose direct children are the
+  plan cards, with nothing between the cards and the clip edge, so each card's
+  `shadow-xs` met it flush. Now `-mx-1 … px-1` plus `scroll-py-1`.
+- Four scrollports parked a tabbed-to control flush against their block edge,
+  where the ring's top or bottom 4px was cut: the main content pane, both
+  sidebar rails, and the two conversation message lists. `scroll-py-1` (4px of
+  scroll-padding) makes the browser stop exactly that much short. Padding
+  would not have helped: the clip only exists once the scroll has happened.
+- Nine scrollports were measured and cleared, each with a `design-allow-clip`
+  comment carrying the number: the table scrollport (16px of slack on cell
+  controls), the collapsed sidebar rail (14px), the notifications list (rows
+  own their padding), the Ask AI thread and composer, both code payload wells
+  in Request detail, the Models code samples (already inset), the Dashboard
+  code panel, and the Security note field. In four of those the scrollport IS
+  the control, and an element's own overflow cannot clip its own ring.
+- Cleared as patterns absent, not as gaps: every floating layer already
+  portals to the body (tooltip, popover, menu, select, notifications menu, and
+  chart tooltips under the existing check 7), so no popup is subject to its
+  trigger's clip chain; the codebase has no `hover:shadow-*` anywhere, so
+  there is no raised-on-hover surface to cut; and every scale is the shrinking
+  `active:scale-[0.98]` except two Policies slider stops at `hover:scale-110`,
+  measured mid-track and nowhere near a clip edge. There is no carousel.
+
+### The default team's Settings tab, on the tiers where it held one sentence (`pages/TeamDetailEnterprise.tsx`) · [a76da8b]
+
+- Before: one build serves `/teams/:teamId`, `/teams-default/:teamId` and
+  `/teams-enterprise/:teamId`, and the Settings tab rendered on every one of
+  them for an admin. Unentitled (Pro and Default) it is `GeneralSettings`
+  alone, and `GeneralSettings` on the DEFAULT team returns a `Callout`
+  instead of rename and delete, because the default team can be neither
+  (PRD 3 / 8.1). So a Pro admin opening the default team got a whole tab
+  whose only content was one informational sentence.
+- After: `showSettings` grows a second clause,
+  `entitled || (!manager && !team.isDefault)`. Extended rather than gated
+  twice: the existing expression already encodes "unentitled manager has
+  nothing left, hide the tab rather than render it empty", and the
+  unentitled default team is the same sentence with a different subject.
+  Entitled keeps the tab on the default team, where Lock settings, Policies
+  and Token savings are real content; unentitled non-default teams keep it,
+  where rename and delete are real actions.
+- The notice is not lost: the same `Callout`, same wording, now renders as
+  the first block of the Overview panel on exactly the tiers that lost the
+  tab (`team.isDefault && !showSettings`). It sits ABOVE the "Team overview"
+  heading, so it frames what this team IS ahead of what it did, rather than
+  reading as a qualifier on the Usage block beneath. Enterprise is untouched:
+  the notice stays in Settings there, so it is never shown twice.
+- The render-time fallback on `Tabs` needed no change and was confirmed in
+  the browser: it reads `showSettings` itself, so switching the workspace
+  from Enterprise to Pro while the Settings tab is open lands on Overview
+  with the notice, instead of painting an empty panel. Verified across the
+  six tier x default-flag combinations and the three view roles; the manager
+  case is unchanged, and managers are pinned to their own team, so the
+  default team is unreachable for them.
+
+### Every seeded person moves to the company domain (`data/team-members.ts`, `data/billing-seats.ts`, `pages/Team.tsx`) · [4b7f499]
+
+- Before: the seeded roster was split across two invented domains that mean
+  nothing on this site. Five people sat on `acme.io` (Kira Tan, Jordan Lee,
+  the former members Noor Haddad and Elena Ruiz, the pending invitation for
+  Marcus Cho) and three on `ebux.com` (Mateus Silva, the invitation for Priya
+  Iyer), against a Chad Ponticas already on `constellationnetwork.io`. Nothing
+  read the domain, so the split was invisible until the member findings tables
+  started rendering addresses beside names.
+- After: all eight on `constellationnetwork.io`, so every seeded person is a
+  colleague and the roster reads as one company. Names, roles, avatar tones,
+  joined and left dates are untouched, and no address is added or dropped, so
+  every consumer that resolves a member by id gets the same row it always did.
+  The one test that types an address (`test/contact-dialog.test.tsx`) moves
+  with the data rather than keeping a dead literal.
+- It is not cosmetic downstream: the longest seeded address grows eight
+  characters to `mateus.silva@constellationnetwork.io`, which is what forced
+  the Email column rebalance in the entry below. Recorded here rather than
+  folded into that one, because the data change stands on its own and the
+  column would need the same widths whoever the members were.
+
+### The team security chart gets the org chart's four-row tooltip (`pages/teams/SecurityOverviewPane.tsx`) · [45315c8]
+
+- Before: hovering the team hero chart gave one unlabelled row, the bucket
+  total and nothing else, while the org Security page's hero chart breaks the
+  same measure into Total, Blocked, Flagged and Redacted with a colour dot
+  each. Same data and same question, answered differently depending on which
+  page you had open.
+- After: the org chart's recipe, mirrored rather than reinvented.
+  `splitEventMix` runs per bucket, which is the same largest-remainder
+  allocator the Action-types bars already use, so the four rows sum to their
+  bucket and the bars still sum to the headline and the file's reconciliation
+  contract holds. `hideIndicator` drops and `className="min-w-36"` lands on
+  `ChartTooltipContent`, so the dots render and the rows have room.
+- The three extra `Area` series are tooltip-only: `strokeWidth={0}` and
+  `fill="none"`, so nothing paints and no active dot appears, but each row can
+  read its dot colour from the series stroke. `strokeWidth={0}` rather than
+  `stroke="none"` on purpose, or the dot has no colour left to read.
+- No `position=` or `wrapperStyle`, so the portal recipe is intact and
+  `lint:design` check 7 passes.
+- NOT verified in a browser. The change is a literal mirror of a chart known
+  to work and every static gate passes, but the Playwright probe used to check
+  it could not trigger a tooltip on the ORG chart either, which a screenshot
+  proves does work, so the probe is unreliable rather than the code. Carried
+  as an open item in `handoff.md`; first person on this page should hover it.
+
+### Email joins the team "Events by …" member tables (`pages/teams/SecurityOverviewPane.tsx`) · [ecdf892]
+
+- Before: `MemberFindingsTable` listed Member, one column per threat type in
+  ATTACK_MIX order, then Events. A reader who wanted to contact the person
+  behind a row, or tell two similar names apart, had the name and nothing
+  else. Widths were `min-w-[640px] table-fixed` at 36% + 4 x 16%.
+- After: an Email column SECOND, directly after Member, so the address sits
+  beside the name it belongs to and the three threat counts stay adjacent for
+  comparison. The value is `memberById(row.id)?.email` — the same roster row
+  the Monogram tone already reads, hoisted to one lookup per row, so no
+  address is ever composed (no-synthetic-data). An id that resolves to nobody
+  renders the site's absent-value dash, the way `memberName()` already does,
+  rather than a plausible-looking guess.
+- Voice and truncation follow the Team page's pending-invitations Email
+  column verbatim: `type-copy-14` plus `whitespace-nowrap` on the cell and a
+  `block truncate` span carrying `title={email}`. Copy, not mono: design.md's
+  data-voice carve-out reserves `type-mono-*` for the machine string a user
+  would paste into a config, and an address is contact text. The Member cell
+  beside it already truncates with a `title`, so the pair reads as one
+  treatment.
+- Sortable, because every other column in this table is. `sortKey="email"`
+  on `SortableTableHead`, and `memberSortValue` grows an `email` branch
+  returning the same roster read the cell renders, so the sort orders exactly
+  what is on screen; an unresolved id returns `null` and `sortRows` parks it
+  last in both directions.
+- Widths rebalanced to 17 / 28 / 15 / 15 / 15 / 10 and the floor raised to
+  `min-w-[1000px]`, design.md §Responsive's canonical value for a 6-8 column
+  `table-fixed` table (ApiKeys, AuditTrail, Activity, Limits). Measured in
+  the browser at that floor with canvas `measureText` against each cell's
+  computed font, plus the real horizontal padding (28px first / last, 24px
+  elsewhere) and, on a header, the 14px sort glyph and its `gap-1`. Needed vs
+  available per column: Member 148.8 vs 170 (20px Monogram + `gap-2` +
+  "Chad Ponticas"), Email 265 vs 280 (`mateus.silva@constellationnetwork.io`,
+  the longest seeded address once the roster moved to the company domain, so
+  it fits whole even at the floor), each threat type 134.4 vs 150 ("Prompt
+  injection" is the widest header and was the binding constraint; at the old
+  640px floor it had 102px and already overflowed), Events 84.1 vs 100. The
+  first pass sized Email against `chad@constellationnetwork.io` at 218 vs
+  250; the domain move made the longest address eight characters longer and
+  pushed it to 265, so it truncated at the floor and at 1440. The 3 points
+  came out of Member, which had the most slack (51.2px), rather than out of
+  the threat columns, which stay equal because they are one comparison set,
+  and rather than out of the 1000px floor, which would have cost the
+  no-side-scroll property below. At 1440 the table measures 1022px against a
+  1022px scrollport, so desktop still never side-scrolls; at 390px and at
+  200% zoom the scrollport scrolls and the document does not.
+- The skeleton row gains the matching cell, so the loading twin still has six
+  columns and cannot drift from the header.
+- One component renders twice, so both tables got the column: verified in the
+  browser by removing Mateus Silva from Development, which puts him in
+  "Events by past members" with `mateus.silva@constellationnetwork.io` and
+  the same six
+  headers. Tier reach is unchanged — Pro and Enterprise render the table,
+  Default returns the guardrail empty state before it, and there is no Free
+  teams route. Roles: Admin and Manager both reach it; Member is redirected
+  to `/overview-enterprise` and never sees a team detail.
+
 ## Tests
+
+### The route-mount wait matches its sibling helper (`test/render.tsx`) · [eaf81bc]
+
+- Before: `renderRoute` hard-coded a 5s `waitFor` timeout while
+  `mount-with-location.tsx` beside it already waited 20s. The two helpers do
+  the same job and disagreed by 4x.
+- After: 20s in both. Closes a CI flake rather than changing behaviour:
+  `team-security-member-email` failed on run `35804242975` at 5059ms with
+  "route /teams/team_platform never resolved a page root", while the same
+  commit passed locally and in a sibling CI run on the identical sha. Route
+  mounts pay a lazy chunk's transform and that overran 5s under CI's parallel
+  load. The per-test `MOUNT_TIMEOUT` the tests set is vitest's own test budget
+  and never reaches inside `waitFor`, so it could not have helped.
+- The wait is a ceiling, not a delay, so a healthy mount still resolves at once
+  and only a genuinely dead route pays the full budget. No assertion moved.
+
+### Payment method card placement (`test/payment-method-card.test.tsx`) · [8e26eb6]
+
+- New suite, 4 cases, `render` under happy-dom: in both the default and the
+  `empty` state the action is a descendant of the `bg-card-muted` row, that
+  row also carries the badge and the card text, and the card renders no
+  `[data-slot="card-footer"]` at all. A third case pins the two classes the
+  layout rests on, `ml-auto` on the button and `flex-wrap` on the row. The
+  fourth reads `BillingFree.tsx` and asserts its local copy of the card has
+  the same shape, since the Free page owns its own markup and the two tiers
+  have drifted before.
 
 ### Manage subscription ladder (`test/manage-subscription.test.tsx`) · [48aa4a8]
 
@@ -401,3 +677,60 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
 - The ladder suite gains groups for the Card tier elevation, the per-view
   lift treatment, the single promoted glyph, the Enterprise price row and
   its caption, and slot order inside a card; it now runs 131 cases.
+
+### Clipping invariants (`test/design-invariants.test.ts`) · [b9152a2]
+
+- 7 new cases in a `nothing is clipped by an ancestor's bounding box` block,
+  each of which fails against the code as it stood this morning: the contact
+  dialog body carries the gutter and no longer carries the bare class string;
+  both plan-comparison grids reserve it; all four floating primitives render a
+  Positioner AND a Portal; the tab trigger's ring and outline are both inset;
+  every `focus-visible:ring-2` on a table row is followed by `ring-inset`; the
+  four scroll-padding sites carry `scroll-py-1`; and a walk of `src` asserts
+  no `hover:shadow-*` exists and at most two growing hover scales do. The last
+  one records "pattern absent" as an enforced fact rather than a note, so a
+  new raised surface has to be measured before it can land.
+- Source-text rather than DOM assertions on purpose: happy-dom has no layout,
+  so a slack of 0px is not observable in vitest at all. The geometry is
+  `lint:clipping`'s job; this suite pins the shape of each remedy.
+
+### Settings tab presence by tier and default flag (`test/team-settings-tab.test.tsx`) · [a76da8b]
+
+- New suite, 12 cases, `renderRoute` under happy-dom. Six of them are the
+  tier x default-flag matrix read off the real route tree: the Settings tab
+  is absent on `/teams/team_default` and `/teams-default/team_default`, and
+  present on the other four. They mount the routes rather than calling the
+  expression, so a future change to the tab list or to the pathname helper
+  fails here too.
+- Four cases pin where the notice reads: on Overview for the default team on
+  Pro and Default, NOT on Overview for Enterprise (it stays in Settings there,
+  so the assertion is what stops it being doubled), and not on a named team
+  at all. The Overview panel is found by its "Team overview" heading rather
+  than by index, so a tab reorder cannot make the test pass on the wrong
+  panel.
+- Two cases hold the role dimension still: the entitled manager keeps the
+  read-only Settings tab, the unentitled manager still has none. The default
+  team is deliberately not in the manager rows: a manager is redirected to
+  their own team, so those URLs never render.
+
+### Member table Email column (`test/team-security-member-email.test.tsx`) · [ecdf892]
+
+- New suite, 8 cases, `renderRoute` under happy-dom. Three pin the column
+  itself: Pro and Enterprise both render exactly
+  `Member / Email / PII / PHI / Prompt injection / Credential leak / Events`,
+  with a separate assertion that index 1 is Email, so a reorder that keeps
+  the set fails as loudly as a removal.
+- One reads the rendered column against the derivation rather than against a
+  literal: `securityForTeamAtRange(...).byMember.map(memberById → email)` must
+  equal the second cell of every row, in order. It waits past the pane's
+  loading state first, because the skeleton row carries the same six cells
+  with no text and would otherwise compare empty strings.
+- Two hold the no-synthetic-data rule: every member row on every seed team
+  resolves to a roster address matching an email shape, and a team whose
+  `memberIds` are emptied yields all-`former` rows that still resolve. That
+  second one is the past-members table's data half; the render half is one
+  component, proven in the browser.
+- Two are the role sweep: a manager sees the column on their own team, and a
+  member never reaches the team detail at all. Default is asserted from the
+  other side — no "Events by current members" title exists there, because the
+  entitlement gate returns the guardrail empty state first.

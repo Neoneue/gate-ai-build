@@ -35,7 +35,7 @@ export const MEMBER_ROWS: MemberRow[] = [
   {
     id: "usr_kira",
     name: "Kira Tan",
-    email: "kira.tan@acme.io",
+    email: "kira.tan@constellationnetwork.io",
     avatarTone: "rose",
     role: "admin",
     joined: authoredDate(2026, 3, 22),
@@ -43,7 +43,7 @@ export const MEMBER_ROWS: MemberRow[] = [
   {
     id: "usr_mate",
     name: "Mateus Silva",
-    email: "mateus.silva@ebux.com",
+    email: "mateus.silva@constellationnetwork.io",
     avatarTone: "emerald",
     role: "member",
     joined: authoredDate(2026, 4, 1),
@@ -51,7 +51,7 @@ export const MEMBER_ROWS: MemberRow[] = [
   {
     id: "usr_jordan",
     name: "Jordan Lee",
-    email: "jordan.lee@acme.io",
+    email: "jordan.lee@constellationnetwork.io",
     avatarTone: "amber",
     role: "member",
     joined: authoredDate(2026, 5, 6), // authored 2026-06-06, the newest member; feeds the "Member added" notification

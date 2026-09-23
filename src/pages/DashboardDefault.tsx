@@ -172,6 +172,8 @@ function HeroCodeTab({
           </span>
         </div>
       )}
+      {/* design-allow-clip: a code payload well. No focusable and no raised
+          child inside; the route measures clear. */}
       <div className={`${maxHeightClass} overflow-y-auto`}>
         <CodePanel snippet={code} />
       </div>

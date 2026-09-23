@@ -242,8 +242,15 @@ export function PlanComparisonDialog({
             Manage subscription
           </DialogTitle>
         </DialogHeader>
+        {/* `px-1 -mx-1` is the overflow allowance. The plan cards are direct
+            children of this scrollport with nothing between them and its
+            inline edges, so their `shadow-xs` (and a focus ring on anything
+            inside that ever sits flush) was cut on both sides, and unlike
+            the block axis there is no scrolling that ever brings it back.
+            4px in, 4px back out, so the cards land exactly where they did.
+            (design.md, Focus ring / Clipping.) */}
         <div
-          className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-2"
+          className="-mx-1 grid min-h-0 flex-1 scroll-py-1 grid-cols-1 gap-4 overflow-y-auto px-1 md:grid-cols-2"
           ref={cardsRef}
         >
           <PlanCard onUpgrade={onUpgrade} plan={FREE_PLAN} />

@@ -182,6 +182,8 @@ function SidebarCollapsed({
           />
         )}
       </div>
+      {/* design-allow-clip: collapsed rail. 16 focusables measured at 14px
+          of inline slack, well clear of the 4px ring. */}
       <div className="flex w-full flex-1 flex-col items-center justify-between overflow-y-auto pt-3 pb-5">
         <div className="flex w-full flex-col items-center gap-1">
           {sections.map((section, i) => (
@@ -307,8 +309,16 @@ export function SidebarPanel({
           so the account rows travel with the links instead of pinning to the
           foot and eating viewport. At `lg`+ the wrapper is display: contents,
           so the desktop rail keeps its `flex-1` nav and pinned user area. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:contents">
-        <nav className="flex flex-col gap-4 px-3 pt-3 pb-6 lg:flex-1 lg:overflow-y-auto">
+      {/* design-allow-clip: below lg the child <nav> supplies the inline
+          gutter (px-3); at lg+ this box is display:contents and has no box
+          to clip with. */}
+      <div className="flex min-h-0 flex-1 scroll-py-1 flex-col overflow-y-auto lg:contents">
+        {/* `scroll-py-1` on both scrollports is the focus-ring allowance on
+            the block axis: tabbing through the rail scrolls the next link
+            flush to the edge, where the 4px ring (`ring-2` + `ring-offset-2`)
+            was cut. `px-3` already clears the inline axis. (design.md, Focus
+            ring / Clipping.) */}
+        <nav className="flex flex-col gap-4 px-3 pt-3 pb-6 lg:flex-1 lg:scroll-py-1 lg:overflow-y-auto">
           {sections.map((section, i) => (
             <div className="flex flex-col" key={section.label ?? `top-${i}`}>
               {section.label ? (

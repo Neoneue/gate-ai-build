@@ -66,7 +66,7 @@ export const FORMER_MEMBER_ROWS: FormerMemberRow[] = [
   {
     id: "usr_noor",
     name: "Noor Haddad",
-    email: "noor.haddad@acme.io",
+    email: "noor.haddad@constellationnetwork.io",
     avatarTone: "ink",
     joined: authoredDate(2026, 2, 15),
     left: authoredDate(2026, 4, 25),
@@ -74,7 +74,7 @@ export const FORMER_MEMBER_ROWS: FormerMemberRow[] = [
   {
     id: "usr_elena",
     name: "Elena Ruiz",
-    email: "elena.ruiz@acme.io",
+    email: "elena.ruiz@constellationnetwork.io",
     avatarTone: "rose",
     joined: authoredDate(2026, 2, 20),
     left: authoredDate(2026, 4, 28),

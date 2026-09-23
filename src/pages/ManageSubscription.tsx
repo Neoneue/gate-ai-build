@@ -528,7 +528,19 @@ function ContactDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="min-h-0 overflow-y-auto overscroll-contain">
+        {/* `p-1 -m-1` is the focus-ring gutter, not decoration. Setting
+            `overflow-y` to anything but `visible` computes `overflow-x` to
+            `auto` (CSS Overflow 3 §3), so this box clips horizontally even
+            though only vertical scrolling was asked for. The site ring is
+            `ring-2` + `ring-offset-2` = 4px outside the control's border box
+            (design.md, Focus ring), and the fields are full-width, so every
+            one of those 4px was being cut on both edges. `p-1` (4px) is the
+            exact reserve on all four sides: the block axis needs it too,
+            because the Notes field is last and scrolls flush to the bottom
+            edge, where `scroll-py-*` has no scroll left to give. `-m-1` pulls
+            the box back out into `DialogContent`'s `p-6` so the content sits
+            where it always did and nothing else shifts. */}
+        <div className="-m-1 min-h-0 overflow-y-auto overscroll-contain p-1">
           {resolvedKind === "demo" ? (
             <SchedulerFrame state={state} />
           ) : (

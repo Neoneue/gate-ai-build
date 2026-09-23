@@ -8,7 +8,7 @@
  * must reconcile: the KPI total equals the sum of its bars".
  */
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { API_KEY_SEED_ROWS } from "@/data/api-keys";
@@ -241,3 +241,142 @@ describe("chart tooltips escape their Card through a body portal", () => {
     }
   });
 });
+
+/* ─── Nothing is clipped by an ancestor's bounding box ───────────────────── */
+
+/* design.md §"Focus ring" / Clipping (2026-09-22). The rule spans three
+ * things a single check cannot: rings, floating layers, and shadows on raised
+ * surfaces. What is asserted here is the SOURCE shape of each remedy applied
+ * on 2026-09-22: the geometry itself is `npm run lint:clipping`'s job,
+ * because only a real browser can measure a slack of 0. Each `it` below fails
+ * against the code as it stood before that date. */
+describe("nothing is clipped by an ancestor's bounding box", () => {
+  const read = (f: string) => readFileSync(resolve(process.cwd(), f), "utf8");
+
+  it("the contact dialog's scroll body reserves the 4px ring gutter", () => {
+    // The reported bug: a bare `min-h-0 overflow-y-auto overscroll-contain`
+    // around four full-width fields, so all 4px of the ring was cut on both
+    // edges. `p-1` reserves it, `-m-1` puts the content back where it was.
+    const src = read("src/pages/ManageSubscription.tsx");
+    expect(src).toMatch(
+      /className="-m-1 min-h-0 overflow-y-auto overscroll-contain p-1"/
+    );
+    expect(src).not.toMatch(
+      /className="min-h-0 overflow-y-auto overscroll-contain"/
+    );
+  });
+
+  it("both plan-comparison dialogs reserve it around the plan cards", () => {
+    // The cards are direct children of the scrollport, so their `shadow-xs`
+    // met the clip edge with nothing between.
+    for (const f of [
+      "src/pages/plan-comparison-dialog.tsx",
+      "src/pages/plan-comparison-dialog-pro.tsx",
+    ]) {
+      const src = read(f);
+      expect(src, f).toMatch(/-mx-1[^"]*grid[^"]*overflow-y-auto[^"]*px-1/);
+    }
+  });
+
+  it("every floating primitive portals its popup out of the clip chain", () => {
+    // A popup left in the trigger's DOM position is clipped by every
+    // overflow-hidden Card and every scrollport above it. Mirrors lint:design
+    // check 9, which scans all of src/components/ui.
+    for (const f of [
+      "src/components/ui/tooltip.tsx",
+      "src/components/ui/popover.tsx",
+      "src/components/ui/menu.tsx",
+      "src/components/ui/select.tsx",
+    ]) {
+      const src = read(f);
+      expect(src, f).toMatch(/<[A-Z][\w.]*\.Positioner\b/);
+      expect(src, f).toMatch(/<[A-Z][\w.]*\.Portal\b/);
+    }
+  });
+
+  it("the tab trigger's whole focus treatment is inset", () => {
+    // The `line` tab list is a scrollport and all 11 call sites pass `px-0`,
+    // so the first trigger is flush against the clip edge. The ring was
+    // already inset; the 1px outline at offset 0 was not, and was cut.
+    const src = read("src/components/ui/tabs.tsx");
+    expect(src).toMatch(/focus-visible:ring-inset/);
+    expect(src).toMatch(/focus-visible:-outline-offset-1/);
+  });
+
+  it("every focusable table row rings inset", () => {
+    // A row is full-bleed inside the table scrollport AND the Card's
+    // overflow-hidden, so an outset ring loses both inline edges. Same
+    // remedy SortableTableHead already carried.
+    for (const f of [
+      "src/pages/AuditTrail.tsx",
+      "src/pages/security/EventsTable.tsx",
+      "src/components/ui/table.tsx",
+    ]) {
+      const src = read(f);
+      const rows = src.split(/focus-visible:ring-2/).slice(1);
+      expect(rows.length, `${f} has a ring to check`).toBeGreaterThan(0);
+      for (const block of rows) {
+        expect(block.slice(0, 200), f).toMatch(/focus-visible:ring-inset/);
+      }
+    }
+  });
+
+  it("scrollports that park a focused control at their edge allow for it", () => {
+    // scroll-padding, not padding: the clip on the block axis only happens
+    // once Tab has scrolled the control flush, so the allowance has to be on
+    // the scroll, not the box.
+    const pairs: [string, string][] = [
+      ["src/layouts/DashboardChrome.tsx", "lg:scroll-py-1"],
+      ["src/components/ui/sidebar.tsx", "scroll-py-1"],
+      ["src/pages/conversations/ConversationDetail.tsx", "scroll-py-1"],
+      ["src/pages/conversations/RequestTracePanel.tsx", "scroll-py-1"],
+    ];
+    for (const [f, cls] of pairs) {
+      expect(read(f), f).toContain(cls);
+    }
+  });
+
+  it("no raised-on-hover surface exists to be clipped", () => {
+    // Recorded as a fact, not a gap: the site has no `hover:shadow-*` at all,
+    // and every scale is the shrinking `active:scale-[0.98]`. If either
+    // changes, the new surface has to be measured against this rule, which
+    // is what this assertion forces.
+    // src/test is excluded: this file quotes the patterns it bans.
+    const files = walkSrc(resolve(process.cwd(), "src")).filter(
+      (f) => !f.includes("/src/test/")
+    );
+    const raised: string[] = [];
+    const grown: string[] = [];
+    for (const f of files) {
+      const src = readFileSync(f, "utf8");
+      if (/hover:shadow-/.test(src)) {
+        raised.push(f);
+      }
+      for (const m of src.matchAll(/hover:scale-(\d+)/g)) {
+        if (Number(m[1]) > 100) {
+          grown.push(`${f} (${m[0]})`);
+        }
+      }
+    }
+    expect(raised, "hover:shadow-* sites").toEqual([]);
+    // The two growing hover states are the Policies slider stops, measured
+    // clear (they sit mid-track, nowhere near a clip edge).
+    expect(grown.length, grown.join(", ")).toBeLessThanOrEqual(2);
+  });
+});
+
+function walkSrc(dir: string): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = `${dir}/${e.name}`;
+    if (e.isDirectory()) {
+      out.push(...walkSrc(p));
+    } else if (
+      /\.tsx?$/.test(e.name) &&
+      !/^(request-bodies|models-catalog)\./.test(e.name)
+    ) {
+      out.push(p);
+    }
+  }
+  return out;
+}

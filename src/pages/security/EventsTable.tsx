@@ -565,7 +565,13 @@ export function EventsTableSection({
                     const verdict = verdicts[verdictKey(row)] ?? "unreviewed";
                     return (
                       <TableRow
-                        className="cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent-muted motion-reduce:transition-none"
+                        // The row takes focus, so it needs the site ring
+                        // rather than the browser default, and the ring is
+                        // `inset`: the row is full-bleed inside the table
+                        // scrollport (`overflow-x-auto`) and the Card's
+                        // `overflow-hidden`, which cut the outset one on both
+                        // edges (design.md, Focus ring / Clipping).
+                        className="cursor-pointer transition-[background-color] duration-150 ease-out hover:bg-accent-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset motion-reduce:transition-none"
                         key={verdictKey(row)}
                         onClick={() => setSelectedRow(row)}
                         onKeyDown={(e) => {
@@ -1019,7 +1025,10 @@ function ThreatEventDetailBody({
               `min-h-16`, which auto-grows with the text; `field-sizing-fixed`
               + `h-35` pin it and `overflow-y-auto` scrolls the overflow
               instead. Sizing utilities only — the surface, radius, and border
-              stay the primitive's. */}
+              stay the primitive's.
+
+              design-allow-clip: the scrollport IS the control. A textarea's
+              own overflow cannot clip its own ring. */}
           <Textarea
             aria-label="Note"
             className="field-sizing-fixed h-35 resize-none overflow-y-auto"

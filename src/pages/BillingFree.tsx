@@ -787,25 +787,28 @@ function PaymentMethodCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4 rounded-xs border border-border bg-card-muted p-4">
-          <span className="type-label-12 inline-flex h-10 items-center rounded-sm border border-border bg-card px-2 text-foreground">
+        {/* The action lives in the row, not a CardFooter: it acts on THIS
+            card on file rather than on the section, and a second saved card
+            would want its own button instead of one ambiguous footer action.
+            Kept identical to the paid tiers' billing/PaymentMethodCard.tsx
+            `empty` state so the two cannot drift. */}
+        <div className="flex flex-wrap items-center gap-4 rounded-xs border border-border bg-card-muted px-4 py-3">
+          <span className="type-label-12 inline-flex h-10 shrink-0 items-center rounded-sm border border-border bg-card px-2 text-foreground">
             CARD
           </span>
-          <span className="type-copy-14 text-foreground">
+          <span className="type-copy-14 min-w-0 text-foreground">
             No payment method on file
           </span>
+          <Button className="ml-auto shrink-0" size="sm">
+            <Plus
+              aria-hidden
+              className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
+              data-icon="inline-start"
+            />
+            Add card
+          </Button>
         </div>
       </CardContent>
-      <CardFooter className="justify-end gap-2 border-border border-t py-2">
-        <Button size="sm">
-          <Plus
-            aria-hidden
-            className="transition-transform duration-150 ease-out group-hover/button:scale-110 motion-reduce:transition-none"
-            data-icon="inline-start"
-          />
-          Add card
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
