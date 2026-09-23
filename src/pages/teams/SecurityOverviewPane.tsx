@@ -57,6 +57,7 @@ import {
   ATTACK_MIX,
   HERO_CHART_CONFIG,
   RANGE_DELTA_NOTE,
+  splitEventMix,
 } from "@/pages/security/events-data";
 import {
   GuardrailEmptyState,
@@ -392,11 +393,18 @@ function HeroEventsCard({
     start: rangeDates[0] ?? new Date(),
     end: rangeDates.at(-1) ?? new Date(),
   };
-  const data = rangeDates.map((d, i) => ({
-    time: formatSparkLabel(d, true),
-    label: formatChartTooltipDate(d, hourly ? "hour" : "day", tipSpan),
-    requests: series[i] ?? 0,
-  }));
+  const data = rangeDates.map((d, i) => {
+    const requests = series[i] ?? 0;
+    return {
+      time: formatSparkLabel(d, true),
+      label: formatChartTooltipDate(d, hourly ? "hour" : "day", tipSpan),
+      requests,
+      // Per-bucket action split, the SAME largest-remainder allocator the
+      // Action-types bars use (reconciliation contract above), so the four
+      // tooltip rows sum to the bucket and the bars sum to the headline.
+      ...splitEventMix(requests),
+    };
+  });
   const domainTop = Math.max(...data.map((d) => d.requests), 1) + 1;
 
   // 4–7 evenly spaced ticks, same rule as the org hero; recharts thins them
@@ -505,7 +513,7 @@ function HeroEventsCard({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    hideIndicator
+                    className="min-w-36"
                     labelFormatter={(_label, items) =>
                       (items?.[0]?.payload as { label?: string } | undefined)
                         ?.label ?? ""
@@ -525,6 +533,36 @@ function HeroEventsCard({
                 stroke="var(--color-danger-500)"
                 strokeWidth={1.5}
                 type="linear"
+              />
+              {/* Tooltip-only series, the org Security hero recipe: zero-width
+                  stroke and no fill, so nothing draws and no active dot
+                  appears, but the tooltip reads each row's dot colour from
+                  the series stroke. `strokeWidth={0}`, never `stroke="none"`,
+                  or the dot has no colour to read. Labels and colours come
+                  from HERO_CHART_CONFIG. */}
+              <Area
+                activeDot={false}
+                dataKey="blocked"
+                fill="none"
+                isAnimationActive={false}
+                stroke="var(--color-danger-500)"
+                strokeWidth={0}
+              />
+              <Area
+                activeDot={false}
+                dataKey="flagged"
+                fill="none"
+                isAnimationActive={false}
+                stroke="var(--color-warning-500)"
+                strokeWidth={0}
+              />
+              <Area
+                activeDot={false}
+                dataKey="redacted"
+                fill="none"
+                isAnimationActive={false}
+                stroke="var(--color-neutral-400)"
+                strokeWidth={0}
               />
             </AreaChart>
           </ChartContainer>
