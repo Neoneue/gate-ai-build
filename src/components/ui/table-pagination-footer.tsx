@@ -38,10 +38,19 @@ import {
  * Rows-per-page offers 10 / 25 / 50 / All (user direction 2026-08-27: the
  * 100 step became All), minus any step larger than the list itself (user
  * direction 2026-09-07). Under 10 rows only "All" is left, and the select,
- * its label, and its separator drop out entirely — the count summary and
- * page controls are unchanged. "All" resolves to the whole list via
- * `resolveRowsPerPage`, which every consumer that slices its own rows must
- * use for its page math, so the option list and the slicing cannot drift.
+ * its label, and its separator drop out entirely — the count summary is
+ * unchanged. "All" resolves to the whole list via `resolveRowsPerPage`,
+ * which every consumer that slices its own rows must use for its page math,
+ * so the option list and the slicing cannot drift.
+ *
+ * The page-link strip renders only when there is more than one page (user
+ * direction 2026-09-23). A one-page list rendered a fully disabled Prev / 1
+ * / Next — chrome with nothing to operate. The predicate is `totalPages > 1`,
+ * never a row count, so it follows the rows-per-page the user picked. The
+ * count summary always stays: it is information rather than a control, and
+ * it holds the bar's height steady so nothing reflows when a list crosses
+ * the threshold. An empty table swaps the whole footer out instead — see
+ * `table-empty-state.tsx`.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -103,6 +112,10 @@ export function TablePaginationFooter({
   // one-option select is chrome with nothing to choose.
   const showRowsSelect = options.length > 1;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
+  // One page means Prev / 1 / Next are all dead; the strip is chrome with
+  // nothing to operate, so it drops out. The count summary stays and holds
+  // the bar's height.
+  const showPageStrip = totalPages > 1;
   const safePage = Math.min(Math.max(1, page), totalPages);
   const start = (safePage - 1) * perPage + 1;
   const end = Math.min(safePage * perPage, total);
@@ -153,55 +166,57 @@ export function TablePaginationFooter({
         ) : null}
       </div>
 
-      <Pagination className="mx-0 w-fit justify-end">
-        <PaginationContent className="gap-1">
-          <PaginationItem>
-            <PaginationPrevious
-              aria-disabled={safePage <= 1 || undefined}
-              className={
-                safePage <= 1 ? "pointer-events-none opacity-50" : undefined
-              }
-              disabled={safePage <= 1}
-              onClick={() => {
-                if (safePage > 1) {
-                  onPageChange(Math.max(1, safePage - 1));
+      {showPageStrip ? (
+        <Pagination className="mx-0 w-fit justify-end">
+          <PaginationContent className="gap-1">
+            <PaginationItem>
+              <PaginationPrevious
+                aria-disabled={safePage <= 1 || undefined}
+                className={
+                  safePage <= 1 ? "pointer-events-none opacity-50" : undefined
                 }
-              }}
-            />
-          </PaginationItem>
-          {pageWindow.map((entry, idx) =>
-            entry === "ellipsis-l" || entry === "ellipsis-r" ? (
-              <PaginationItem key={`${entry}-${idx}`}>
-                <PaginationEllipsis />
-              </PaginationItem>
-            ) : (
-              <PaginationItem key={entry}>
-                <PaginationLink
-                  className="w-auto min-w-8 px-2"
-                  isActive={safePage === entry}
-                  onClick={() => onPageChange(entry)}
-                >
-                  {entry}
-                </PaginationLink>
-              </PaginationItem>
-            )
-          )}
-          <PaginationItem>
-            <PaginationNext
-              aria-disabled={atLastPage || undefined}
-              className={
-                atLastPage ? "pointer-events-none opacity-50" : undefined
-              }
-              disabled={atLastPage}
-              onClick={() => {
-                if (!atLastPage) {
-                  onPageChange(Math.min(totalPages, safePage + 1));
+                disabled={safePage <= 1}
+                onClick={() => {
+                  if (safePage > 1) {
+                    onPageChange(Math.max(1, safePage - 1));
+                  }
+                }}
+              />
+            </PaginationItem>
+            {pageWindow.map((entry, idx) =>
+              entry === "ellipsis-l" || entry === "ellipsis-r" ? (
+                <PaginationItem key={`${entry}-${idx}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={entry}>
+                  <PaginationLink
+                    className="w-auto min-w-8 px-2"
+                    isActive={safePage === entry}
+                    onClick={() => onPageChange(entry)}
+                  >
+                    {entry}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            )}
+            <PaginationItem>
+              <PaginationNext
+                aria-disabled={atLastPage || undefined}
+                className={
+                  atLastPage ? "pointer-events-none opacity-50" : undefined
                 }
-              }}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+                disabled={atLastPage}
+                onClick={() => {
+                  if (!atLastPage) {
+                    onPageChange(Math.min(totalPages, safePage + 1));
+                  }
+                }}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      ) : null}
     </div>
   );
 }
