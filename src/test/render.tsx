@@ -64,7 +64,13 @@ export async function renderRoute(
         throw new Error(`route ${path} never resolved a page root`);
       }
     },
-    { timeout: 5000 }
+    // 20s, matching `mount-with-location.tsx`. Route mounts pay a lazy
+    // chunk's transform, and under CI's parallel load that has overrun a 5s
+    // wait: `team-security-member-email` failed on CI at 5059ms while the
+    // same commit passed locally and in a sibling CI run (2026-09-22). The
+    // wait is a ceiling, not a delay, so a healthy mount still resolves at
+    // once and only a genuinely dead route pays the full budget.
+    { timeout: 20_000 }
   );
 
   return result;
