@@ -1925,11 +1925,21 @@ Security page (HeroNumeric + Blocked/Flagged/Redacted BreakdownRow legend
 plus an area chart, NO delta chip) whose series is `teamSparkSeries` settled
 onto the findings headline, so sum(chart) = the hero number and range
 shapes share one backbone; Action types and Attack types as org-style
-horizontal-bar cards; By member as a table with one column per threat type
-(ATTACK_MIX order) plus an Events total: `TeamMemberSlice.byCategory`, each
+horizontal-bar cards; By member as a table of Member / **Email** / one column
+per threat type (ATTACK_MIX order) / an Events total, at `table-fixed` widths
+17/28/15/15/15/10 over a `min-w-[1000px]` floor (Email added 2026-09-22;
+rebalanced from 20/25 the same day, after the seeded addresses moved to the
+company domain made `mateus.silva@constellationnetwork.io` the longest one at
+265px needed against the 250px that 25% of the floor gave it):
+`TeamMemberSlice.byCategory`, each
 column allocated by member request weight so it sums EXACTLY to the Attack
 types card; the row total IS the sum of its three columns, so rows, columns
-and the headline all reconcile (test-guarded in `teams.test.ts`). The
+and the headline all reconcile (test-guarded in `teams.test.ts`). Email is
+not on the slice: it is read per row from the roster (`memberById(row.id)`),
+the same lookup the Monogram tone uses, so the cell can only ever show a real
+member's address; an id that resolves to nobody renders a dash. Sortable on
+`sortKey="email"` like every other column here, with an unresolved id sorting
+last. The
 by-member block is TWO of that table (2026-09-02), mirroring the Usage tab:
 "Events by current members" (`!former`) then, only when a former member has
 events, "Events by past members" — PRD 3's immutable history, so a member
