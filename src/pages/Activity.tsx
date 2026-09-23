@@ -723,7 +723,7 @@ function UsageByKey({
   const [query, setQuery] = useState("");
   const [hideRevoked, setHideRevoked] = useState(true);
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState("10");
+  const [rowsPerPage, setRowsPerPage] = useState("25");
   const scope = useViewScope();
 
   // Land on page 1 whenever the underlying ordering or window changes.
@@ -1031,6 +1031,7 @@ function UsageByKey({
               </TableBody>
             </Table>
             <TablePaginationFooter
+              minRowsPerPage={25}
               onPageChange={setPage}
               onRowsPerPageChange={setRowsPerPage}
               page={page}

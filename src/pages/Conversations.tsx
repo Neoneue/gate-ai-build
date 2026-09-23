@@ -743,6 +743,7 @@ function ConversationsTableSection({
               </Table>
 
               <TablePaginationFooter
+                minRowsPerPage={25}
                 onPageChange={setPage}
                 onRowsPerPageChange={setRowsPerPage}
                 page={page}

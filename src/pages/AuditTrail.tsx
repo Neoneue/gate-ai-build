@@ -669,6 +669,7 @@ function EventLog({ rows }: { rows: EventRow[] }) {
               </Table>
 
               <TablePaginationFooter
+                minRowsPerPage={25}
                 onPageChange={setPage}
                 onRowsPerPageChange={setRowsPerPage}
                 page={page}

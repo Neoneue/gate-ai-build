@@ -14,9 +14,24 @@ const ROWS_PER_PAGE_STEPS = [10, 25, 50] as const;
  *  page size larger than the list (user direction 2026-09-07 — a "50" on a
  *  25-row list is a no-op that reads as broken). "All" is always last, and
  *  is the only option once the list is shorter than the smallest step, in
- *  which case the footer drops the select entirely. */
-export function rowsPerPageOptions(total: number): string[] {
-  const steps = ROWS_PER_PAGE_STEPS.filter((n) => n <= total).map(String);
+ *  which case the footer drops the select entirely.
+ *
+ *  `minStep` is the floor the surface starts at, and composes with that rule
+ *  from the other end. Two buckets (user direction 2026-09-23): the Teams
+ *  surfaces keep the floor of 10, because a roster or a team list is short
+ *  and 25 would page nothing; every other table floors at 25, so the 10 step
+ *  is gone there. The floor never re-adds a step the list itself cannot
+ *  support — a 12-row list at floor 25 is still "All" alone.
+ *
+ *  A consumer that passes a floor MUST also default its own `rowsPerPage`
+ *  state to a value at or above it. A "10" held against a floor of 25 is
+ *  dropped from `options`, so the select displays "All" while the consumer's
+ *  `resolveRowsPerPage("10", total)` still slices 10 — the exact drift these
+ *  two helpers exist to prevent. */
+export function rowsPerPageOptions(total: number, minStep = 10): string[] {
+  const steps = ROWS_PER_PAGE_STEPS.filter(
+    (n) => n >= minStep && n <= total
+  ).map(String);
   return [...steps, ROWS_ALL];
 }
 

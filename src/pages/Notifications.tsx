@@ -1462,7 +1462,7 @@ function FeedSection({ hasFeed }: { hasFeed: boolean }) {
    *  change itself; switching tabs resets it here, because page 3 of the
    *  Inbox is a meaningless place to land in a two-row Archive. */
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState("10");
+  const [rowsPerPage, setRowsPerPage] = useState("25");
   /** Bulk-select, INBOX ONLY and scoped to the page you can see. Local to this
    *  section for the same reason `page` is: nothing else on the page — and
    *  nothing in the shared store — cares which rows you have ticked. It is
@@ -1751,6 +1751,7 @@ function FeedSection({ hasFeed }: { hasFeed: boolean }) {
                 </TableBody>
               </Table>
               <TablePaginationFooter
+                minRowsPerPage={25}
                 onPageChange={changePage}
                 onRowsPerPageChange={changeRowsPerPage}
                 page={safePage}

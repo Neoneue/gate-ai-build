@@ -43,6 +43,13 @@ import {
  * which every consumer that slices its own rows must use for its page math,
  * so the option list and the slicing cannot drift.
  *
+ * Page sizes split into two buckets by surface (user direction 2026-09-23),
+ * expressed as `minRowsPerPage`: the Teams surfaces keep the floor of 10
+ * (a roster or a team list is short, and 25 would page nothing); every other
+ * table passes `minRowsPerPage={25}`, dropping the 10 step there. A consumer
+ * that raises the floor must raise its own default `rowsPerPage` to match, or
+ * the select shows "All" while the consumer slices the smaller number.
+ *
  * The page-link strip renders only when there is more than one page (user
  * direction 2026-09-23). A one-page list rendered a fully disabled Prev / 1
  * / Next — chrome with nothing to operate. The predicate is `totalPages > 1`,
@@ -90,6 +97,9 @@ export type TablePaginationFooterProps = {
   rowsPerPage: string;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (rowsPerPage: string) => void;
+  /** Smallest page size this surface offers. 10 on the Teams surfaces (the
+   *  default), 25 everywhere else. See the bucket note above. */
+  minRowsPerPage?: number;
 };
 
 export function TablePaginationFooter({
@@ -98,9 +108,10 @@ export function TablePaginationFooter({
   rowsPerPage,
   onPageChange,
   onRowsPerPageChange,
+  minRowsPerPage = 10,
 }: TablePaginationFooterProps) {
   const perPage = resolveRowsPerPage(rowsPerPage, total);
-  const options = rowsPerPageOptions(total);
+  const options = rowsPerPageOptions(total, minRowsPerPage);
   // A page size the list can no longer support (a stale "50" on a 20-row
   // list) falls back to "All" for display, matching what
   // `resolveRowsPerPage` already does for the slice math. Derived in
