@@ -2007,6 +2007,19 @@ the team's Settings tab drops to the General block (rename / delete) with no
 `LockSettingsCard` — no plan-comparison dialog, no upsell card. Both panes are
 live and editable wherever they render.
 
+**When the team Settings tab renders at all (2026-09-22).** One expression,
+`showSettings = entitled || (!manager && !team.isDefault)`, decides the
+trigger, the panel and the render-time fallback that pushes a stale
+`tab === "settings"` back to Overview. Two cases hide it, for the same
+reason: the tab would hold no action. An unentitled MANAGER has no forced
+settings to read and no write beyond membership (PRD §5). An unentitled
+DEFAULT team can be neither renamed nor deleted (PRD 3 / 8.1), so General
+collapses to an informational `Callout`; that notice renders as the first
+block of the Overview panel instead, above the "Team overview" heading.
+Entitled keeps the tab in both cases, because Lock settings, Policies and
+Token savings are real content there, and Enterprise therefore keeps the
+default-team notice inside Settings rather than on Overview.
+
 **Loading states (2026-09-02, AG-695 item 10).** `src/pages/teams/use-theatre-loading.ts`
 holds the whole mechanism:
 

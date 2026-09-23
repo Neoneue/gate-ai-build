@@ -382,7 +382,12 @@ function TeamDetailBody({
   // what the Default workspace shows today. Unentitled MANAGER has nothing
   // left: no forced settings to read, and manager write beyond membership is
   // a non-goal (PRD §5), so the tab is hidden rather than rendered empty.
-  const showSettings = entitled || !manager;
+  // Same reasoning for the unentitled DEFAULT TEAM (user 2026-09-22): it can
+  // be neither renamed nor deleted (PRD 3 / 8.1), so General collapses to a
+  // notice and the tab would hold one sentence and no action. The notice
+  // moves to Overview below. Entitled keeps the tab on the default team —
+  // Lock settings, Policies and Token savings are real content there.
+  const showSettings = entitled || !(manager || team.isDefault);
   // Management tabs lead (user 2026-09-01): a fresh team is populated before
   // it is read, and a manager lands on their roster the way the Teams list
   // lands on teams. Data tabs (Usage, Budget, Security) follow.
@@ -465,7 +470,9 @@ function TeamDetailBody({
         // /teams/:teamId, and React reuses this instance (same element type,
         // same route position), so `tab` can still read "settings" after the
         // trigger stops rendering. Fall back to the first tab rather than
-        // paint an empty panel.
+        // paint an empty panel. It reads `showSettings` itself, so it covers
+        // the default team leaving Enterprise for Pro the same way it covers
+        // an admin leaving it for a manager view.
         value={tab === "settings" && !showSettings ? "overview" : tab}
       >
         <TabsList className="-mt-2 px-0" variant="line">
@@ -493,6 +500,19 @@ function TeamDetailBody({
               retitled after its tab. One range picker in the header drives
               all three. */}
           <div className="flex flex-col gap-6">
+            {/* What this team IS, ahead of what it did. The default team's
+                notice used to be the whole Settings tab on Pro and Default
+                (General collapses to it: nothing to rename, nothing to
+                delete); with that tab hidden it reads here instead, above
+                the "Team overview" heading so it frames the team rather
+                than qualifying the Usage block under it. Entitled keeps it
+                in Settings, where General still renders. */}
+            {team.isDefault && !showSettings ? (
+              <Callout>
+                Your org’s default team. People and keys removed from other
+                teams land here.
+              </Callout>
+            ) : null}
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
                 <PageTitle as="h2" className="type-heading-24">
