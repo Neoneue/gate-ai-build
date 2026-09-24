@@ -57,3 +57,4 @@ coverage/
 # Local secrets (TypeSafe / Jev key etc.)
 .env
 .env.*
+handoff-reference.md

@@ -180,28 +180,25 @@ const PRO_FEATURES: PlanFeature[] = [
   },
 ];
 
-/** Enterprise-only capabilities. Forced settings are H2 PRD §8.5 (org and
- *  team settings a team cannot override); the other three are the ticket's
- *  list: private cloud deployment, custom retention, procurement support. */
+/** Enterprise-only capabilities, the user's copy verbatim (2026-09-24). */
 const ENTERPRISE_FEATURES: PlanFeature[] = [
   {
-    // Title is the PRD's own term and stays; the detail states the same
-    // fact positively (PRD 8.5: "Forced settings apply to the team's
-    // traffic and are enforced at the gateway; teams see them as locked").
-    title: "Org and team forced settings",
-    detail: "Compression and security policies every team follows.",
-  },
-  {
     title: "Private cloud deployment",
-    detail: "Run the gateway in your own cloud.",
+    detail: "Gate running inside your own cloud, with data isolation",
   },
   {
-    title: "Custom retention",
-    detail: "Set how long request data is kept.",
+    title: "Custom limits and retention",
+    detail:
+      "Request volume, seats, rate limits, and retention set to your policy",
   },
   {
-    title: "Procurement support",
-    detail: "Security review, DPA, and invoicing through Support.",
+    title: "Security review and contracting",
+    detail:
+      "We complete your security questionnaire, sign a DPA, and invoice on your terms",
+  },
+  {
+    title: "Premium support",
+    detail: "A named contact, guided onboarding, and a committed response time",
   },
 ];
 
@@ -401,7 +398,7 @@ const enterpriseCard = (tier: PlanTier): PlanCardData => {
       badge: CURRENT_PLAN_BADGE("enterprise"),
       title: "Enterprise plan",
       price: "Custom",
-      benefitsLabel: "Included with the Enterprise plan:",
+      benefitsLabel: "Everything in Pro, plus what we scope with you:",
       features: ENTERPRISE_FEATURES,
       // The same control every current plan carries on every view, so "this
       // is the one you are on" reads identically across the ladder. Outline
@@ -416,7 +413,7 @@ const enterpriseCard = (tier: PlanTier): PlanCardData => {
     id: "enterprise",
     title: "Enterprise plan",
     price: "Custom",
-    benefitsLabel: "Included with the Enterprise plan:",
+    benefitsLabel: "Everything in Pro, plus what we scope with you:",
     features: ENTERPRISE_FEATURES,
     actions: CONTACT_ACTIONS,
     // Seat-based Stripe billing, H2 PRD §3 / §10.
