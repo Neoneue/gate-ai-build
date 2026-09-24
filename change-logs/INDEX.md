@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-09-24](./2026-09/changelog-9-24.md)
 
+- Plans: feature details drop their trailing periods
 - Plans: the Enterprise card lists four scoped features
 
 ### [2026-09-23](./2026-09/changelog-9-23.md)

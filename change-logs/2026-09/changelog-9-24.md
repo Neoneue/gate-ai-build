@@ -22,3 +22,13 @@ user's copy verbatim.
   contracting, Premium support. Details carry no trailing periods.
 - "Org and team forced settings" is removed. `BillingEnterprise.tsx` is
   unchanged.
+
+### Plans: feature details drop their trailing periods (`data/plans.ts`) · [c8f7597]
+
+Every plan feature `detail` string now matches the Enterprise card, which
+already carried no trailing periods.
+
+- **Before:** Free and Pro details ended in periods; Enterprise did not.
+- **After:** no detail ends in a period. 19 strings, wording unchanged.
+- **Where:** `data/plans.ts`, `Upgrade.tsx`, `plan-comparison-dialog.tsx`,
+  `plan-comparison-dialog-pro.tsx`.
