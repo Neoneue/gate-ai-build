@@ -156,27 +156,27 @@ const FREE_FEATURES: PlanFeature[] = [
   },
   {
     title: "Conversation threading",
-    detail: "Follow agent runs and chats end-to-end.",
+    detail: "Follow agent runs and chats end-to-end",
   },
 ];
 
 const PRO_FEATURES: PlanFeature[] = [
   {
     title: "Prompt injection scanning",
-    detail: "Block or flag before tokens reach the model.",
+    detail: "Block or flag before tokens reach the model",
   },
   {
     title: "PII, PHI & credential redaction",
-    detail: "Redacted before the response returns.",
+    detail: "Redacted before the response returns",
   },
   {
     title: "Spend, token & rate limits",
-    detail: "Caps at the org, project, or key level.",
+    detail: "Caps at the org, project, or key level",
   },
   {
     title: "Token savings",
     detail:
-      "20%+ tokens saved per request via lossless compression and cache injection.",
+      "20%+ tokens saved per request via lossless compression and cache injection",
   },
 ];
 

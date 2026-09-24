@@ -68,7 +68,7 @@ const FREE_PLAN: PlanCardData = {
     {
       Icon: MessagesSquare,
       title: "Conversation threading",
-      detail: "Follow agent runs and chats end-to-end.",
+      detail: "Follow agent runs and chats end-to-end",
     },
   ],
   cta: {
@@ -90,23 +90,23 @@ const PRO_PLAN: PlanCardData = {
     {
       Icon: ShieldAlert,
       title: "Prompt injection scanning",
-      detail: "Block or flag before tokens reach the model.",
+      detail: "Block or flag before tokens reach the model",
     },
     {
       Icon: EyeOff,
       title: "PII, PHI & credential redaction",
-      detail: "Redacted before the response returns.",
+      detail: "Redacted before the response returns",
     },
     {
       Icon: SlidersHorizontal,
       title: "Spend, token & rate limits",
-      detail: "Caps at the org, project, or key level.",
+      detail: "Caps at the org, project, or key level",
     },
     {
       Icon: Recycle,
       title: "Token savings",
       detail:
-        "20%+ tokens saved per request via lossless compression and cache injection.",
+        "20%+ tokens saved per request via lossless compression and cache injection",
     },
   ],
   cta: {
