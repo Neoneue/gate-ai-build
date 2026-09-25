@@ -185,8 +185,8 @@ describe("rankSeries", () => {
       "anthropic/claude-opus-4-8",
       "anthropic/claude-opus-4-7",
       "google/gemini-3-1-pro-preview",
-      "anthropic/claude-sonnet-5",
       "qwen/qwen3-next-80b-a3b-instruct",
+      "anthropic/claude-sonnet-5",
       OTHERS_KEY,
     ]);
   });

@@ -1,14 +1,16 @@
 import type { Vendor } from "@/components/icons/vendor-meta";
 import { PROVIDER_META } from "@/components/icons/vendor-meta";
+import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { MESSAGE_TOTALS, messageTotalFor } from "@/data/message-totals";
 import { costOf, modelById, modelName, type ProviderId } from "@/data/models";
-import { isByokKey, REQUEST_ROWS_ALL } from "@/data/requests";
+import { isByokKey, REQUEST_ROWS_ALL, requestDate } from "@/data/requests";
 import { CHART_PALETTE } from "@/lib/chart-palette";
 import {
   type CustomRange,
   daysInRange,
   type PresetRange,
   type Range,
+  rangeWindow,
 } from "@/lib/range";
 
 export type Dimension = "model" | "provider" | "apiKey";
@@ -121,7 +123,10 @@ export function savingsCurve(
  * Messages: a key's share of a range's MESSAGE_TOTALS is its share of those
  * rows (design-agent sent 102 of the 153, so it carries two thirds of every
  * range). Shares are settled per range so the per-key counts sum EXACTLY to
- * the range total. A key with no rows (ci-runner) sends 0.
+ * the range total. A key with no rows (ci-runner) sends 0, and so does a
+ * revoked key in any window that opens after its last activity (the later of
+ * its last real row and the Keys page's last-used date): a revoked key
+ * cannot send today, so its share goes to the keys that could.
  *
  * Spend: messages times what that key's rows actually cost per message. A row
  * whose cost reads "—" is unmetered and sits out of the average. BYOK keys
@@ -214,6 +219,31 @@ export type KeyUsageAt = {
 
 const KEY_USAGE_CACHE = new Map<string, KeyUsageAt>();
 
+/** Last instant each key was active: its latest real row, or the Keys page's
+ *  last-used date when that is later. */
+const KEY_LAST_ACTIVE: Map<string, number> = (() => {
+  const out = new Map<string, number>();
+  for (const row of REQUEST_ROWS_ALL) {
+    const t = requestDate(row).getTime();
+    out.set(row.keyId, Math.max(out.get(row.keyId) ?? 0, t));
+  }
+  for (const k of API_KEY_SEED_ROWS) {
+    if (k.lastUsed) {
+      out.set(k.name, Math.max(out.get(k.name) ?? 0, k.lastUsed.getTime()));
+    }
+  }
+  return out;
+})();
+
+/** True when `key` is revoked on the Keys page (the key's record) and went
+ *  quiet before `from`. */
+function keyRetiredBefore(key: string, from: Date): boolean {
+  const record = API_KEY_SEED_ROWS.find((k) => k.name === key);
+  return (
+    record?.revoked === true && (KEY_LAST_ACTIVE.get(key) ?? 0) < from.getTime()
+  );
+}
+
 /** Messages, spend and tokens per key for a range. Every Activity count,
  *  dollar and token reads this, so the KPIs, the key table and the
  *  breakdowns are one set of numbers. */
@@ -222,18 +252,21 @@ export function keyUsageAt(
   customRange: CustomRange | null
 ): KeyUsageAt {
   const total = messageTotalFor(range, customRange);
-  const cacheKey = `${total}`;
+  const window = rangeWindow(range, customRange);
+  const cacheKey = `${total}|${window?.from.getTime() ?? "all"}`;
   const hit = KEY_USAGE_CACHE.get(cacheKey);
   if (hit) {
     return hit;
   }
-  const rowTotal =
-    Object.values(KEY_ROW_STATS).reduce((a, s) => a + s.rows, 0) || 1;
+  const live = Object.entries(KEY_ROW_STATS).filter(
+    ([key]) => !(window && keyRetiredBefore(key, window.from))
+  );
+  const rowTotal = live.reduce((a, [, s]) => a + s.rows, 0) || 1;
   const messages = settle(
     Object.fromEntries(
       Object.entries(KEY_ROW_STATS).map(([key, s]) => [
         key,
-        (s.rows * total) / rowTotal,
+        live.some(([k]) => k === key) ? (s.rows * total) / rowTotal : 0,
       ])
     ),
     0
@@ -1181,6 +1214,8 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     savings: 0.25,
   },
   {
+    // Revoked and never used, matching the Keys page: no Messages row
+    // carries it, so every usage figure is a real zero.
     key: "ci-runner",
     label: "ci-runner",
     owner: "Jordan Lee",
@@ -1201,10 +1236,10 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     owner: "Mateus Silva",
     path: "Gate",
     savings: 0.285,
-    revoked: true,
   },
-  // Matches the Keys page's revoked test-key (sk-gw-…255e): never used, so
-  // every usage figure is a real zero, not a scaled-down count.
+  // Matches the Keys page's revoked test-key (sk-gw-…255e). It carries real
+  // Messages rows, so it has lifetime usage; revoked, it reads 0 in any
+  // window after its last row.
   {
     key: "test-key",
     label: "test-key",

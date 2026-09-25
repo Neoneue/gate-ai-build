@@ -99,7 +99,7 @@ describe("view scope: managers and members read their own keys", () => {
     // Pinned in teams.test.ts; restated here so the re-attribution of
     // conversations (which never feeds these) is provably neutral.
     const org = TEAM_SEED_ROWS.reduce((a, t) => a + usageForTeam(t).spend, 0);
-    expect(org).toBeCloseTo(2.38, 2);
+    expect(org).toBeCloseTo(2.41, 2);
   });
 });
 

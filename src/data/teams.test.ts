@@ -268,12 +268,12 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
     bad.push(`org ${org} != team sum ${teamSum}`);
   }
   // Real rows' spend (messages × cost per message) since 2026-09-25.
-  if (org !== 2.38) {
-    bad.push(`org ${org} != 2.38 (rendered bar)`);
+  if (org !== 2.41) {
+    bad.push(`org ${org} != 2.41 (rendered bar)`);
   }
   const orgCap = ORG_BUDGET_SEED.caps.monthly ?? 0;
-  if (budgetPercentLabel(org, orgCap) !== "15.9%") {
-    bad.push(`org pct ${budgetPercentLabel(org, orgCap)} != 15.9%`);
+  if (budgetPercentLabel(org, orgCap) !== "16.1%") {
+    bad.push(`org pct ${budgetPercentLabel(org, orgCap)} != 16.1%`);
   }
   // window scale is strictly increasing in canonical order
   for (let i = 1; i < BUDGET_WINDOW_ORDER.length; i++) {

@@ -57,7 +57,9 @@ export const API_KEY_SEED_ROWS: ApiKeyRow[] = [
     ownerId: "usr_chad",
     requests7d: [0, 0, 0, 0, 0, 0, 0],
     createdAt: authoredDate(2026, 3, 18, 9, 0, 0), // authored 2026-04-18 09:00:00
-    lastUsed: null,
+    // Its latest Messages row (cnv_vela_21, May 12 09:40:44): the key has
+    // real traffic, so "never used" would contradict the Messages page.
+    lastUsed: authoredDate(2026, 4, 12, 9, 40, 44), // authored 2026-05-12 09:40:44
     revoked: true,
   },
   {
@@ -125,9 +127,11 @@ export const API_KEY_SEED_ROWS: ApiKeyRow[] = [
     name: "ci-runner",
     masked: "sk-gw-…14f7",
     ownerId: "usr_jordan",
-    // Spiky — fires on merges, silent between them.
-    requests7d: [3, 0, 6, 1, 5, 0, 4],
+    // Minted for a CI pipeline that never ran, then revoked: no Messages row
+    // carries this key, so it has no traffic anywhere on the site.
+    requests7d: [0, 0, 0, 0, 0, 0, 0],
     createdAt: authoredDate(2026, 4, 5, 8, 15, 29), // authored 2026-05-05 08:15:29
-    lastUsed: authoredDate(2026, 4, 18, 6, 12, 48), // authored 2026-05-18 06:12:48
+    lastUsed: null,
+    revoked: true,
   },
 ];

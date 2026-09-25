@@ -367,14 +367,15 @@ export const ORG_BUDGET_SEED: TeamBudget = {
  *
  *  Derived 7d figures (from activity-data, not authored; spend is each key's
  *  real messages × its rows' cost per message since 2026-09-25):
- *    · Default: Chad; prod-web $0.21 + prod-agent $1.45 + design-agent (BYOK,
- *      $0) = $1.66 over 362 messages.
+ *    · Default: Chad; prod-web $0.23 + prod-agent $1.45 + design-agent (BYOK,
+ *      $0) = $1.68 over 368 messages.
  *    · Development: Kira (manager) + Mateus; openclaw/nova-chat/hermes-agent
- *      are BYOK ($0), atlas-eval is metered = $0.29 over 88 messages. Its
+ *      are BYOK ($0), atlas-eval is metered = $0.30 over 91 messages. Its
  *      soft budget has all three windows (5h $1, weekly $2.50, monthly $7),
  *      so it is the seed that exercises multi-window budgets.
- *    · Design: Jordan (manager); development $0.43 + ci-runner (no messages,
- *      $0) = $0.43 over 9 messages, against a $7 monthly soft budget. */
+ *    · Design: Jordan (manager); development $0.43 over 9 messages, against
+ *      a $7 monthly soft budget. ci-runner is revoked and never used, so no
+ *      team holds it. */
 export const TEAM_SEED_ROWS: TeamRow[] = [
   {
     id: "team_default",
@@ -419,7 +420,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     memberIds: ["usr_jordan"],
     // Jordan joined the org 2026-06-06 (team-members.ts); the team two days on.
     memberJoined: { usr_jordan: authoredDate(2026, 5, 8) },
-    keyIds: keyIds("development", "ci-runner"),
+    keyIds: keyIds("development"),
     managerIds: ["usr_jordan"],
     budget: {
       name: "Team budget",

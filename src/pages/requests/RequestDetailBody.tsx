@@ -1386,6 +1386,12 @@ function buildRequestBodyLines(
    conversation reads coherently top-to-bottom. Errors and blocks are
    absent — see `RequestBodyPanel` for which statuses produce a response. */
 function sampleResponseText(row: RequestRow): string {
+  // A blocked request never reaches the provider, and a failed one returned
+  // nothing usable, so neither has an assistant turn to show. Empty here
+  // means every caller skips the response block.
+  if (row.guardrail === "block" || row.status === "error") {
+    return "";
+  }
   if (row.guardrail === "flagged") {
     return 'Here is a quick line you could use: "That deck looked like Clippy designed it on a Saturday night."';
   }
