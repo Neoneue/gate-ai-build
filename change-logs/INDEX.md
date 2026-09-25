@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-25](./2026-09/changelog-9-25.md)
+
+- Messages: Device name column and filter, columns reordered
+
 ### [2026-09-24](./2026-09/changelog-9-24.md)
 
 - Plans: feature details drop their trailing periods

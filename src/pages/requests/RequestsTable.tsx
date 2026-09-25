@@ -54,6 +54,7 @@ import {
 } from "@/data/requests";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { withTierOf } from "@/lib/plan";
+import { API_KEY_ROWS } from "@/pages/activity-data";
 import { inScope, useViewScope } from "@/pages/teams/view-scope";
 import { useBudgetBlockRows } from "./budget-block-rows";
 import {
@@ -67,6 +68,18 @@ import {
 } from "./data";
 import { messagePreview } from "./message-preview";
 import type { CustomRange, RangeKey, RequestRow } from "./types";
+
+/** keyId -> device name, read from the Activity page's key rows so the two
+ *  "Device name" columns can never disagree. API_KEY_ROWS already resolves
+ *  per-key overrides (prod-agent runs from the Macbook Air). A key with no
+ *  row, or an owner with no device (activity-data renders that as "—"),
+ *  resolves to undefined and the cell shows the em dash + sr-only note. */
+const DEVICE_BY_KEY = new Map(
+  API_KEY_ROWS.filter((r) => r.device !== "—").map((r) => [r.key, r.device])
+);
+function deviceForKey(keyId: string): string | undefined {
+  return DEVICE_BY_KEY.get(keyId);
+}
 
 /* ─── Table section (toolbar + table in one card · pagination below) ─────
  *
@@ -126,6 +139,7 @@ export function RequestsTableSection({
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("all");
   const [keyId, setKeyId] = useState("all");
+  const [device, setDevice] = useState("all");
   // Response + guardrail filters are independent (split out of the single
   // status filter per CTO direction). 'slow' in the response filter is an
   // alias for `row.slow === true` rather than a status value.
@@ -140,6 +154,7 @@ export function RequestsTableSection({
   const activeFilterCount = [
     model,
     keyId,
+    device,
     responseFilter,
     guardrailFilter,
   ].filter((v) => v !== "all").length;
@@ -150,11 +165,13 @@ export function RequestsTableSection({
   // open. Apply commits draft → committed; Cancel just closes.
   const [draftModel, setDraftModel] = useState("all");
   const [draftKeyId, setDraftKeyId] = useState("all");
+  const [draftDevice, setDraftDevice] = useState("all");
   const [draftResponseFilter, setDraftResponseFilter] = useState("all");
   const [draftGuardrailFilter, setDraftGuardrailFilter] = useState("all");
   const draftActiveFilterCount = [
     draftModel,
     draftKeyId,
+    draftDevice,
     draftResponseFilter,
     draftGuardrailFilter,
   ].filter((v) => v !== "all").length;
@@ -165,25 +182,34 @@ export function RequestsTableSection({
   const openFilters = useCallback(() => {
     setDraftModel(model);
     setDraftKeyId(keyId);
+    setDraftDevice(device);
     setDraftResponseFilter(responseFilter);
     setDraftGuardrailFilter(guardrailFilter);
     setFiltersOpen(true);
-  }, [model, keyId, responseFilter, guardrailFilter]);
+  }, [model, keyId, device, responseFilter, guardrailFilter]);
   // Reset clears the DRAFT only (staged); committed state is untouched until
   // Apply.
   const resetFilters = useCallback(() => {
     setDraftModel("all");
     setDraftKeyId("all");
+    setDraftDevice("all");
     setDraftResponseFilter("all");
     setDraftGuardrailFilter("all");
   }, []);
   const applyFilters = useCallback(() => {
     setModel(draftModel);
     setKeyId(draftKeyId);
+    setDevice(draftDevice);
     setResponseFilter(draftResponseFilter);
     setGuardrailFilter(draftGuardrailFilter);
     setFiltersOpen(false);
-  }, [draftModel, draftKeyId, draftResponseFilter, draftGuardrailFilter]);
+  }, [
+    draftModel,
+    draftKeyId,
+    draftDevice,
+    draftResponseFilter,
+    draftGuardrailFilter,
+  ]);
   const [rowsPerPage, setRowsPerPage] = useState("25");
   // `query` joins the scope key so a new search resets to page 1 — same
   // effect as the Events resetKey, reusing the reset mechanism this file
@@ -221,6 +247,19 @@ export function RequestsTableSection({
   // things the row shows: model label, key name, request id, and the message
   // preview. Transcript bodies are NOT searched — `messagePreview` reads the
   // precomputed one-line map, so this stays off the 425 KB blob.
+  // Devices present on the scoped rows, so a Manager or Member only sees the
+  // machines their own keys run from.
+  const deviceOptions = useMemo(
+    () =>
+      [
+        ...new Set(
+          rows
+            .map((r) => deviceForKey(r.keyId))
+            .filter((d): d is string => d !== undefined)
+        ),
+      ].sort(),
+    [rows]
+  );
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
@@ -234,8 +273,16 @@ export function RequestsTableSection({
         guardrailFilter === "all" ? true : r.guardrail === guardrailFilter;
       const matchesModel = model === "all" ? true : r.model === model;
       const matchesKey = keyId === "all" ? true : r.keyId === keyId;
+      const matchesDevice =
+        device === "all" ? true : deviceForKey(r.keyId) === device;
       if (
-        !(matchesResponse && matchesGuardrail && matchesModel && matchesKey)
+        !(
+          matchesResponse &&
+          matchesGuardrail &&
+          matchesModel &&
+          matchesKey &&
+          matchesDevice
+        )
       ) {
         return false;
       }
@@ -249,17 +296,22 @@ export function RequestsTableSection({
         messagePreview(r) ?? "",
       ].some((field) => field.toLowerCase().includes(q));
     });
-  }, [rows, responseFilter, guardrailFilter, model, keyId, query]);
+  }, [rows, responseFilter, guardrailFilter, model, keyId, device, query]);
 
   // Click-to-sort on column headers. No sort by default → rows stay in their
   // authored (chronological) order; picking a column sorts client-side.
   const { sort, toggle: toggleSort } = useTableSort();
   // `message` is resolved here rather than inside requestSortValue so the
-  // request-body module stays out of ./data — see message-preview.ts. Every
-  // other key falls through to the shared accessor.
+  // request-body module stays out of ./data — see message-preview.ts.
+  // `device` is resolved here for the same reason: it reads activity-data,
+  // which ./data (imported by other routes) should not pull in. Every other
+  // key falls through to the shared accessor.
   const sortValue = useCallback((row: RequestRow, key: string) => {
     if (key === "message") {
       return messagePreview(row) ?? null;
+    }
+    if (key === "device") {
+      return deviceForKey(row.keyId) ?? null;
     }
     return requestSortValue(row, key);
   }, []);
@@ -348,6 +400,50 @@ export function RequestsTableSection({
 
               <div className="flex flex-col gap-2">
                 <Label className="type-label-14 text-muted-foreground">
+                  Key
+                </Label>
+                <Select onValueChange={setDraftKeyId} value={draftKeyId}>
+                  <SelectTrigger
+                    aria-label="Key"
+                    className="w-full border-border bg-card text-foreground"
+                    id="filter-key"
+                  >
+                    <SelectValue placeholder="Key" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All keys</SelectItem>
+                    {keyOptions.map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {k}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="type-label-14 text-muted-foreground">
+                  Device name
+                </Label>
+                <Select onValueChange={setDraftDevice} value={draftDevice}>
+                  <SelectTrigger
+                    aria-label="Device name"
+                    className="w-full border-border bg-card text-foreground"
+                    id="filter-device"
+                  >
+                    <SelectValue placeholder="Device name" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All devices</SelectItem>
+                    {deviceOptions.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="type-label-14 text-muted-foreground">
                   Model
                 </Label>
                 <Select onValueChange={setDraftModel} value={draftModel}>
@@ -364,28 +460,6 @@ export function RequestsTableSection({
                       <SelectItem key={m.value} value={m.value}>
                         <VendorAvatar decorative vendor={m.vendor} />
                         {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="type-label-14 text-muted-foreground">
-                  Key
-                </Label>
-                <Select onValueChange={setDraftKeyId} value={draftKeyId}>
-                  <SelectTrigger
-                    aria-label="Key"
-                    className="w-full border-border bg-card text-foreground"
-                    id="filter-key"
-                  >
-                    <SelectValue placeholder="Key" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All keys</SelectItem>
-                    {keyOptions.map((k) => (
-                      <SelectItem key={k} value={k}>
-                        {k}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -501,9 +575,10 @@ export function RequestsTableSection({
 
                 `need` is the measurement and does not move. `%` and `px` are
                 the current declaration, re-derived on 2026-08-20 after the
-                four narrowing steps below; `px` is `% / 94 * 1484`, since the
-                declared percentages sum to 94 (see the note under the
-                history).
+                four narrowing steps below; `px` is `% / 102 * 1612`, since the
+                declared percentages sum to 102 (see the note under the
+                history). Device name was added 2026-09-25 at the same
+                ~15.8px per point, so no earlier column moved.
 
                   col            %      px    need   slack
                   Time          9.5    150    138     +12
@@ -513,6 +588,7 @@ export function RequestsTableSection({
                   Message      15.5    245   4501  elastic
                   Conversation 15.5    245    401  elastic
                   Key           8.5    134    125      +9
+                  Device name   8.0    126    123      +3
                   Tokens        8.5    134    121     +13
                   Latency       6.5    103     92     +11
                   Cost          5.5     87     74     +13
@@ -566,15 +642,23 @@ export function RequestsTableSection({
                 width (Time is 9.5/94 * 1484 = 149.96px), and it lands on the
                 4px grid. Model goes to 189px (+33) and Cost to 87px (+13),
                 both still comfortable, and every other column is unmoved.
+                -> 1612 (2026-09-25): Device name added after Key at 8%. It is
+                HEADER-bound: "Device name" plus its sort icon needs ~123px
+                against ~113px for the widest value ("OpenClaw PC", 89px + 24px
+                padding). 8 points at the old ~15.79px per point is ~126px
+                (+3), so the floor rises by that much: 1484 + 126.3 = 1610.3,
+                rounded up to the 4px grid. Time is 9.5/102 * 1612 = 150.1px,
+                so every other column keeps its pixel width.
 
-                The eight non-elastic columns need 898px in total, so at the
-                1226px content column 328px remains for Message +
+                The nine non-elastic columns need 1021px in total, so at the
+                1226px content column 205px remains for Message +
                 Conversation — that, not tuning, is why this table
                 side-scrolls. (This read 998px / 228px until 2026-08-20; the
-                need column above sums to 898 and always did, so the old
+                need column summed to 898 and always did, so the old
                 figure was an arithmetic slip, not a changed measurement.)
 
-                The head percentages therefore sum to 94, not 100. That is
+                The head percentages therefore sum to 102, not 100 (94 before
+                Device name). That is
                 deliberate and load-bearing: `table-fixed` hands the spare
                 six points back proportionally, which is what keeps a column
                 that was NOT narrowed at roughly its old pixel width as the
@@ -583,7 +667,7 @@ export function RequestsTableSection({
 
                 No new breakpoints: the `overflow-x-auto` on the table
                 container already side-scrolls below the floor. */}
-            <Table className="min-w-[1484px] table-fixed">
+            <Table className="min-w-[1612px] table-fixed">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <SortableTableHead
@@ -611,12 +695,20 @@ export function RequestsTableSection({
                     Security
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[12%] whitespace-nowrap"
+                    className="w-[8.5%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
-                    sortKey="model"
+                    sortKey="keyId"
                   >
-                    Model
+                    Key
+                  </SortableTableHead>
+                  <SortableTableHead
+                    className="w-[8%] whitespace-nowrap"
+                    onSort={toggleSort}
+                    sort={sort}
+                    sortKey="device"
+                  >
+                    Device name
                   </SortableTableHead>
                   <SortableTableHead
                     className="w-[15.5%] whitespace-nowrap"
@@ -635,12 +727,12 @@ export function RequestsTableSection({
                     Conversation
                   </SortableTableHead>
                   <SortableTableHead
-                    className="w-[8.5%] whitespace-nowrap"
+                    className="w-[12%] whitespace-nowrap"
                     onSort={toggleSort}
                     sort={sort}
-                    sortKey="keyId"
+                    sortKey="model"
                   >
-                    Key
+                    Model
                   </SortableTableHead>
                   <SortableTableHead
                     className="w-[8.5%] whitespace-nowrap"
@@ -740,6 +832,7 @@ export function RequestsTableSection({
                         : "text-foreground";
                   const conversationName = conversationTitle(row.conversation);
                   const messageText = messagePreview(row);
+                  const deviceName = deviceForKey(row.keyId);
                   return (
                     <TableRow
                       className="cursor-pointer transition-[background-color] duration-150 ease-out motion-reduce:transition-none"
@@ -790,30 +883,49 @@ export function RequestsTableSection({
                           {row.guardrail}
                         </Badge>
                       </TableCell>
+                      <TableCell className="type-mono-14 whitespace-nowrap">
+                        {/* Two bounds, both needed: `keyLabel` caps the string
+                            at 20 characters, and `truncate` holds the column
+                            edge — 20 mono characters are wider than the
+                            column, so the cap alone would still spill into
+                            Message. Full value on hover. */}
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={(props) => (
+                              <span
+                                {...props}
+                                className="block truncate text-foreground"
+                              >
+                                {keyLabel(row.keyId)}
+                              </span>
+                            )}
+                          />
+                          <TooltipContent>{row.keyId}</TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      {/* Device name — same cell as the Activity page's
+                          column (Activity.tsx), resolved from the row's key
+                          via DEVICE_BY_KEY. A key with no device renders the
+                          em dash + sr-only note, never a guessed name. */}
                       <TableCell className="whitespace-nowrap">
-                        <RowActionButton
-                          aria-label={`Inspect ${row.code} message to ${modelName(row.model)} at ${row.time}`}
-                          href={findingsPath(row)}
-                        >
-                          <VendorAvatar vendor={row.vendor} />
-                          {/* Name only. A canonical-id second line was added
-                              here on 2026-08-03 and removed the same day —
-                              the catalog reconciliation was a DATA change and
-                              had no business restructuring this cell. */}
-                          {/* Copy voice, not Label, even though this span is
-                              the row's drill-in target: it is the row
-                              IDENTIFIER, read alongside Message /
-                              Conversation / Key, which all sit at 400. A
-                              500 weight here made Model the one column that
-                              shouted (2026-08-20). design-allow-copy-voice —
-                              see design.md §3. */}
+                        {deviceName ? (
                           <span
-                            className="type-copy-14 block truncate text-foreground"
-                            title={modelName(row.model)}
+                            className="type-copy-14 block max-w-[20ch] truncate text-foreground"
+                            title={deviceName}
                           >
-                            {modelName(row.model)}
+                            {deviceName}
                           </span>
-                        </RowActionButton>
+                        ) : (
+                          <>
+                            <span
+                              aria-hidden
+                              className="type-copy-14 text-muted-foreground"
+                            >
+                              —
+                            </span>
+                            <span className="sr-only">No device recorded</span>
+                          </>
+                        )}
                       </TableCell>
                       {/* Message — same two-line shape as Conversation, but
                           per-REQUEST rather than per-conversation: what this
@@ -903,25 +1015,30 @@ export function RequestsTableSection({
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="type-mono-14 whitespace-nowrap">
-                        {/* Two bounds, both needed: `keyLabel` caps the string
-                            at 20 characters, and `truncate` holds the column
-                            edge — 20 mono characters are wider than the
-                            column, so the cap alone would still spill into
-                            Tokens. Full value on hover. */}
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={(props) => (
-                              <span
-                                {...props}
-                                className="block truncate text-foreground"
-                              >
-                                {keyLabel(row.keyId)}
-                              </span>
-                            )}
-                          />
-                          <TooltipContent>{row.keyId}</TooltipContent>
-                        </Tooltip>
+                      <TableCell className="whitespace-nowrap">
+                        <RowActionButton
+                          aria-label={`Inspect ${row.code} message to ${modelName(row.model)} at ${row.time}`}
+                          href={findingsPath(row)}
+                        >
+                          <VendorAvatar vendor={row.vendor} />
+                          {/* Name only. A canonical-id second line was added
+                              here on 2026-08-03 and removed the same day —
+                              the catalog reconciliation was a DATA change and
+                              had no business restructuring this cell. */}
+                          {/* Copy voice, not Label, even though this span is
+                              the row's drill-in target: it is the row
+                              IDENTIFIER, read alongside Message /
+                              Conversation / Key, which all sit at 400. A
+                              500 weight here made Model the one column that
+                              shouted (2026-08-20). design-allow-copy-voice —
+                              see design.md §3. */}
+                          <span
+                            className="type-copy-14 block truncate text-foreground"
+                            title={modelName(row.model)}
+                          >
+                            {modelName(row.model)}
+                          </span>
+                        </RowActionButton>
                       </TableCell>
                       {/* Tokens in and out share one column. Both were
                           HEADER-bound, not value-bound: "Tokens Out" needed
