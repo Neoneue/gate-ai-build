@@ -30,3 +30,53 @@ filter, and two columns move.
   scope-filtered rows, sorted, plus "All devices"), wired through draft,
   apply, reset and the active count. Field order is now Key, Device name,
   Model, Response, Guardrail.
+
+### Messages: every row shows a message, flagged rows get matching findings (`data/authored-request-bodies.ts`) · [1659527]
+
+- **Before:** 51 rows on `/messages` rendered a dash in the Message column
+  and detail body because no captured body existed for them. **After:**
+  each has an authored user message in the new
+  `src/data/authored-request-bodies.ts`, merged in `getRequestBody` as a
+  fallback after the verbatim captures in `request-bodies.ts`. Previews in
+  `request-previews.ts` regenerated: 153/153 rows resolve.
+- **Findings:** 18 flagged, redacted or blocked legacy rows in
+  `data/requests.ts` now carry findings that match their message text
+  (evidence equals the message; the match is masked in the preview).
+
+### Activity reconciled to the Messages page (`data/message-totals.ts`) · [1659527]
+
+- **Single source:** new `MESSAGE_TOTALS` (48 / 468 / 2,248 / 4,860 per
+  range) feeds the Activity KPIs, key table and trend
+  (`activity-data.ts`, `Activity.tsx`, `activity/TrendCard.tsx`), the
+  Messages hero (`requests/hero-data.ts`), Overview, Teams, team security
+  and token savings.
+- **Per key:** messages split by each key's share of the real rows; spend
+  and tokens = messages x that key's real-row averages (BYOK keys $0).
+- **Activity at All, before:** 542,241 messages, $2,104.52 spend.
+  **After:** 4,860 messages, $24.69 spend, 626.9M tokens.
+- **Test:** `activity-data.test.ts` asserts KPI === Messages hero ===
+  key-table column sum per range for messages, spend and tokens.
+
+### Security events and budget meters follow the real rows (`security/events-data.ts`, `data/teams.ts`) · [1659527]
+
+- **Security events, before:** a fixed 25% of messages (All 1,215).
+  **After:** the real rows' non-allow share (32/153) of `MESSAGE_TOTALS`
+  (All 1,016). Test added in `events-data.test.ts`.
+- **Seed budget caps** resized to the real spend so the meters show a
+  believable fill with no state change: org $1,500 to $15 (15.9%);
+  Development $25 / $100 / $250 to $1 / $2.50 / $7; Design $250 to $7. A
+  test asserts every seed meter is visibly filled and under its warn line.
+  Shipped dialog presets are untouched.
+
+## Conventions
+
+### Unused finding and detector fields removed; scanner vendor name dropped (`data/requests.ts`) · [1659527]
+
+- **Deleted fields nothing reads:** `RequestFinding` `policy`, `method`,
+  `score`, `threshold`, `recognizer`, `reasoning`; `PassedDetector`
+  `method`, `score`, `threshold`; `DETECTOR_CATALOG` `method`,
+  `cleanScore`, `threshold`; security `TYPE_DETAILS` `policy`,
+  `detection`, `layer`. Kept `turn`, `verdicts`, `rule`.
+- **Vendor name:** every mention of the PII scanner's vendor name is gone
+  from `src`, along with the dead doc references in `CLAUDE.md` and the
+  front-end agent's `gateway-context.md`.

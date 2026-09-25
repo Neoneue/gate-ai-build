@@ -12,6 +12,10 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-09-25](./2026-09/changelog-9-25.md)
 
 - Messages: Device name column and filter, columns reordered
+- Messages: every row shows a message, flagged rows get matching findings
+- Activity reconciled to the Messages page
+- Security events and budget meters follow the real rows
+- Unused finding and detector fields removed; scanner vendor name dropped
 
 ### [2026-09-24](./2026-09/changelog-9-24.md)
 
