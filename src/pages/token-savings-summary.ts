@@ -8,9 +8,11 @@
 //                   answered from cache = the Caching tile's rate × requests.
 //                   Dividing a figure by its denominator gives the tile back
 //                   exactly, so the card and the rail cannot disagree.
-//   • denominators — TOTAL_7D_BASE_INPUT_TOKENS and TOTAL_7D_BASE_REQUESTS
-//                   (activity-data.ts) × RANGE_SCALE, the same scaling every
-//                   other page uses for a window.
+//   • denominators — requests are the window's message total
+//                   (MESSAGE_TOTALS, data/message-totals.ts) and input tokens
+//                   the same messages' real input tokens (usageAt,
+//                   activity-data.ts): the numbers the Messages page and
+//                   Activity print for the same range.
 //   • the breakdown — two levels on ONE named basis, Gate-attributed savings
 //                   as the Total saved tile reports it (Total = Caching +
 //                   Compression, token-savings-data.ts). Compression and
@@ -40,10 +42,7 @@ import {
   RANGE_SCALE,
   type Range,
 } from "@/lib/range";
-import {
-  TOTAL_7D_BASE_INPUT_TOKENS,
-  TOTAL_7D_BASE_REQUESTS,
-} from "@/pages/activity-data";
+import { usageAt } from "@/pages/activity-data";
 import { KPI_BY_RANGE } from "@/pages/token-savings-data";
 
 export type SummaryPlan = "pro" | "free";
@@ -169,6 +168,27 @@ export function resolveWindow(
 }
 
 /* ─── Model ────────────────────────────────────────────────────────────── */
+
+/** Messages and input tokens in the window: the preset's real numbers
+ *  (usageAt over MESSAGE_TOTALS), or for a custom window the same over the
+ *  (possibly clamped) days, ending 23:55 on the last day the way the date
+ *  picker does. */
+function windowUsage(
+  range: Range,
+  customRange: CustomRange | null,
+  window: SummaryWindow
+): { requests: number; inputTokensSent: number } {
+  if (window.scale === 0) {
+    return { requests: 0, inputTokensSent: 0 };
+  }
+  let usage = usageAt(window.rateRange, null, null);
+  if (range === "custom" && customRange) {
+    const to = new Date(window.to);
+    to.setHours(23, 55, 0, 0);
+    usage = usageAt("custom", { from: window.from, to }, null);
+  }
+  return { requests: usage.messages, inputTokensSent: usage.tokensIn };
+}
 
 export type SummaryBar = {
   id: string;
@@ -329,8 +349,7 @@ export function summaryFor(
   const compressionRate = Number(compressionTile.value) / 100;
   const cachingRate = Number(cachingTile.value) / 100;
 
-  const requests = Math.round(TOTAL_7D_BASE_REQUESTS * window.scale);
-  const inputTokensSent = Math.round(TOTAL_7D_BASE_INPUT_TOKENS * window.scale);
+  const { requests, inputTokensSent } = windowUsage(range, customRange, window);
   const inputTokensRemoved = Math.round(compressionRate * inputTokensSent);
   const cacheAnswered = Math.round(cachingRate * requests);
 

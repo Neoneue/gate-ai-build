@@ -802,7 +802,7 @@ function KvRow({
   );
 }
 
-/** Detail panel for PII / credential findings — the Presidio / regex layout.
+/** Detail panel for PII / credential findings — the PII-scanner / regex layout.
  * Findings are always masked: titles and evidence render `redactedAs`, never
  * the raw match. Every section is title-ABOVE-card; cards hold only data. */
 /** One scrollable evidence box: title-above-card, the message body with each
@@ -1386,6 +1386,12 @@ function buildRequestBodyLines(
    conversation reads coherently top-to-bottom. Errors and blocks are
    absent — see `RequestBodyPanel` for which statuses produce a response. */
 function sampleResponseText(row: RequestRow): string {
+  // A blocked request never reaches the provider, and a failed one returned
+  // nothing usable, so neither has an assistant turn to show. Empty here
+  // means every caller skips the response block.
+  if (row.guardrail === "block" || row.status === "error") {
+    return "";
+  }
   if (row.guardrail === "flagged") {
     return 'Here is a quick line you could use: "That deck looked like Clippy designed it on a Saturday night."';
   }

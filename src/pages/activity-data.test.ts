@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { MESSAGE_TOTALS } from "@/data/message-totals";
+import { isByokKey, REQUEST_ROWS_ALL } from "@/data/requests";
 import { CHART_PALETTE } from "@/lib/chart-palette";
+import type { PresetRange } from "@/lib/range";
 import {
   API_KEY_ROWS,
   type Dimension,
   distributeSeries,
+  keyUsageAt,
   OTHERS_COLOR,
   OTHERS_KEY,
   rankChartSeries,
@@ -12,14 +16,29 @@ import {
   SERIES_POOL,
   SPEND_BASE,
   SPEND_TOTALS_7D,
+  spendTotalsAt,
   splitAcrossBuckets,
   TOKENS_TOTALS_7D,
   TOTAL_7D_BASE_DOLLARS,
   TOTAL_7D_BASE_TOKENS,
+  tokensTotalsAt,
+  usageAt,
 } from "@/pages/activity-data";
+import { HERO_VIEWS } from "@/pages/requests/hero-data";
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 const rowSum = (row: Record<string, number>) => sum(Object.values(row));
+
+/** Tokens on Gate keys: what the provider dimension can chart. BYOK tokens
+ *  have no Gate route, so they sit out of it (and nothing else). */
+const GATE_TOKENS_7D = sum(
+  API_KEY_ROWS.filter((k) => k.path === "Gate").map(
+    (k) => k.tokensIn + k.tokensOut
+  )
+);
+/** What each dimension of TOKENS_TOTALS_7D sums to. */
+const tokenWorkspace = (dimension: Dimension) =>
+  dimension === "provider" ? GATE_TOKENS_7D : TOTAL_7D_BASE_TOKENS;
 
 // The charts-must-reconcile contract: every per-dimension breakdown derives
 // from (and must sum back to) the single TOTAL_7D_BASE_* source of truth.
@@ -34,10 +53,10 @@ describe("activity KPI reconciliation", () => {
     }
   });
 
-  it("TOKENS_TOTALS_7D sums to TOTAL_7D_BASE_TOKENS in every dimension", () => {
+  it("TOKENS_TOTALS_7D sums to TOTAL_7D_BASE_TOKENS by model and key, Gate tokens by route", () => {
     for (const [dimension, totals] of Object.entries(TOKENS_TOTALS_7D)) {
-      const sum = Object.values(totals).reduce((a, b) => a + b, 0);
-      const drift = Math.abs(sum - TOTAL_7D_BASE_TOKENS) / TOTAL_7D_BASE_TOKENS;
+      const want = tokenWorkspace(dimension as Dimension);
+      const drift = Math.abs(rowSum(totals) - want) / want;
       expect(drift, `dimension: ${dimension}`).toBeLessThan(0.001);
     }
   });
@@ -106,13 +125,15 @@ describe("splitAcrossBuckets", () => {
     );
 
   it("gives the same daily curve regardless of series count", () => {
-    for (const [totals, count, scale] of [
-      [SPEND_TOTALS_7D, 7, 1],
-      [SPEND_TOTALS_7D, 30, 8.5],
-      [TOKENS_TOTALS_7D, 12, 0.14],
-      [TOKENS_TOTALS_7D, 30, 3.5],
+    // Tokens compare model with apiKey only: the provider dimension covers
+    // Gate-routed tokens, a different (smaller) total.
+    for (const [totals, count, scale, dims] of [
+      [SPEND_TOTALS_7D, 7, 1, ["model", "provider", "apiKey"]],
+      [SPEND_TOTALS_7D, 30, 8.5, ["model", "provider", "apiKey"]],
+      [TOKENS_TOTALS_7D, 12, 0.14, ["model", "apiKey"]],
+      [TOKENS_TOTALS_7D, 30, 3.5, ["model", "apiKey"]],
     ] as const) {
-      const curves = (["model", "provider", "apiKey"] as const).map((d) =>
+      const curves = dims.map((d) =>
         bucketTotals(splitAcrossBuckets(totals[d], count, 77, scale), count)
       );
       for (const curve of curves.slice(1)) {
@@ -157,28 +178,30 @@ describe("rankSeries", () => {
   const keysOf = (dimension: Dimension, totals: Record<string, number>) =>
     rankSeries(dimension, totals).series.map((s) => s.key);
 
-  it("names the top 5 models by tokens, Haiku among them", () => {
+  it("names the top 5 models by tokens, the BYOK session's Opus 4.8 first", () => {
+    // Tokens follow the real rows: design-agent's BYOK session (Opus 4.8,
+    // ~190k tokens in per message) is almost all of the week's tokens.
     expect(keysOf("model", TOKENS_TOTALS_7D.model)).toEqual([
-      "anthropic/claude-sonnet-5",
-      "qwen/qwen3-next-80b-a3b-instruct",
-      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-opus-4-8",
+      "anthropic/claude-opus-4-7",
       "google/gemini-3-1-pro-preview",
-      "deepseek/deepseek-v4-pro",
+      "qwen/qwen3-next-80b-a3b-instruct",
+      "anthropic/claude-sonnet-5",
       OTHERS_KEY,
     ]);
   });
 
   it("re-ranks the same models when the metric changes", () => {
-    // Opus is 5.6% of tokens and 24.7% of spend, so no single ordering can be
+    // Opus is 5.6% of tokens and leads spend, so no single ordering can be
     // right for both lenses. Qwen makes the opposite trip: 2nd by volume,
     // rolled into Others by money.
     //
-    // DeepSeek takes the 5th slot on spend over Qwen on a settled tie — both
-    // display $5.95, from $5.9483 and $5.9457 — which pool order preserves.
+    // DeepSeek takes the 5th slot on spend over Qwen on a settled tie (both
+    // display $0.07), which pool order decides.
     expect(keysOf("model", SPEND_TOTALS_7D.model)).toEqual([
-      "anthropic/claude-sonnet-5",
-      "google/gemini-3-1-pro-preview",
       "anthropic/claude-opus-4-7",
+      "google/gemini-3-1-pro-preview",
+      "anthropic/claude-sonnet-5",
       "anthropic/claude-haiku-4-5",
       "deepseek/deepseek-v4-pro",
       OTHERS_KEY,
@@ -189,22 +212,27 @@ describe("rankSeries", () => {
   });
 
   it("leaves dimensions under the cap with no Others bucket at all", () => {
-    // 3 routes and 5 Gate keys. Everything passes through; a 3-band stack must
-    // not grow a 4th neutral band that stands for nothing.
-    for (const [totals, dimension] of [
-      [TOKENS_TOTALS_7D.provider, "provider"],
-      [SPEND_TOTALS_7D.provider, "provider"],
-      [TOKENS_TOTALS_7D.apiKey, "apiKey"],
-      [SPEND_TOTALS_7D.apiKey, "apiKey"],
+    // 3 routes; everything passes through, and a 3-band stack must not grow a
+    // 4th neutral band that stands for nothing. The spend lens on keys draws
+    // the 4 metered keys with messages (ci-runner has no request rows, so no
+    // messages and $0; BYOK keys bill $0). The token lens on keys charts every
+    // key with traffic, BYOK included, so it overflows into Others.
+    for (const [totals, dimension, drawn] of [
+      [TOKENS_TOTALS_7D.provider, "provider", 3],
+      [SPEND_TOTALS_7D.provider, "provider", 3],
+      [SPEND_TOTALS_7D.apiKey, "apiKey", 4],
     ] as const) {
       const keys = keysOf(dimension, totals);
       expect(keys, dimension).not.toContain(OTHERS_KEY);
-      expect(keys.length, dimension).toBe(SERIES_POOL[dimension].length);
+      expect(keys.length, dimension).toBe(drawn);
+      expect(keys.length, dimension).toBeLessThanOrEqual(
+        SERIES_POOL[dimension].length
+      );
       expect(keys.length, dimension).toBeLessThanOrEqual(SERIES_CAP);
     }
-    // Both key dimensions still re-rank on the metric even without a rollup:
-    // prod-web leads on volume, prod-agent on money (it takes most of the Opus).
-    expect(keysOf("apiKey", TOKENS_TOTALS_7D.apiKey)[0]).toBe("prod-web");
+    // Both key lenses re-rank on the metric: design-agent leads on volume
+    // (BYOK, $0), prod-agent on money.
+    expect(keysOf("apiKey", TOKENS_TOTALS_7D.apiKey)[0]).toBe("design-agent");
     expect(keysOf("apiKey", SPEND_TOTALS_7D.apiKey)[0]).toBe("prod-agent");
   });
 
@@ -250,7 +278,7 @@ describe("rankChartSeries", () => {
   it("keeps the legend summing to the workspace total", () => {
     for (const dimension of dimensions) {
       for (const [totals, workspace] of [
-        [TOKENS_TOTALS_7D[dimension], TOTAL_7D_BASE_TOKENS],
+        [TOKENS_TOTALS_7D[dimension], tokenWorkspace(dimension)],
         [SPEND_TOTALS_7D[dimension], TOTAL_7D_BASE_DOLLARS],
       ] as const) {
         const ranked = rankChartSeries(dimension, totals, []);
@@ -271,7 +299,9 @@ describe("rankChartSeries", () => {
     // chart stacks must still sum to the same per-bucket curve they did
     // before Others existed, in every dimension.
     const count = 30;
-    const curves = dimensions.map((dimension) => {
+    // Model and apiKey share the workspace token total; provider charts the
+    // Gate-routed part, so it is not on the same curve.
+    const curves = (["model", "apiKey"] as const).map((dimension) => {
       const totals = TOKENS_TOTALS_7D[dimension];
       const buckets = splitAcrossBuckets(totals, count, 77, 8.5);
       const rows = Array.from({ length: count }, (_, i) => {
@@ -301,14 +331,21 @@ describe("rankChartSeries", () => {
     const named = new Set(series.map((s) => s.key));
     const dropped = Object.entries(totals).filter(([k]) => !named.has(k));
     expect(dropped.map(([k]) => k).sort()).toEqual([
-      "anthropic/claude-opus-4-7",
+      "anthropic/claude-haiku-4-5",
+      "deepseek/deepseek-v4-pro",
       "moonshotai/kimi-k2-thinking",
     ]);
     expect(folded[OTHERS_KEY]).toBeCloseTo(sum(dropped.map(([, v]) => v)), 6);
-    // And it must be smaller than every band above it, which is the property
-    // the old fixed bucket violated: it held 92% one model and ranked 3rd.
-    for (const s of series.filter((x) => x.key !== OTHERS_KEY)) {
-      expect(folded[s.key], s.key).toBeGreaterThan(folded[OTHERS_KEY] ?? 0);
+    // Every folded model is smaller than every named band, which is the
+    // property the old fixed bucket violated: it held 92% one model and
+    // ranked 3rd.
+    const smallestNamed = Math.min(
+      ...series
+        .filter((x) => x.key !== OTHERS_KEY)
+        .map((s) => folded[s.key] ?? 0)
+    );
+    for (const [key, value] of dropped) {
+      expect(value, key).toBeLessThan(smallestNamed);
     }
   });
 
@@ -317,5 +354,144 @@ describe("rankChartSeries", () => {
     const ranked = rankChartSeries("provider", SPEND_TOTALS_7D.provider, rows);
     expect(ranked.rows).toBe(rows);
     expect(ranked.series.map((s) => s.key)).not.toContain(OTHERS_KEY);
+  });
+});
+
+// One message count per range, and spend that follows it. The bug this guards:
+// Activity scaled its own 63,793-a-week figure and printed 112x to 213x the
+// messages the Messages page lists, and its key table summed to ~872k because
+// BYOK keys kept authored counts while Gate keys were rescaled.
+describe("Activity reconciles with the Messages page", () => {
+  const PRESETS: PresetRange[] = ["all", "24h", "7d", "30d"];
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
+  /** Each key's real-row average cost per message, computed here from the
+   *  rows themselves ("—" = unmetered) rather than through activity-data. */
+  const rowAverage = (key: string): number => {
+    if (isByokKey(key)) {
+      return 0;
+    }
+    const costs = REQUEST_ROWS_ALL.filter(
+      (r) => r.keyId === key && r.cost !== "—"
+    ).map((r) => Number.parseFloat(r.cost.replace(/[^0-9.]/g, "")));
+    return costs.length > 0 ? sum(costs) / costs.length : 0;
+  };
+
+  for (const range of PRESETS) {
+    it(`${range}: Total messages KPI === Messages hero === key table column`, () => {
+      const kpi = usageAt(range, null, null).messages;
+      const at = keyUsageAt(range, null);
+      const column = sum(API_KEY_ROWS.map((k) => at.messages[k.key] ?? 0));
+      expect(kpi).toBe(MESSAGE_TOTALS[range]);
+      expect(kpi).toBe(HERO_VIEWS[range].total);
+      expect(column).toBe(kpi);
+    });
+
+    it(`${range}: Total spend KPI === key table Spend column === every breakdown`, () => {
+      const kpi = usageAt(range, null, null).spend;
+      const at = keyUsageAt(range, null);
+      const column = round2(sum(API_KEY_ROWS.map((k) => at.spend[k.key] ?? 0)));
+      expect(column).toBeCloseTo(kpi, 2);
+      const breakdown = spendTotalsAt(range, null, null);
+      for (const dimension of ["model", "provider", "apiKey"] as const) {
+        expect(
+          round2(rowSum(breakdown[dimension])),
+          `${range} ${dimension}`
+        ).toBeCloseTo(kpi, 2);
+      }
+    });
+
+    it(`${range}: Tokens used KPI === key table tokens === by-model and by-key breakdowns`, () => {
+      const kpi = usageAt(range, null, null);
+      const at = keyUsageAt(range, null);
+      const column = sum(
+        API_KEY_ROWS.map(
+          (k) => (at.tokensIn[k.key] ?? 0) + (at.tokensOut[k.key] ?? 0)
+        )
+      );
+      expect(column).toBe(kpi.tokens);
+      const breakdown = tokensTotalsAt(range, null, null);
+      expect(rowSum(breakdown.model), `${range} model`).toBe(kpi.tokens);
+      expect(rowSum(breakdown.apiKey), `${range} apiKey`).toBe(kpi.tokens);
+      // Routes chart Gate traffic only: the Gate keys' tokens.
+      const gate = sum(
+        API_KEY_ROWS.filter((k) => k.path === "Gate").map(
+          (k) => (at.tokensIn[k.key] ?? 0) + (at.tokensOut[k.key] ?? 0)
+        )
+      );
+      expect(rowSum(breakdown.provider), `${range} provider`).toBe(gate);
+    });
+
+    it(`${range}: each key's tokens ÷ messages are its real rows' averages`, () => {
+      const at = keyUsageAt(range, null);
+      for (const k of API_KEY_ROWS) {
+        const rows = REQUEST_ROWS_ALL.filter((r) => r.keyId === k.key);
+        const avg = (side: "inTokens" | "outTokens") =>
+          rows.length > 0
+            ? sum(
+                rows.map(
+                  (r) =>
+                    Number.parseInt(r[side].replace(/[^0-9]/g, ""), 10) || 0
+                )
+              ) / rows.length
+            : 0;
+        const messages = at.messages[k.key] ?? 0;
+        // Whole tokens: messages × average, rounded once.
+        expect(
+          Math.abs((at.tokensIn[k.key] ?? 0) - messages * avg("inTokens")),
+          `${range} ${k.key} in`
+        ).toBeLessThanOrEqual(0.5);
+        expect(
+          Math.abs((at.tokensOut[k.key] ?? 0) - messages * avg("outTokens")),
+          `${range} ${k.key} out`
+        ).toBeLessThanOrEqual(0.5);
+      }
+    });
+
+    it(`${range}: each key's spend ÷ messages is its real rows' average`, () => {
+      const at = keyUsageAt(range, null);
+      for (const k of API_KEY_ROWS) {
+        const messages = at.messages[k.key] ?? 0;
+        const spend = at.spend[k.key] ?? 0;
+        // To the cent: spend is messages × average, rounded once.
+        expect(spend, `${range} ${k.key}`).toBeCloseTo(
+          messages * rowAverage(k.key),
+          2
+        );
+        if (k.path === "BYOK") {
+          expect(spend, `${range} ${k.key}`).toBe(0);
+        }
+      }
+    });
+  }
+
+  it("splits messages by the keys' real row counts; a key with no rows sends 0", () => {
+    const at = keyUsageAt("all", null);
+    for (const k of API_KEY_ROWS) {
+      const rows = REQUEST_ROWS_ALL.filter((r) => r.keyId === k.key).length;
+      const share = (rows / REQUEST_ROWS_ALL.length) * MESSAGE_TOTALS.all;
+      // Every key rounds its share; the largest (design-agent) absorbs the
+      // few messages of rounding so the column still sums to the total.
+      expect(Math.abs((at.messages[k.key] ?? 0) - share), k.key).toBeLessThan(
+        k.key === "design-agent" ? 5 : 1
+      );
+    }
+    expect(REQUEST_ROWS_ALL.some((r) => r.keyId === "ci-runner")).toBe(false);
+    expect(at.messages["ci-runner"] ?? 0).toBe(0);
+  });
+
+  it("a scoped reader's KPI is the sum of their own keys' rows", () => {
+    const own = new Set(["openclaw", "nova-chat", "atlas-eval"]);
+    for (const range of PRESETS) {
+      const at = keyUsageAt(range, null);
+      const scoped = usageAt(range, null, own);
+      expect(scoped.messages).toBe(
+        sum([...own].map((k) => at.messages[k] ?? 0))
+      );
+      expect(scoped.spend).toBeCloseTo(
+        sum([...own].map((k) => at.spend[k] ?? 0)),
+        2
+      );
+    }
   });
 });

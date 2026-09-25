@@ -116,9 +116,11 @@ const THREATS_DETECTED_COUNT = 117; // Security 7d total: 77 blocked + 35 flagge
  * not a locally-guessed constant. Dollar equivalent derives from the
  * canonical spend baseline so Overview and Token Savings reconcile. */
 
-const DOLLARS_SAVED_7D = Math.round(
+// To the cent: real 7d spend is a few dollars, so whole-dollar rounding
+// would flatten the savings sparkline to $0.
+const DOLLARS_SAVED_7D = +(
   TOKEN_SAVINGS_RATE_7D * TOTAL_7D_BASE_DOLLARS
-);
+).toFixed(2);
 // Per-day averages derived from the same seeds the Activity KPI rail uses,
 // so the sparkline reflects real daily variation rather than seeded noise.
 const _REQUESTS_7D_SERIES = distributeSeries(
@@ -593,7 +595,7 @@ function scopedStrip(scope: ViewScope, teams: ReturnType<typeof useTeams>) {
   return {
     requests: usage.requests,
     savedRate: TOKEN_SAVINGS_RATE_7D * factor,
-    savedDollars: Math.round(TOKEN_SAVINGS_RATE_7D * factor * usage.spend),
+    savedDollars: +(TOKEN_SAVINGS_RATE_7D * factor * usage.spend).toFixed(2),
     threats,
   };
 }

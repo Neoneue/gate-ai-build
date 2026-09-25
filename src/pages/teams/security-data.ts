@@ -1,8 +1,7 @@
 import { MEMBER_ROWS } from "@/data/team-members";
 import { attributedKeyNames, TEAM_SEED_ROWS, type TeamRow } from "@/data/teams";
 import type { CustomRange, Range } from "@/lib/range";
-import { RANGE_SCALE } from "@/lib/range";
-import { API_KEY_ROWS } from "@/pages/activity-data";
+import { API_KEY_ROWS, usageAt } from "@/pages/activity-data";
 import type { GuardrailAction } from "@/pages/requests/types";
 import {
   ATTACK_MIX,
@@ -23,24 +22,22 @@ import {
  *
  * Sources, each the truth for its axis, nothing authored in between:
  *
- *   VOLUME → `API_KEY_ROWS` (activity-data): per-key 7d request counts, the
- *            same rows the Usage tab totals. Scaled by the Usage tab's
- *            range canon (RANGE_SCALE — All = 8.5) so "out of N checks"
- *            agrees with the Usage tab's Total Messages for the same range.
- *            (The first cut presented raw 7d volume as "everything on
- *            record".)
+ *   VOLUME → `usageAt` (activity-data): the team keys' messages for the
+ *            range, the same per-key numbers the Usage tab and Activity's
+ *            key table total (MESSAGE_TOTALS split by real rows), so "out of
+ *            N checks" agrees with the Usage tab's Total Messages for the
+ *            same range. (The first cut presented raw 7d volume as
+ *            "everything on record".)
  *   EVENTS → `security/events-data` (org Security page): `eventsTotal()`
  *            per range, split 31:14:2 by `splitEventMix`, typed 8:5:3 by
  *            `ATTACK_MIX` (sums to the total). Teams receive largest-remainder shares in
  *            proportion to their request volume, so the seed teams sum
  *            EXACTLY to the org page's number at every preset range.
  *
- * Known, accepted drift: the org events canon scales ranges by the
- * Requests-page ratios (25% coupling) while checks scale by RANGE_SCALE;
- * the two disagree by up to ~20% at "all", so the implied finding RATE
- * wobbles across ranges. Nothing on screen divides the two; reconciling
- * the canons is a data-model decision recorded in data-model.md, not one
- * this module takes on its own.
+ * Both canons now read MESSAGE_TOTALS for preset ranges (events are the
+ * real rows' non-allow share of it), so the org-wide finding rate is the same at every preset. A single
+ * team's rate still varies slightly: its events share is weighted by 7d
+ * volume while its checks are that range's settled per-key counts.
  *
  * The check arithmetic, stated once so every card sums. It models the dev
  * build's WRITE path (gateway-proxy `request.repository.ts`): at most one
@@ -181,9 +178,8 @@ export function securityForTeamAtRange(
 ): TeamSecurity {
   const names = teamKeyNames(team);
 
-  // Volume: the Usage tab's rows and the Usage tab's range canon.
-  const scale = RANGE_SCALE[range === "custom" ? "7d" : range];
-  const requests = Math.round(teamRequests7d(team) * scale);
+  // Volume: the team keys' messages for this range, as the Usage tab reads.
+  const requests = usageAt(range, customRange, names).messages;
 
   // Events: this team's share of the org Security page's canon.
   const findings =

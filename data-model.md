@@ -839,7 +839,7 @@ The app has no backend. All data is seeded in-file. The three rules:
 
 1. **Single source of truth.** KPI tiles, chart bars, descriptions, and breakdowns all derive from one constant or generator function. Never hardcode the same number in two places.
 2. **Deterministic LCG seeding.** Bucket/sparkline distributions use a linear congruential generator so they look realistic but reproduce exactly.
-3. **Cross-page consistency.** Event totals = 0.25× request totals. Range scaling uses a shared `RANGE_SCALE` multiplier. Model/vendor distribution matches across pages.
+3. **Cross-page consistency.** Event totals = 0.25× request totals. Message counts per range come from `MESSAGE_TOTALS` (`src/data/message-totals.ts`) and spend follows them; token range scaling uses a shared `RANGE_SCALE` multiplier. Model/vendor distribution matches across pages.
 
 ### 5.1 Canonical totals
 
@@ -851,17 +851,28 @@ The app has no backend. All data is seeded in-file. The three rules:
 | Requests | `HERO_VIEWS['30d'].total` | 2,248 |
 | Security | `EVENTS_RANGE_TOTAL['all']` | 1,215 |
 | Security | `EVENTS_RANGE_TOTAL['7d']` | 117 |
-| Activity | `TOTAL_7D_BASE_DOLLARS` | $247.59 (derived) |
-| Activity | `TOTAL_7D_BASE_REQUESTS` | 63,793 |
-| Activity | `TOTAL_7D_BASE_TOKENS` | 73,450,000 (derived) |
+| Activity | `TOTAL_7D_BASE_DOLLARS` | $2.38 (derived from real rows) |
+| Activity | `TOTAL_7D_BASE_REQUESTS` | 468 (= `MESSAGE_TOTALS['7d']`) |
+| Activity | `TOTAL_7D_BASE_TOKENS` | 60,538,685 (derived from real rows, BYOK included) |
 
-Only `HERO_ALL_TOTAL` is a standalone const; the other three per-range totals
-are literals inside the `HERO_VIEWS` record in `src/pages/requests/hero-data.ts`
-(the old `HERO_24H_TOTAL` / `HERO_7D_TOTAL` / `HERO_30D_TOTAL` names are gone).
+**Message counts have one source (2026-09-25):** `MESSAGE_TOTALS` in
+`src/data/message-totals.ts` (24H 48, 7D 468, 30D 2,248, All 4,860) plus
+`customMessageTotal` / `messageTotalFor` for custom ranges (the Messages
+hero's ~80/hr estimate). The Messages hero, Activity (KPI + key table),
+Overview, the Teams usage/security/budget tabs, Token savings and the
+Security events canon (25%) all read it. Activity splits each range's total
+across keys by their share of `REQUEST_ROWS_ALL` (`keyUsageAt`, settled so the
+column sums exactly; a key with no rows gets 0).
 
-`TOTAL_7D_BASE_DOLLARS` and `TOTAL_7D_BASE_TOKENS` are no longer authored — see
-§5.1.1. `TOTAL_7D_BASE_REQUESTS` still is, because a request count is not a
-function of price.
+**Spend and tokens follow the messages:** a key's spend = its messages × the
+average `cost` of its metered rows ("—" = unmetered; BYOK = $0; a Gate key
+with no metered row would use the workspace average), and its tokens in / out
+= its messages × its rows' average tokens in / out. The authored workload
+(`MODEL_SERIES_7D` × mixes) only splits each Gate key's week across models and
+routes (`USAGE_7D`); BYOK keys' tokens split by their own rows' model mix at
+$0 (`WORKSPACE_CELLS_7D`). Tokens count every key, so the provider dimension
+(Gate routes only) sums to the Gate part. Per-range totals: `keyUsageAt`,
+`usageAt`, `spendTotalsAt`, `tokensTotalsAt` in `activity-data.ts`.
 
 ### 5.1.1 The pricing contract (2026-08-03)
 
@@ -922,9 +933,9 @@ Consequences worth knowing:
   spend while all 102 of its request rows were unmetered. It is no longer a
   charted key, so `SPEND_SERIES.apiKey` has 5 entries, not 6.
 - **`MODEL_ROWS` authors `tokensPerRequest`, not `requests`.** Request counts
-  derive from tokens ÷ call size and rescale onto `TOTAL_7D_BASE_REQUESTS`, so
-  the card sums to the KPI rail above it. Gate keys in `API_KEY_ROWS` rescale the
-  same way.
+  derive from tokens ÷ call size and settle onto the Gate keys' 7d messages
+  (BYOK excluded, like its spend). `API_KEY_ROWS.requests` is every key's 7d
+  share of `MESSAGE_TOTALS` (see §5.1).
 
 ### 5.2 Range scaling
 
@@ -938,7 +949,7 @@ const RANGE_SCALE: Record<PresetRange, number> = {
 }
 ```
 
-KPI values for other ranges are derived by multiplying the 7d base by the scale factor. Charts apply the same factor to per-bucket arrays.
+Activity's messages, spend and tokens do NOT scale by this: they read `MESSAGE_TOTALS` per range (§5.1) via `keyUsageAt` / `usageAt` / `spendTotalsAt` / `tokensTotalsAt` in `activity-data.ts`. `RANGE_SCALE` remains for surfaces that still project a 7d figure (the 5h budget window's fallback, Token savings window days, Conversations row scaling).
 
 ### 5.2a Demo clock (added 2026-09-01)
 
@@ -1160,10 +1171,10 @@ Resolution order, most specific to least (coverage measured over 153 rows):
 
 | Source | Rows | Why |
 | --- | --- | --- |
-| `body.userMessage` first line, leading `User:` stripped | 13 | the real user turn |
+| `body.userMessage` first line, leading `User:` stripped | 13 + 51 | the user turn: 13 captured (`REQUEST_BODIES`), 51 authored for the seven legacy `cnv_*` sessions (`src/data/authored-request-bodies.ts`, the `getRequestBody` fallback) |
 | `body.toolArgs` first line | 89 | the actual call — already prefixed `Bash:` / `Read:` by the data |
 | `row.summary` | ~51 | last resort: for a Bash row it reads `tool: Bash`, which names the tool and says nothing |
-| none → em dash + `sr-only` note | 51 | the legacy `cnv_*` sessions carry no body; never fabricate a preview |
+| none → em dash + `sr-only` note | 0 | kept for safety; never fabricate a preview |
 
 **Masking is mandatory on this column.** Whatever text wins is run through
 `redactFindings` (`src/data/redact.ts`) before it leaves `messagePreview`.
@@ -1394,9 +1405,10 @@ Savings options cards so the Summary can name an off mechanism), `ttl:
 **Data:** Overview tiles from `KPI_BY_RANGE` (`token-savings-data.ts`). The
 Summary model is `summaryFor(range, customRange, { compressionOn, cachingOn,
 plan, hasTraffic? })` in `token-savings-summary.ts`: removed tokens =
-Compression tile rate × `TOTAL_7D_BASE_INPUT_TOKENS` × `RANGE_SCALE`;
-cache-answered requests = Caching tile rate × `TOTAL_7D_BASE_REQUESTS` ×
-`RANGE_SCALE`; one basis for every bar = removed tokens + input tokens of the
+Compression tile rate × input tokens sent;
+cache-answered requests = Caching tile rate × the window's `MESSAGE_TOTALS`
+(so 24H and 7D fall under `LOW_VOLUME_REQUESTS`); input tokens sent = the
+window's real input tokens (`usageAt(...).tokensIn`); one basis for every bar = removed tokens + input tokens of the
 cache-answered requests. Constants: `COMPARABILITY_EPOCH` (first day of the
 All window), `LOW_VOLUME_REQUESTS` 1,000. Compression split = `METHOD_SHARES`,
 four categories plus "All others" (Tool compression, Output compaction,
@@ -1636,7 +1648,9 @@ there while the Pro files stay frozen for comparison. Divergences so far:
   `DateRangePicker` (defaults All). KPI rail = Activity's exact cards
   (Total Spend / Total Messages / Tokens Used with `CompactSpark`s, no
   delta chips — no prior-period team data exists). ONE
-  `scaleUsage(usage, effectiveScale(range, customRange))` projection feeds
+  `scaleUsage(usage, effectiveScale(range, customRange), usageTargetsAt(usage,
+  range, customRange))` projection (messages, spend and tokens = the team
+  keys' real range numbers) feeds
   the KPIs, the sparklines, and both breakdown tables. Sparklines render
   windows of ONE 60-day daily backbone per team + metric
   (`src/pages/teams/spark-series.ts`, seed carries team + metric, NEVER the
@@ -1782,7 +1796,9 @@ Claude/Codex shape (session + weekly caps, one enforcement) and maps to one
 uniqueness on `team_id`; the dev's UI currently `find`s one, flagged).
 Per-window spend is the team's 7d roll-up projected through
 `BUDGET_WINDOW_SCALE` (5h = 5/168, weekly = 1, monthly = `RANGE_SCALE["30d"]`
-so the Budget tab's monthly figure reconciles with the Usage tab's 30D) via
+as the 5h fallback; weekly and monthly messages, spend and tokens are the team
+keys' real 7D / 30D numbers via `usageTargetsAt`, so the Budget tab's monthly figure
+reconciles with the Usage tab's 30D) via
 `usageForWindow` / `budgetReadings`, so meter, facts, and both breakdown
 tables for a window are one settled number. `tightestReading` (highest
 utilization, ties keep canonical order `BUDGET_WINDOW_ORDER`) is what the
@@ -1877,7 +1893,7 @@ rows that already exist:
 - `src/data/teams.test.ts` (permanent) audits the whole reconciliation:
   per-team KPIs vs both tables across 8 scales, sparkline sums, budget
   facts, security-tab groupings, org roll-up. It PINS the org figures
-  ($247.59 / "16.5%") — move those assertions whenever spend seeds move
+  ($2.38 / "0.2%") — move those assertions whenever spend seeds move
 
 **Security tab** (`src/pages/teams/security-data.ts`; rendered by
 `SecurityOverviewPane.tsx`. `SecurityPane.tsx` is the retired Pro pane, kept
@@ -1894,11 +1910,10 @@ card sums to the org total since 2026-09-01); members get each category
 allocated by their request share, and a member's Events total is the sum of
 their three columns.
 `REQUEST_ROWS_ALL` is no longer imported — the ~10 recorded findings stay
-as org-page drill-in exemplars only. Checks scale by the USAGE canon
-(`RANGE_SCALE`, All = 8.5×) so "out of N checks" agrees with the Usage
-tab; the org events canon scales by the Requests-page ratios instead, so
-the implied finding RATE wobbles ~20% across ranges — accepted drift,
-nothing on screen divides the two. API: `securityForTeamAtRange(team,
+as org-page drill-in exemplars only. Checks are the team keys' messages
+for the range (`usageAt`, the Usage tab's numbers), and the org events
+canon is 25% of the same `MESSAGE_TOTALS`, so the org finding rate is flat
+across presets (since 2026-09-25). API: `securityForTeamAtRange(team,
 range, customRange, teams)` (pass live page state so shares settle),
 `securityForTeam` = the all-time wrapper Pro uses, `teamEventShares`.
 The arithmetic, which every card obeys:

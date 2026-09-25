@@ -43,6 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { UploadIcon } from "@/components/ui/upload";
+import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { modelName } from "@/data/models";
 import {
   isByokKey,
@@ -97,6 +98,11 @@ function deviceForKey(keyId: string): string | undefined {
 
 /* ─── Requests log table ─────────────────────────────────────────────────── */
 
+/** Live (non-revoked) key names from the Keys page record, in its order. */
+const LIVE_KEY_NAMES = API_KEY_SEED_ROWS.filter((k) => !k.revoked).map(
+  (k) => k.name
+);
+
 export function RequestsTableSection({
   range,
   customRange,
@@ -122,17 +128,12 @@ export function RequestsTableSection({
       ),
     [blockRows, range, scope]
   );
-  const keyOptions = scope.keyNames
-    ? [...scope.keyNames]
-    : [
-        "prod-web",
-        "prod-agent",
-        "development",
-        "openclaw",
-        "hermes-agent",
-        "nova-chat",
-        "test-key",
-      ];
+  // Live keys only (the Keys page record), in the viewer's scope: a revoked
+  // key is never selectable.
+  const keyOptions = useMemo(() => {
+    const inView = scope.keyNames;
+    return LIVE_KEY_NAMES.filter((name) => !inView || inView.has(name));
+  }, [scope]);
   // Toolbar search. Plain state, no debounce/defer — same shape as
   // EventsTableSection (security/EventsTable.tsx:136), which filters
   // synchronously off the committed value.

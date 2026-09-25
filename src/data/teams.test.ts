@@ -20,6 +20,7 @@ import {
   teamSavedPercent,
   tightestReading,
   usageForTeam,
+  usageTargetsAt,
 } from "@/data/teams";
 import type { Range } from "@/lib/range";
 
@@ -232,14 +233,19 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
     // stage ratio: output rows exist only when the reply scan recorded a
     // result — the dev build's write rule, anchored at 1,612/20,737 (~7.8%).
     // Guards against regressing to the old one-check-per-stage ~1:1 split.
+    // Asserted as the rounded product, not a band: at real message counts a
+    // team can run 9 messages a week, where one output row is 11%.
     const reqStage = sec.byStage.find((s) => s.id === "request")?.count ?? 0;
     const outStage = sec.byStage.find((s) => s.id === "output")?.count ?? 0;
-    const stageRate = reqStage > 0 ? outStage / reqStage : 0;
     if (reqStage + outStage !== sec.checks) {
       bad.push(`${team.name} stages ${reqStage}+${outStage} != ${sec.checks}`);
     }
-    if (stageRate < 0.075 || stageRate > 0.08) {
-      bad.push(`${team.name} stage rate ${stageRate.toFixed(4)} off anchor`);
+    if (outStage !== Math.round((reqStage * 1612) / 20_737)) {
+      bad.push(`${team.name} output stage ${outStage} off anchor`);
+    }
+    const allowed = sec.byOutcome.find((o) => o.action === "allow")?.count ?? 0;
+    if (allowed < 0) {
+      bad.push(`${team.name} allowed ${allowed} < 0`);
     }
   }
   // security shares: seed teams sum EXACTLY to the org Security page's
@@ -261,12 +267,13 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
   if (org !== teamSum) {
     bad.push(`org ${org} != team sum ${teamSum}`);
   }
-  if (org !== 247.59) {
-    bad.push(`org ${org} != 247.59 (rendered bar)`);
+  // Real rows' spend (messages × cost per message) since 2026-09-25.
+  if (org !== 2.41) {
+    bad.push(`org ${org} != 2.41 (rendered bar)`);
   }
   const orgCap = ORG_BUDGET_SEED.caps.monthly ?? 0;
-  if (budgetPercentLabel(org, orgCap) !== "16.5%") {
-    bad.push(`org pct ${budgetPercentLabel(org, orgCap)} != 16.5%`);
+  if (budgetPercentLabel(org, orgCap) !== "16.1%") {
+    bad.push(`org pct ${budgetPercentLabel(org, orgCap)} != 16.1%`);
   }
   // window scale is strictly increasing in canonical order
   for (let i = 1; i < BUDGET_WINDOW_ORDER.length; i++) {
@@ -282,9 +289,9 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
   if (platform?.budget) {
     const r = budgetReadings(usageForTeam(platform), platform.budget);
     const fiveH = r.find((x) => x.window === "5h");
-    if (!fiveH || budgetPercentLabel(fiveH.spend, fiveH.cap) !== "1.5%") {
+    if (!fiveH || budgetPercentLabel(fiveH.spend, fiveH.cap) !== "1.0%") {
       bad.push(
-        `platform 5h pct ${fiveH ? budgetPercentLabel(fiveH.spend, fiveH.cap) : "missing"} != 1.5%`
+        `platform 5h pct ${fiveH ? budgetPercentLabel(fiveH.spend, fiveH.cap) : "missing"} != 1.0%`
       );
     }
     if (
@@ -292,6 +299,28 @@ test("teams math reconciles across teams, scales, budgets, security, and org rol
       "monthly"
     ) {
       bad.push("platform tightest window != monthly");
+    }
+  }
+  // A monthly budget reads the team's own 30D messages and spend, the same
+  // numbers its Usage tab shows at 30D and Activity's key table sums to.
+  for (const team of TEAM_SEED_ROWS) {
+    if (!team.budget?.caps.monthly) {
+      continue;
+    }
+    const u = usageForTeam(team);
+    const monthly = budgetReadings(u, team.budget).find(
+      (x) => x.window === "monthly"
+    );
+    const usageTab = scaleUsage(
+      u,
+      BUDGET_WINDOW_SCALE.monthly,
+      usageTargetsAt(u, "30d", null)
+    );
+    if (
+      monthly?.spend !== usageTab.spend ||
+      monthly?.usage.requests !== usageTab.requests
+    ) {
+      bad.push(`${team.name} monthly budget != Usage tab 30D`);
     }
   }
   const design = TEAM_SEED_ROWS.find((t) => t.id === "team_design");
@@ -547,4 +576,26 @@ test("Usage Saved column reconciles with Activity per key", () => {
     }
   }
   expect(teamSavedPercent(undefined, "7d", null)).toBeNull();
+});
+
+test("seed budget meters read a visible fill and every seed stays under its warn line", () => {
+  // Caps are sized to the real spend. A meter at ~0% reads as an unused
+  // budget; one at or past the warn line would change a seed team's state
+  // (and could add budget-block rows on /messages).
+  const org = orgSpend(TEAM_SEED_ROWS);
+  const orgFill = budgetProgress(org, ORG_BUDGET_SEED.caps.monthly) ?? 0;
+  expect(orgFill).toBeGreaterThan(0.05);
+  expect(orgFill * 100).toBeLessThan(ORG_BUDGET_SEED.warnThreshold);
+  for (const team of TEAM_SEED_ROWS) {
+    if (!team.budget) {
+      continue;
+    }
+    for (const r of budgetReadings(usageForTeam(team), team.budget)) {
+      const fill = budgetProgress(r.spend, r.cap) ?? 0;
+      expect(fill, `${team.name} ${r.window}`).toBeGreaterThan(0.005);
+      expect(fill * 100, `${team.name} ${r.window}`).toBeLessThan(
+        team.budget.warnThreshold
+      );
+    }
+  }
 });

@@ -76,6 +76,7 @@ import {
   teamSavedPercent,
   type UsageSlice,
   usageForTeam,
+  usageTargetsAt,
 } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
@@ -910,10 +911,11 @@ function UsagePane({
   controlledRange?: { range: Range; customRange: CustomRange | null };
 }) {
   // Range chrome matches Activity's Overview row: preset pill + custom
-  // picker, landing on All. Every number on the tab is the team's REAL 7d
-  // workload projected onto the selected window via effectiveScale — the
-  // same derivation Activity's KPI rail and Top cards use, so the KPIs and
-  // the breakdown tables below always describe the same selection.
+  // picker, landing on All. Messages and spend are the team keys' real
+  // numbers for the selected window and tokens are the 7d workload projected
+  // via effectiveScale: the same derivations Activity's KPI rail and Top cards
+  // use, so the KPIs and the breakdown tables below always describe the same
+  // selection.
   const [ownRange, setRange] = useState<Range>("all");
   const [ownCustomRange, setCustomRange] = useState<CustomRange | null>(null);
   const range = controlledRange ? controlledRange.range : ownRange;
@@ -924,8 +926,13 @@ function UsagePane({
 
   // One projection feeds everything on the tab: KPIs, sparklines, and both
   // tables read the SAME settled scaling (scaleUsage), so the numbers cannot
-  // drift apart on any range.
-  const scaled = useMemo(() => scaleUsage(usage, scale), [usage, scale]);
+  // drift apart on any range. Messages and spend are the team keys' real
+  // numbers for the range (usageTargetsAt), the ones Activity's key table
+  // shows; tokens scale.
+  const scaled = useMemo(
+    () => scaleUsage(usage, scale, usageTargetsAt(usage, range, customRange)),
+    [usage, scale, range, customRange]
+  );
 
   // Sparklines render windows of ONE daily backbone per team + metric
   // (teams/spark-series.ts), so the All chart's tail and the 7D chart
