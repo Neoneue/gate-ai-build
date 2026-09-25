@@ -30,6 +30,7 @@ import {
   MODEL_ROWS,
   savingsRateFor,
   USAGE_7D,
+  usageAt,
 } from "@/pages/activity-data";
 import { INITIAL_POLICIES, type PolicyState } from "@/pages/policies/config";
 
@@ -278,15 +279,24 @@ export const BUDGET_WINDOW_ORDER: BudgetWindow[] = ["5h", "weekly", "monthly"];
 export const BUDGET_WINDOW_OPTIONS: { label: string; value: BudgetWindow }[] =
   BUDGET_WINDOW_ORDER.map((w) => ({ label: BUDGET_WINDOW_LABEL[w], value: w }));
 
-/** Fraction of the 7d workload each window covers, so a window's spend is
+/** Fraction of the 7d workload each window covers, so a window's tokens are
  *  `scaleUsage(usage, BUDGET_WINDOW_SCALE[window])`. Weekly IS the 7d
  *  roll-up; 5h is 5 of 168 hours at the same rate; monthly reuses the Usage
- *  tab's 30d scale so the Budget tab's monthly figure reconciles with the
- *  Usage tab's 30D reading (charts-must-reconcile). */
+ *  tab's 30d scale. Messages and spend for the monthly window come from the
+ *  team's own 30D numbers instead (BUDGET_WINDOW_RANGE), so the Budget tab's
+ *  monthly figure reconciles with the Usage tab's 30D reading
+ *  (charts-must-reconcile). */
 export const BUDGET_WINDOW_SCALE: Record<BudgetWindow, number> = {
   "5h": 5 / 168,
   weekly: 1,
   monthly: RANGE_SCALE["30d"],
+};
+
+/** The range whose real messages and spend a window reads, where one exists.
+ *  5h has no range of its own and keeps the proportional 5/168 share. */
+const BUDGET_WINDOW_RANGE: Partial<Record<BudgetWindow, Range>> = {
+  weekly: "7d",
+  monthly: "30d",
 };
 
 /* ─── Assignable entities ───────────────────────────────────────────────── */
@@ -335,9 +345,15 @@ export function memberName(id: string | null): string {
 
 /* ─── Seed ──────────────────────────────────────────────────────────────── */
 
+/** Seed caps are sized to this workspace's real spend (messages × each
+ *  key's cost per message), so every meter reads a believable fill: org
+ *  ~16%, Development 1% / 12% / 20% across 5h / weekly / monthly, Design
+ *  ~30%. All sit under the 80% warn line, so no seed team is in a warn or
+ *  block state. These are seeds, not presets: the dialog's quick-pick
+ *  amounts (BUDGET_WINDOW_DEFAULT_AMOUNT) are the shipped product values. */
 export const ORG_BUDGET_SEED: TeamBudget = {
   name: "Org budget",
-  caps: { monthly: 1500 },
+  caps: { monthly: 15 },
   enforcement: "soft",
   warnThreshold: 80,
   notifyAdmins: true,
@@ -349,15 +365,16 @@ export const ORG_BUDGET_SEED: TeamBudget = {
  *  the three members split across two working teams with THEIR keys, so each
  *  team's spend-by-user shows its actual people (attribution is key-first).
  *
- *  Derived 7d figures (from activity-data, not authored):
- *    · Default  — Chad; prod-web $106.04 + prod-agent $110.70 +
- *      design-agent (BYOK, $0) = $216.74.
- *    · Development — Kira (manager) + Mateus; openclaw/nova-chat/hermes-agent
- *      are BYOK ($0), atlas-eval is metered = $12.39.
- *    · Design   — Jordan (manager); development $13.29 + ci-runner $5.17 =
- *      $18.46 against a $20 weekly hard budget → 92.3%, past the 80% warn.
- *      Its second window, a $5 per-5-hour cap, holds $0.55 (18.46 × 5/168)
- *      → 11.0%, so Design is the seed that exercises multi-window budgets. */
+ *  Derived 7d figures (from activity-data, not authored; spend is each key's
+ *  real messages × its rows' cost per message since 2026-09-25):
+ *    · Default: Chad; prod-web $0.21 + prod-agent $1.45 + design-agent (BYOK,
+ *      $0) = $1.66 over 362 messages.
+ *    · Development: Kira (manager) + Mateus; openclaw/nova-chat/hermes-agent
+ *      are BYOK ($0), atlas-eval is metered = $0.29 over 88 messages. Its
+ *      soft budget has all three windows (5h $1, weekly $2.50, monthly $7),
+ *      so it is the seed that exercises multi-window budgets.
+ *    · Design: Jordan (manager); development $0.43 + ci-runner (no messages,
+ *      $0) = $0.43 over 9 messages, against a $7 monthly soft budget. */
 export const TEAM_SEED_ROWS: TeamRow[] = [
   {
     id: "team_default",
@@ -386,7 +403,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
     managerIds: ["usr_kira"],
     budget: {
       name: "Team budget",
-      caps: { "5h": 25, weekly: 100, monthly: 250 },
+      caps: { "5h": 1, weekly: 2.5, monthly: 7 },
       enforcement: "soft",
       warnThreshold: 80,
       notifyAdmins: true,
@@ -408,7 +425,7 @@ export const TEAM_SEED_ROWS: TeamRow[] = [
       name: "Team budget",
       // Monthly only: the other two windows are for the user to switch on
       // from the form (user direction 2026-09-02).
-      caps: { monthly: 250 },
+      caps: { monthly: 7 },
       enforcement: "soft",
       warnThreshold: 80,
       notifyAdmins: true,
@@ -465,6 +482,10 @@ export function teamSavedPercent(
 export type TeamUsage = {
   /** Every request the team's keys served, metered or not. */
   requests: number;
+  /** The Activity key names this usage was summed over, so a range or budget
+   *  window can read those keys' real messages and spend (usageTargetsAt).
+   *  Absent on a hand-built usage, which then scales proportionally. */
+  keyNames?: readonly string[];
   /** What the gateway billed for them. BYOK keys contribute $0. */
   spend: number;
   /** Tokens in + out across the same key rows, BYOK included — a third
@@ -675,6 +696,7 @@ export function usageForTeam(team: TeamRow): TeamUsage {
   const spend = round2(rows.reduce((a, r) => a + r.spend, 0));
   return {
     requests: rows.reduce((a, r) => a + r.requests, 0),
+    keyNames: [...attributedKeyNames(team)],
     spend,
     tokens: rows.reduce((a, r) => a + r.tokensIn + r.tokensOut, 0),
     byUser: usageByUser(team, rows, spend),
@@ -682,26 +704,67 @@ export function usageForTeam(team: TeamRow): TeamUsage {
   };
 }
 
-/** Project a team's 7d usage onto a range scale, with both breakdown lists
- *  SETTLED onto the scaled totals, so the KPI, the by-user table, and the
+/** Messages and spend a usage's keys produced in a range: Activity's per-key
+ *  numbers (usageAt) summed, so a team's Total messages and Total spend for a
+ *  range equal its keys' rows in Activity's key table. */
+export type UsageTargets = {
+  requests: number;
+  spend: number;
+  tokens: number;
+  tokensIn: number;
+};
+
+export function usageTargetsAt(
+  usage: TeamUsage,
+  range: Range,
+  customRange: CustomRange | null
+): UsageTargets | undefined {
+  if (!usage.keyNames) {
+    return;
+  }
+  const at = usageAt(range, customRange, new Set(usage.keyNames));
+  return {
+    requests: at.messages,
+    spend: at.spend,
+    tokens: at.tokens,
+    tokensIn: at.tokensIn,
+  };
+}
+
+/** Project a team's 7d usage onto a range, with both breakdown lists
+ *  SETTLED onto the new totals, so the KPI, the by-user table, and the
  *  by-model table stay three readings of one number at ANY scale. Scaling
  *  rows independently and rounding each (what the Usage tab did first)
- *  drifts on non-terminating scales such as a custom 10-day window's 10/7. */
-export function scaleUsage(usage: TeamUsage, scale: number): TeamUsage {
-  if (scale === 1) {
+ *  drifts on non-terminating scales such as a custom 10-day window's 10/7.
+ *
+ *  `targets` (usageTargetsAt) sets messages, spend and tokens to the range's
+ *  real per-key numbers; without it (the 5h budget window, a hand-built
+ *  usage) every total scales by `scale`. */
+export function scaleUsage(
+  usage: TeamUsage,
+  scale: number,
+  targets?: UsageTargets
+): TeamUsage {
+  const requests = targets?.requests ?? Math.round(usage.requests * scale);
+  const spend = targets?.spend ?? round2(usage.spend * scale);
+  const tokens = targets?.tokens ?? Math.round(usage.tokens * scale);
+  if (
+    requests === usage.requests &&
+    spend === usage.spend &&
+    tokens === usage.tokens
+  ) {
     return usage;
   }
-  const requests = Math.round(usage.requests * scale);
-  const spend = round2(usage.spend * scale);
-  const tokens = Math.round(usage.tokens * scale);
+  const requestScale = usage.requests > 0 ? requests / usage.requests : 0;
+  const spendScale = usage.spend > 0 ? spend / usage.spend : 0;
   const scaleSlices = (slices: UsageSlice[]): UsageSlice[] => {
     const reqs = settleValues(
-      slices.map((s) => s.requests * scale),
+      slices.map((s) => s.requests * requestScale),
       requests,
       0
     );
     const spends = settleValues(
-      slices.map((s) => s.spend * scale),
+      slices.map((s) => s.spend * spendScale),
       spend,
       2
     );
@@ -710,17 +773,20 @@ export function scaleUsage(usage: TeamUsage, scale: number): TeamUsage {
     // total, so in + out across the table equals the Tokens Used tile.
     const hasTokens = slices.some((s) => s.tokensIn !== undefined);
     const inTotal = slices.reduce((a, s) => a + (s.tokensIn ?? 0), 0);
-    const scaledIn = Math.round(inTotal * scale);
+    const outTotal = slices.reduce((a, s) => a + (s.tokensOut ?? 0), 0);
+    const scaledIn = targets?.tokensIn ?? Math.round(inTotal * scale);
+    const inScale = inTotal > 0 ? scaledIn / inTotal : 0;
+    const outScale = outTotal > 0 ? (tokens - scaledIn) / outTotal : 0;
     const ins = hasTokens
       ? settleValues(
-          slices.map((s) => (s.tokensIn ?? 0) * scale),
+          slices.map((s) => (s.tokensIn ?? 0) * inScale),
           scaledIn,
           0
         )
       : [];
     const outs = hasTokens
       ? settleValues(
-          slices.map((s) => (s.tokensOut ?? 0) * scale),
+          slices.map((s) => (s.tokensOut ?? 0) * outScale),
           tokens - scaledIn,
           0
         )
@@ -734,6 +800,7 @@ export function scaleUsage(usage: TeamUsage, scale: number): TeamUsage {
   };
   return {
     requests,
+    keyNames: usage.keyNames,
     spend,
     tokens,
     byUser: scaleSlices(usage.byUser),
@@ -773,7 +840,12 @@ export function usageForWindow(
   usage: TeamUsage,
   window: BudgetWindow
 ): TeamUsage {
-  return scaleUsage(usage, BUDGET_WINDOW_SCALE[window]);
+  const range = BUDGET_WINDOW_RANGE[window];
+  return scaleUsage(
+    usage,
+    BUDGET_WINDOW_SCALE[window],
+    range ? usageTargetsAt(usage, range, null) : undefined
+  );
 }
 
 /** One window's reading: its cap and the spend inside it. */

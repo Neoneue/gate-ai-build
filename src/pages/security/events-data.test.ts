@@ -1,8 +1,11 @@
 import { expect, test } from "vitest";
+import { MESSAGE_TOTALS } from "@/data/message-totals";
+import { REQUEST_ROWS_ALL } from "@/data/requests";
 import {
   allocate,
   attackTypeCounts,
   buildEventsChartView,
+  EVENTS_RANGE_TOTAL,
   eventsTotal,
   splitEventMix,
 } from "@/pages/security/events-data";
@@ -55,5 +58,18 @@ test("chart points carry a per-bucket action split that reconciles", () => {
     expect(sum.flagged).toBe(split.flagged);
     expect(sum.redacted).toBe(split.redacted);
     expect(sum.requests).toBe(eventsTotal(range, null));
+  }
+});
+
+test("event totals are the Messages rows' own finding rate applied to the message totals", () => {
+  // The org Security page may not claim a finding rate the Messages list
+  // contradicts: events / messages === non-allow rows / all rows.
+  const share =
+    REQUEST_ROWS_ALL.filter((r) => r.guardrail !== "allow").length /
+    REQUEST_ROWS_ALL.length;
+  for (const range of RANGES) {
+    expect(EVENTS_RANGE_TOTAL[range]).toBe(
+      Math.round(MESSAGE_TOTALS[range] * share)
+    );
   }
 });

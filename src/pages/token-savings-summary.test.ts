@@ -1,9 +1,7 @@
 import { expect, test } from "vitest";
-import { type PresetRange, RANGE_SCALE } from "@/lib/range";
-import {
-  TOTAL_7D_BASE_INPUT_TOKENS,
-  TOTAL_7D_BASE_REQUESTS,
-} from "@/pages/activity-data";
+import { MESSAGE_TOTALS } from "@/data/message-totals";
+import type { PresetRange } from "@/lib/range";
+import { usageAt } from "@/pages/activity-data";
 import { KPI_BY_RANGE } from "@/pages/token-savings-data";
 import {
   allocateTenths,
@@ -27,23 +25,26 @@ test("figures divide back to the Overview tile rates (charts must reconcile)", (
     const m = summaryFor(range, null, ON);
     const [, caching, compression] = KPI_BY_RANGE[range];
     const compressionRate = (m.inputTokensRemoved / m.inputTokensSent) * 100;
-    const cachingRate = (m.cacheAnswered / m.requests) * 100;
     expect(compressionRate).toBeCloseTo(Number(compression.value), 1);
-    expect(cachingRate).toBeCloseTo(Number(caching.value), 1);
+    // Requests are real message counts (48 at 24H), so the cached count is
+    // the tile rate applied and rounded; at that volume it cannot divide
+    // back to a two-decimal rate.
+    expect(m.cacheAnswered).toBe(
+      Math.round((Number(caching.value) / 100) * m.requests)
+    );
     expect(m.compressionRateLabel).toBe(`${compression.value}%`);
     expect(m.cachingRateLabel).toBe(`${caching.value}%`);
   }
 });
 
-test("denominators are the site's totals scaled to the window", () => {
+test("denominators are the site's totals for the window", () => {
   for (const range of RANGES) {
     const m = summaryFor(range, null, ON);
-    expect(m.requests).toBe(
-      Math.round(TOTAL_7D_BASE_REQUESTS * RANGE_SCALE[range])
-    );
-    expect(m.inputTokensSent).toBe(
-      Math.round(TOTAL_7D_BASE_INPUT_TOKENS * RANGE_SCALE[range])
-    );
+    // The Messages page's count for the same range, and those messages'
+    // real input tokens (Activity's Tokens In column summed), not a scaled
+    // base.
+    expect(m.requests).toBe(MESSAGE_TOTALS[range]);
+    expect(m.inputTokensSent).toBe(usageAt(range, null, null).tokensIn);
   }
 });
 
@@ -68,6 +69,11 @@ test("breakdown: two levels on ONE basis (the Total saved tile); every printed s
       0
     );
     expect(tenths(comp.shareLabel) + tenths(cache.shareLabel)).toBe(1000);
+    // Low-volume windows show the two mechanism bars only (see below).
+    if (m.lowVolume) {
+      expect(comp.passes).toHaveLength(0);
+      continue;
+    }
     // Five rows: four categories plus the "All others" catch-all, last.
     expect(comp.passes).toHaveLength(BREAKDOWN_MAX_ROWS);
     expect(comp.passes.at(-1)?.label).toBe(BREAKDOWN_OTHERS_LABEL);
@@ -145,12 +151,17 @@ test("a window entirely before the epoch is no traffic, not zero-valued claims",
   expect(resolveWindow("custom", { from, to }).empty).toBe(true);
 });
 
-test("low volume hides the passes; no preset org window is low volume", () => {
+test("low volume hides the passes: 24H and 7D sit under the threshold", () => {
+  // Real message counts (48 / 468 / 2,248 / 4,860 since 2026-09-25) put the
+  // two short windows under LOW_VOLUME_REQUESTS.
   for (const range of RANGES) {
     const m = summaryFor(range, null, ON);
-    expect(m.requests).toBeGreaterThanOrEqual(LOW_VOLUME_REQUESTS);
-    expect(m.lowVolume).toBe(false);
+    expect(m.lowVolume).toBe(m.requests < LOW_VOLUME_REQUESTS);
   }
+  expect(summaryFor("24h", null, ON).lowVolume).toBe(true);
+  expect(summaryFor("7d", null, ON).lowVolume).toBe(true);
+  expect(summaryFor("30d", null, ON).lowVolume).toBe(false);
+  expect(summaryFor("all", null, ON).lowVolume).toBe(false);
 });
 
 test("copy: no dollar amounts, denominators and exclusion present", () => {

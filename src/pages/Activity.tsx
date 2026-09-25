@@ -1,5 +1,5 @@
 import { Key } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useNavigate,
   useOutletContext,
@@ -32,13 +32,11 @@ import { resolveRowsPerPage } from "@/components/ui/table-pagination";
 import { TablePaginationFooter } from "@/components/ui/table-pagination-footer";
 import { UploadIcon } from "@/components/ui/upload";
 import { modelName } from "@/data/models";
-import { usageForTeam } from "@/data/teams";
 import { parseNumeric, sortRows, useTableSort } from "@/hooks/use-table-sort";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatChartTooltipDate, formatCompactCount } from "@/lib/formatters";
 import {
   type CustomRange,
-  effectiveScale,
   type PresetRange,
   RANGE_OPTIONS,
   type Range,
@@ -47,14 +45,14 @@ import {
   ACTIVITY_SAVINGS_RATE_7D,
   API_KEY_ROWS,
   distributeSeries,
+  keyUsageAt,
   METRIC_OPTIONS,
   type Metric,
   MODEL_ROWS,
   savingsRateFor,
-  scopedUsageTotals,
-  TOTAL_7D_BASE_DOLLARS,
-  TOTAL_7D_BASE_REQUESTS,
-  TOTAL_7D_BASE_TOKENS,
+  spendTotalsAt,
+  tokensTotalsAt,
+  usageAt,
 } from "@/pages/activity-data";
 import { attackTypeCounts } from "@/pages/security/events-data";
 import { TYPE_META } from "@/pages/security-data";
@@ -186,8 +184,9 @@ function PageHeader() {
 /* ─── KPI rail (3-up, range-aware) ──────────────────────────────────────── */
 
 // Only `delta` is hand-authored per range; the KPI value and sparkline are
-// both computed in getKpiSpec from TOTAL_7D_BASE_* × effectiveScale, so the
-// KPI rail cannot drift from the Spend / Requests / Tokens over-time charts.
+// both computed in getKpiSpec. Messages, spend and tokens are the range's real
+// per-key numbers summed (usageAt), so the rail equals the key table's
+// columns, and the message count equals the Messages page hero.
 type KpiSpec = { delta: string };
 
 const KPI_DATA: Record<
@@ -216,24 +215,24 @@ const KPI_DATA: Record<
   },
 };
 
-/** KPI spec for the active range. All three metrics computed: value from
- *  the canonical 7d base × scale; sparkline by distributing that scaled
- *  total across the range's bucket count via distributeSeries — same
- *  generator the Spend over time chart uses, so spark shapes track real
- *  per-bucket variation (upward trend + ±10% jitter, deterministic). */
+/** KPI spec for the active range. All three metrics computed from usageAt:
+ *  MESSAGE_TOTALS split across keys by their real rows, with each key's
+ *  spend and tokens at its rows' averages; sparkline by distributing each total
+ *  across the range's bucket count via distributeSeries, the same generator
+ *  the Spend over time chart uses, so spark shapes track real per-bucket
+ *  variation (upward trend + ±10% jitter, deterministic). */
 function getKpiSpec(
   range: Range,
   customRange: CustomRange | null,
   scope: ViewScope
 ) {
-  const scale = effectiveScale(range, customRange);
   const count = getBucketCount(range, customRange);
-  // A Manager or Member reads their own keys (view-scope.ts): the same
-  // usageForTeam derivation the team pages use, over a one-person team.
-  const own = scope.ownTeam ? usageForTeam(scope.ownTeam) : null;
-  const spendDollars = (own ? own.spend : TOTAL_7D_BASE_DOLLARS) * scale;
-  const requestsCount = (own ? own.requests : TOTAL_7D_BASE_REQUESTS) * scale;
-  const tokensCount = (own ? own.tokens : TOTAL_7D_BASE_TOKENS) * scale;
+  // A Manager or Member reads their own keys (view-scope.ts). All three sum
+  // the same per-key numbers the key table shows (usageAt).
+  const usage = usageAt(range, customRange, scope.keyNames);
+  const spendDollars = usage.spend;
+  const requestsCount = usage.messages;
+  const tokensCount = usage.tokens;
 
   // Each metric gets its own seed so adjacent sparklines in the rail
   // don't share the same jitter pattern. Range-aware seed so ranges with
@@ -477,7 +476,6 @@ function TopByAxisRow({
   range: Range;
   customRange: CustomRange | null;
 }) {
-  const scale = effectiveScale(range, customRange);
   const scope = useViewScope();
   const teams = useTeams();
   const keyRowsInScope = useMemo(
@@ -492,32 +490,40 @@ function TopByAxisRow({
   const [userMetric, setUserMetric] = useState<Metric>("tokens");
   const [attackMetric, setAttackMetric] = useState<AttackMetric>("amount");
 
-  // Spend → fmtUsd, with 2dp scaled values; tokens → fmtTokens (compact
-  // "M"/"k") on rounded integers. Each card computes from its own metric.
+  // Every card reads the range's own numbers (keyUsageAt and the per-series
+  // totals built on it), the same ones the KPI rail and key table show.
+  // Spend → fmtUsd; tokens → fmtTokens (compact "M"/"k"). A Manager or Member
+  // reads only their own keys (scope.keyNames).
+  const spendAt = useMemo(
+    () => spendTotalsAt(range, customRange, scope.keyNames),
+    [range, customRange, scope]
+  );
+  const tokensAt = useMemo(
+    () => tokensTotalsAt(range, customRange, scope.keyNames),
+    [range, customRange, scope]
+  );
+  const keyAt = useMemo(
+    () => keyUsageAt(range, customRange),
+    [range, customRange]
+  );
+  const keyAxis = useCallback(
+    (key: string, isSpend: boolean) =>
+      isSpend
+        ? (keyAt.spend[key] ?? 0)
+        : (keyAt.tokensIn[key] ?? 0) + (keyAt.tokensOut[key] ?? 0),
+    [keyAt]
+  );
   const modelRows: TopRow[] = useMemo(() => {
     const isSpend = modelMetric === "spend";
-    // Scoped: the models the user's own keys ran (scopedUsageTotals), read
-    // in the same two units; MODEL_ROWS is the org.
-    const scoped = scope.keyNames ? scopedUsageTotals(scope.keyNames) : null;
-    const rows = scoped
-      ? Object.keys({ ...scoped.tokens.model, ...scoped.spend.model }).map(
-          (key) => ({
-            key,
-            vendor:
-              MODEL_BY_KEY.get(key)?.vendor ??
-              (key.split("/")[0] as (typeof MODEL_ROWS)[number]["vendor"]),
-            spend: scoped.spend.model[key] ?? 0,
-            tokensIn: scoped.tokens.model[key] ?? 0,
-            tokensOut: 0,
-          })
-        )
-      : MODEL_ROWS;
-    return rows
-      .map((m) => ({
-        key: m.key,
-        label: modelName(m.key),
-        vendor: m.vendor,
-        axis: isSpend ? m.spend * scale : (m.tokensIn + m.tokensOut) * scale,
+    const totals = isSpend ? spendAt.model : tokensAt.model;
+    return Object.entries(totals)
+      .map(([key, axis]) => ({
+        key,
+        label: modelName(key),
+        vendor:
+          MODEL_BY_KEY.get(key)?.vendor ??
+          (key.split("/")[0] as (typeof MODEL_ROWS)[number]["vendor"]),
+        axis,
       }))
       .sort((a, b) => b.axis - a.axis)
       .slice(0, 4)
@@ -529,7 +535,7 @@ function TopByAxisRow({
           : fmtTokens(Math.round(m.axis)),
         avatar: <VendorAvatar vendor={m.vendor} />,
       }));
-  }, [scale, modelMetric, scope]);
+  }, [modelMetric, spendAt, tokensAt]);
 
   const keyRows: TopRow[] = useMemo(() => {
     const isSpend = keyMetric === "spend";
@@ -537,7 +543,7 @@ function TopByAxisRow({
       .map((k) => ({
         key: k.key,
         label: k.label,
-        axis: isSpend ? k.spend * scale : (k.tokensIn + k.tokensOut) * scale,
+        axis: keyAxis(k.key, isSpend),
       }))
       .sort((a, b) => b.axis - a.axis)
       .slice(0, 4)
@@ -550,7 +556,7 @@ function TopByAxisRow({
           : fmtTokens(Math.round(k.axis)),
         avatar: KEY_AVATAR,
       }));
-  }, [scale, keyMetric, keyRowsInScope]);
+  }, [keyMetric, keyRowsInScope, keyAxis]);
 
   const userRows: TopRow[] = useMemo(() => {
     const isSpend = userMetric === "spend";
@@ -568,7 +574,7 @@ function TopByAxisRow({
     const agg = new Map<string, { owner: string; axis: number }>();
     for (const k of keyRowsInScope) {
       const existing = agg.get(k.owner) ?? { owner: k.owner, axis: 0 };
-      existing.axis += (isSpend ? k.spend : k.tokensIn + k.tokensOut) * scale;
+      existing.axis += keyAxis(k.key, isSpend);
       agg.set(k.owner, existing);
     }
     return [...agg.values()]
@@ -590,7 +596,7 @@ function TopByAxisRow({
           />
         ),
       }));
-  }, [scale, userMetric, keyRowsInScope]);
+  }, [userMetric, keyRowsInScope, keyAxis]);
 
   // Counts come from the shared Security attack mix (attackTypeCounts), so
   // this card and Security's Attack-types card show the SAME integers for
@@ -739,21 +745,24 @@ function UsageByKey({
   }
 
   const scaledRows = useMemo<ScaledKeyRow[]>(() => {
-    const scale = effectiveScale(range, customRange);
+    // Messages, spend and tokens are the range's own per-key numbers
+    // (keyUsageAt), not the 7d row × a scale, so each column sums EXACTLY to
+    // its KPI above it.
+    const at = keyUsageAt(range, customRange);
     // Savings is a rate, not a volume — per-key values shift with the
-    // range's workspace rate (savingsRateFor), not with effectiveScale.
+    // range's workspace rate (savingsRateFor), not with message volume.
     const savingsScale =
       savingsRateFor(range, customRange) / ACTIVITY_SAVINGS_RATE_7D;
     return API_KEY_ROWS.filter(
       (k) => !scope.keyNames || scope.keyNames.has(k.key)
     ).map((k) => {
-      const requests = Math.round(k.requests * scale);
+      const requests = at.messages[k.key] ?? 0;
       return {
         ...k,
-        spend: +(k.spend * scale).toFixed(2),
+        spend: at.spend[k.key] ?? 0,
         requests,
-        tokensIn: Math.round(k.tokensIn * scale),
-        tokensOut: Math.round(k.tokensOut * scale),
+        tokensIn: at.tokensIn[k.key] ?? 0,
+        tokensOut: at.tokensOut[k.key] ?? 0,
         // Placeholder rate until per-key alert data exists: alerts run at
         // 1/8th of the key's message count, so the column tracks the range
         // selector through `requests`.

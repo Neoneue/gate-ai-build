@@ -45,9 +45,8 @@ Read the relevant doc before working in its area. Do not re-inject on every prom
 | [`data-model.md`](./data-model.md) | Dashboard architecture — routes, TypeScript types, mock-data model, entity relationships, deep-links, page inventory. |
 | [`change-logs/`](./change-logs/) | Running UI change logs, one file per day, grouped by month (`change-logs/2026-07/changelog-7-6.md`). Append an entry for every UI change so devs/agents can diff against it. **Start at [`change-logs/INDEX.md`](./change-logs/INDEX.md)** — it lists every entry by date so you open one file, not thirty (~90k tokens if globbed). |
 | [`audits/`](./audits/) | Review findings, one checklist per day at `audits/YYYY-MM/audit-M-D.md`, mirroring `change-logs/`. Section per skill, subsection per page, IDs `<alias>-N` (`wdg-3`). **Start at [`audits/INDEX.md`](./audits/INDEX.md)**; the same-day changelog entry links the file. |
-| [`docs/Presidio-findings.md`](./docs/Presidio-findings.md) | PII detection truth — built-in Presidio recognizers. Read before authoring any PII finding value. |
-| [`docs/Credentials-findings.md`](./docs/Credentials-findings.md) | Credential/secret detection — regex + Shannon entropy (NOT Presidio). |
-| [`docs/Injection-findings.md`](./docs/Injection-findings.md) | Prompt-injection detection — ML classifier (NOT Presidio/regex); §3 = the 10 verdict enums. |
+| [`docs/Credentials-findings.md`](./docs/Credentials-findings.md) | Credential/secret detection — regex + Shannon entropy. |
+| [`docs/Injection-findings.md`](./docs/Injection-findings.md) | Prompt-injection detection — ML classifier (not regex); §3 = the 10 verdict enums. |
 | [`README.md`](./README.md) | Repo overview, stack, routes. |
 | [`agents/front-end-developer/skills/INDEX.md`](./agents/front-end-developer/skills/INDEX.md) | Which design skill fits which job; start here before picking a review or build skill. |
 | [`.claude/skills/INDEX.md`](./.claude/skills/INDEX.md) | Orchestrator skills and slash commands by situation, recurring chains, and the scripts they own. |

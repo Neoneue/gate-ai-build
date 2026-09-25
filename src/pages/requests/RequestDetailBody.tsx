@@ -802,7 +802,7 @@ function KvRow({
   );
 }
 
-/** Detail panel for PII / credential findings — the Presidio / regex layout.
+/** Detail panel for PII / credential findings — the PII-scanner / regex layout.
  * Findings are always masked: titles and evidence render `redactedAs`, never
  * the raw match. Every section is title-ABOVE-card; cards hold only data. */
 /** One scrollable evidence box: title-above-card, the message body with each

@@ -1,3 +1,8 @@
+import {
+  customMessageTotal,
+  customRangeHours,
+  MESSAGE_TOTALS,
+} from "@/data/message-totals";
 import { demoAnchorFields } from "@/lib/demo-clock";
 import { formatChartTooltipDate } from "@/lib/formatters";
 import { scaleByShare } from "@/pages/teams/view-scope";
@@ -241,9 +246,10 @@ function heroTipRange(oldestMinutesAgo: number): { start: Date; end: Date } {
 // ── All-time view (240 × 6-hour buckets ≈ 60-day lifetime window) ─────────
 // The widest preset: the lifetime cumulative request volume for this mock
 // account. Sits above 30D — same 6-hour bucketing as 30D extended back to
-// ~60 days. `HERO_ALL_TOTAL` (4,860) is the single source of truth for
-// the all-time total; the breakdown and table pagination derive from it.
-const HERO_ALL_TOTAL = 4860;
+// ~60 days. `HERO_ALL_TOTAL` (4,860) is the all-time total, read from
+// MESSAGE_TOTALS (data/message-totals.ts) like every preset below, so Activity
+// and the other pages that count messages print the same number.
+const HERO_ALL_TOTAL = MESSAGE_TOTALS.all;
 const HERO_ALL_BUCKETS = makeHeroBuckets(
   240,
   HERO_ALL_TOTAL,
@@ -264,7 +270,12 @@ const HERO_ALL_DATA = HERO_ALL_BUCKETS.map((requests, i) => {
 const HERO_ALL_TICKS = deriveTicks(HERO_ALL_DATA);
 
 // ── 24H view (96 × 15-minute buckets) ─────────────────────────────────────
-const HERO_24H_BUCKETS = makeHeroBuckets(96, 48, "daily", 0xc5_7e_11_a7);
+const HERO_24H_BUCKETS = makeHeroBuckets(
+  96,
+  MESSAGE_TOTALS["24h"],
+  "daily",
+  0xc5_7e_11_a7
+);
 const HERO_24H_TIP_RANGE = heroTipRange(95 * 15);
 const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
   // Bucket 0 = 23h45m before the anchor; bucket 95 = the anchor (15-min
@@ -280,7 +291,12 @@ const HERO_24H_DATA = HERO_24H_BUCKETS.map((requests, i) => {
 const HERO_24H_TICKS = deriveTicks(HERO_24H_DATA, 6);
 
 // ── 7D view (168 × 1-hour buckets) ────────────────────────────────────────
-const HERO_7D_BUCKETS = makeHeroBuckets(168, 468, "weekly", 0x7d_c0_ff_ee);
+const HERO_7D_BUCKETS = makeHeroBuckets(
+  168,
+  MESSAGE_TOTALS["7d"],
+  "weekly",
+  0x7d_c0_ff_ee
+);
 const HERO_7D_TIP_RANGE = heroTipRange(167 * 60);
 const HERO_7D_DATA = HERO_7D_BUCKETS.map((requests, i) => {
   // Bucket 167 = current hour (14:00 today); bucket 0 = 167h before that.
@@ -295,7 +311,12 @@ const HERO_7D_DATA = HERO_7D_BUCKETS.map((requests, i) => {
 const HERO_7D_TICKS = deriveTicks(HERO_7D_DATA);
 
 // ── 30D view (120 × 6-hour buckets) ───────────────────────────────────────
-const HERO_30D_BUCKETS = makeHeroBuckets(120, 2248, "monthly", 0x30_dc_af_e0);
+const HERO_30D_BUCKETS = makeHeroBuckets(
+  120,
+  MESSAGE_TOTALS["30d"],
+  "monthly",
+  0x30_dc_af_e0
+);
 const HERO_30D_TIP_RANGE = heroTipRange(119 * 360);
 const HERO_30D_DATA = HERO_30D_BUCKETS.map((requests, i) => {
   // Bucket 119 = current 6h window (anchor); bucket 0 = 119*6h earlier.
@@ -333,7 +354,7 @@ const HERO_VIEW_SEEDS: Record<RangeKey, HeroViewSeed> = {
   },
   "24h": {
     eyebrow: "MESSAGES",
-    total: 48,
+    total: MESSAGE_TOTALS["24h"],
     success: 46,
     errors: 2,
     delta: "+8.2%",
@@ -345,7 +366,7 @@ const HERO_VIEW_SEEDS: Record<RangeKey, HeroViewSeed> = {
   },
   "7d": {
     eyebrow: "MESSAGES",
-    total: 468,
+    total: MESSAGE_TOTALS["7d"],
     success: 455,
     errors: 13,
     delta: "+5.4%",
@@ -357,7 +378,7 @@ const HERO_VIEW_SEEDS: Record<RangeKey, HeroViewSeed> = {
   },
   "30d": {
     eyebrow: "MESSAGES",
-    total: 2248,
+    total: MESSAGE_TOTALS["30d"],
     success: 2188,
     errors: 60,
     delta: "+14.6%",
@@ -400,9 +421,8 @@ export function buildCustomHeroView(custom: CustomRange | null): HeroView {
     return HERO_VIEWS["custom"];
   }
 
-  const ms = custom.to.getTime() - custom.from.getTime();
   // `+1` so a same-day range still spans one bucket / one tick instead of zero.
-  const hours = Math.max(1, Math.round(ms / 36e5) + 1);
+  const hours = customRangeHours(custom);
   // Pick bucket count: hourly buckets for short windows, 6h buckets for long ones.
   // Brief asks `clamp(hoursInRange, 24, 168)` for the count itself when hourly.
   const useHourly = hours <= 7 * 24;
@@ -412,9 +432,9 @@ export function buildCustomHeroView(custom: CustomRange | null): HeroView {
     Math.min(168, Math.ceil(hours / bucketSizeHours))
   );
 
-  // ~80 req/hr base rate × hours-in-range, rounded down to a tidy number.
-  const rawTotal = 80 * hours;
-  const total = Math.max(1, Math.round(rawTotal / 10) * 10);
+  // ~80 req/hr base rate × hours-in-range, rounded to a tidy ten. Shared with
+  // Activity through data/message-totals.ts so both pages print one number.
+  const total = customMessageTotal(custom);
 
   const buckets = makeHeroBuckets(bucketCount, total, "weekly", 0xca_fe_f0_0d);
 

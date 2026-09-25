@@ -1,7 +1,8 @@
 import type { Vendor } from "@/components/icons/vendor-meta";
 import { PROVIDER_META } from "@/components/icons/vendor-meta";
+import { MESSAGE_TOTALS, messageTotalFor } from "@/data/message-totals";
 import { costOf, modelById, modelName, type ProviderId } from "@/data/models";
-import { REQUEST_ROWS_ALL } from "@/data/requests";
+import { isByokKey, REQUEST_ROWS_ALL } from "@/data/requests";
 import { CHART_PALETTE } from "@/lib/chart-palette";
 import {
   type CustomRange,
@@ -12,15 +13,15 @@ import {
 
 export type Dimension = "model" | "provider" | "apiKey";
 
-// Canonical 7d totals — single source of truth for each KPI. Every range's
-// value AND sparkline shape are computed from these × effectiveScale, so
-// the KPIs reconcile with the underlying data and the spark shapes reflect
-// real per-bucket variation rather than hand-drawn arrays.
+// Canonical 7d totals, one per KPI.
 //
-// Requests is the only one still authored: a request count is not a function
-// of price. TOTAL_7D_BASE_DOLLARS and TOTAL_7D_BASE_TOKENS are DERIVED from
-// the workload model further down and are exported from there.
-export const TOTAL_7D_BASE_REQUESTS = 63_793;
+// Messages are not authored here. The count per range is MESSAGE_TOTALS
+// (data/message-totals.ts), the Messages page hero, so Activity prints the
+// same 4,860 / 468 / 48 the Messages page lists. This 7d figure is kept as a
+// named export for the pages that read the week (Overview, Token savings).
+// Spend and tokens are DERIVED from those messages and the real rows' cost
+// and tokens per message (see "Messages, spend and tokens per key" below).
+export const TOTAL_7D_BASE_REQUESTS = MESSAGE_TOTALS["7d"];
 
 // Reconciles with TokenSavings.tsx's "7d" window Total-saved rate (caching
 // 0.18% + compression 14.0% ≈ 14.2%, both real product mechanisms, not a
@@ -47,8 +48,11 @@ const SAVINGS_CURVE_BOUNDS: Record<
   all: { floor: 10, ceiling: 25 }, // full lifetime climb 10 → 25 — mean 20.0%
 };
 
-/** 7d reference rate for Activity's Saved column — the token-weighted mean of
- *  API_KEY_ROWS.savings, and the divisor the per-range scaling hangs off. */
+/** 7d reference rate for Activity's Saved column, and the divisor the
+ *  per-range scaling hangs off. It was the token-weighted mean of
+ *  API_KEY_ROWS.savings under the authored workload; with real-row tokens
+ *  (design-agent is ~99% of them, at 0.25) that mean is ~25%, and this
+ *  authored steady-state goal is kept so the Saved column does not move. */
 export const ACTIVITY_SAVINGS_RATE_7D = 0.243;
 
 const curveBounds = (
@@ -109,6 +113,199 @@ export function savingsCurve(
   });
 }
 
+/* ─── Messages, spend and tokens per key ────────────────────────────────────
+ *
+ * Both come off the real request rows, the same REQUEST_ROWS_ALL the Messages
+ * page lists, so neither is authored here.
+ *
+ * Messages: a key's share of a range's MESSAGE_TOTALS is its share of those
+ * rows (design-agent sent 102 of the 153, so it carries two thirds of every
+ * range). Shares are settled per range so the per-key counts sum EXACTLY to
+ * the range total. A key with no rows (ci-runner) sends 0.
+ *
+ * Spend: messages times what that key's rows actually cost per message. A row
+ * whose cost reads "—" is unmetered and sits out of the average. BYOK keys
+ * are $0 by definition: the customer's own provider account is billed. A Gate
+ * key with messages but no metered row would fall back to the workspace-wide
+ * metered average; every Gate key with rows has metered rows today, so the
+ * fallback is a guard, not a number anyone sees.
+ *
+ * Tokens: messages times the key's average tokens in and out per row, over
+ * all its rows (a blocked row with "—" tokens counts as a message with none).
+ * design-agent's long BYOK session averages ~190k tokens in per message, so
+ * it carries almost all of the workspace's tokens.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+type KeyRowStats = {
+  rows: number;
+  metered: number;
+  cost: number;
+  tokensIn: number;
+  tokensOut: number;
+};
+
+/** Parse a row's token cell ("44,889"). "—" reads as 0. */
+function rowTokens(cell: string): number {
+  return Number.parseInt(cell.replace(/[^0-9]/g, ""), 10) || 0;
+}
+
+function sumOf(r: Record<string, number>): number {
+  return Object.values(r).reduce((a, b) => a + b, 0);
+}
+
+/** Parse a row's cost cell ("$0.0120"). "—" (unmetered) returns null. */
+function rowCost(cost: string): number | null {
+  const n = Number.parseFloat(cost.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
+const KEY_ROW_STATS: Record<string, KeyRowStats> = (() => {
+  const out: Record<string, KeyRowStats> = {};
+  for (const row of REQUEST_ROWS_ALL) {
+    const acc = out[row.keyId] ?? {
+      rows: 0,
+      metered: 0,
+      cost: 0,
+      tokensIn: 0,
+      tokensOut: 0,
+    };
+    acc.rows += 1;
+    acc.tokensIn += rowTokens(row.inTokens);
+    acc.tokensOut += rowTokens(row.outTokens);
+    const cost = rowCost(row.cost);
+    if (cost !== null) {
+      acc.metered += 1;
+      acc.cost += cost;
+    }
+    out[row.keyId] = acc;
+  }
+  return out;
+})();
+
+/** Workspace-wide average cost of one metered message, the fallback for a Gate
+ *  key whose rows are all unmetered. */
+const WORKSPACE_COST_PER_MESSAGE = (() => {
+  const all = Object.values(KEY_ROW_STATS);
+  const metered = all.reduce((a, s) => a + s.metered, 0);
+  return metered > 0 ? all.reduce((a, s) => a + s.cost, 0) / metered : 0;
+})();
+
+/** What one message on `key` costs, from its own real rows. */
+export function costPerMessage(key: string): number {
+  if (isByokKey(key)) {
+    return 0;
+  }
+  const stats = KEY_ROW_STATS[key];
+  if (!stats || stats.metered === 0) {
+    return WORKSPACE_COST_PER_MESSAGE;
+  }
+  return stats.cost / stats.metered;
+}
+
+export type KeyUsageAt = {
+  /** Messages per key for the range; sums to messageTotalFor(range). */
+  messages: Record<string, number>;
+  /** Spend per key for the range: messages × costPerMessage, to the cent. */
+  spend: Record<string, number>;
+  /** Tokens per key for the range: messages × the key's rows' average. */
+  tokensIn: Record<string, number>;
+  tokensOut: Record<string, number>;
+};
+
+const KEY_USAGE_CACHE = new Map<string, KeyUsageAt>();
+
+/** Messages, spend and tokens per key for a range. Every Activity count,
+ *  dollar and token reads this, so the KPIs, the key table and the
+ *  breakdowns are one set of numbers. */
+export function keyUsageAt(
+  range: Range,
+  customRange: CustomRange | null
+): KeyUsageAt {
+  const total = messageTotalFor(range, customRange);
+  const cacheKey = `${total}`;
+  const hit = KEY_USAGE_CACHE.get(cacheKey);
+  if (hit) {
+    return hit;
+  }
+  const rowTotal =
+    Object.values(KEY_ROW_STATS).reduce((a, s) => a + s.rows, 0) || 1;
+  const messages = settle(
+    Object.fromEntries(
+      Object.entries(KEY_ROW_STATS).map(([key, s]) => [
+        key,
+        (s.rows * total) / rowTotal,
+      ])
+    ),
+    0
+  );
+  const spend = Object.fromEntries(
+    Object.entries(messages).map(([key, n]) => [
+      key,
+      Math.round(n * costPerMessage(key) * 100) / 100,
+    ])
+  );
+  const perMessage = (key: string, side: "tokensIn" | "tokensOut") => {
+    const s = KEY_ROW_STATS[key];
+    return s && s.rows > 0 ? s[side] / s.rows : 0;
+  };
+  const tokens = (side: "tokensIn" | "tokensOut") =>
+    Object.fromEntries(
+      Object.entries(messages).map(([key, n]) => [
+        key,
+        Math.round(n * perMessage(key, side)),
+      ])
+    );
+  const out = {
+    messages,
+    spend,
+    tokensIn: tokens("tokensIn"),
+    tokensOut: tokens("tokensOut"),
+  };
+  KEY_USAGE_CACHE.set(cacheKey, out);
+  return out;
+}
+
+export type UsageAt = {
+  messages: number;
+  spend: number;
+  tokensIn: number;
+  tokensOut: number;
+  tokens: number;
+};
+
+/** Messages, spend and tokens for a set of keys (null = the workspace). */
+export function usageAt(
+  range: Range,
+  customRange: CustomRange | null,
+  names: ReadonlySet<string> | null
+): UsageAt {
+  const at = keyUsageAt(range, customRange);
+  let messages = 0;
+  let spend = 0;
+  let tokensIn = 0;
+  let tokensOut = 0;
+  for (const key of Object.keys(at.messages)) {
+    if (names && !names.has(key)) {
+      continue;
+    }
+    messages += at.messages[key] ?? 0;
+    spend += at.spend[key] ?? 0;
+    tokensIn += at.tokensIn[key] ?? 0;
+    tokensOut += at.tokensOut[key] ?? 0;
+  }
+  return {
+    messages,
+    spend: Math.round(spend * 100) / 100,
+    tokensIn,
+    tokensOut,
+    tokens: tokensIn + tokensOut,
+  };
+}
+
+/** The real 7d week per key: what the workload below is rescaled onto. */
+const KEY_WEEK = keyUsageAt("7d", null);
+const KEY_SPEND_7D = KEY_WEEK.spend;
+
 /** Base (7d) chart data. Other ranges derive from this by scaling values and
  * relabeling the x-axis. Mock-realistic, not aggregated.
  *
@@ -123,20 +320,26 @@ export function savingsCurve(
 /* ─── The 7d Gate-metered workload ────────────────────────────────────────
  *
  * Everything below this comment that is measured in dollars is DERIVED from
- * this block. Nothing here is money; it is tokens, plus the two routing splits
- * that say who ran them and where. `costOf` (data/models.ts) turns that into
- * spend at catalog rates.
+ * this block and the per-key spend above. Nothing here is money; it is tokens,
+ * plus the two routing splits that say who ran them and where. `costOf`
+ * (data/models.ts) prices that at catalog rates, and that pricing decides only
+ * the SHAPE: how a key's dollars divide across models and routes. The size of
+ * each key's bill is its real spend (KEY_SPEND_7D), so the catalog-priced
+ * cells are rescaled per key onto it (USAGE_7D).
  *
- * Why it works this way. Until 2026-08-03 this file authored ~110 dollar
- * values by hand — a 3 × 7 × N matrix of daily spend — and authored the token
- * splits separately. Both were internally consistent and neither agreed with
- * the price list: the Top Models card billed Qwen3 Next at 13× list and Gemini
- * 3.1 Pro at 0.47×, so a reader who divided the Spend column by the Tokens
- * column got a rate that appears nowhere in the catalog, on a page one click
- * from the Models table that prints the real one. The old header said, in as
- * many words, "do not try to reconcile spend ÷ tokens here against the
- * catalog's per-1M rates." That instruction is now obsolete: reconciling is
- * the point, and it is enforced by `pricing.test.ts`.
+ * Since 2026-09-25 the authored numbers here are SHAPE only. Each Gate
+ * key's cells are rescaled onto that key's real week (KEY_WEEK): tokens in
+ * and out by the authored token mix, spend by the catalog-priced mix. The
+ * authored 73.45M Gate tokens and their $247.59 list price are gone from
+ * every surface; the real rows put the Gate keys' week at ~0.49M tokens and
+ * $2.38. Spend ÷ tokens per cell no longer equals the catalog per-1M rate,
+ * because the two are rescaled separately.
+ *
+ * History. Until 2026-08-03 this file authored ~110 dollar values by hand, a
+ * 3 × 7 × N matrix of daily spend, and authored the token splits separately.
+ * The catalog pricing that replaced it still gives the relative costs:
+ * Opus 4.7 is a small share of tokens and a large share of spend, Qwen3 Next
+ * the reverse.
  *
  * The shape is a product form — per-model tokens × provider share × key share
  * — rather than a hand-written 3-way table. That is what makes all three
@@ -144,17 +347,18 @@ export function savingsCurve(
  * than by tuning, and it is why the cross-dimension invariant the charts rely
  * on is no longer something a future edit can quietly break.
  *
- * BYOK traffic is out of scope by definition: the customer's own provider
- * account is billed, so Gate meters no dollars for it. That is why Claude Opus
- * 4.8 (102 of the 153 request rows, all one BYOK session) does not appear
- * here, and why `design-agent` is not a charted key.
+ * BYOK traffic is not in this block: the customer's own provider account is
+ * billed, so Gate meters no dollars for it. Its tokens still count; they
+ * enter as WORKSPACE_CELLS_7D (below) at $0, which is how Claude Opus 4.8
+ * (102 of the 153 request rows, all one BYOK session) and `design-agent`
+ * reach the token lens.
  */
 
-/** One model's 7d Gate-metered volume, split the way the workload actually
- *  splits it. Output share is the expensive half of the bill — Opus at 45%
- *  output pays $14/M against a $5 sticker rate — so it is authored per model
- *  rather than assumed flat. Values carry over from MODEL_ROWS' own in/out
- *  ratios, which is where they were measured. */
+/** One model's authored 7d Gate-metered volume, split the way the workload
+ *  splits it. Only its proportions reach the page (USAGE_7D rescales each key
+ *  onto its real week). Output share is the expensive half of the bill, so it
+ *  is authored per model rather than assumed flat. Values carry over from
+ *  MODEL_ROWS' own in/out ratios, which is where they were measured. */
 type ModelUsage = {
   /** Canonical catalog id. `models-catalog.test.ts` pins it to a real row. */
   id: string;
@@ -349,7 +553,10 @@ export type UsageCell = {
   spend: number;
 };
 
-export const USAGE_7D: UsageCell[] = Object.values(MODEL_SERIES_7D).flatMap(
+/** The workload priced at catalog list rates (routing markup included). Only
+ *  its SHAPE survives into USAGE_7D: how one key's dollars divide across
+ *  models and routes. */
+const CATALOG_CELLS_7D: UsageCell[] = Object.values(MODEL_SERIES_7D).flatMap(
   (models) =>
     models.flatMap((m) => {
       const listCost = costOf(m.id, m.tokensIn, m.tokensOut);
@@ -373,15 +580,126 @@ export const USAGE_7D: UsageCell[] = Object.values(MODEL_SERIES_7D).flatMap(
     })
 );
 
-/** Group the workload by a dimension. `metric` picks tokens or dollars; both
- *  come off the same rows, so a series' spend and its tokens are two readings
- *  of one fact rather than two authored numbers that happen to sit together. */
+/** The authored workload's 7d totals per key, the divisors that rescale each
+ *  key onto its real week. */
+const CATALOG_KEY_7D: Record<
+  string,
+  { spend: number; tokensIn: number; tokensOut: number }
+> = (() => {
+  const out: Record<
+    string,
+    { spend: number; tokensIn: number; tokensOut: number }
+  > = {};
+  for (const cell of CATALOG_CELLS_7D) {
+    const acc = out[cell.apiKey] ?? { spend: 0, tokensIn: 0, tokensOut: 0 };
+    acc.spend += cell.spend;
+    acc.tokensIn += cell.tokensIn;
+    acc.tokensOut += cell.tokensOut;
+    out[cell.apiKey] = acc;
+  }
+  return out;
+})();
+
+const rescale = (value: number, real: number, authored: number) =>
+  authored > 0 ? (value * real) / authored : 0;
+
+/** Every (model, provider, key) atom of the Gate keys' 7d workload. Each
+ *  key's REAL week (KEY_WEEK: its messages × its rows' averages) is spread
+ *  across that key's cells in the authored proportions: tokens in and out by
+ *  the authored token mix, spend by the catalog-priced mix. So a key's cells
+ *  sum to what the key table shows, and the model and route splits keep the
+ *  workload's shape and the catalog's relative prices. */
+export const USAGE_7D: UsageCell[] = CATALOG_CELLS_7D.map((cell) => {
+  const authored = CATALOG_KEY_7D[cell.apiKey];
+  const tokensIn = rescale(
+    cell.tokensIn,
+    KEY_WEEK.tokensIn[cell.apiKey] ?? 0,
+    authored?.tokensIn ?? 0
+  );
+  const tokensOut = rescale(
+    cell.tokensOut,
+    KEY_WEEK.tokensOut[cell.apiKey] ?? 0,
+    authored?.tokensOut ?? 0
+  );
+  return {
+    ...cell,
+    tokensIn,
+    tokensOut,
+    tokens: tokensIn + tokensOut,
+    spend: rescale(
+      cell.spend,
+      KEY_SPEND_7D[cell.apiKey] ?? 0,
+      authored?.spend ?? 0
+    ),
+  };
+});
+
+/** Not a Gate route: the customer's own provider account. */
+const BYOK_PROVIDER = "byok" as ProviderId;
+
+/** A BYOK key's 7d cells. The provider billed it, so there are no Gate cells,
+ *  but its real week is known (KEY_WEEK) and its model mix is on record in
+ *  the Messages rows it sent, so its cells are that mix applied to those
+ *  tokens at $0. BYOK traffic has no Gate route, so it sits out of the
+ *  provider series. */
+function byokCellsFor(key: string): UsageCell[] {
+  if (!isByokKey(key)) {
+    return [];
+  }
+  const perModel = new Map<string, { tokensIn: number; tokensOut: number }>();
+  for (const r of REQUEST_ROWS_ALL) {
+    if (r.keyId !== key) {
+      continue;
+    }
+    const acc = perModel.get(r.model) ?? { tokensIn: 0, tokensOut: 0 };
+    acc.tokensIn += rowTokens(r.inTokens);
+    acc.tokensOut += rowTokens(r.outTokens);
+    perModel.set(r.model, acc);
+  }
+  const sumIn = [...perModel.values()].reduce((a, m) => a + m.tokensIn, 0) || 1;
+  const sumOut =
+    [...perModel.values()].reduce((a, m) => a + m.tokensOut, 0) || 1;
+  const keyIn = KEY_WEEK.tokensIn[key] ?? 0;
+  const keyOut = KEY_WEEK.tokensOut[key] ?? 0;
+  return [...perModel.entries()].map(([model, m]) => {
+    const tokensIn = (keyIn * m.tokensIn) / sumIn;
+    const tokensOut = (keyOut * m.tokensOut) / sumOut;
+    return {
+      model,
+      provider: BYOK_PROVIDER,
+      apiKey: key,
+      tokensIn,
+      tokensOut,
+      tokens: tokensIn + tokensOut,
+      spend: 0,
+    };
+  });
+}
+
+/** The whole workspace's 7d cells: the Gate workload plus every BYOK key's
+ *  cells. Every per-dimension total groups THIS, so the Tokens KPI, the key
+ *  table and the by-model breakdown all count the BYOK tokens the gateway
+ *  proxied (design-agent's session is most of them). */
+const WORKSPACE_CELLS_7D: UsageCell[] = [
+  ...USAGE_7D,
+  ...Object.keys(KEY_WEEK.messages).flatMap(byokCellsFor),
+];
+
+/** Group cells by a dimension. `metric` picks tokens or dollars; both come
+ *  off the same cells, so a series' spend and its tokens are two readings of
+ *  one fact rather than two authored numbers that happen to sit together.
+ *  BYOK cells carry no Gate route, so the provider dimension skips them. */
 function groupUsage(
-  by: (cell: UsageCell) => string,
+  cells: UsageCell[],
+  dimension: Dimension,
   metric: (cell: UsageCell) => number
 ): Record<string, number> {
+  const by = DIMENSION_KEY[dimension];
   const out: Record<string, number> = {};
-  for (const cell of USAGE_7D) {
+  for (const cell of cells) {
+    if (dimension === "provider" && cell.provider === BYOK_PROVIDER) {
+      continue;
+    }
     out[by(cell)] = (out[by(cell)] ?? 0) + metric(cell);
   }
   return out;
@@ -422,24 +740,17 @@ const rounded = (s: TokenSplit): TokenSplit => ({
   tokensOut: Math.round(s.tokensOut),
 });
 
-/** 7d in/out tokens per Gate key — what UsageByKey's Tokens In / Tokens Out
- *  columns show, and the exact tokens its Spend column was priced from. */
-const KEY_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
-  Object.entries(splitBy((c) => c.apiKey)).map(([k, v]) => [k, rounded(v)])
-);
-
-/** 7d in/out tokens per catalog model — the Top Models card's two columns. */
+/** 7d in/out tokens per Gate-metered catalog model: MODEL_ROWS' two token
+ *  columns. BYOK models are not in MODEL_ROWS (it is the metered card data). */
 const MODEL_TOKENS_7D: Record<string, TokenSplit> = Object.fromEntries(
   Object.entries(splitBy((c) => c.model)).map(([k, v]) => [k, rounded(v)])
 );
 
-/** Workspace 7d INPUT tokens — the prompt side of MODEL_TOKENS_7D. The Token
- *  savings Summary's denominator ("of the N input tokens you sent"): compression
- *  removes input tokens, so its rate applies to this, not to in + out. */
-export const TOTAL_7D_BASE_INPUT_TOKENS = Object.values(MODEL_TOKENS_7D).reduce(
-  (sum, s) => sum + s.tokensIn,
-  0
-);
+/** Workspace 7d INPUT tokens, every key: the prompt side of the Tokens KPI.
+ *  The Token savings Summary reads the same per-key numbers for its window
+ *  ("of the N input tokens you sent"): compression removes input tokens, so
+ *  its rate applies to this, not to in + out. */
+export const TOTAL_7D_BASE_INPUT_TOKENS = sumOf(KEY_WEEK.tokensIn);
 
 /** 7d spend per catalog model, routing markup included. Not simply
  *  `costOf(model, in, out)`: OpenRouter bills 10% over list, so what a model
@@ -447,7 +758,7 @@ export const TOTAL_7D_BASE_INPUT_TOKENS = Object.values(MODEL_TOKENS_7D).reduce(
  *  cells that produced MODEL_TOKENS_7D is what keeps the Spend column and the
  *  token columns beside it describing one transaction. */
 const MODEL_SPEND_7D: Record<string, number> = settle(
-  groupUsage((c) => c.model, cellSpend),
+  groupUsage(USAGE_7D, "model", cellSpend),
   2
 );
 
@@ -488,18 +799,25 @@ function settle(
   return out;
 }
 
-const byDimension = (metric: (cell: UsageCell) => number, decimals: number) =>
+const byDimension = (
+  cells: UsageCell[],
+  metric: (cell: UsageCell) => number,
+  decimals: number
+) =>
   Object.fromEntries(
-    Object.entries(DIMENSION_KEY).map(([dim, key]) => [
-      dim,
-      settle(groupUsage(key, metric), decimals),
-    ])
+    (Object.keys(DIMENSION_KEY) as Dimension[]).map((dim) => {
+      const grouped = groupUsage(cells, dim, metric);
+      return [
+        dim,
+        Object.keys(grouped).length > 0 ? settle(grouped, decimals) : grouped,
+      ];
+    })
   ) as Record<Dimension, Record<string, number>>;
 
 export const SPEND_TOTALS_7D: Record<
   Dimension,
   Record<string, number>
-> = byDimension(cellSpend, 2);
+> = byDimension(WORKSPACE_CELLS_7D, cellSpend, 2);
 
 /** Per-series 7d *token* totals per dimension. Mirrors SPEND_TOTALS_7D and
  * shares its source rows, which is the whole point: the token distribution
@@ -507,35 +825,34 @@ export const SPEND_TOTALS_7D: Record<
  * for the reason the page claims rather than because two arrays were authored
  * independently.
  *
- * • model → Sonnet leads on volume (27%) and on spend (30%); Qwen3 Next is
- *   second on volume (20%) and last on spend (2%); Opus 4.7 is 6% of tokens
- *   and 25% of spend. Divide any pair and you get that model's blended rate
- *   at its own output share, which is what `blendedRate` returns.
- * • provider → cheap tokens buy more of them, so Alibaba (DeepSeek + Qwen
- *   only, per the catalog) carries 11% of tokens against under 2% of dollars.
- *   OpenRouter runs the other way: its +10% PAYG markup lifts its dollar
- *   share above its token share.
- * • apiKey → `atlas-eval` buys the cheap models by the million and lands far
- *   down the spend order; `prod-agent` takes most of the Opus and leads it. */
+ * • model → Claude Opus 4.8 (design-agent's BYOK session) is ~99% of tokens
+ *   and $0 of spend. Among metered models Opus 4.7 leads both (prod-agent,
+ *   the biggest real spender, sends most of it). The ratios follow catalog
+ *   prices within each key; the levels are the real rows'.
+ * • provider → Gate routes only (BYOK has none). Cheap tokens buy more of
+ *   them, so Alibaba (DeepSeek + Qwen only, per the catalog) carries ~14% of
+ *   Gate-routed tokens against about 2% of dollars.
+ * • apiKey → design-agent leads tokens at $0; `prod-agent` leads spend. */
 export const TOKENS_TOTALS_7D: Record<
   Dimension,
   Record<string, number>
-> = byDimension(cellTokens, 0);
+> = byDimension(WORKSPACE_CELLS_7D, cellTokens, 0);
 
 const sumValues = (r: Record<string, number>) =>
   Object.values(r).reduce((a, b) => a + b, 0);
 
-/** Workspace 7d spend — the sum of what the catalog charges for the workload
- *  above, and the Total Spend KPI by construction. It was authored as a flat
- *  `238` until 2026-08-03; at real prices the same traffic costs ~$248, and
- *  the difference is no longer a number anyone gets to choose. */
+/** Workspace 7d spend: the sum of every Gate key's real 7d spend (messages ×
+ *  its rows' cost per message), and the 7D Total spend KPI by construction.
+ *  Catalog pricing of the authored tokens put this at $247.59 until
+ *  2026-09-25; the real rows bill the same week's messages far less. */
 export const TOTAL_7D_BASE_DOLLARS = +sumValues(SPEND_TOTALS_7D.model).toFixed(
   2
 );
 
-/** Workspace 7d tokens — the sum of MODEL_SERIES_7D. Unchanged at 73,450,000:
- *  tokens are the authored fact here, and this reconciliation deliberately did
- *  not move them. Only the dollars they imply changed. */
+/** Workspace 7d tokens, every key BYOK included: the 7D Tokens used KPI and
+ *  the sum of the key table's token columns. MODEL_SERIES_7D authored
+ *  73,450,000 Gate tokens until 2026-09-25; the real rows put the week at
+ *  about 60M, almost all of it design-agent's BYOK session. */
 export const TOTAL_7D_BASE_TOKENS = sumValues(TOKENS_TOTALS_7D.model);
 
 /** Relative weight of each of the 7 base days — the authored daily shape,
@@ -621,14 +938,35 @@ export function distributeSeries(
     weights.push(trend * jitter);
   }
   const sumW = weights.reduce((a, b) => a + b, 0) || 1;
-  const out: number[] = [];
+  // Whole cents by largest remainder: floors first, then one cent to the
+  // biggest fractional shares until the total is met. Rounding each bucket
+  // on its own let small totals (a $0.07 day split 12 ways) overshoot and
+  // leave the last bucket negative.
+  const cents = Math.max(0, Math.round(total * 100));
+  const quotas = weights.map((w) => (cents * w) / sumW);
+  const alloc = quotas.map(Math.floor);
+  let left = cents - alloc.reduce((a, b) => a + b, 0);
+  const order = quotas
+    .map((q, i) => ({ i, frac: q - Math.floor(q) }))
+    .sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (const { i } of order) {
+    if (left <= 0) {
+      break;
+    }
+    alloc[i] = (alloc[i] ?? 0) + 1;
+    left -= 1;
+  }
+  const out = alloc.map((c) => c / 100);
+  if (count < 1) {
+    return [+total.toFixed(2)];
+  }
+  // The last bucket carries any sub-cent remainder, so the series sums to
+  // `total` itself rather than to `total` rounded.
   let accumulated = 0;
   for (let i = 0; i < count - 1; i++) {
-    const v = +(total * (weights[i] / sumW)).toFixed(2);
-    out.push(v);
-    accumulated += v;
+    accumulated += out[i] ?? 0;
   }
-  out.push(+(total - accumulated).toFixed(2));
+  out[count - 1] = +(total - accumulated).toFixed(2);
   return out;
 }
 
@@ -748,8 +1086,8 @@ export type ApiKeyRow = {
   tokensOut: number;
   spend: number;
   /** 7d Total-saved rate for the key (caching + compression, fraction).
-   *  Token-weighted mean across keys = ACTIVITY_SAVINGS_RATE_7D (24.3%), the
-   *  steady-state Activity savings goal. The Saved column and the trend
+   *  ACTIVITY_SAVINGS_RATE_7D (24.3%) is the steady-state Activity savings
+   *  goal these hang off. The Saved column and the trend
    *  chart's Savings lens both hang off this; NOT tied to the TokenSavings
    *  page's 14.2% (decoupled 2026-07-14). */
   savings: number;
@@ -762,11 +1100,13 @@ export type ApiKeyRow = {
  *  this table has a Spend column at all:
  *
  *  Gate keys are metered by the gateway, so their `tokensIn` / `tokensOut` /
- *  `spend` are DERIVED — the same USAGE_7D cells the trend chart groups, read
- *  by key. The table's Spend column and the chart's breakdown panel are the
- *  same numbers, and the Spend column divided by the two token columns is the
- *  blended rate the catalog charges for that key's model mix. None of it is
- *  authored.
+ *  `spend` are DERIVED: tokens from the USAGE_7D cells the trend chart
+ *  groups, spend from the key's real rows (messages × cost per message,
+ *  keyUsageAt), which the same cells carry. The table's Spend column and the
+ *  chart's breakdown panel are the same numbers. None of it is authored.
+ *
+ *  Messages are derived for every key, BYOK included: the key's share of the
+ *  real request rows, settled onto MESSAGE_TOTALS for the range.
  *
  *  BYOK keys bill the customer's own provider account. Gate sees the traffic
  *  but never the invoice, so their tokens stay authored and their spend is $0
@@ -778,19 +1118,19 @@ export type ApiKeyRow = {
  *  whether the gateway bills this key. The request rows are the primary
  *  evidence, so BYOK is what it is.
  *
- *  Resulting top-4 leaders:
- *  Spend    → prod-agent, prod-web, development, atlas-eval
- *  Requests → prod-web, nova-chat, design-agent, development
+ *  Resulting top-4 leaders (7d):
+ *  Spend    → prod-agent, development, atlas-eval, prod-web
+ *  Messages → design-agent, prod-agent, hermes-agent, then atlas-eval and
+ *             nova-chat tied
  *  Tokens   → prod-web, prod-agent, design-agent, openclaw */
 type ApiKeySeed = Omit<
   ApiKeyRow,
-  "tokensIn" | "tokensOut" | "spend" | "device"
-> &
-  Partial<TokenSplit> & {
-    /** Overrides the owner's default device. Set only when a key is used from
-     *  a different machine than that person's other keys. */
-    device?: string;
-  };
+  "requests" | "tokensIn" | "tokensOut" | "spend" | "device"
+> & {
+  /** Overrides the owner's default device. Set only when a key is used from
+   *  a different machine than that person's other keys. */
+  device?: string;
+};
 
 const API_KEY_SEEDS: ApiKeySeed[] = [
   {
@@ -798,7 +1138,6 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "prod-web",
     owner: "Chad Ponticas",
     path: "Gate",
-    requests: 60_000,
     savings: 0.2563,
   },
   {
@@ -809,7 +1148,6 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     // Device column exists to make exactly this visible.
     device: "Macbook Air",
     path: "Gate",
-    requests: 12_000,
     savings: 0.27,
   },
   {
@@ -817,9 +1155,6 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "openclaw",
     owner: "Kira Tan",
     path: "BYOK",
-    requests: 8000,
-    tokensIn: 10_096_154,
-    tokensOut: 403_846,
     savings: 0.21,
   },
   {
@@ -827,9 +1162,6 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "hermes-agent",
     owner: "Mateus Silva",
     path: "BYOK",
-    requests: 5500,
-    tokensIn: 6_923_077,
-    tokensOut: 276_923,
     savings: 0.2,
   },
   {
@@ -837,19 +1169,15 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "development",
     owner: "Jordan Lee",
     path: "Gate",
-    requests: 15_000,
     savings: 0.235,
   },
-  // Tokens are the real counts off its own 102 request rows (conversation
-  // cnv_7a3f9e2b), which is the session that makes this key BYOK.
+  // Its 102 request rows (conversation cnv_7a3f9e2b) are the session that
+  // makes this key BYOK.
   {
     key: "design-agent",
     label: "design-agent",
     owner: "Chad Ponticas",
     path: "BYOK",
-    requests: 13_000,
-    tokensIn: 19_386_869,
-    tokensOut: 59_938,
     savings: 0.25,
   },
   {
@@ -857,7 +1185,6 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "ci-runner",
     owner: "Jordan Lee",
     path: "Gate",
-    requests: 6500,
     savings: 0.19,
     revoked: true,
   },
@@ -866,9 +1193,6 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "nova-chat",
     owner: "Kira Tan",
     path: "BYOK",
-    requests: 18_000,
-    tokensIn: 5_416_667,
-    tokensOut: 1_083_333,
     savings: 0.225,
   },
   {
@@ -876,7 +1200,6 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "atlas-eval",
     owner: "Mateus Silva",
     path: "Gate",
-    requests: 2000,
     savings: 0.285,
     revoked: true,
   },
@@ -887,51 +1210,26 @@ const API_KEY_SEEDS: ApiKeySeed[] = [
     label: "test-key",
     owner: "Chad Ponticas",
     path: "BYOK",
-    requests: 0,
-    tokensIn: 0,
-    tokensOut: 0,
     savings: 0,
     revoked: true,
   },
 ];
 
 export const API_KEY_ROWS: ApiKeyRow[] = (() => {
-  // Gate-key request counts are rescaled onto TOTAL_7D_BASE_REQUESTS so this
-  // table sums to the same workspace the Top Models card and the KPI rail
-  // describe. The authored shape (and so the leaderboard order) is preserved;
-  // only the scale moves. BYOK keys keep their authored counts — they are not
-  // part of the metered universe, which is the same reason their spend is $0.
-  const gate = API_KEY_SEEDS.filter((s) => s.path === "Gate");
-  const gateTotal = gate.reduce((a, s) => a + s.requests, 0) || 1;
-  const requests = settle(
-    Object.fromEntries(
-      gate.map((s) => [
-        s.key,
-        (s.requests * TOTAL_7D_BASE_REQUESTS) / gateTotal,
-      ])
-    ),
-    0
-  );
-  return API_KEY_SEEDS.map((seed) => {
-    if (seed.path === "BYOK") {
-      return {
-        ...seed,
-        device: seed.device ?? deviceFor(seed.owner),
-        tokensIn: seed.tokensIn ?? 0,
-        tokensOut: seed.tokensOut ?? 0,
-        spend: 0,
-      };
-    }
-    const tokens = KEY_TOKENS_7D[seed.key];
-    return {
-      ...seed,
-      device: seed.device ?? deviceFor(seed.owner),
-      requests: requests[seed.key] ?? 0,
-      tokensIn: tokens?.tokensIn ?? 0,
-      tokensOut: tokens?.tokensOut ?? 0,
-      spend: SPEND_TOTALS_7D.apiKey[seed.key] ?? 0,
-    };
-  });
+  // 7d messages, spend and tokens per key come from keyUsageAt (real rows,
+  // settled onto MESSAGE_TOTALS["7d"]), BYOK included: the gateway proxied
+  // every one of those messages even when the provider billed it. The columns
+  // sum to the 7D KPIs. Other ranges read keyUsageAt directly rather than
+  // scaling these.
+  const week = keyUsageAt("7d", null);
+  return API_KEY_SEEDS.map((seed) => ({
+    ...seed,
+    device: seed.device ?? deviceFor(seed.owner),
+    requests: week.messages[seed.key] ?? 0,
+    tokensIn: week.tokensIn[seed.key] ?? 0,
+    tokensOut: week.tokensOut[seed.key] ?? 0,
+    spend: seed.path === "BYOK" ? 0 : (SPEND_TOTALS_7D.apiKey[seed.key] ?? 0),
+  }));
 })();
 
 export type ModelRow = {
@@ -955,21 +1253,20 @@ export type ModelRow = {
  *  $0.46 for. Spend includes routing markup, because OpenRouter bills 10% over
  *  list and where the traffic went is part of what it cost.
  *
- *  `requests` stays authored — a request count is not a function of price —
- *  but is rescaled onto TOTAL_7D_BASE_REQUESTS so the card sums to the KPI
- *  rail above it. The old comment here claimed that reconciliation and quoted
- *  "~$1,248 spend, ~48,293 requests, ~18.4M tokens", none of which were this
- *  table's totals by then.
+ *  `requests` is shaped by each model's authored call size and settled onto
+ *  the Gate keys' real 7d messages (GATE_MESSAGES_7D), so the card sums to the
+ *  metered part of the Total messages KPI. BYOK messages are not in this
+ *  card, for the same reason BYOK spend is not.
  *
  *  Resulting top-4 leaders:
- *    Spend     → Sonnet 5, Gemini 3.1 Pro, Opus 4.7, Haiku 4.5
+ *    Spend     → Opus 4.7, Gemini 3.1 Pro, Sonnet 5, Haiku 4.5
  *    Requests  → Haiku 4.5, Sonnet 5, Gemini 3.1 Pro, DeepSeek V4 Pro
  *    Tokens    → Sonnet 5, Qwen3 Next, Haiku 4.5, Gemini 3.1 Pro
  *
  *  Read the Spend and Tokens rows against each other: Qwen3 Next is second on
- *  volume and last on money, Opus 4.7 is second-to-last on volume and third on
- *  money. That contrast is the card's entire job, and it is only true because
- *  both columns now come from the catalog.
+ *  volume and near the bottom on money, Opus 4.7 is second-to-last on volume
+ *  and first on money. That contrast is the card's entire job; it comes from
+ *  catalog prices splitting each key's real spend.
  *
  *  Labels are read from the catalog (`modelName`) off the canonical id, so
  *  this card can never re-spell a model the Models page names differently —
@@ -1026,6 +1323,14 @@ const MODEL_ROW_SEEDS: {
   },
 ];
 
+/** 7d messages on Gate keys only. The Top Models card covers metered
+ *  traffic, so its requests settle onto this, not onto the BYOK-inclusive
+ *  MESSAGE_TOTALS. */
+const GATE_MESSAGES_7D = API_KEY_ROWS.filter((k) => k.path === "Gate").reduce(
+  (a, k) => a + k.requests,
+  0
+);
+
 export const MODEL_ROWS: ModelRow[] = (() => {
   const modelTokens = (key: string) => {
     const split = MODEL_TOKENS_7D[key];
@@ -1039,7 +1344,7 @@ export const MODEL_ROWS: ModelRow[] = (() => {
     Object.fromEntries(
       Object.entries(raw).map(([k, v]) => [
         k,
-        (v * TOTAL_7D_BASE_REQUESTS) / rawTotal,
+        (v * GATE_MESSAGES_7D) / rawTotal,
       ])
     ),
     0
@@ -1124,13 +1429,14 @@ function seriesLabel(dimension: Dimension, key: string): string {
  *  bug this replaced.
  *
  *  Two consequences worth knowing rather than rediscovering:
- *  • Claude Opus 4.8 is not here. It is 102 of the 153 request rows, but every
- *    one belongs to the BYOK session cnv_7a3f9e2b, and Gate meters no dollars
- *    for BYOK. Same reason `design-agent` is not a candidate key.
- *  • Alibaba is a hairline on the SPEND lens (under 2%) because the catalog
+ *  • BYOK keys and models are candidates (design-agent, Claude Opus 4.8 from
+ *    the BYOK session cnv_7a3f9e2b). They lead the TOKEN lens and drop off
+ *    the SPEND lens, where they are $0, like any zero series.
+ *  • Alibaba is a hairline on the SPEND lens (about 2%) because the catalog
  *    only lets it serve DeepSeek and Qwen, the two cheapest models in the
- *    fleet. Toggle to TOKENS and the same route is 11%. That contrast is the
- *    finding; do not "fix" it by inventing spend for it. */
+ *    fleet. Toggle to TOKENS and the same route is ~14% of Gate-routed
+ *    tokens. That contrast is the finding; do not "fix" it by inventing spend
+ *    for it. */
 export const SERIES_POOL: Record<Dimension, readonly string[]> = {
   model: Object.keys(TOKENS_TOTALS_7D.model),
   provider: Object.keys(TOKENS_TOTALS_7D.provider),
@@ -1144,9 +1450,8 @@ export const SERIES_POOL: Record<Dimension, readonly string[]> = {
  *  can never describe a different selection than the bars.
  *
  *  Ties keep pool order (Array#sort is stable). Two series can tie after
- *  `settle` rounds them to the cent — DeepSeek and Qwen both land on $5.95 on
- *  the spend lens, from $5.9483 and $5.9457 — and pool order preserves the
- *  unrounded order in that case. */
+ *  `settle` rounds them to the cent (DeepSeek and Qwen both land on $0.07 on
+ *  the 7d spend lens), and pool order then decides. */
 export function rankSeries(
   dimension: Dimension,
   totals: Record<string, number>
@@ -1282,78 +1587,11 @@ export const METRIC_OPTIONS: { value: Metric; label: string }[] = [
 ];
 
 /* ─── Scoped usage (view-scope.ts) ────────────────────────────────────────
- * A Manager or Member reads the workload their OWN keys produced. Gate keys
- * already have cells in USAGE_7D. A BYOK key has none (the provider billed
- * it), but its 7d tokens are authored on API_KEY_ROWS and its model mix is on
- * record in the Messages rows it sent, so its cells are that mix applied to
- * those tokens at $0. Nothing is invented: every share comes from a real row.
- * BYOK traffic has no Gate route, so it contributes no provider series. */
+ * A Manager or Member reads the workload their OWN keys produced: the same
+ * WORKSPACE_CELLS_7D the org totals group (Gate cells plus BYOK cells at $0),
+ * filtered to their keys. */
 
 export type UsageTotals = Record<Dimension, Record<string, number>>;
-
-/** Not a Gate route: the customer's own provider account. */
-const BYOK_PROVIDER = "byok" as ProviderId;
-
-function byokCellsFor(key: string): UsageCell[] {
-  const row = API_KEY_ROWS.find((r) => r.key === key);
-  if (row?.path !== "BYOK") {
-    return [];
-  }
-  const count = (v: string) =>
-    Number.parseInt(v.replace(/[^0-9]/g, ""), 10) || 0;
-  const perModel = new Map<string, { tokensIn: number; tokensOut: number }>();
-  for (const r of REQUEST_ROWS_ALL) {
-    if (r.keyId !== key) {
-      continue;
-    }
-    const acc = perModel.get(r.model) ?? { tokensIn: 0, tokensOut: 0 };
-    acc.tokensIn += count(r.inTokens);
-    acc.tokensOut += count(r.outTokens);
-    perModel.set(r.model, acc);
-  }
-  const sumIn = [...perModel.values()].reduce((a, m) => a + m.tokensIn, 0) || 1;
-  const sumOut =
-    [...perModel.values()].reduce((a, m) => a + m.tokensOut, 0) || 1;
-  return [...perModel.entries()].map(([model, m]) => {
-    const tokensIn = Math.round((row.tokensIn * m.tokensIn) / sumIn);
-    const tokensOut = Math.round((row.tokensOut * m.tokensOut) / sumOut);
-    return {
-      model,
-      provider: BYOK_PROVIDER,
-      apiKey: key,
-      tokensIn,
-      tokensOut,
-      tokens: tokensIn + tokensOut,
-      spend: 0,
-    };
-  });
-}
-
-function usageCellsFor(names: Set<string>): UsageCell[] {
-  const gate = USAGE_7D.filter((c) => names.has(c.apiKey));
-  const byok = [...names].flatMap(byokCellsFor);
-  return [...gate, ...byok];
-}
-
-function totalsOf(
-  cells: UsageCell[],
-  metric: (cell: UsageCell) => number,
-  decimals: number
-): UsageTotals {
-  return Object.fromEntries(
-    Object.entries(DIMENSION_KEY).map(([dim, key]) => {
-      const out: Record<string, number> = {};
-      for (const cell of cells) {
-        // BYOK cells carry no Gate route: they sit out of the provider series.
-        if (dim === "provider" && cell.provider === BYOK_PROVIDER) {
-          continue;
-        }
-        out[key(cell)] = (out[key(cell)] ?? 0) + metric(cell);
-      }
-      return [dim, Object.keys(out).length > 0 ? settle(out, decimals) : out];
-    })
-  ) as UsageTotals;
-}
 
 /** Spend and token totals per dimension for the keys in `names`; the org's
  *  own SPEND_TOTALS_7D / TOKENS_TOTALS_7D when `names` is null. */
@@ -1364,9 +1602,88 @@ export function scopedUsageTotals(names: Set<string> | null): {
   if (names === null) {
     return { spend: SPEND_TOTALS_7D, tokens: TOKENS_TOTALS_7D };
   }
-  const cells = usageCellsFor(names);
+  const cells = WORKSPACE_CELLS_7D.filter((c) => names.has(c.apiKey));
   return {
-    spend: totalsOf(cells, cellSpend, 2),
-    tokens: totalsOf(cells, cellTokens, 0),
+    spend: byDimension(cells, cellSpend, 2),
+    tokens: byDimension(cells, cellTokens, 0),
   };
+}
+
+/** Spread `totals` onto `target` in proportion, rounded to `decimals`, with
+ *  the largest series absorbing the rounding so the parts sum to `target`
+ *  exactly. */
+function settleOnto(
+  totals: Record<string, number>,
+  target: number,
+  decimals: number
+): Record<string, number> {
+  const sum = sumValues(totals);
+  if (sum <= 0 || target <= 0) {
+    return Object.fromEntries(Object.keys(totals).map((k) => [k, 0]));
+  }
+  return settle(
+    Object.fromEntries(
+      Object.entries(totals).map(([k, v]) => [k, (v * target) / sum])
+    ),
+    decimals
+  );
+}
+
+/** One metric's per-series totals for a range, in every dimension, for the
+ *  keys in `names` (null = the workspace). `apiKey` is each key's own number
+ *  for the range (keyUsageAt); `model` and `provider` keep the 7d cells'
+ *  shape, settled onto the range total. Provider covers Gate routes only, so
+ *  it settles onto the Gate keys' part (all of spend; tokens minus BYOK). */
+function totalsAt(
+  metric: "spend" | "tokens",
+  range: Range,
+  customRange: CustomRange | null,
+  names: Set<string> | null
+): UsageTotals {
+  const at = keyUsageAt(range, customRange);
+  const week = scopedUsageTotals(names)[metric];
+  const decimals = metric === "spend" ? 2 : 0;
+  const perKey = (key: string) =>
+    metric === "spend"
+      ? (at.spend[key] ?? 0)
+      : (at.tokensIn[key] ?? 0) + (at.tokensOut[key] ?? 0);
+  let total = 0;
+  let gate = 0;
+  for (const key of Object.keys(at.messages)) {
+    if (names && !names.has(key)) {
+      continue;
+    }
+    total += perKey(key);
+    gate += isByokKey(key) ? 0 : perKey(key);
+  }
+  const round = (n: number) => +n.toFixed(decimals);
+  return {
+    model: settleOnto(week.model, round(total), decimals),
+    provider: settleOnto(week.provider, round(gate), decimals),
+    apiKey: Object.fromEntries(
+      Object.keys(week.apiKey).map((k) => [k, perKey(k)])
+    ),
+  };
+}
+
+/** Spend per series for a range: sums to that range's Total spend KPI in
+ *  every dimension, so the trend chart, its breakdown panel, the Top cards
+ *  and the key table agree. */
+export function spendTotalsAt(
+  range: Range,
+  customRange: CustomRange | null,
+  names: Set<string> | null
+): UsageTotals {
+  return totalsAt("spend", range, customRange, names);
+}
+
+/** Tokens per series for a range: `model` and `apiKey` sum to that range's
+ *  Tokens used KPI; `provider` sums to its Gate-routed part (BYOK tokens have
+ *  no Gate route to chart). */
+export function tokensTotalsAt(
+  range: Range,
+  customRange: CustomRange | null,
+  names: Set<string> | null
+): UsageTotals {
+  return totalsAt("tokens", range, customRange, names);
 }

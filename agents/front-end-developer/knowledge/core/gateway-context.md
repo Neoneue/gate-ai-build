@@ -112,7 +112,7 @@ resolve it yourself.
 | Any visual value, component spec, do / don't | `design.md` (repo root), then `src/index.css` |
 | Routes, types, mock-data model, page inventory, entity relationships | `data-model.md` (repo root) |
 | What a feature must do | `docs/prds/` and `docs/tickets/` (local only); Notion H1 + H2 hubs are the live spec |
-| What a finding may say | `docs/Presidio-findings.md`, `docs/Credentials-findings.md`, `docs/Injection-findings.md` |
+| What a finding may say | `docs/Credentials-findings.md`, `docs/Injection-findings.md` |
 | What changed recently and why | `change-logs/INDEX.md`, then the day file |
 | Hard rules that fail the build | `.claude/rules/` (`design-tokens`, `no-hardcoding`, `no-handrolling`, `no-thrash`, `token-efficient-reads`) |
 

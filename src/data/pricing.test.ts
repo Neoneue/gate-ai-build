@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getConversationView } from "@/data/conversationDetail";
 import { CONVERSATION_ROWS, SAMPLE_TRACE } from "@/data/conversations";
-import { blendedRate, costOf, modelById } from "@/data/models";
+import { costOf, modelById } from "@/data/models";
 import { isByokKey, REQUEST_ROWS_ALL } from "@/data/requests";
 import {
   API_KEY_ROWS,
@@ -9,6 +9,7 @@ import {
   MODEL_ROWS,
   MODEL_SERIES_7D,
   PROVIDER_MIX_7D,
+  rankSeries,
   SERIES_POOL,
   SPEND_BASE,
   SPEND_TOTALS_7D,
@@ -38,6 +39,12 @@ import {
  *
  * A failure here is not a rounding disagreement. It means a page is quoting a
  * price the gateway does not charge.
+ *
+ * One exception to "divide spend by the tokens beside it", since 2026-09-25:
+ * Activity's dollars are its keys' real rows (messages × each key's catalog-
+ * priced cost per message), while its tokens stay the authored workload. The
+ * catalog still sets how a key's dollars split across models and routes, so
+ * the tests below check those proportions rather than a per-1M rate.
  */
 
 const money = (s: string) => Number.parseFloat(s.replace(/[^0-9.]/g, "")) || 0;
@@ -212,17 +219,38 @@ describe("the Activity workload prices itself from the catalog", () => {
     }
   });
 
-  it("costs every cell at list price × the route's own markup", () => {
-    for (const cell of USAGE_7D) {
-      const model = modelById(cell.model);
+  it("splits each key's real spend across its cells at list price × the route's own markup", () => {
+    // Within one key every cell is the same multiple of what the catalog
+    // charges for the AUTHORED workload in that cell, so the model and route
+    // splits keep the catalog's relative prices.
+    const authoredCost = (model: string, provider: string, apiKey: string) => {
+      const m = Object.values(MODEL_SERIES_7D)
+        .flat()
+        .find((x) => x.id === model);
+      const share =
+        (PROVIDER_MIX_7D[model]?.[
+          provider as keyof (typeof PROVIDER_MIX_7D)[string]
+        ] ?? 0) * (KEY_MIX_7D[model]?.[apiKey] ?? 0);
       const markup =
-        model?.providers.find((p) => p.id === cell.provider)?.paygMarkup ?? 1;
-      const expected =
-        costOf(cell.model, cell.tokensIn, cell.tokensOut) * markup;
-      expect(cell.spend, `${cell.model} via ${cell.provider}`).toBeCloseTo(
-        expected,
+        modelById(model)?.providers.find((p) => p.id === provider)
+          ?.paygMarkup ?? 1;
+      return m ? costOf(model, m.tokensIn, m.tokensOut) * share * markup : 0;
+    };
+    const factorByKey = new Map<string, number>();
+    for (const cell of USAGE_7D) {
+      const factor =
+        cell.spend / authoredCost(cell.model, cell.provider, cell.apiKey);
+      const first = factorByKey.get(cell.apiKey) ?? factor;
+      factorByKey.set(cell.apiKey, first);
+      expect(factor, `${cell.model} via ${cell.provider}`).toBeCloseTo(
+        first,
         9
       );
+    }
+    // And a key's cells add up to the spend its table row shows.
+    for (const row of API_KEY_ROWS.filter((k) => k.path === "Gate")) {
+      const cells = USAGE_7D.filter((c) => c.apiKey === row.key);
+      expect(sum(cells.map((c) => c.spend)), row.key).toBeCloseTo(row.spend, 2);
     }
   });
 
@@ -233,9 +261,16 @@ describe("the Activity workload prices itself from the catalog", () => {
         2
       );
     }
+    // Tokens: model and apiKey count every key; routes chart Gate traffic
+    // only, so provider sums to the Gate keys' tokens.
+    const gateTokens = sum(
+      API_KEY_ROWS.filter((k) => k.path === "Gate").map(
+        (k) => k.tokensIn + k.tokensOut
+      )
+    );
     for (const [dimension, totals] of Object.entries(TOKENS_TOTALS_7D)) {
       expect(sumValues(totals), `${dimension} tokens`).toBe(
-        TOTAL_7D_BASE_TOKENS
+        dimension === "provider" ? gateTokens : TOTAL_7D_BASE_TOKENS
       );
     }
   });
@@ -247,12 +282,18 @@ describe("the Activity workload prices itself from the catalog", () => {
     // the workspace's 3rd-heaviest model — with Kimi K2, and the legend
     // rendered the bundle as a named band ranked 3rd while the Top Models card
     // below it correctly listed Haiku 3rd on its own.
+    // Since 2026-09-25 the pool also holds the models BYOK keys sent (read
+    // off their request rows): their tokens count, their spend is $0.
+    const byokModels = REQUEST_ROWS_ALL.filter((r) => isByokKey(r.keyId)).map(
+      (r) => r.model
+    );
     const workloadModels = [
-      ...new Set(
-        Object.values(MODEL_SERIES_7D)
+      ...new Set([
+        ...Object.values(MODEL_SERIES_7D)
           .flat()
-          .map((m) => m.id)
-      ),
+          .map((m) => m.id),
+        ...byokModels,
+      ]),
     ];
     expect([...SERIES_POOL.model].sort()).toEqual(workloadModels.sort());
 
@@ -268,32 +309,9 @@ describe("the Activity workload prices itself from the catalog", () => {
     }
 
     // And the pool is entities the workspace actually has: every charted key
-    // is a Gate key on the Keys page, never a BYOK one.
-    const gateKeys = new Set(
-      API_KEY_ROWS.filter((k) => k.path === "Gate").map((k) => k.key)
-    );
-    expect(SERIES_POOL.apiKey.filter((k) => !gateKeys.has(k))).toEqual([]);
-  });
-
-  it("keeps every series' blended rate inside the catalog's own range", () => {
-    // The cheapest thing the fleet can do is all-input Qwen3 Next; the dearest
-    // is all-output Opus 4.7. A series outside that band is arithmetically
-    // impossible, whatever its model mix.
-    const floor = blendedRate("qwen/qwen3-next-80b-a3b-instruct", 0);
-    const ceiling = blendedRate("anthropic/claude-opus-4-7", 1) * 1.1;
-    for (const dimension of ["model", "provider", "apiKey"] as const) {
-      for (const [key, spend] of Object.entries(SPEND_TOTALS_7D[dimension])) {
-        const tokens = TOKENS_TOTALS_7D[dimension][key] ?? 0;
-        const rate = (spend / tokens) * 1_000_000;
-        expect(
-          rate,
-          `${dimension}/${key} $${rate.toFixed(3)}/1M`
-        ).toBeGreaterThan(floor);
-        expect(rate, `${dimension}/${key} $${rate.toFixed(3)}/1M`).toBeLessThan(
-          ceiling
-        );
-      }
-    }
+    // is a key on the Keys page.
+    const keys = new Set(API_KEY_ROWS.map((k) => k.key));
+    expect(SERIES_POOL.apiKey.filter((k) => !keys.has(k))).toEqual([]);
   });
 
   it("bills the same on every day of the week in every dimension", () => {
@@ -310,15 +328,13 @@ describe("the Activity workload prices itself from the catalog", () => {
 });
 
 describe("the Activity tables show the price of the tokens beside them", () => {
-  it("prices each Top Models row at its own blended catalog rate", () => {
+  it("gives each Top Models row the spend its workload cells carry", () => {
+    // To the cent, except that the biggest model absorbs the other six rows'
+    // rounding (up to half a cent each) so the card still sums exactly.
     for (const row of MODEL_ROWS) {
-      const tokens = row.tokensIn + row.tokensOut;
-      const list = blendedRate(row.key, row.tokensOut / tokens);
-      const actual = (row.spend / tokens) * 1_000_000;
-      // Between list and list + 10%: the spread is OpenRouter's PAYG markup on
-      // whatever share of this model's traffic it routed, and nothing else.
-      expect(actual, `${row.key} rate`).toBeGreaterThanOrEqual(list - 1e-6);
-      expect(actual, `${row.key} rate`).toBeLessThanOrEqual(list * 1.1 + 1e-6);
+      const cells = USAGE_7D.filter((c) => c.model === row.key);
+      const drift = Math.abs(row.spend - sum(cells.map((c) => c.spend)));
+      expect(drift, row.key).toBeLessThanOrEqual(0.035);
     }
   });
 
@@ -327,25 +343,39 @@ describe("the Activity tables show the price of the tokens beside them", () => {
       TOTAL_7D_BASE_DOLLARS,
       2
     );
-    expect(sum(MODEL_ROWS.map((m) => m.tokensIn + m.tokensOut))).toBe(
-      TOTAL_7D_BASE_TOKENS
-    );
-    expect(sum(MODEL_ROWS.map((m) => m.requests))).toBe(TOTAL_7D_BASE_REQUESTS);
+    // MODEL_ROWS covers metered traffic: its tokens and requests are the
+    // Gate keys' 7d share, the BYOK-free part of the KPIs.
+    const gate = API_KEY_ROWS.filter((k) => k.path === "Gate");
+    // Within a token per model: each row rounds its in and out on its own.
+    expect(
+      Math.abs(
+        sum(MODEL_ROWS.map((m) => m.tokensIn + m.tokensOut)) -
+          sum(gate.map((k) => k.tokensIn + k.tokensOut))
+      )
+    ).toBeLessThanOrEqual(MODEL_ROWS.length);
+    const gateMessages = sum(gate.map((k) => k.requests));
+    expect(sum(MODEL_ROWS.map((m) => m.requests))).toBe(gateMessages);
   });
 
   it("gives each key the spend its own chart series carries", () => {
     for (const [key, charted] of Object.entries(SPEND_TOTALS_7D.apiKey)) {
       const row = API_KEY_ROWS.find((k) => k.key === key);
       expect(row?.spend, `key: ${key}`).toBeCloseTo(charted, 2);
-      expect(row?.path, `key: ${key}`).toBe("Gate");
+      if (row?.path === "BYOK") {
+        expect(charted, `key: ${key}`).toBe(0);
+      }
     }
   });
 
-  it("bills BYOK keys nothing, and charts none of them", () => {
-    const charted = new Set(SERIES_POOL.apiKey);
+  it("bills BYOK keys nothing, and charts none of them on the spend lens", () => {
+    // BYOK keys are in the pool (the token lens charts their traffic), but at
+    // $0 the spend lens drops them like any zero series.
+    const onSpend = new Set(
+      rankSeries("apiKey", SPEND_TOTALS_7D.apiKey).series.map((s) => s.key)
+    );
     for (const row of API_KEY_ROWS.filter((k) => k.path === "BYOK")) {
       expect(row.spend, `${row.key} spend`).toBe(0);
-      expect(charted.has(row.key), `${row.key} charted`).toBe(false);
+      expect(onSpend.has(row.key), `${row.key} charted`).toBe(false);
     }
     // `design-agent` is the one this caught: charted at $21.00 while every one
     // of its request rows is unmetered.
@@ -357,9 +387,13 @@ describe("the Activity tables show the price of the tokens beside them", () => {
   it("sums the Gate keys to the same workspace as every other surface", () => {
     const gate = API_KEY_ROWS.filter((k) => k.path === "Gate");
     expect(sum(gate.map((k) => k.spend))).toBeCloseTo(TOTAL_7D_BASE_DOLLARS, 2);
-    expect(sum(gate.map((k) => k.tokensIn + k.tokensOut))).toBe(
+    // Tokens and messages count every key, BYOK included.
+    expect(sum(API_KEY_ROWS.map((k) => k.tokensIn + k.tokensOut))).toBe(
       TOTAL_7D_BASE_TOKENS
     );
-    expect(sum(gate.map((k) => k.requests))).toBe(TOTAL_7D_BASE_REQUESTS);
+    // Messages count every key, BYOK included: the gateway proxied them all.
+    expect(sum(API_KEY_ROWS.map((k) => k.requests))).toBe(
+      TOTAL_7D_BASE_REQUESTS
+    );
   });
 });

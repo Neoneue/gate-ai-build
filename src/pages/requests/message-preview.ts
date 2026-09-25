@@ -10,10 +10,13 @@
  *  source of truth the generator and the drift test both call.
  *
  *  Coverage across the 153 rows, measured rather than assumed:
- *    userMessage  13   real user turns
+ *    userMessage  13   real user turns (captured, `REQUEST_BODIES`)
+ *    userMessage  51   authored user turns for the seven legacy cnv_*
+ *                      sessions (`AUTHORED_REQUEST_BODIES`), which had no
+ *                      captured body
  *    toolArgs     89   every tool-call row — Bash 40, Read 29, Edit 3, MCP 17
  *    summary     101   authored trace label (mostly "tool: <Name>")
- *    neither      51   the legacy cnv_* sessions carry no body at all
+ *    neither       0
  *
  *  `summary` is the LAST resort, not the first: for a Bash row it reads
  *  "tool: Bash", which names the tool and tells you nothing about the call.
@@ -44,7 +47,7 @@ function firstLine(text: string | undefined): string {
  *    4. undefined → the cell renders an em dash rather than a fabricated
  *       preview, matching how Cost handles BYOK
  *
- *  102 of 153 rows resolve to real text.
+ *  153 of 153 rows resolve to text.
  *
  *  MASKING IS NOT OPTIONAL. Whatever text wins above is run through
  *  `redactFindings` before it leaves this function, so a value the gateway

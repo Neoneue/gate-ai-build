@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatChartTooltipDate } from "@/lib/formatters";
-import { type CustomRange, effectiveScale, type Range } from "@/lib/range";
+import type { CustomRange, Range } from "@/lib/range";
 import {
   ACTIVITY_SAVINGS_RATE_7D,
   type ChartSeries,
@@ -50,7 +50,9 @@ import {
   savingsRateFor,
   scopedUsageTotals,
   seriesColor,
+  spendTotalsAt,
   splitAcrossBuckets,
+  tokensTotalsAt,
 } from "@/pages/activity-data";
 import { useViewScope } from "@/pages/teams/view-scope";
 import {
@@ -206,9 +208,21 @@ export function TrendCard({
   const isSavings = metric === "savings";
   // Managers and members chart their own keys' workload (view-scope.ts).
   const scope = useViewScope();
-  const { spend: spendTotals, tokens: tokenTotals7d } = useMemo(
-    () => scopedUsageTotals(scope.keyNames),
+  // Spend and tokens are the range's own totals (spendTotalsAt /
+  // tokensTotalsAt), so the chart sums to the KPI and the key table's
+  // columns without a scale factor. The Savings lens weights series by the
+  // 7d token mix only (a shape, not a volume).
+  const tokenTotals7d = useMemo(
+    () => scopedUsageTotals(scope.keyNames).tokens,
     [scope]
+  );
+  const spendTotals = useMemo(
+    () => spendTotalsAt(range, customRange, scope.keyNames),
+    [range, customRange, scope]
+  );
+  const tokenTotals = useMemo(
+    () => tokensTotalsAt(range, customRange, scope.keyNames),
+    [range, customRange, scope]
   );
 
   /** Bar density keys off the CONTENT COLUMN's width, not the viewport: the
@@ -229,8 +243,7 @@ export function TrendCard({
   const fullRows = useMemo(() => {
     const count = fullCount;
     const labels = getRangeLabels(range, customRange);
-    const scale = effectiveScale(range, customRange);
-    const totals = (isSpend ? spendTotals : tokenTotals7d)[dimension];
+    const totals = (isSpend ? spendTotals : tokenTotals)[dimension];
 
     // Range-aware base seed so ranges with matching bucket counts don't
     // produce identical shapes. Deliberately NOT combined with a per-series
@@ -285,12 +298,9 @@ export function TrendCard({
     // One dimension-independent daily curve, then a fixed per-series share of
     // every bucket. See splitAcrossBuckets for why this must not be seeded per
     // series and what the lockstep tradeoff buys.
-    Object.assign(
-      seriesBuckets,
-      splitAcrossBuckets(totals, count, rangeSeed, scale)
-    );
+    Object.assign(seriesBuckets, splitAcrossBuckets(totals, count, rangeSeed));
 
-    // Per-bucket sum equals scaled 7d total by construction (distributeSeries
+    // The buckets sum to the range's total by construction (distributeSeries
     // sums each series exactly, then sums across series).
     return Array.from({ length: count }, (_, i) => {
       const row: Record<string, number | string> = { date: labels[i] ?? "" };
@@ -307,6 +317,7 @@ export function TrendCard({
     isSavings,
     fullCount,
     spendTotals,
+    tokenTotals,
     tokenTotals7d,
   ]);
 
