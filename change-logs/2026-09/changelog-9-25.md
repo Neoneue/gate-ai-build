@@ -68,6 +68,44 @@ filter, and two columns move.
   test asserts every seed meter is visibly filled and under its warn line.
   Shipped dialog presets are untouched.
 
+### Messages: Filters key list follows the Keys page (`pages/requests/RequestsTable.tsx`) · [23eb715]
+
+- **Before:** the Key select in the Filters modal was a hardcoded list that
+  left out design-agent and offered the revoked test-key. **After:** it
+  lists the live (non-revoked) keys from `API_KEY_SEED_ROWS`, in Keys page
+  order, narrowed to the viewer's scope. Held in a module-level
+  `LIVE_KEY_NAMES` plus a `useMemo` on the scope.
+
+### Keys and Activity: only test-key and ci-runner are revoked (`data/api-keys.ts`, `pages/activity-data.ts`) · [23eb715]
+
+- **Revoked set:** test-key and ci-runner on both the Keys page and
+  Activity. ci-runner was never used: traffic all zeros, last-used empty,
+  and it leaves the Design team (`data/teams.ts`). test-key has real
+  Messages rows, so its last-used is its latest row (May 12 09:40:44).
+- **Activity per-key split:** a revoked key reads 0 in any window that
+  opens after its last activity (the later of its last real row and its
+  last-used date), and its share goes to the keys that could still send.
+- **Tests:** pinned 7D figures updated in `teams.test.ts`,
+  `view-scope.test.ts` and `activity-data.test.ts` (org spend $2.38 to
+  $2.41, 15.9% to 16.1%; Sonnet 5 and Qwen swap rank).
+
+### Messages: real replies on authored rows, none on blocked or errored rows (`data/authored-request-bodies.ts`, `requests/RequestDetailBody.tsx`) · [23eb715]
+
+- **Blocked and error rows:** no placeholder assistant reply. The detail
+  body returns an empty response for them, so the response block is
+  skipped.
+- **Replies:** 44 authored rows that reached the model now carry a real
+  assistant reply that answers their message (Jev reply-fit min 0.83,
+  median 0.94). Row 1ba6a849 rewritten to fit its SEPA conversation.
+- **Blocked attacks:** 4 blocked messages rewritten so the attack arises
+  from the conversation's own work. Findings keep their category, type,
+  rule, verdicts and match; evidence equals the new message. Jev
+  plausibility, before to after: 78fe6ea4 (credential in a pasted
+  finance-bucket config) 0.66 to 0.82; 460e3baa (injection inside pasted
+  partner welcome copy) 0.62 to 0.81; d382e628 (system prompt request to
+  share the setup with another team) 0.74 to 0.82; d0b46d2b (key inside a
+  pasted API call) 0.70 to 0.82. Previews regenerated.
+
 ## Conventions
 
 ### Unused finding and detector fields removed; scanner vendor name dropped (`data/requests.ts`) · [1659527]
