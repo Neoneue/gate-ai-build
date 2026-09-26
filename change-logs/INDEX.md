@@ -9,6 +9,14 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-26](./2026-09/changelog-9-26.md)
+
+- Messages: a Manager's or Member's hero total matches their Activity page
+- Message detail: blocked and error rows show no assistant reply
+- Messages: two authored blocked messages rewritten
+- Credential findings carry the credential scanner rule
+- Dead key sparkline data and stale doc references removed
+
 ### [2026-09-25](./2026-09/changelog-9-25.md)
 
 - Messages: Device name column and filter, columns reordered
