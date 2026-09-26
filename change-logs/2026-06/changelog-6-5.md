@@ -33,9 +33,9 @@ The trace finding chip and the request's fired Security check now derive from th
 same field (`guardrailReason` / the row's `findings`), so they cannot disagree.
 Staging has a bug where a trace chip reads "pii" while the Security tab flags
 prompt injection; we do not replicate that. Finding values follow the docs: email
-is Presidio (`EmailRecognizer` / `EMAIL_ADDRESS`); AWS and Anthropic keys are
+the PII scanner (`EmailRecognizer` / `EMAIL_ADDRESS`); AWS and Anthropic keys are
 regex + Shannon entropy (`AWSKeyDetector` / `AnthropicKeyRecognizer`), never
-labeled "Presidio".
+labeled as PII.
 
 ## Components
 

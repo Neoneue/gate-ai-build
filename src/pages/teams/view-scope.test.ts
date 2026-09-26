@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { CONVERSATION_ROWS } from "@/data/conversations";
 import { REQUEST_ROWS_ALL } from "@/data/requests";
 import { TEAM_SEED_ROWS, usageForTeam } from "@/data/teams";
+import { usageAt } from "@/pages/activity-data";
+import { HERO_VIEWS, scaleHeroView } from "@/pages/requests/hero-data";
 import { EVENT_ROWS } from "@/pages/security-data";
 import { ADMIN_USER_ID, MANAGER_USER_ID, MEMBER_USER_ID } from "./teams-store";
 import { eventKeyName, ownKeyNames, viewScopeFor } from "./view-scope";
@@ -18,15 +20,12 @@ describe("view scope: managers and members read their own keys", () => {
     const s = viewScopeFor("admin", ADMIN_USER_ID, TEAM_SEED_ROWS);
     expect(s.scoped).toBe(false);
     expect(s.keyNames).toBeNull();
-    expect(s.requestShare).toBe(1);
   });
 
   it("Kira (manager) owns openclaw + nova-chat and manages Development", () => {
     const s = viewScopeFor("manager", MANAGER_USER_ID, TEAM_SEED_ROWS);
     expect([...(s.keyNames ?? [])].sort()).toEqual(["nova-chat", "openclaw"]);
     expect(s.managedTeam?.name).toBe("Development");
-    expect(s.requestShare).toBeGreaterThan(0);
-    expect(s.requestShare).toBeLessThan(1);
   });
 
   it("Mateus (member) owns hermes-agent + atlas-eval and manages nothing", () => {
@@ -124,4 +123,33 @@ describe("scoped derivations have data for both personas", () => {
       expect(events.length, role).toBeGreaterThan(0);
     }
   });
+});
+
+describe("a scoped Messages hero reads the same total as that user's Activity", () => {
+  // It used to scale the org chart by a 7d traffic share and round each
+  // bucket, so a small user read 0 on Messages against 9 on Activity.
+  for (const role of ["manager", "member"] as const) {
+    for (const userId of [
+      ADMIN_USER_ID,
+      MANAGER_USER_ID,
+      MEMBER_USER_ID,
+      "usr_jordan",
+    ]) {
+      it(`${role} ${userId}`, () => {
+        const s = viewScopeFor(role, userId, TEAM_SEED_ROWS);
+        if (!s.keyNames) {
+          return;
+        }
+        for (const range of ["24h", "7d", "30d", "all"] as const) {
+          const own = usageAt(range, null, s.keyNames).messages;
+          const hero = scaleHeroView(HERO_VIEWS[range], own);
+          expect(hero.total, range).toBe(own);
+          expect(
+            hero.data.reduce((a, d) => a + d.requests, 0),
+            range
+          ).toBe(own);
+        }
+      });
+    }
+  }
 });

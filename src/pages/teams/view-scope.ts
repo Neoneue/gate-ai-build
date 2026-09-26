@@ -5,7 +5,6 @@ import {
   TEAM_SAVINGS_SEED,
   type TeamRow,
 } from "@/data/teams";
-import { API_KEY_ROWS } from "@/pages/activity-data";
 import {
   currentUserId,
   useTeams,
@@ -41,28 +40,12 @@ export type ViewScope = {
   /** The team the user manages (live store), for the Manager's team-level
    *  security reads (PRD §8.4 security-event visibility). Null otherwise. */
   managedTeam: TeamRow | null;
-  /** The user's share of the org's 7d request volume. Org canon totals that
-   *  are not row-derived (the Messages hero, the Conversations count) scale by
-   *  it, the same way team pages allocate the org Security canon. 1 when
-   *  unscoped. */
-  requestShare: number;
 };
 
 export function ownKeyNames(userId: string): Set<string> {
   return new Set(
     API_KEY_SEED_ROWS.filter((k) => k.ownerId === userId).map((k) => k.name)
   );
-}
-
-/** Fraction of the org's 7d requests that ran on `names`. BYOK keys count:
- *  Gate saw the traffic even though the provider billed it. */
-function requestShareFor(names: Set<string>): number {
-  const total = API_KEY_ROWS.reduce((a, r) => a + r.requests, 0) || 1;
-  const own = API_KEY_ROWS.filter((r) => names.has(r.key)).reduce(
-    (a, r) => a + r.requests,
-    0
-  );
-  return own / total;
 }
 
 /** One person as a team: their id, their live keys as membership, every key
@@ -96,7 +79,6 @@ export function viewScopeFor(
       keyNames: null,
       ownTeam: null,
       managedTeam: null,
-      requestShare: 1,
     };
   }
   const keyNames = ownKeyNames(userId);
@@ -110,7 +92,6 @@ export function viewScopeFor(
       role === "manager"
         ? (teams.find((t) => t.managerIds.includes(userId)) ?? null)
         : null,
-    requestShare: requestShareFor(keyNames),
   };
 }
 
@@ -128,9 +109,4 @@ export function eventKeyName(eventKey: string): string {
 
 export function inScope(scope: ViewScope, keyName: string): boolean {
   return scope.keyNames === null || scope.keyNames.has(keyName);
-}
-
-/** A whole-number share of an org canon total, floored at 0. */
-export function scaleByShare(n: number, share: number): number {
-  return Math.max(0, Math.round(n * share));
 }

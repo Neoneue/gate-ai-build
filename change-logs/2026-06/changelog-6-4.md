@@ -386,7 +386,7 @@ AuthLayout no-`h1`-at-mobile, SecurityDefault `aria-hidden` ticker heading.
 
 ### Requests Findings modal v2 — full redesign (`Requests.tsx`, `ui/code-card.tsx`) · [480633e · a2e6fd0]
 
-- **Polymorphic right panel by detector:** PII/credential → Presidio layout
+- **Polymorphic right panel by detector:** PII/credential → PII-scanner layout
   (`PiiRightPanel`: User message, Why this fired, What we sent upstream); injection
   → `InjectionRightPanel` (What happened + detector note, evidence segment, What we
   did, How to fix with Tune policy / Mark false positive). The three detectors

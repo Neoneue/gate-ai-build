@@ -9,6 +9,14 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## September 2026
 
+### [2026-09-26](./2026-09/changelog-9-26.md)
+
+- Messages: a Manager's or Member's hero total matches their Activity page
+- Message detail: blocked and error rows show no assistant reply
+- Messages: two authored blocked messages rewritten
+- Credential findings carry the credential scanner rule
+- Dead key sparkline data and stale doc references removed
+
 ### [2026-09-25](./2026-09/changelog-9-25.md)
 
 - Messages: Device name column and filter, columns reordered
@@ -18,6 +26,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Messages: Filters key list follows the Keys page
 - Keys and Activity: only test-key and ci-runner are revoked
 - Messages: real replies on authored rows, none on blocked or errored rows
+- Teams: security chart tooltip rows sum to their total
 - Unused finding and detector fields removed; scanner vendor name dropped
 
 ### [2026-09-24](./2026-09/changelog-9-24.md)

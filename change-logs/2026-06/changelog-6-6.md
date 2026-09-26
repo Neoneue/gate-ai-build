@@ -74,7 +74,7 @@ Where: `src/pages/Requests.tsx` (`findingBannerSentence`).
 
 ### A caught value never re-appears raw in the transcript (uncommitted)
 
-Redaction happens at the gateway on ingress: Presidio / the credentials scanner
+Redaction happens at the gateway on ingress: the PII scanner / the credentials scanner
 detect the entity, then the anonymizer replaces it with a placeholder before the
 prompt reaches the provider. The Conversations **Messages** panel is a
 reconstruction from those logs, so it must show the redacted form, not the raw

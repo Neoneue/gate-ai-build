@@ -92,7 +92,10 @@ export type EventMixSplit = {
  *  the leftover units to the largest fractional remainders first.
  *  Examples: 117 → 77/35/5, 562 → 371/167/24, 1215 → 801/362/52,
  *  12 → 8/4/0. */
-export function splitEventMix(total: number): EventMixSplit {
+export function splitEventMix(rawTotal: number): EventMixSplit {
+  // Events are whole. A fractional total left a fractional remainder that the
+  // loop below rounded UP into an extra event, so the rows summed past it.
+  const total = Math.max(0, Math.round(rawTotal));
   const keys = ["blocked", "flagged", "redacted"] as const;
   const ideal = keys.map((k) => (total * EVENT_MIX[k]) / EVENT_MIX_TOTAL);
   const floors = ideal.map((v) => Math.floor(v));

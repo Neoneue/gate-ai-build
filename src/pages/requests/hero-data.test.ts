@@ -34,22 +34,24 @@ const FIXTURE: HeroView = {
 const sumRequests = (view: HeroView) =>
   view.data.reduce((a, d) => a + d.requests, 0);
 
-/** Real Manager / Member request shares (view-scope.ts). */
-const SCOPED_SHARES = [0.24, 0.06];
+/** Scoped totals a Manager or Member can read: small ones (0, 1, 9) are
+ *  the case per-bucket share scaling used to round to 0. */
+const SCOPED_TOTALS = [0, 1, 9, 17, 41];
 
 describe("scaleHeroView", () => {
-  it("returns the input view unchanged at share 1", () => {
-    expect(scaleHeroView(FIXTURE, 1)).toBe(FIXTURE);
+  it("returns the input view unchanged at its own total", () => {
+    expect(scaleHeroView(FIXTURE, FIXTURE.total)).toBe(FIXTURE);
   });
 
-  for (const share of SCOPED_SHARES) {
-    it(`headline total equals the sum of scaled buckets at share ${share}`, () => {
-      const view = scaleHeroView(FIXTURE, share);
-      expect(view.total).toBe(sumRequests(view));
+  for (const target of SCOPED_TOTALS) {
+    it(`headline equals the target and the sum of its buckets at ${target}`, () => {
+      const view = scaleHeroView(FIXTURE, target);
+      expect(view.total).toBe(target);
+      expect(sumRequests(view)).toBe(target);
     });
 
-    it(`success never exceeds total and errors close the gap at share ${share}`, () => {
-      const view = scaleHeroView(FIXTURE, share);
+    it(`success never exceeds total and errors close the gap at ${target}`, () => {
+      const view = scaleHeroView(FIXTURE, target);
       expect(view.success).toBeLessThanOrEqual(view.total);
       expect(view.success + view.errors).toBe(view.total);
       expect(view.errors).toBeGreaterThanOrEqual(0);
@@ -57,7 +59,7 @@ describe("scaleHeroView", () => {
   }
 
   it("keeps the bucket count and lifts domainTop above the tallest bar", () => {
-    const view = scaleHeroView(FIXTURE, 0.24);
+    const view = scaleHeroView(FIXTURE, 17);
     expect(view.data).toHaveLength(FIXTURE.data.length);
     expect(view.domainTop).toBe(
       Math.max(...view.data.map((d) => d.requests), 1) + 1
@@ -87,9 +89,9 @@ describe("withBreakdown", () => {
     }
   });
 
-  it("reconciles scoped views at every real share", () => {
-    for (const share of SCOPED_SHARES) {
-      expectReconciled(scaleHeroView(HERO_VIEWS.all, share));
+  it("reconciles scoped views at every scoped total", () => {
+    for (const target of SCOPED_TOTALS) {
+      expectReconciled(scaleHeroView(HERO_VIEWS.all, target));
     }
   });
 
@@ -124,10 +126,10 @@ describe("hero series shape", () => {
     ...(Object.keys(HERO_VIEWS) as RangeKey[]).map(
       (key) => [key, HERO_VIEWS[key]] as [string, HeroView]
     ),
-    ...SCOPED_SHARES.flatMap((share) =>
+    ...SCOPED_TOTALS.flatMap((target) =>
       (["all", "24h", "7d", "30d"] as RangeKey[]).map(
         (key) =>
-          [`${key} @ ${share}`, scaleHeroView(HERO_VIEWS[key], share)] as [
+          [`${key} @ ${target}`, scaleHeroView(HERO_VIEWS[key], target)] as [
             string,
             HeroView,
           ]
