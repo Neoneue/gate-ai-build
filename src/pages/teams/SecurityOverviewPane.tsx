@@ -57,6 +57,7 @@ import { cn } from "@/lib/utils";
 import { getBucketCount, getRangeDates } from "@/pages/activity/chart-helpers";
 import {
   ATTACK_MIX,
+  allocate,
   HERO_CHART_CONFIG,
   RANGE_DELTA_NOTE,
   splitEventMix,
@@ -376,13 +377,20 @@ function HeroEventsCard({
   const count = getBucketCount(range, customRange);
   const findings7d =
     teamEventShares("7d", null, teamsIncluding(teams, team)).get(team.id) ?? 0;
-  const series = teamSparkSeries(
-    findings7d,
+  // Events are whole: the backbone is a SHAPE of fractional weights, so it
+  // is settled onto the headline as integer buckets (the same allocator
+  // every event breakdown uses). A fractional bucket made splitEventMix hand
+  // out an extra event, and the tooltip rows summed past their Total.
+  const series = allocate(
     security.findings,
-    range,
-    customRange,
-    count,
-    teamSeed * 31 + 4
+    teamSparkSeries(
+      findings7d,
+      security.findings,
+      range,
+      customRange,
+      count,
+      teamSeed * 31 + 4
+    )
   );
 
   // `time` carries the full timestamp so every bucket is a distinct x

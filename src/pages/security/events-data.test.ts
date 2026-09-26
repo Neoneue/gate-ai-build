@@ -73,3 +73,12 @@ test("event totals are the Messages rows' own finding rate applied to the messag
     );
   }
 });
+
+test("splitEventMix never hands out more events than the total, even for a fractional input", () => {
+  // The team security chart fed it fractional buckets (0.24, 1.91), and its
+  // tooltip rows summed past their Total.
+  for (const raw of [0, 0.24, 0.5, 1.91, 3.51, 4, 4.4, 17, 17.6, 1215]) {
+    const { blocked, flagged, redacted } = splitEventMix(raw);
+    expect(blocked + flagged + redacted, String(raw)).toBe(Math.round(raw));
+  }
+});
