@@ -5,7 +5,6 @@ import {
 } from "@/data/message-totals";
 import { demoAnchorFields } from "@/lib/demo-clock";
 import { formatChartTooltipDate } from "@/lib/formatters";
-import { scaleByShare } from "@/pages/teams/view-scope";
 import type {
   CustomRange,
   HeroBucket,
@@ -52,22 +51,35 @@ export function withBreakdown(
   }));
 }
 
-/** A Manager's or Member's reading of the hero: the org canon allocated by
- *  their share of request volume (view-scope.ts). Buckets are scaled first
- *  and `total` is their sum, so the headline always reconciles with the
- *  bars (per-bucket rounding would otherwise drift from a separately
- *  rounded total). Total = success + errors still holds, and the trace
- *  keeps its shape at the smaller scale. */
-export function scaleHeroView(view: HeroView, share: number): HeroView {
-  if (share === 1) {
+/** A Manager's or Member's reading of the hero: `total` is their own keys'
+ *  messages for the range (activity-data `usageAt`, the same number their
+ *  Activity page shows), spread across the org chart's buckets by largest
+ *  remainder so the trace keeps its shape and the bars sum EXACTLY to the
+ *  headline. Scaling each bucket by a traffic share instead rounded a small
+ *  user's buckets to 0 (Jordan read 0 at 7D against Activity's 9).
+ *  Total = success + errors still holds. */
+export function scaleHeroView(view: HeroView, target: number): HeroView {
+  const total = Math.max(0, Math.round(target));
+  if (total === view.total) {
     return view;
   }
-  const data = view.data.map((d) => ({
-    ...d,
-    requests: scaleByShare(d.requests, share),
-  }));
-  const total = data.reduce((sum, d) => sum + d.requests, 0);
-  const success = Math.min(total, scaleByShare(view.success, share));
+  const weight = view.data.reduce((sum, d) => sum + d.requests, 0);
+  const quotas = view.data.map((d) =>
+    weight > 0 ? (d.requests * total) / weight : total / view.data.length
+  );
+  const counts = quotas.map(Math.floor);
+  let remaining = total - counts.reduce((a, b) => a + b, 0);
+  const order = quotas
+    .map((q, i) => ({ i, frac: q - Math.floor(q) }))
+    .sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (let k = 0; remaining > 0; k++, remaining--) {
+    counts[order[k % order.length].i] += 1;
+  }
+  const data = view.data.map((d, i) => ({ ...d, requests: counts[i] }));
+  const success =
+    view.total > 0
+      ? Math.min(total, Math.round((view.success * total) / view.total))
+      : total;
   return {
     ...view,
     total,

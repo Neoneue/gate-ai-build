@@ -18,6 +18,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroNumeric } from "@/components/ui/hero-numeric";
 import { StatusDot } from "@/components/ui/status-dot";
 import { formatCompactCount } from "@/lib/formatters";
+import { usageAt } from "@/pages/activity-data";
 import { useViewScope } from "@/pages/teams/view-scope";
 import { buildCustomHeroView, HERO_VIEWS, scaleHeroView } from "./hero-data";
 import { useCustomRange, useRange } from "./range-store";
@@ -34,10 +35,15 @@ export function HeroMetricCard() {
     [customRange]
   );
   const scope = useViewScope();
-  const view = scaleHeroView(
-    range === "custom" ? customView : HERO_VIEWS[range],
-    scope.requestShare
-  );
+  // Admin reads the org view as-is; a Manager or Member reads their own
+  // keys' messages, the same total their Activity page shows.
+  const orgView = range === "custom" ? customView : HERO_VIEWS[range];
+  const view = scope.keyNames
+    ? scaleHeroView(
+        orgView,
+        usageAt(range, customRange, scope.keyNames).messages
+      )
+    : orgView;
   // Three tooltip rows from one hovered bucket: Total, then the Success /
   // Errors split the point carries (`withBreakdown`, hero-data). Success
   // and Errors are invisible series (no stroke, no fill, no active dot)

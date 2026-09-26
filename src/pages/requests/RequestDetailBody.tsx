@@ -1118,8 +1118,7 @@ function PiiDetailPanel({
 
 /** Detail panel for injection findings — the classifier layout. NONE of
  * Recognizer / Offset / Bytes / redaction diff. Every section is
- * title-ABOVE-card. Built on the five real detector outputs only
- * (docs/Injection-findings.md §0/§6). */
+ * title-ABOVE-card. Built on the five real detector outputs only. */
 function InjectionDetailPanel({
   finding,
   row,
@@ -1385,6 +1384,18 @@ function buildRequestBodyLines(
 /* Sample assistant `text` per row. Mirrors the request scenario so the
    conversation reads coherently top-to-bottom. Errors and blocks are
    absent — see `RequestBodyPanel` for which statuses produce a response. */
+/* The assistant turn this request produced. A blocked request never reached
+ * the provider and a failed one returned nothing usable, so both read "" even
+ * when a capture carries text: in a captured session that text is the
+ * model's NEXT turn (explaining the block), which the conversation view
+ * still shows in its place in the thread. */
+function assistantReply(row: RequestRow): string | undefined {
+  if (row.guardrail === "block" || row.status === "error") {
+    return "";
+  }
+  return getRequestBody(row).assistantResponse;
+}
+
 function sampleResponseText(row: RequestRow): string {
   // A blocked request never reaches the provider, and a failed one returned
   // nothing usable, so neither has an assistant turn to show. Empty here
@@ -1696,7 +1707,7 @@ function resolveRequestTurns(row: RequestRow): {
   const isErrorResponse = errorOrigin(row.errorSource) !== null;
   const responseContent = isTool
     ? (getRequestBody(row).toolResult ?? "")
-    : (getRequestBody(row).assistantResponse ?? sampleResponseText(row));
+    : (assistantReply(row) ?? sampleResponseText(row));
   return { isTool, userContent, responseContent, isErrorResponse };
 }
 
@@ -1827,7 +1838,7 @@ function RequestBodyPanel({
     : rawRequestContent;
   const effectiveHighlight = highlightFinding?.redactedAs ?? highlightMatch;
   const responseContent =
-    getRequestBody(row).assistantResponse ??
+    assistantReply(row) ??
     (row.toolName
       ? (getRequestBody(row).toolResult ?? "")
       : sampleResponseText(row));
@@ -1871,7 +1882,7 @@ function RequestBodyPanel({
             getRequestBody(row).userMessage ??
             (isTool
               ? (getRequestBody(row).toolResult ?? "")
-              : (getRequestBody(row).assistantResponse ?? responseContent))
+              : (assistantReply(row) ?? responseContent))
           }
           label={
             getRequestBody(row).userMessage

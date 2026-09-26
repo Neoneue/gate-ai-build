@@ -117,8 +117,6 @@ export function ApiKeys() {
       masked: `sk-gw-…${suffix}`,
       // The signed-in user mints the key, so they own it.
       ownerId: currentUserId(),
-      // Zero-volume sparkline for a freshly-created key — no traffic yet.
-      requests7d: [0, 0, 0, 0, 0, 0, 0],
       createdAt: new Date(),
       lastUsed: null,
     };

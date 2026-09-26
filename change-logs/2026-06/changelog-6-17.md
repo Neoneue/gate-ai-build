@@ -40,7 +40,7 @@ so each step scrolls the evidence to that occurrence; the "Why this fired"
 offset is occurrence-aware (was always the first match). Removed the
 `DetectorTip` hover popover (Detector / Score / Threshold) and the
 `METHOD_LABEL` import, so the Full-request highlight is a plain span and
-Presidio no longer appears in the UI. Dropped the count badge from the
+the PII scanner's vendor name no longer appears in the UI. Dropped the count badge from the
 Findings / Passed titles (`CountChip` back to its plain form, still on the PII
 card); the `Finding x / y` label is `text-foreground`.
 
