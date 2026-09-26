@@ -18,6 +18,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Messages: Filters key list follows the Keys page
 - Keys and Activity: only test-key and ci-runner are revoked
 - Messages: real replies on authored rows, none on blocked or errored rows
+- Teams: security chart tooltip rows sum to their total
 - Unused finding and detector fields removed; scanner vendor name dropped
 
 ### [2026-09-24](./2026-09/changelog-9-24.md)

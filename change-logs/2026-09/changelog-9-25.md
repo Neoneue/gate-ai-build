@@ -106,6 +106,23 @@ filter, and two columns move.
   share the setup with another team) 0.74 to 0.82; d0b46d2b (key inside a
   pasted API call) 0.70 to 0.82. Previews regenerated.
 
+### Teams: security chart tooltip rows sum to their total (`teams/SecurityOverviewPane.tsx`, `security/events-data.ts`) · [fab4eed]
+
+- **Before:** the team security hero chart's tooltip (Total / Blocked /
+  Flagged / Redacted, added in 45315c8) could list rows that summed past
+  the Total. `teamSparkSeries` returns fractional buckets (0.24, 1.91),
+  and `splitEventMix` turned the fractional remainder into an extra
+  event: 27 of 60 buckets at All, 59 of 60 at 7D.
+- **After:** `SecurityOverviewPane.tsx` settles the series onto the
+  headline as whole-number buckets with `allocate` (the allocator every
+  event breakdown uses), so it still sums to the headline.
+  `splitEventMix` in `events-data.ts` rounds its input (clamped at 0), so
+  no caller can over-allocate.
+- **Tests:** `events-data.test.ts` asserts the split sums to
+  `Math.round(total)` for fractional and integer inputs. Checked live on
+  team_platform, team_design and team_default: 24 hovers each, 0
+  mismatches.
+
 ## Conventions
 
 ### Unused finding and detector fields removed; scanner vendor name dropped (`data/requests.ts`) · [1659527]
