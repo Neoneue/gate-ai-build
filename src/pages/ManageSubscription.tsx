@@ -26,6 +26,13 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PageTitle } from "@/components/ui/page-title";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SparklesIcon } from "@/components/ui/sparkles";
@@ -536,7 +543,7 @@ function ContactDialog({
             (design.md, Focus ring), and the fields are full-width, so every
             one of those 4px was being cut on both edges. `p-1` (4px) is the
             exact reserve on all four sides: the block axis needs it too,
-            because the Notes field is last and scrolls flush to the bottom
+            because the Message field is last and scrolls flush to the bottom
             edge, where `scroll-py-*` has no scroll left to give. `-m-1` pulls
             the box back out into `DialogContent`'s `p-6` so the content sits
             where it always did and nothing else shifts. */}
@@ -584,21 +591,65 @@ function ContactDialog({
  * Submission API, so it wears our tokens, our type voices and our own
  * submit button.
  *
- * Four fields and no more. Work email is the only one HubSpot requires by
- * default and it is what links a later demo booking to the same contact
- * record. Name and Company are prefilled because we already hold them and
- * sales needs Company to route. Notes is the one thing we cannot know: it
- * is where the customer states the intent the ticket says we have no way to
- * capture today, private cloud deployment, custom retention or procurement
- * support. No phone, country, job title or employee count.
+ * Six fields, the ticket's list: first name, last name, work email,
+ * company, company size, message. Name (first AND last), work email and
+ * company are required; company size and message are optional. Work email
+ * is what links a later demo booking to the same contact record. First
+ * name, last name, work email and company are prefilled because we already
+ * hold them (the two name fields split the roster's single `name` on its
+ * first space) and sales needs Company to route. Company size offers
+ * HubSpot's default "Number of Employees" contact-property options (the
+ * real build reads them from the portal) and starts empty: we do not hold
+ * that value, so it is never guessed. Message is where the customer states
+ * the intent the ticket says we have no way to capture today, private
+ * cloud deployment, custom retention or procurement support. Each `name`
+ * attribute is the matching HubSpot contact property (`firstname`,
+ * `lastname`, `email`, `company`, `numemployees`, `message`), so the Forms
+ * Submission API payload maps one to one.
  *
  * Every prefilled value stays EDITABLE. The person filling this in may be
  * correcting a value or handing the enquiry to a colleague.
  * ───────────────────────────────────────────────────────────────────────── */
 
-type ContactField = "name" | "email" | "company" | "notes";
+type ContactField =
+  | "firstName"
+  | "lastName"
+  | "email"
+  | "company"
+  | "companySize"
+  | "message";
 
-const REQUIRED_FIELDS: ContactField[] = ["name", "email", "company"];
+const REQUIRED_FIELDS: ContactField[] = [
+  "firstName",
+  "lastName",
+  "email",
+  "company",
+];
+
+/** HubSpot's default "Number of Employees" (`numemployees`) contact-property
+ *  options, verbatim and in its order. Seed values only: the real build
+ *  reads the option list from the portal. */
+const COMPANY_SIZES = [
+  "1-5",
+  "5-25",
+  "25-50",
+  "50-100",
+  "100-500",
+  "500-1000",
+  "1000+",
+] as const;
+
+/** The roster holds one `name`; the form asks for two. Split on the FIRST
+ *  space so a multi-word surname stays whole in Last name. A single-word
+ *  name lands entirely in First name and leaves Last name empty for the
+ *  user to fill. */
+const splitName = (name: string): { first: string; last: string } => {
+  const trimmed = name.trim();
+  const space = trimmed.indexOf(" ");
+  return space === -1
+    ? { first: trimmed, last: "" }
+    : { first: trimmed.slice(0, space), last: trimmed.slice(space + 1) };
+};
 
 /** Format only. Deliverability and MX are HubSpot's server-side job and
  *  this is a mockup; a regex that pretends otherwise would lie. */
@@ -643,11 +694,16 @@ function ContactForm() {
   // Prefilled from the signed-in user and the current workspace, both read
   // from the roster seed rather than re-typed here.
   const me = signedInMember();
-  const [values, setValues] = useState<Record<ContactField, string>>({
-    name: me.name,
-    email: me.email,
-    company: WORKSPACE_NAME,
-    notes: "",
+  const [values, setValues] = useState<Record<ContactField, string>>(() => {
+    const { first, last } = splitName(me.name);
+    return {
+      firstName: first,
+      lastName: last,
+      email: me.email,
+      company: WORKSPACE_NAME,
+      companySize: "",
+      message: "",
+    };
   });
   // Validation fires on BLUR and on submit, never per keystroke, so a
   // half-typed address is not flagged mid-entry.
@@ -675,19 +731,48 @@ function ContactForm() {
 
   return (
     <FieldGroup>
-      <Field data-invalid={errorFor("name") !== null}>
-        <ContactFieldLabel htmlFor="contact-name" required>
-          Name
-        </ContactFieldLabel>
-        <Input
-          {...field("name")}
-          autoComplete="name"
-          name="name"
-          onChange={(e) => set("name", e.target.value)}
-          type="text"
-        />
-        <ContactFieldError field="name" message={errorFor("name")} />
-      </Field>
+      {/* First and last name share ONE row, always two columns (user
+          direction). Width math: the dialog body is 512px at the 560px cap
+          (560 - 2 x 24 padding), so each column is (512 - 16) / 2 = 248px;
+          at a 390px viewport the body is 390 - 32 gutter - 48 padding =
+          310px, so each column is (310 - 16) / 2 = 147px, still wider than
+          the label row ("First name" + gap-2 + "Required", ~125px). The
+          ring reserve is the scroll wrapper's `p-1` on the OUTER edges;
+          the 16px `gap-4` between columns already exceeds the two 4px
+          rings that meet inside it. `grid grid-cols-2 gap-4` is the
+          site's two-column recipe (design.md, Summary card). */}
+      <div className="grid grid-cols-2 gap-4">
+        <Field data-invalid={errorFor("firstName") !== null}>
+          <ContactFieldLabel htmlFor="contact-firstName" required>
+            First name
+          </ContactFieldLabel>
+          <Input
+            {...field("firstName")}
+            autoComplete="given-name"
+            name="firstname"
+            onChange={(e) => set("firstName", e.target.value)}
+            type="text"
+          />
+          <ContactFieldError
+            field="firstName"
+            message={errorFor("firstName")}
+          />
+        </Field>
+
+        <Field data-invalid={errorFor("lastName") !== null}>
+          <ContactFieldLabel htmlFor="contact-lastName" required>
+            Last name
+          </ContactFieldLabel>
+          <Input
+            {...field("lastName")}
+            autoComplete="family-name"
+            name="lastname"
+            onChange={(e) => set("lastName", e.target.value)}
+            type="text"
+          />
+          <ContactFieldError field="lastName" message={errorFor("lastName")} />
+        </Field>
+      </div>
 
       <Field data-invalid={errorFor("email") !== null}>
         <ContactFieldLabel htmlFor="contact-email" required>
@@ -719,11 +804,36 @@ function ContactForm() {
       </Field>
 
       <Field>
-        <ContactFieldLabel htmlFor="contact-notes">Notes</ContactFieldLabel>
+        <ContactFieldLabel htmlFor="contact-companySize">
+          Company size
+        </ContactFieldLabel>
+        {/* Uncontrolled with no default: nothing is preselected, so the
+            trigger carries `data-placeholder` (muted ink from the trigger
+            recipe) until a size is picked. Option values ARE their
+            labels. */}
+        <Select
+          name="numemployees"
+          onValueChange={(v: string) => set("companySize", v)}
+        >
+          <SelectTrigger className="w-full" id="contact-companySize">
+            <SelectValue placeholder="Select size" />
+          </SelectTrigger>
+          <SelectContent>
+            {COMPANY_SIZES.map((size) => (
+              <SelectItem key={size} value={size}>
+                {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+
+      <Field>
+        <ContactFieldLabel htmlFor="contact-message">Message</ContactFieldLabel>
         <Textarea
-          {...field("notes")}
-          name="notes"
-          onChange={(e) => set("notes", e.target.value)}
+          {...field("message")}
+          name="message"
+          onChange={(e) => set("message", e.target.value)}
           rows={3}
         />
       </Field>
@@ -764,7 +874,7 @@ function ContactFieldError({
 function ContactBody({ state }: { state: EmbedState }) {
   return (
     <div aria-busy={state === "loading"} className="flex flex-col gap-4">
-      {state === "loading" ? <FieldSkeletons rows={4} /> : null}
+      {state === "loading" ? <FieldSkeletons rows={5} /> : null}
       {state === "error" ? <FrameError /> : null}
       {state === "done" ? <Confirmation kind="contact" /> : null}
       {state === "ready" ? <ContactForm /> : null}

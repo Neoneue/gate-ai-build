@@ -100,9 +100,16 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   );
 }
 
+// Any function child suppresses Base UI's own `placeholder` prop, so the
+// default label lookup renders the placeholder itself when nothing is
+// selected, using Base UI's emptiness test (null, "" or an empty array).
+const isEmptySelection = (value: unknown) =>
+  value == null || value === "" || (Array.isArray(value) && value.length === 0);
+
 function SelectValue({
   className,
   children,
+  placeholder,
   ...props
 }: SelectPrimitive.Value.Props) {
   const labels = React.useContext(SelectLabelContext);
@@ -113,7 +120,10 @@ function SelectValue({
       {...props}
     >
       {children ??
-        ((value) => labels?.get(String(value)) ?? (value as React.ReactNode))}
+        ((value) =>
+          isEmptySelection(value)
+            ? placeholder
+            : (labels?.get(String(value)) ?? (value as React.ReactNode)))}
     </SelectPrimitive.Value>
   );
 }
