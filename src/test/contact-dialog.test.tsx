@@ -154,27 +154,76 @@ describe("the four embed states, off the one-way ?form= param", () => {
   });
 });
 
-describe("the contact form is ours: four fields, prefilled and editable", () => {
-  const FIELDS = ["Name", "Work email", "Company", "Notes"] as const;
+describe("the contact form is ours: six fields, prefilled and editable", () => {
+  // The ticket's six, in its order.
+  const FIELDS = [
+    "First name",
+    "Last name",
+    "Work email",
+    "Company",
+    "Company size",
+    "Message",
+  ] as const;
 
-  it("renders exactly those four, in order", async () => {
+  it("renders exactly those six, in order", async () => {
     const { dialog } = await openBy("/billing/plans", "Contact us");
-    for (const label of FIELDS) {
-      expect(within(dialog).getByLabelText(label)).toBeTruthy();
+    const controls = FIELDS.map((label) =>
+      within(dialog).getByLabelText(label)
+    );
+    // Document order matches the ticket's order.
+    for (let i = 1; i < controls.length; i++) {
+      expect(
+        controls[i - 1].compareDocumentPosition(controls[i]) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     }
-    // The four the spec names and nothing else.
-    expect(dialog.querySelectorAll("input, textarea")).toHaveLength(4);
-    for (const absent of ["Phone", "Country", "Job title", "Employees"]) {
+    // The six the spec names and nothing else: every labelled control in
+    // the dialog is one of them.
+    expect(dialog.querySelectorAll("label[for]")).toHaveLength(FIELDS.length);
+    for (const absent of ["Phone", "Country", "Job title", "Name", "Notes"]) {
       expect(within(dialog).queryByLabelText(absent)).toBeNull();
     }
+  });
+
+  it("puts first and last name on one row", async () => {
+    const { dialog } = await openBy("/billing/plans", "Contact us");
+    const first = within(dialog).getByLabelText("First name");
+    const last = within(dialog).getByLabelText("Last name");
+    const row = first.closest("[data-slot=field]")?.parentElement;
+    expect(row?.className).toContain("grid-cols-2");
+    expect(last.closest("[data-slot=field]")?.parentElement).toBe(row);
+    expect(first.getAttribute("autocomplete")).toBe("given-name");
+    expect(last.getAttribute("autocomplete")).toBe("family-name");
+  });
+
+  it("offers HubSpot's default company-size options with nothing preselected", async () => {
+    const { u, dialog } = await openBy("/billing/plans", "Contact us");
+    const size = within(dialog).getByLabelText("Company size");
+    expect(size.textContent).toContain("Select size");
+    await u.click(size);
+    const options = await screen.findAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual([
+      "1-5",
+      "5-25",
+      "25-50",
+      "50-100",
+      "100-500",
+      "500-1000",
+      "1000+",
+    ]);
   });
 
   it("prefills from the signed-in user and the current workspace", async () => {
     const me = signedInMember();
     const { dialog } = await openBy("/billing/plans", "Contact us");
-    expect(within(dialog).getByLabelText("Name")).toHaveProperty(
+    const space = me.name.indexOf(" ");
+    expect(within(dialog).getByLabelText("First name")).toHaveProperty(
       "value",
-      me.name
+      me.name.slice(0, space)
+    );
+    expect(within(dialog).getByLabelText("Last name")).toHaveProperty(
+      "value",
+      me.name.slice(space + 1)
     );
     expect(within(dialog).getByLabelText("Work email")).toHaveProperty(
       "value",
@@ -184,8 +233,11 @@ describe("the contact form is ours: four fields, prefilled and editable", () => 
       "value",
       WORKSPACE_NAME
     );
-    // Notes is the one thing we cannot know.
-    expect(within(dialog).getByLabelText("Notes")).toHaveProperty("value", "");
+    // Message is the one text field we cannot know.
+    expect(within(dialog).getByLabelText("Message")).toHaveProperty(
+      "value",
+      ""
+    );
   });
 
   it("leaves every prefilled field editable, not read-only or disabled", async () => {
@@ -201,9 +253,9 @@ describe("the contact form is ours: four fields, prefilled and editable", () => 
     expect(email).toHaveProperty("value", "kira.tan@constellationnetwork.io");
   });
 
-  it("marks the three required fields with a word, not colour alone", async () => {
+  it("marks the four required fields with a word, not colour alone", async () => {
     const { dialog } = await openBy("/billing/plans", "Contact us");
-    expect(within(dialog).getAllByText("Required")).toHaveLength(3);
+    expect(within(dialog).getAllByText("Required")).toHaveLength(4);
   });
 });
 
@@ -249,12 +301,32 @@ describe("per-field errors: inline, on blur, wired to the control", () => {
     ).toContain("required");
   });
 
-  it("never flags Notes, the one optional field", async () => {
+  it("flags an emptied first or last name on blur, each under its own field", async () => {
     const { u, dialog } = await openBy("/billing/plans", "Contact us");
-    const notes = within(dialog).getByLabelText("Notes");
-    await u.click(notes);
+    for (const [label, id] of [
+      ["First name", "firstName"],
+      ["Last name", "lastName"],
+    ] as const) {
+      const input = within(dialog).getByLabelText(label);
+      await u.clear(input);
+      await u.tab();
+      await waitFor(() => {
+        expect(input.getAttribute("aria-invalid")).toBe("true");
+      });
+      const message = document.getElementById(`contact-${id}-error`);
+      expect(message?.textContent).toContain("required");
+      expect(message?.closest("[data-slot=field]")).toBe(
+        input.closest("[data-slot=field]")
+      );
+    }
+  });
+
+  it("never flags Message, an optional field", async () => {
+    const { u, dialog } = await openBy("/billing/plans", "Contact us");
+    const message = within(dialog).getByLabelText("Message");
+    await u.click(message);
     await u.tab();
-    expect(notes.getAttribute("aria-invalid")).not.toBe("true");
+    expect(message.getAttribute("aria-invalid")).not.toBe("true");
   });
 
   /** Field-level errors and the frame-level error are separate states and
