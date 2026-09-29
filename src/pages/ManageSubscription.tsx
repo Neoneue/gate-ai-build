@@ -809,18 +809,14 @@ function ContactForm() {
         </ContactFieldLabel>
         {/* Uncontrolled with no default: nothing is preselected, so the
             trigger carries `data-placeholder` (muted ink from the trigger
-            recipe) until a size is picked. The function child renders the
-            placeholder because the `SelectValue` wrapper always passes Base
-            UI a function child, which suppresses Base UI's own
-            `placeholder` prop. Option values ARE their labels. */}
+            recipe) until a size is picked. Option values ARE their
+            labels. */}
         <Select
           name="numemployees"
           onValueChange={(v: string) => set("companySize", v)}
         >
           <SelectTrigger className="w-full" id="contact-companySize">
-            <SelectValue>
-              {(value: string | null) => value ?? "Select size"}
-            </SelectValue>
+            <SelectValue placeholder="Select size" />
           </SelectTrigger>
           <SelectContent>
             {COMPANY_SIZES.map((size) => (
