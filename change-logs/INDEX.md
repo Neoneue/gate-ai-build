@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-09-29](./2026-09/changelog-9-29.md)
 
+- Select: `SelectValue` renders its placeholder
 - Plans: the Contact us form carries the six ticket fields
 
 ### [2026-09-26](./2026-09/changelog-9-26.md)

@@ -7,6 +7,25 @@ Prior day: [`changelog-9-26.md`](./changelog-9-26.md)
 
 ---
 
+## Components
+
+### Select: `SelectValue` renders its placeholder (`components/ui/select.tsx`) · [3b9d6c6]
+
+- **Before:** the `SelectValue` wrapper always passed Base UI a function
+  child (for the item-label lookup), which suppresses Base UI's own
+  `placeholder` prop, so `<SelectValue placeholder="..." />` never
+  rendered. The contact form worked around it with a local function child.
+- **After:** the wrapper destructures `placeholder` and the default
+  function child returns it when the selection is empty. New
+  `isEmptySelection` (null, `""` or an empty array) matches Base UI's
+  `hasSelectedValue` test.
+- Plans contact form (`pages/ManageSubscription.tsx`): Company size uses
+  `<SelectValue placeholder="Select size" />`; the workaround and its
+  comment are gone. The trigger reads "Select size" with
+  `data-placeholder` until a size is picked.
+- The other placeholder call sites all default to "all", so they show no
+  visible change; the contact form is the one surface that starts empty.
+
 ## Sections & surfaces
 
 ### Plans: the Contact us form carries the six ticket fields (`pages/ManageSubscription.tsx`) · [cc5a65b]
