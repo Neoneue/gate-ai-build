@@ -58,6 +58,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { FREE_MODELS } from "@/data/free-models";
 import {
   CAPABILITY_INLINE_MAX,
   CAPABILITY_META,
@@ -1096,6 +1097,9 @@ function ModelDetailPage({
 }
 
 function ModelKpiRail({ model }: { model: Model }) {
+  // The two Free models (`FREE_MODELS`) cost the customer nothing, so their
+  // price tiles read "Free" rather than the catalog list price.
+  const isFree = FREE_MODELS.some((f) => f.id === model.id);
   return (
     <KpiRailShell columns={4}>
       <ModelKpiTile
@@ -1108,11 +1112,15 @@ function ModelKpiRail({ model }: { model: Model }) {
       />
       <ModelKpiTile
         label="Input"
-        value={formatPricePerM(listPrice(model, "inputPer1M"))}
+        value={
+          isFree ? "Free" : formatPricePerM(listPrice(model, "inputPer1M"))
+        }
       />
       <ModelKpiTile
         label="Output"
-        value={formatPricePerM(listPrice(model, "outputPer1M"))}
+        value={
+          isFree ? "Free" : formatPricePerM(listPrice(model, "outputPer1M"))
+        }
       />
     </KpiRailShell>
   );
