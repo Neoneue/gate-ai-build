@@ -48,3 +48,16 @@ Prior day: [`changelog-9-26.md`](./changelog-9-26.md)
   skeleton rows 4 to 5. Block comments updated.
 - Tests (`test/contact-dialog.test.tsx`) cover the six fields, the name
   row, the size options and the name errors.
+
+### Models: free models read "Free" on their detail pages (`pages/Models.tsx`) · [fd4c6af]
+
+- **Before:** the model detail KPI rail (`ModelKpiRail`) showed the catalog
+  list price for Input and Output on every model, so the two Free models
+  (`openai/gpt-oss-20b`, `deepseek/deepseek-v4-flash-0731`) read a price on
+  their detail page while their cards read "Free".
+- **After:** a model listed in `FREE_MODELS` (`data/free-models.ts`) shows
+  "Free" in both the Input and Output tiles, matching its card. Every other
+  model keeps its list price (Sonnet $2.00/M and $10.00/M; DeepSeek V4
+  Flash Latest $0.09/M and $0.17/M).
+- One edit covers every tier: `/models`, `/models-free`, `/models-default`
+  and `/models-enterprise` all render `Models.tsx`.
