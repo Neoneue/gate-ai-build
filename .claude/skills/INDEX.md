@@ -14,6 +14,7 @@ indexed at `agents/front-end-developer/skills/INDEX.md`.
 | About to propose or apply any user-facing copy, or `lint:copy` flags a string | `triage-copy` (lint, sort, PRD source top-down from Notion, cited proposal) | Me, always, unasked |
 | User pastes `npx skills add ...` or says "install this skill" | `adopt-skill` (one home: agent kit or `.claude/skills`; ask which) | User |
 | User asks "what should we improve", roadmap, tech debt, plans for another agent | `improve` (read-only survey, prioritised plans; never edits) | User |
+| A web task WebSearch / WebFetch can't do: JS-rendered page, site map / crawl, structured multi-site extraction | The user-level `firecrawl` CLI skills (`firecrawl`, `firecrawl-scrape`, `firecrawl-crawl`, ...) or the user-scope MCP `firecrawl`; costs credits; never private or Constellation URLs. Setup and reinstall notes: `firecrawl-setup` | Any agent, only after WebFetch falls short |
 | `/commit` | Commit current branch, stamp changelog and INDEX; no push | User |
 | `/commit-push` | `/commit` then push the current branch only | User |
 | `/promote` | dev to main: divergence check, test-merge, PR, merge commit, one CI watch, sync back | User; the only path that pushes main |
