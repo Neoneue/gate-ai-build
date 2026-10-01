@@ -17,6 +17,14 @@ const AuthLayout = lazy(() =>
 const Activity = lazy(() =>
   import("@/pages/Activity").then((m) => ({ default: m.Activity }))
 );
+/* Gate Chat: its own full-screen layout (no dashboard sidebar or top bar)
+ * and one page component behind every tier twin; see ChatLayout. */
+const ChatLayout = lazy(() =>
+  import("@/layouts/ChatLayout").then((m) => ({ default: m.ChatLayout }))
+);
+const Chat = lazy(() =>
+  import("@/pages/Chat").then((m) => ({ default: m.Chat }))
+);
 const ApiKeys = lazy(() =>
   import("@/pages/ApiKeys").then((m) => ({ default: m.ApiKeys }))
 );
@@ -322,6 +330,22 @@ export function AppRoutes() {
           itself bounces any other role to /overview. */}
       <Route element={<SiteMap />} path="/site-map" />
       <Route element={<Layout />}>
+        {/* Gate Chat sits OUTSIDE DashboardChrome: it owns the whole screen
+            under its own ChatLayout, and opens from the nav in a new tab.
+            Inside <Layout> so it shares the Ask AI thread and panel state.
+            `/chat` is a new conversation; `/chat/:conversationId` opens one.
+            Every tier has the same page under its own suffix, so the
+            workspace switcher, upgrade path and cross-links stay in-tier. */}
+        <Route element={<ChatLayout />}>
+          <Route element={<Chat />} path="/chat" />
+          <Route element={<Chat />} path="/chat/:conversationId" />
+          <Route element={<Chat />} path="/chat-free" />
+          <Route element={<Chat />} path="/chat-free/:conversationId" />
+          <Route element={<Chat />} path="/chat-default" />
+          <Route element={<Chat />} path="/chat-default/:conversationId" />
+          <Route element={<Chat />} path="/chat-enterprise" />
+          <Route element={<Chat />} path="/chat-enterprise/:conversationId" />
+        </Route>
         <Route element={<Navigate replace to="/overview" />} index />
         <Route element={<Dashboard />} path="/overview" />
         <Route element={<DashboardDefault />} path="/overview-default" />

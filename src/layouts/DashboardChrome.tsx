@@ -1,22 +1,11 @@
-import {
-  BookOpen,
-  BotMessageSquare,
-  Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
+import { BookOpen, BotMessageSquare, Menu } from "lucide-react";
 import { domAnimation, LazyMotion } from "motion/react";
-import { lazy, type ReactNode, Suspense, useEffect, useState } from "react";
-import {
-  Link,
-  Navigate,
-  useLocation,
-  useOutletContext,
-} from "react-router-dom";
+import { type ReactNode, useEffect, useState } from "react";
+import { Navigate, useLocation, useOutletContext } from "react-router-dom";
 import type { LayoutContext } from "@/App";
+import { AskAiSurface } from "@/components/ui/ask-ai-surface";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
-import { IconCrossFade } from "@/components/ui/icon-cross-fade";
 import { NotificationsMenu } from "@/components/ui/notifications-menu";
 import {
   Sheet,
@@ -30,8 +19,13 @@ import {
   type SidebarSection,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import {
+  LogoMarkLink,
+  SidebarToggleButton,
+} from "@/components/ui/top-bar-brand";
 import { ViewRoleSwitch } from "@/components/ui/view-role-switch";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { useScrollRestoration } from "@/hooks/use-scroll-restoration";
 import {
   isDefaultSurface,
@@ -39,7 +33,6 @@ import {
   isFreeSurface,
   isTeamRoleSurface,
 } from "@/lib/plan";
-import { cn } from "@/lib/utils";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
@@ -77,16 +70,6 @@ export interface DashboardChromeProps {
   onToggleSidebar: () => void;
   sidebarExpanded: boolean;
 }
-
-/* The Ask AI panel carries react-markdown and its remark / micromark tree
- * (about 290 KB of source) plus the dot-matrix animation. It is closed by
- * default, so it loads on first open and stays mounted afterwards so the
- * thread survives close / reopen (plans/bundle-split.md step 2). */
-const AskAiPanel = lazy(() =>
-  import("@/components/ui/ask-ai-panel").then((m) => ({
-    default: m.AskAiPanel,
-  }))
-);
 
 export function DashboardChrome({
   activeNavId,
@@ -157,30 +140,10 @@ export function DashboardChrome({
   // and read via the outlet context, so it survives navigation (each page
   // remounts its own DashboardChrome) and refresh. Default closed.
   const { askAiOpen, setAskAiOpen } = useOutletContext<LayoutContext>();
-  // Once opened, the panel stays mounted (closed state is width 0 / inert),
-  // so the lazy chunk is fetched exactly once per chrome mount. Render-phase
-  // latch (the Conversations `?open=` pattern), not an effect: it settles in
-  // the same render the panel opens, so there is no closed-then-open frame.
-  const [askAiEverOpened, setAskAiEverOpened] = useState(askAiOpen);
-  if (askAiOpen && !askAiEverOpened) {
-    setAskAiEverOpened(true);
-  }
   // The push-panel is a docked flex sibling on lg+ (condenses the top bar +
   // content in sync). Below lg there's no rail and no horizontal room, so the
-  // same shell opens in a right-docked Sheet instead. `isDesktop` gates which
-  // mount is live so the Sheet never portals open alongside the docked column.
-  const [isDesktop, setIsDesktop] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(min-width: 1024px)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const handleChange = (event: MediaQueryListEvent) =>
-      setIsDesktop(event.matches);
-    mq.addEventListener("change", handleChange);
-    return () => mq.removeEventListener("change", handleChange);
-  }, []);
+  // same shell opens in a right-docked Sheet instead (AskAiSurface).
+  const isDesktop = useIsDesktop();
   // Top-bar tight band. With the rail expanded AND the Ask AI panel open, the
   // main column narrows enough that the top-bar left group (toggle + workspace
   // switcher) crowds the right group (Ask AI / Docs) and the panel header.
@@ -202,7 +165,6 @@ export function DashboardChrome({
   // only in the tight desktop band with both rail and panel open. Auto-reverses
   // via state (rail collapse / panel close) or matchMedia (viewport widens).
   const switcherInRail = isDesktop && sidebarExpanded && askAiOpen && isTight;
-  const closeAskAi = () => setAskAiOpen(false);
   // Hidden in the sidebar means blocked by URL. `sections` is already this
   // workspace × role's nav, so a page missing from it is a page this viewer
   // cannot see, and typing its path lands on Overview instead of the admin
@@ -312,52 +274,16 @@ export function DashboardChrome({
               {children}
             </main>
           </div>
-          {/* Right-docked "Ask AI" panel column — lg+ only (mirrors the rail's
-            `hidden … lg:flex` pattern). As a `shrink-0` sibling of the
-            `flex-1 min-w-0` main column, animating its width from 0 → 368px
-            condenses the top bar AND content together (the push effect). The
-            outer column clips (`overflow-hidden`) while the inner surface stays
-            a fixed 368px, so panel content never reflows mid-transition. Width
-            animation is the sanctioned mechanism here (per the build brief);
-            `motion-reduce` snaps it instantly. `inert` when closed drops the
-            offscreen skeleton out of the tab order. */}
-          <div
-            className={cn(
-              "hidden shrink-0 overflow-hidden transition-[width] duration-300 ease-out will-change-[width] motion-reduce:transition-none lg:block",
-              askAiOpen ? "lg:w-[368px]" : "lg:w-0"
-            )}
-          >
-            <div
-              className="flex h-full w-[368px] flex-col border-border border-l bg-card"
-              inert={!askAiOpen}
-            >
-              {askAiEverOpened ? (
-                <Suspense fallback={null}>
-                  <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
-                </Suspense>
-              ) : null}
-            </div>
-          </div>
+          {/* Right-docked "Ask AI" panel — lg+ docked column, Sheet below
+            lg. One shell, shared with Gate Chat: see AskAiSurface. It is the
+            LAST flex child of this row so the docked column condenses the top
+            bar and content together (the push effect). */}
+          <AskAiSurface
+            isDesktop={isDesktop}
+            onOpenChange={setAskAiOpen}
+            open={askAiOpen}
+          />
         </div>
-        {/* Below lg the docked column is hidden (no rail, no horizontal room), so
-          the same shell opens in a right-docked Sheet. `isDesktop` keeps this
-          closed on lg+ so it never portals open beside the docked column; the
-          Base-UI flicker fix (`data-closed:fill-mode-forwards`) is inherited
-          from SheetContent. */}
-        <Sheet onOpenChange={setAskAiOpen} open={askAiOpen && !isDesktop}>
-          <SheetContent
-            className="w-full gap-0 p-0 sm:max-w-[368px]"
-            showCloseButton={false}
-            side="right"
-          >
-            <SheetTitle className="sr-only">Ask AI</SheetTitle>
-            {askAiEverOpened ? (
-              <Suspense fallback={null}>
-                <AskAiPanel onClose={closeAskAi} open={askAiOpen} />
-              </Suspense>
-            ) : null}
-          </SheetContent>
-        </Sheet>
         {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
           not to this scroll container — placing it here as a sibling keeps
           the stacking context clean while the `fixed` rule escapes any
@@ -406,39 +332,15 @@ function DashTopBar({
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
       <div className="flex items-center gap-2">
-        <Button
-          aria-expanded={sidebarExpanded}
-          aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-          className="-ml-2 hidden text-muted-foreground hover:text-foreground aria-expanded:bg-transparent aria-expanded:text-muted-foreground hover:aria-expanded:text-muted-foreground lg:inline-flex"
-          onClick={onToggleSidebar}
-          size="icon"
-          variant="ghost"
-        >
-          {/* Contextual icon cross-fade — shared recipe, see IconCrossFade. */}
-          <IconCrossFade
-            active={!sidebarExpanded}
-            first={<PanelLeftClose aria-hidden strokeWidth={1.75} />}
-            second={<PanelLeftOpen aria-hidden strokeWidth={1.75} />}
-          />
-        </Button>
+        <SidebarToggleButton
+          expanded={sidebarExpanded}
+          onToggle={onToggleSidebar}
+        />
         {/* Below lg there's no rail, so the top bar carries the logomark and
          *  the nav moves into the hamburger Sheet; the workspace switcher lives
          *  in that Sheet below lg. At lg+ the rail carries the brand and the
          *  switcher sits here in the top bar. */}
-        <Link
-          aria-label="Go to overview"
-          className="flex items-center justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:hidden"
-          to={overviewPath ?? "/overview"}
-        >
-          <img
-            alt=""
-            aria-hidden
-            className="h-8 w-auto"
-            height={226}
-            src="/gate-ai-logo-mark.png"
-            width={195}
-          />
-        </Link>
+        <LogoMarkLink className="lg:hidden" to={overviewPath ?? "/overview"} />
         {/* At lg+ the switcher normally lives here. In the tight band (rail +
             Ask AI panel both open) it relocates into the expanded rail so the
             top bar doesn't crowd; see `switcherInRail` in DashboardChrome. */}

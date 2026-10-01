@@ -56,15 +56,24 @@ graph LR
     LAYOUT --> BILL["/billing → Billing.tsx"]
     LAYOUT --> PLANS["/billing/plans → ManageSubscription.tsx"]
     LAYOUT --> BILLENT["/billing-enterprise → BillingEnterprise.tsx"]
+
+    CHATL["ChatLayout (full-screen layout, no DashboardChrome)"]
+    CHATL --> CHAT["/chat → Chat.tsx (new conversation)"]
+    CHATL --> CHATC["/chat/:conversationId → Chat.tsx"]
 ```
 
-- The graph shows the **PRO** surfaces only. `App.tsx` declares 89 paths in
+- The graph shows the **PRO** surfaces only. `App.tsx` declares 97 paths in
   total: nearly every nav base also has a `-default` and a `-free` twin, and
   five `/setup-*-default` pages carry the onboarding flow. Both sets are
-  inventoried under "Tier & onboarding variants" below.
+  inventoried under "Tier & onboarding variants" below. Eight of the 97 are
+  Gate Chat: `/chat` and `/chat/:conversationId` on all four tier suffixes.
 - Default route: the layout's `index` route and `*` both redirect to `/overview`.
 - Auth routes (`/sign-in`, `/sign-up`) render under `AuthLayout`, outside `DashboardChrome`.
-- All routes share `DashboardChrome` as their layout wrapper.
+- Every dashboard route renders `DashboardChrome` as its layout wrapper.
+  **Gate Chat is the exception (added 2026-10-01):** its eight routes sit in a
+  pathless `<Route element={<ChatLayout />}>` inside `<Layout>` (so it shares
+  App's Ask AI thread and `askAiOpen`), and render NO dashboard sidebar or top
+  bar. See §6 → Gate Chat.
 - Every page component is `lazy()`-imported in `App.tsx` behind a `Suspense`
   boundary, so adding a page adds a chunk, not weight to the entry bundle.
 - Sidebar expand/collapse state lives in `App.tsx` with `localStorage` persistence; passed to pages via `useOutletContext<{ sidebarExpanded: boolean; toggleSidebar: () => void }>()`.
@@ -111,16 +120,19 @@ the **Ask AI docked panel** on the right.
 ### Sidebar navigation
 
 Five sections defined in `src/layouts/nav-sections.ts` → `SIDEBAR_SECTIONS`.
-Each item is `{ id, icon, label, pageId?, locked? }` — `pageId` holds the URL
+Each item is `{ id, icon, label, pageId?, locked?, newTab? }` — `pageId` holds the URL
 path handed straight to `navigate()`; an item without one is an inert
-affordance.
+affordance. `newTab: true` (added 2026-10-01, mirroring the production
+sidebar) renders the row as a real `<a href target="_blank" rel="noreferrer">`
+in both the collapsed rail and the expanded panel instead of a router `Link`:
+a router link cannot open a tab. Its only consumer is Gate Chat.
 
 | Section | Nav items (id → pageId) |
 | --- | --- |
 | _(unnamed)_ | overview → `/overview` |
 | Monitor | requests → `/messages` (label "Messages"), conversations → `/conversations`, security-events → `/security` _(`locked`)_, audit-trail → `/audit-trail` |
 | My settings | policies → `/policies`, token-savings → `/token-savings` _(`locked`)_. The signed-in user's own configuration on every tier; org and team locks are managed on Teams (PM meeting 2026-09-03). |
-| Gateway | models → `/models` |
+| Gateway | models → `/models`, chat → `/chat` (label "Gate Chat", `Bot` icon, `newTab`). Gate Chat is in EVERY tier and role variant: no hidden set carries it, and each variant suffixes it like any row (`/chat-free`, `/chat-default`, `/chat-enterprise`). Pinned in `nav-sections.test.ts`. |
 | Workspace | activity → `/activity`, limits → `/limits` _(`locked`)_, team → `/members`, billing → `/billing`, api-keys → `/api-keys`, notifications → `/notifications`, settings → `/settings` |
 
 Each page passes its own `activeNavId` string to `<DashboardChrome>` to mark the correct sidebar item active.
@@ -170,6 +182,15 @@ Security `-default` twin answers on **both** `/events-default` and
 render `Requests*.tsx` because the route was renamed but the components were
 not. (An Alerts page lived at `/alerts` from 2026-08-05 until its removal on
 2026-08-24, superseded by the My Notifications + Limits-alerts plan.)
+
+**Gate Chat twins (2026-10-01).** `/chat` has `-free`, `-default` and
+`-enterprise` twins, each also carrying `/:conversationId`, all rendering the
+ONE `Chat.tsx` under `ChatLayout`. The twins exist so the tier is readable off
+the URL like everywhere else: the chat's workspace switcher stays in chat when
+switching tier (`/chat` is in `FREE_TWINS` / `DEFAULT_TWINS` /
+`ENTERPRISE_TWINS`), the "Upgrade to Pro" action shows only on `-free` and
+`-default`, and every link out of the chat (`View message`, the conversation
+record, Billing, Overview) is carried onto the same tier by `withTierOf`.
 
 **Teams is the first base with a `-default` twin and no `-free` one
 (2026-08-28).** The PRD scopes Teams to Pro + Enterprise, so the Free sidebar
@@ -751,6 +772,48 @@ NOTIFICATIONS_NOW`, kind/`KIND_META` completeness, and that every href
 resolves (security `?open=` ids exist; message params survive the
 RequestsFindings lookup).
 
+### 3.11 Gate Chat (added 2026-10-01)
+
+Presentational contract ported verbatim from the production site
+(`components/chat/types.ts`) into `src/pages/chat/types.ts`; the slice of
+`@gate/shared/chat-contract` it branches on lives in
+`src/pages/chat/contract.ts`. Every numeric field is a PRE-FORMATTED string;
+`null` means "not recorded" and renders the word, never a zero.
+
+```typescript
+interface ChatModel {          // one picker row, built from a MODELS entry
+  id: string; label: string; provider: VendorSlug;
+  available: boolean; unavailableReason: "not_offered" | "disabled" | "suppressed" | null;
+  favorite: boolean; lastUsedAt: string | null;   // derived from the seed lanes
+  supportsTools: boolean | null; supportsVision: boolean | null;
+  capabilities: readonly Capability[];             // drawn by Models' CapabilityStrip
+  contextWindow: string; price: string; isFree?: boolean;
+}
+interface ChatUsage {          // the row under an answer (or a prompt)
+  kind: "prompt" | "response"; settlement: "pending" | "settled" | "unavailable";
+  compression: string | null; compressionPercent?: string | null;
+  promptTokens: string | null; tokens: string | null; cost: string | null;
+  estimated: boolean; messageId: string | null;     // Gate request id → View message
+  security: { verdict: "flag" | "redact" | "block"; category: ChatSecurityCategory | null } | null;
+}
+interface ChatLane  { id; model: ChatModel; state: "complete" | "streaming" | "stopped" | "failed";
+                      body: string /* markdown */; timestamp; usage: ChatUsage; error?;
+                      memories?: { action: "remembered" | "forgotten"; key }[];
+                      attachments?: { deliveredIds: string[]; omittedIds: string[] } }
+interface ChatTurn  { id; prompt; promptTimestamp; promptAttachments: ChatAttachment[];
+                      promptUsage?: ChatUsage; lanes: ChatLane[] /* 2+ = comparison */ }
+interface ChatConversation { id: string | null; title; updatedLabel; modelLabel; model?;
+                      memoryToolsEnabled?: boolean | null; turns: ChatTurn[] }
+interface ChatCredits { balance: string; low: boolean; pro: boolean; notified: boolean }
+interface ChatConversationTotals { totalRequests; totalTurns; promptTokens;
+                      completionTokens; totalCostUsd; isByok; compressionPct: number | null }
+```
+
+The SEED shapes these are built from (`ChatSeedConversation` → `ChatSeedTurn`
+→ `ChatSeedLane`, raw numbers and `Date`s) live in `src/data/gate-chat.ts`;
+the adapter `src/pages/chat/chat-data.ts` (the site's `chat-adapter.ts` with
+the transport removed) is the only bridge between them. See §5.6.
+
 ---
 
 ## 4. Entity Relationships
@@ -1075,6 +1138,48 @@ persona's model mix is the model of each conversation they own. A BYOK-only
 persona (Kira) reads $0 spend and an empty "By provider" trend, because BYOK
 cells have no Gate route. A Member sees their own messages and conversations,
 never an empty page (user, 2026-09-03), and has no Teams surface at all (§2).
+
+### 5.6 Gate Chat seed (added 2026-10-01)
+
+`src/data/gate-chat.ts` is the ONE module every Gate Chat surface reads, a
+single-sourced fiction (this build has no chat backend). It follows the
+pricing contract (§5.1.1) exactly:
+
+- **Authored:** six conversations (`CHAT_SEED_CONVERSATIONS`, newest first),
+  their titles, prompt and reply text, `authoredDate` timestamps (so the demo
+  clock lands the newest on yesterday, §5.2a), attachment names and byte
+  sizes, and per-lane TOKEN counts plus the compression tokens Gate saved.
+  `CHAT_SEED_MEMORIES` (3 rows), `CHAT_SEED_MEMORY_TOOLS_ENABLED`, and
+  `CHAT_SEED_FAVORITE_MODEL_IDS` (2 catalog ids).
+- **Derived, never typed:** every dollar (`laneCostUsd` = `costOf(modelId,
+  promptTokens, completionTokens)`), every stats-popover total
+  (`conversationTotals`, summed from the conversation's own lanes; a lane with
+  no Gate request id adds nothing), every compression % (`saved / (prompt +
+  saved)`, one decimal), every model's `lastUsedAt` (`lastUsedByModel`, from
+  complete lanes) and therefore the new chat's opening model, the sidebar's
+  Yesterday / Earlier grouping and relative labels (`lastActivity`), and the
+  credit balance (`CREDIT_BALANCE_USD`, the Billing ledger's newest running
+  balance, so chat and Billing cannot disagree). `pro` is the tier: Pro and
+  Enterprise hold it, Free and Default do not. No low-balance threshold is
+  configured anywhere in the build, so `low` and the latch are `false`.
+- **Coverage, by design:** a 2-lane comparison (Opus 4.8 vs DeepSeek V4 Pro)
+  with an image delivered to one lane and withheld from the other; settled,
+  `pending` ("Calculating…") and `unavailable` usage; compressed and "Not
+  compressed" rows; an `estimated` cost; `redact`/`pii`, `flag`/`injection`
+  and `block`/`injection` verdicts; `complete`, `stopped` and `failed`
+  (`upstream_timeout`, `security_blocked`) lanes; a recorded prompt-usage row;
+  a CSV (read) and a DOCX ("Not sent to the model") attachment; memory chips
+  that name rows the memory panel holds.
+- Every model id resolves in `MODELS` (`gate-chat.test.ts`). The seeded Gate
+  request ids are minted for the chat and are NOT rows in `REQUEST_ROWS_*` or
+  `CONVERSATION_ROWS`, so `View message` and the conversation-record links
+  land on the Findings / Trace pages' not-found states.
+
+**Session state** (`src/pages/chat/chat-store.ts`): rename, delete, a
+conversation's lane models, favourites, memory rows and both memory-tool
+switches are written to a module-scoped `useSyncExternalStore` store on top of
+the seeds, in memory, reset on reload (the notifications-store lifecycle).
+Sending is inert: the composer keeps its draft and no turn is added.
 
 ## 6. Page Inventory
 
@@ -2172,6 +2277,51 @@ Pro and Free plan cards adopted the same Seats / Plan details stat rows on 2026-
 
 ---
 
+### Gate Chat (`/chat`, `/chat/:conversationId` + `-free` / `-default` / `-enterprise` twins → `Chat.tsx` under `ChatLayout`, added 2026-10-01)
+
+A UI-only port of the production site's Gate Chat
+(`apps/dashboard-web/src/pages/chat/Chat.tsx` + `components/chat/*`), mapped
+onto this build's primitives and tokens; copy is the site's `copy.ts`
+verbatim (`src/pages/chat/copy.ts`). Opens from the Gateway nav row in a NEW
+TAB. Nothing in it makes a network call, and a send produces no reply.
+
+- **Layout** (`src/layouts/ChatLayout.tsx`): full viewport, no dashboard
+  chrome. `ChatTopBar` spans the width: a brand column the rail's width at
+  `lg`+ (border-r continuous with the rail's) holding the LOGO MARK, then the
+  shared `SidebarToggleButton` (the rail's collapse toggle lives HERE, as in
+  `DashTopBar`, not inside the chat rail) and `WorkspaceSwitcher`; right side
+  `NotificationsMenu`, `ThemeToggle`, the Ask AI pair and Docs. Below the bar,
+  the page and the shared `AskAiSurface` (docked column `lg`+, Sheet below).
+  Below `lg` the brand column hugs the mark and the switcher moves into the
+  chat's nav Sheet (the dashboard's breakpoint rule).
+- **Page** (`src/pages/Chat.tsx`): `ChatSidebar` (New chat, search, Yesterday
+  / Earlier history with per-row Rename / Export / Delete menu, credits +
+  Upgrade below `xl`, Back to dashboard; 288px, 64px collapsed) as a desktop
+  rail and, below `lg`, in a left `Sheet` opened from the header's menu key.
+  `ChatHeader` (title linked to the Gate record, stats popover, relative
+  updated label, credits + Upgrade from `xl`, Memories). Then the landing
+  (`ChatLanding`: title, starter prompts that seed the draft) or the thread
+  (`ChatThread` → `ChatMessage`: prompt bubble, attachment chips, lane cards
+  with markdown `ChatProse`, attachment / memory notes, stopped / failed
+  states, `ChatUsageRow` with the verdict badge, copy and regenerate tools),
+  and `ChatComposer` (attachment menu, per-lane model triggers opening
+  `ChatModelSelector`, Compare / remove comparison, send).
+- **Dialogs and popovers:** `ChatModelSelector` (Favorites / Recent / All
+  models, search, provider filter, favourite stars, Models-page capability
+  strip), `ChatMemoryPanel` (user switch, per-chat Inherit / On / Off,
+  add / toggle / delete memory), `ChatExportDialog` (Markdown / JSON built in
+  the browser, object-URL download), `ChatConversationStats`, rename Dialog,
+  delete AlertDialog, attachment kind Menu.
+- **Tiers and roles:** every tier and every Viewing-as role renders the page;
+  only the Upgrade action differs by tier. Pinned in
+  `src/pages/chat/chat.test.tsx`.
+- **Not reachable without a backend** (ported where they live in a
+  component, omitted where they were page-level fetch states): streaming
+  lanes and the "Preparing reply" wait, Stop generating, upload progress,
+  export preparing / failed polling, stats loading / timeout, history and
+  catalog load errors, the low-balance notice (no threshold exists), and an
+  unavailable model row (every catalog row has a provider).
+
 ### Variant & auxiliary pages (brief)
 
 Not specced in full above; see "Tier & onboarding variants" in §2 for the
@@ -2418,6 +2568,8 @@ Voice conventions layered on top:
 | `ViewRoleSwitch` (`view-role-switch.tsx`) | `Select` | "Viewing as" Admin / Manager / Member. Enterprise only; top bar + tight-band rail slot + mobile drawer. Writes `teamsStore.viewRole` (§2 role switch, §5.5 view scope). Added 2026-09-03. |
 | `NotificationsMenu` (`notifications-menu.tsx`) | `Popover` (NOT Menu — rows are two-line, MenuItem is h-8) | Top-bar bell + its dropdown (notifications PRD phase 1; inbox semantics 2026-08-25). Owns its trigger: `size="icon"` outline Button + animated `BellIcon size={16}` + corner unread dot (`bg-destructive` — the semantic token theme-flips danger-600/400) and a dynamic `aria-label` count. `w-100` (400px) surface. Renders the whole non-archived `NOTIFICATION_HISTORY` — **not** the newest-8 peek (changed 2026-08-25) — as full-bleed button rows in a `max-h-96 overflow-y-auto` band: `type-label-14` title / `type-copy-12` copy / `type-mono-12` relative time, whole-row ink flips foreground↔muted with read state (Gmail pattern, no row dots); item click = mark read → close → `navigate(href)`. **Windowed render:** 8 rows, +8 per bottom-reach, via a zero-height IntersectionObserver sentinel as the scroll region's last child (`rootMargin: 96px`, root = the band — the `ScrollBottomSentinel` pattern from `ask-ai-scroll-to-latest.tsx`); window resets to 8 on open and on tab switch (which also resets `scrollTop`). **Counts are global:** badge presence, `aria-label` count and the Unread tab's `TabsCount` chip all read one `unreadCount` = unread among ALL non-archived history, the same number as the page's Inbox chip. Unread/All `Segmented` tabs — the Unread option carries its count through `Segmented`'s `options[].count`, which composes the shared `<TabsCount>` (memoize the options array: it is a dep of the pill variant's measuring layout effect). All tab is uncounted. Actions are tab-scoped and both act on the full list, never the window: "Mark all as read" sweeps the whole history, "Archive all" files every non-archived row. Persistent footer row: quiet full-width ghost `View all notifications` → `/notifications?view=feed`. Mounted by `DashboardChrome` before `ThemeToggle`. |
 | `SidebarUpgradeCard` (`sidebar-upgrade-card.tsx`) | custom div + `Button` | "Upgrade to Pro plan" promo pinned beneath the nav in the expanded rail and the mobile nav Sheet (both share `SidebarPanel`); the collapsed 64px rail has no variant. Transcribed 1:1 from Figma `1255:6256` / `1256:6340`: 8px radius, 12px padding, `bg-card` with a 1px `--promo-border` inside border and `shadow-sm` tinted `--promo-shadow`, a full-bleed `.sidebar-upgrade-texture` child (dot pattern + wash off `--promo-dot`/`--promo-wash`), and a 24px `SparklesIcon` at 50% opacity on `--promo-accent`. Copy is NOT on the promo ink — title `--foreground`, description `--muted-foreground` — which is what keeps the 10/14 line legible in both themes. Width-flexible, height content-driven; nothing pinned to a pixel. Rest state is exactly the design; hover/press/focus come from house conventions (`SparklesIcon` animates on its closest button ancestor). Renders only when `upgradePath` is present, so PRO never sees it. Added 2026-08-04. |
+| `SidebarToggleButton` + `LogoMarkLink` (`top-bar-brand.tsx`) | `Button` + `IconCrossFade`; router `Link` | The top bar's sidebar collapse toggle (ghost `icon`, `-ml-2`, `lg`+ only, "Collapse sidebar" / "Expand sidebar", `PanelLeftClose` ↔ `PanelLeftOpen`) and the logomark link to the tier's Overview. Extracted verbatim from `DashTopBar` 2026-10-01 so Gate Chat's top bar draws the same recipe; visibility of the mark is the caller's (`lg:hidden` in the dashboard, always in chat). |
+| `AskAiSurface` (`ask-ai-surface.tsx`) | custom div + `Sheet` | Where the Ask AI panel opens: the `lg`+ docked 0 → 368px column (last flex child of its row) and the below-`lg` right Sheet, with the lazy panel latched mounted after first open. Extracted from `DashboardChrome` 2026-10-01; consumed by it and by `ChatLayout`. Pairs with `useIsDesktop` (`src/hooks/use-is-desktop.ts`). |
 | `AskAiPanel` | custom div + `Sheet` | Ask AI chat-panel shell rendered by `DashboardChrome`: header ("New session" trigger + `SquarePen` + `PanelRightClose` collapse) over a `px-4 pb-4` body stacking the scrolling message region (`pt-4`) — `AskAiEmptyState`, then `MessageThread` + `AskAiThinkingRow` under `ScrollToLatestFab` — above `AskAiComposer`. Docked `w-[368px]` push panel at `lg+` (animates `transition-[width]`, `var(--ease-out)` 300ms); right-docked `Sheet` below `lg`. See §2 → Chrome shell layout. Added 2026-07-27. |
 | `AskAiComposer` | custom div + `<textarea>` | Ask AI chat box (Figma `1125:5376`). `bg-card-muted` shell, `p-4`, `rounded-md`, `border-border` → `focus-within:border-primary`. `field-sizing-content` textarea at `type-copy-14` (14/20) clamped `min-h-5` → `max-h-20`, i.e. 1 → 4 lines then `overflow-y-auto`. `gap-3` to a 32px action row: 24px `Plus` "Add context" (`variant="raised"`, `shape="circle"`, still unwired) left, and one 32px `shape="circle"` button right in two roles — `Send` at rest, `Square` "Stop replying" while `isBusy`, wired to `onSend`/`onStop` (`opacity-50` until the field has text). Added 2026-07-27. |
 | `AskAiMessage` (`ask-ai-message.tsx`) | custom divs | Ask AI chat bubbles (Figma `1125:4374`, light twins `1096:5471`/`1114:7141`, dark `1108:4193`). `UserMessage` right-aligned `bg-secondary` chip, `rounded-md`, `px-4 py-3`, `max-w-[85%]`. `AgentMessage` left, `bg-card` + `border-border` + `p-4`, 16px `BotMessageSquare`, with a 4-button completion row (ThumbsUp/ThumbsDown/Copy/RotateCcw, 24px targets, 14px glyphs) as a sibling 8px BELOW the bubble. `ReplyProse` is a scoped typographic treatment keyed off element type (`[&_h3]:…`) so rendered markdown from the live agent needs no restyling. `MessageThread` = `gap-4` turn list. Added 2026-07-27. |

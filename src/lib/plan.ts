@@ -48,6 +48,7 @@ const toBasePath = (pathname: string): string =>
 /** Nav bases that have a `-free` twin. */
 const FREE_TWINS = new Set([
   "/overview",
+  "/chat",
   "/messages",
   "/messages-findings",
   "/conversations",
@@ -69,6 +70,7 @@ const FREE_TWINS = new Set([
 /** Nav bases that have a `-default` twin. */
 const DEFAULT_TWINS = new Set([
   "/overview",
+  "/chat",
   "/messages",
   "/messages-findings",
   "/conversations",
@@ -92,6 +94,7 @@ const DEFAULT_TWINS = new Set([
  *  Pro page component under the Enterprise chrome (see App.tsx). */
 const ENTERPRISE_TWINS = new Set([
   "/overview",
+  "/chat",
   "/messages",
   "/messages-findings",
   "/conversations",
