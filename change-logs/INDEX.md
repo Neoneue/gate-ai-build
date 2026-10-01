@@ -7,6 +7,15 @@ diff against and replicate across surfaces.
 **Find the change, then open only that file.** Thirty files is roughly 90k
 tokens; this index exists so nothing has to glob the directory.
 
+## October 2026
+
+### [2026-10-01](./2026-10/changelog-10-1.md)
+
+- Smoke test: sidebar walk follows new-tab items
+- Gate Chat: UI ported from production
+- Sidebar: nav items can open in a new tab
+- Dashboard chrome: shared top-bar pieces extracted
+
 ## September 2026
 
 ### [2026-09-29](./2026-09/changelog-9-29.md)

@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+import type { SidebarSection } from "@/components/ui/sidebar";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
   ENTERPRISE_MEMBER_SIDEBAR_SECTIONS,
@@ -90,7 +91,7 @@ test("Pro role sidebars keep unsuffixed paths", () => {
   }
 });
 
-/* ─── The 16 nav ids, and who loses which ────────────────────────────────
+/* ─── The 17 nav ids, and who loses which ────────────────────────────────
  * The chrome blocks by URL on exactly one test — `sectionsIncludePage`
  * against the same set it renders the rail from — so a page dropped from a
  * variant here is a page that variant cannot reach at all. These pin the
@@ -102,6 +103,7 @@ const ALL_NAV_IDS = [
   "api-keys",
   "audit-trail",
   "billing",
+  "chat",
   "conversations",
   "limits",
   "models",
@@ -116,7 +118,7 @@ const ALL_NAV_IDS = [
   "token-savings",
 ];
 
-test("the admin sidebars carry all 16 nav ids", () => {
+test("the admin sidebars carry all 17 nav ids", () => {
   for (const sections of [SIDEBAR_SECTIONS, ENTERPRISE_SIDEBAR_SECTIONS]) {
     expect([...ids(sections)].sort()).toEqual(ALL_NAV_IDS);
   }
@@ -217,5 +219,34 @@ test("every item in every variant has a route", () => {
         expect(item.pageId).not.toContain("undefined");
       }
     }
+  }
+});
+
+/* ─── Gate Chat: every tier, every role, always a new tab ────────────────
+ * The production sidebar does not filter Gate Chat by role or plan, so no
+ * variant may drop it, and every variant must open it in a new tab on its
+ * own tier's twin (`/chat`, `/chat-free`, `/chat-default`, `/chat-enterprise`). */
+
+test("Gate Chat is in every tier and role variant, opening its tier's twin in a new tab", () => {
+  const expected: [SidebarSection[], string][] = [
+    [SIDEBAR_SECTIONS, "/chat"],
+    [PRO_TEAM_ROLE_SIDEBAR_SECTIONS, "/chat"],
+    [PRO_MEMBER_SIDEBAR_SECTIONS, "/chat"],
+    [FREE_SIDEBAR_SECTIONS, "/chat-free"],
+    [DEFAULT_SIDEBAR_SECTIONS, "/chat-default"],
+    [ENTERPRISE_SIDEBAR_SECTIONS, "/chat-enterprise"],
+    [ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS, "/chat-enterprise"],
+    [ENTERPRISE_MEMBER_SIDEBAR_SECTIONS, "/chat-enterprise"],
+  ];
+  for (const [sections, path] of expected) {
+    const gateway = sections.find((section) => section.label === "Gateway");
+    const ids = gateway?.items.map((item) => item.id);
+    expect(ids).toEqual(["models", "chat"]);
+    const chat = gateway?.items.find((item) => item.id === "chat");
+    expect(chat).toMatchObject({
+      label: "Gate Chat",
+      newTab: true,
+      pageId: path,
+    });
   }
 });

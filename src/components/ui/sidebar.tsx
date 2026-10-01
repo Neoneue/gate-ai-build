@@ -39,6 +39,13 @@ export type SidebarItem = {
    *  reach is dropped from `sections` (and blocked by URL in
    *  `layouts/DashboardChrome.tsx`), never rendered inert. */
   pageId: string;
+  /** Opens `pageId` in a NEW browser tab instead of navigating the SPA.
+   *  Rendered as a real anchor with `target="_blank"`: a router link cannot
+   *  open a tab. Same-origin, but a full page load rather than a client-side
+   *  transition, so the surface it lands on boots fresh. Used for Gate Chat
+   *  (`/chat`), which replaces the whole screen rather than living inside
+   *  this shell. Mirrors the production sidebar's `newTab`. */
+  newTab?: boolean;
 };
 
 export type SidebarSection = {
@@ -195,18 +202,31 @@ function SidebarCollapsed({
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeId === item.id;
+                // Collapsed-rail icon links (36px square) use
+                // `active:scale-[0.98]` — a subtle 1% scale-down on press,
+                // matching the project's Button primitive press feel.
+                const className = isActive
+                  ? "flex size-9 items-center justify-center rounded-sm bg-accent text-accent-foreground transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                  : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-accent-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100";
+                if (item.newTab) {
+                  return (
+                    <a
+                      aria-label={item.label}
+                      className={className}
+                      href={item.pageId}
+                      key={item.id}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <Icon className="size-[18px]" strokeWidth={1.5} />
+                    </a>
+                  );
+                }
                 return (
                   <Link
                     aria-current={isActive ? "page" : undefined}
                     aria-label={item.label}
-                    // Collapsed-rail icon links (36px square) use
-                    // `active:scale-[0.98]` — a subtle 1% scale-down on press,
-                    // matching the project's Button primitive press feel.
-                    className={
-                      isActive
-                        ? "flex size-9 items-center justify-center rounded-sm bg-accent text-accent-foreground transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                        : "flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-[color,background-color,scale] duration-150 ease-out hover:bg-accent-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                    }
+                    className={className}
                     key={item.id}
                     to={item.pageId}
                   >
@@ -329,14 +349,8 @@ export function SidebarPanel({
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeId === item.id;
-                return (
-                  <Link
-                    aria-current={isActive ? "page" : undefined}
-                    className={isActive ? NAV_ROW_ACTIVE : NAV_ROW}
-                    key={item.id}
-                    onClick={onNavItemClick}
-                    to={item.pageId}
-                  >
+                const body = (
+                  <>
                     <Icon
                       className={cn(
                         "size-4 shrink-0",
@@ -345,6 +359,31 @@ export function SidebarPanel({
                       strokeWidth={1.75}
                     />
                     <span className="type-label-14">{item.label}</span>
+                  </>
+                );
+                if (item.newTab) {
+                  return (
+                    <a
+                      className={NAV_ROW}
+                      href={item.pageId}
+                      key={item.id}
+                      onClick={onNavItemClick}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      {body}
+                    </a>
+                  );
+                }
+                return (
+                  <Link
+                    aria-current={isActive ? "page" : undefined}
+                    className={isActive ? NAV_ROW_ACTIVE : NAV_ROW}
+                    key={item.id}
+                    onClick={onNavItemClick}
+                    to={item.pageId}
+                  >
+                    {body}
                   </Link>
                 );
               })}

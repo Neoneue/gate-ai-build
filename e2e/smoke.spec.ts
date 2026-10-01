@@ -68,6 +68,16 @@ test.describe("smoke", () => {
       expect(hrefs.length).toBeGreaterThan(5);
       for (const href of [...new Set(hrefs)]) {
         const link = page.locator(`${SIDEBAR} a[href="${href}"]`).first();
+        // A new-tab item (Gate Chat) opens a popup; the walk stays put.
+        if ((await link.getAttribute("target")) === "_blank") {
+          const [popup] = await Promise.all([
+            page.waitForEvent("popup"),
+            link.click(),
+          ]);
+          await expect(popup).toHaveURL(new RegExp(`${href}(\\?|$)`));
+          await popup.close();
+          continue;
+        }
         await link.click();
         await expect(page).toHaveURL(new RegExp(`${href}(\\?|$)`));
         await expectMainRendered(page);

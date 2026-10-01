@@ -1,6 +1,7 @@
 import {
   Activity,
   BellRing,
+  Bot,
   Box,
   Building2,
   Coins,
@@ -84,7 +85,19 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   },
   {
     label: "Gateway",
-    items: [{ id: "models", icon: Box, label: "Models", pageId: "/models" }],
+    items: [
+      { id: "models", icon: Box, label: "Models", pageId: "/models" },
+      // Gate Chat (production `nav-sections.ts`): opens in a NEW TAB, because
+      // it replaces the whole screen rather than living inside this shell.
+      // In every tier and for every role; no hidden set carries it.
+      {
+        id: "chat",
+        icon: Bot,
+        label: "Gate Chat",
+        pageId: "/chat",
+        newTab: true,
+      },
+    ],
   },
   {
     label: "Workspace",
