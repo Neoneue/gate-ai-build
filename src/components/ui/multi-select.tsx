@@ -65,6 +65,10 @@ type MultiSelectProps = {
   options: MultiSelectOption[];
   /** Empty-selection label, e.g. "All members". */
   placeholder: string;
+  /** The empty selection means "all" (a filter), so the label reads as a
+   *  value in `text-foreground` like a sibling Select's "All providers",
+   *  not as a muted placeholder. Leave off for "Select …" pickers. */
+  emptyIsAll?: boolean;
   /** Pins a case-insensitive search input above the list. */
   searchable?: boolean;
   /** Pins the two-state "(Select All)" row above the list. On by default —
@@ -109,6 +113,7 @@ function MultiSelect({
   onValueChange,
   options,
   placeholder,
+  emptyIsAll = false,
   searchable = false,
   selectAll = true,
   maxVisibleOptions,
@@ -241,7 +246,7 @@ function MultiSelect({
           // Match the call-site overrides the AuditTrail Selects apply so the
           // trigger reads identically in the filter row.
           "w-full border-border bg-card text-foreground",
-          value.length === 0 && "text-muted-foreground",
+          value.length === 0 && !emptyIsAll && "text-muted-foreground",
           className
         )}
         disabled={disabled}
