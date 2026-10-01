@@ -24,6 +24,16 @@ Prior day: [`changelog-9-29.md`](../2026-09/changelog-9-29.md)
   `components/ui/top-bar-brand.tsx`, `components/ui/ask-ai-surface.tsx`
   and `hooks/use-is-desktop.ts`, so the chat layout reuses them.
 
+### Smoke test: sidebar walk follows new-tab items (`e2e/smoke.spec.ts`) · [be72fa6]
+
+- **Before:** the "sidebar walk across every tier root" test clicked every
+  sidebar link and expected the same tab to navigate. Gate Chat opens in a
+  new tab, so the page stayed on `/models` and CI's `e2e` job failed on
+  PR #49.
+- **After:** a `target="_blank"` item is followed through the popup: the
+  test asserts the new tab's URL, closes it and continues the walk. No UI
+  change.
+
 ## Sections & surfaces
 
 ### Gate Chat: UI ported from production (`pages/Chat.tsx`, `pages/chat/`, `layouts/ChatLayout.tsx`) · [544eb1b]
