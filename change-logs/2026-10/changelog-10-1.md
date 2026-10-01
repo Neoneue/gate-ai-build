@@ -7,6 +7,18 @@ Prior day: [`changelog-9-29.md`](../2026-09/changelog-9-29.md)
 
 ---
 
+## Conventions
+
+### Agent tooling: Firecrawl setup skill and routing (`.claude/skills/`) · [1ee8d34]
+
+- **Before:** agents had no web tool for JS-rendered pages, site crawls or
+  structured multi-site extraction beyond WebFetch and Playwright.
+- **After:** the Firecrawl MCP, CLI and official skills are installed at
+  user level (outside the repo). This repo adds
+  `.claude/skills/firecrawl-setup/` (setup and reinstall notes, no key) and
+  a `.claude/skills/INDEX.md` row: WebFetch first, Firecrawl only when it
+  falls short, never private or Constellation URLs. No UI change.
+
 ## Components
 
 ### Sidebar: nav items can open in a new tab (`components/ui/sidebar.tsx`) · [544eb1b]
