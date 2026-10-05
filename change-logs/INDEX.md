@@ -11,6 +11,11 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-01](./2026-10/changelog-10-1.md)
 
+- Shareable prompt: Gate Chat model dialog spacing fixes
+- Model detail: Deprecated badge, capability tags hidden
+- Models: Features renamed Capabilities, modality tabs hidden
+- MultiSelect: `emptyIsAll` prop
+- Agent tooling: Firecrawl setup skill and routing
 - Smoke test: sidebar walk follows new-tab items
 - Gate Chat: UI ported from production
 - Sidebar: nav items can open in a new tab

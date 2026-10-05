@@ -7,6 +7,27 @@ Prior day: [`changelog-9-29.md`](../2026-09/changelog-9-29.md)
 
 ---
 
+## Conventions
+
+### Agent tooling: Firecrawl setup skill and routing (`.claude/skills/`) · [1ee8d34]
+
+- **Before:** agents had no web tool for JS-rendered pages, site crawls or
+  structured multi-site extraction beyond WebFetch and Playwright.
+- **After:** the Firecrawl MCP, CLI and official skills are installed at
+  user level (outside the repo). This repo adds
+  `.claude/skills/firecrawl-setup/` (setup and reinstall notes, no key) and
+  a `.claude/skills/INDEX.md` row: WebFetch first, Firecrawl only when it
+  falls short, never private or Constellation URLs. No UI change.
+
+### Shareable prompt: Gate Chat model dialog spacing fixes (`gate-chat-model-dialog-fixes.md`) · [3e42b0b]
+
+- **Before:** the two model picker spacing fixes made in this build had no
+  write-up for the production site.
+- **After:** a repo-root prompt for the dev: the search grows so the
+  "All providers" dropdown reaches the right padding, and the favourite
+  star sits 16px from the list's inner edge, with file, lines and the
+  expected measurements. No UI change.
+
 ## Components
 
 ### Sidebar: nav items can open in a new tab (`components/ui/sidebar.tsx`) · [544eb1b]
@@ -33,6 +54,15 @@ Prior day: [`changelog-9-29.md`](../2026-09/changelog-9-29.md)
 - **After:** a `target="_blank"` item is followed through the popup: the
   test asserts the new tab's URL, closes it and continues the walk. No UI
   change.
+
+### MultiSelect: `emptyIsAll` prop (`components/ui/multi-select.tsx`) · [974bbf9]
+
+- **Before:** an empty selection always rendered the trigger label in
+  `text-muted-foreground`, so a filter's "All capabilities" read as a
+  placeholder beside a sibling Select's "All providers".
+- **After:** with `emptyIsAll`, the empty label stays `text-foreground`
+  and reads as a value. Used on the Models capabilities filter. "Select
+  ..." pickers (Teams windows) leave it off and keep the muted placeholder.
 
 ## Sections & surfaces
 
@@ -67,3 +97,26 @@ Prior day: [`changelog-9-29.md`](../2026-09/changelog-9-29.md)
   - The seed's request ids link to not-found pages.
   - Landing gap is 24px instead of 28px.
   - Starter rows are 36px instead of 44px.
+
+### Models: Features renamed Capabilities, modality tabs hidden (`pages/Models.tsx`) · [974bbf9]
+
+- **Before:** the catalog showed an All types / Text / Multimodal tab bar,
+  and the column, filter and empty state said "Features" ("All features",
+  "Filter by features", "fewer features").
+- **After:** the tab bar is hidden, not deleted (`hidden` on its
+  `TabsList`, `modality` stays "all"). The column header, filter
+  placeholder, aria-label and empty-state copy say "Capabilities" ("All
+  capabilities", "Filter by capabilities", "fewer capabilities").
+
+### Model detail: Deprecated badge, capability tags hidden (`pages/Models.tsx`, `data/model-deprecations.ts`) · [974bbf9]
+
+- **Before:** no deprecation signal on any model, and the page header
+  showed a row of capability tags.
+- **After:** a `Badge variant="warning"` reading "Deprecated" sits beside
+  the title when `isDeprecated(model.id)`. `MODEL_DEPRECATIONS` lists 16
+  models deprecated as of 2026-10-01, each with a date and a cited source
+  (Anthropic's model table, the route head's LiteLLM `deprecation_date`,
+  or the vendor's first-party LiteLLM entry).
+  `model-deprecations.test.ts` asserts every id exists in `MODELS` and no
+  date is in the future. The capability tags wrapper is hidden, not
+  deleted (`flex` to `hidden`). `data-model.md` updated.

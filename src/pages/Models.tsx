@@ -59,6 +59,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { FREE_MODELS } from "@/data/free-models";
+import { isDeprecated } from "@/data/model-deprecations";
 import {
   CAPABILITY_INLINE_MAX,
   CAPABILITY_META,
@@ -322,7 +323,9 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           }}
           value={modality}
         >
-          <TabsList className="mt-2 px-0" variant="line">
+          {/* Hidden for now (user, 2026-10-01), not deleted: remove `hidden`
+              to bring the modality tabs back. `modality` stays "all". */}
+          <TabsList className="mt-2 hidden px-0" variant="line">
             <TabsTrigger value="all">
               All types
               <TabsCount>{MODELS.length}</TabsCount>
@@ -382,7 +385,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
                     Clear filters
                   </Button>
                 }
-                body="Try a broader search, a different type, fewer features, or clear the filters to see every routable model."
+                body="Try a broader search, a different type, fewer capabilities, or clear the filters to see every routable model."
                 title="No models match these filters"
               />
             ) : (
@@ -501,11 +504,12 @@ function Toolbar({
           the row strip and the detail page do. Live-applying (no commitMode):
           it is a filter, and each toggle is a cheap, reversible narrowing. */}
       <MultiSelect
-        aria-label="Filter by features"
+        aria-label="Filter by capabilities"
         className="w-auto min-w-0 @2xl:flex-none @xl:flex-1 @xl:basis-auto basis-full"
+        emptyIsAll
         onValueChange={(v) => onFeaturesChange(v as Capability[])}
         options={CAPABILITY_OPTIONS}
-        placeholder="All features"
+        placeholder="All capabilities"
         popupWidth="content"
         value={features}
       />
@@ -609,7 +613,9 @@ function ModelsTable({
           >
             Output
           </SortableTableHead>
-          <TableHead className="w-[18%] whitespace-nowrap">Features</TableHead>
+          <TableHead className="w-[18%] whitespace-nowrap">
+            Capabilities
+          </TableHead>
           <TableHead className="w-[8.5%] whitespace-nowrap">
             Providers
           </TableHead>
@@ -891,6 +897,9 @@ function ModelDetailPage({
             <h2 className="type-heading-20 m-0 text-foreground">
               {model.name}
             </h2>
+            {isDeprecated(model.id) ? (
+              <Badge variant="warning">Deprecated</Badge>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -904,8 +913,10 @@ function ModelDetailPage({
           </div>
         </div>
 
+        {/* Hidden for now (user, 2026-10-01), not deleted: swap `hidden` back
+            to `flex` to restore the capability tags on every model detail page. */}
         {model.capabilities.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="hidden flex-wrap items-center gap-2">
             {orderedCapabilities.map((c) => {
               const meta = CAPABILITY_META[c];
               const Icon = meta.icon;

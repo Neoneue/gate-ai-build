@@ -291,7 +291,7 @@ graph LR
 
 ## 3. TypeScript Type System
 
-Most types live inline in their page file, but shared primitives and heavy data now live in dedicated modules: time-range types in `src/lib/range.ts`, the model catalog in `src/data/models.ts`, and the Conversations types in `src/pages/conversations/types.ts` (imported by the page, its component modules, and the data layer; this replaced the former page/data-module type cycle). Page-specific types still live inline and are reused by importing from the defining page.
+Most types live inline in their page file, but shared primitives and heavy data now live in dedicated modules: time-range types in `src/lib/range.ts`, the model catalog in `src/data/models.ts` (deprecations in `src/data/model-deprecations.ts`: `MODEL_DEPRECATIONS` keyed by model id with a cited date and source, read by `isDeprecated()` for the "Deprecated" badge beside the detail page title), and the Conversations types in `src/pages/conversations/types.ts` (imported by the page, its component modules, and the data layer; this replaced the former page/data-module type cycle). Page-specific types still live inline and are reused by importing from the defining page.
 
 ### 3.1 Shared primitive types
 
