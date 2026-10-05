@@ -9,6 +9,16 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-05](./2026-10/changelog-10-5.md)
+
+- Models: separate free and paid detail pages
+- Models: free models are Qwen3.8 Flash and GLM 5.3 Flash, open to every plan
+- Models: Z.ai logo
+- Models: "Free version" link on the paid detail page
+- Models: Qwen3.8 Flash context, max output and capabilities
+- Models: 24px between section headings and their content
+- Tests: model detail paths
+
 ### [2026-10-01](./2026-10/changelog-10-1.md)
 
 - Shareable prompt: Gate Chat model dialog spacing fixes
