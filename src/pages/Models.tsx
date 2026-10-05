@@ -58,7 +58,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { FREE_MODELS } from "@/data/free-models";
+import { type FreeModel, findFreeModel } from "@/data/free-models";
 import { isDeprecated } from "@/data/model-deprecations";
 import {
   CAPABILITY_INLINE_MAX,
@@ -135,9 +135,13 @@ export function Models() {
     toggleSidebar: () => void;
   }>();
 
-  // selectedModel lives at the top so list ↔ detail view switching doesn't
-  // re-mount DashboardChrome.
-  const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  // The selection lives at the top so list ↔ detail view switching doesn't
+  // re-mount DashboardChrome. It carries the PATH that opened it: a card in
+  // "Free models from Gate" opens the free detail page (its `FreeModel` row
+  // rides along), a catalog row or a Featured card opens the paid one
+  // (`free: null`). The same model therefore has two detail pages.
+  const [selected, setSelected] = useState<ModelSelection | null>(null);
+  const selectedModel = selected?.model ?? null;
 
   // Focus handoff between list and detail (WCAG 2.4.3). The swap is in-place,
   // not a route change, so nothing moves focus on its own: opening a model
@@ -146,23 +150,30 @@ export function Models() {
   // ModelDetailPage); closing restores it to the row button that opened it.
   // The id sits in a ref so the restore survives the list re-mount without
   // re-rendering the page on every selection.
-  const restoreFocusId = useRef<string | null>(null);
+  // The attribute names the opener's kind: a free card carries
+  // `data-free-model`, a catalog row `data-model-row`, so closing a free
+  // detail lands on the free card even though the same model has a row too.
+  const restoreFocus = useRef<{ id: string; attr: string } | null>(null);
 
-  const handleSelect = useCallback((model: Model) => {
-    restoreFocusId.current = model.id;
-    setSelectedModel(model);
+  const handleSelect = useCallback((model: Model, path: SelectPath) => {
+    const free = path === "free" ? (findFreeModel(model.id) ?? null) : null;
+    restoreFocus.current = {
+      id: model.id,
+      attr: free ? "data-free-model" : "data-model-row",
+    };
+    setSelected({ model, free });
   }, []);
 
   useEffect(() => {
-    const id = restoreFocusId.current;
-    if (selectedModel || !id) {
+    const target = restoreFocus.current;
+    if (selectedModel || !target) {
       return;
     }
-    restoreFocusId.current = null;
-    // The row button carries `data-model-row`; querySelector rather than a ref
-    // because the list unmounts while the detail is open, so no ref survives.
+    restoreFocus.current = null;
+    // querySelector rather than a ref because the list unmounts while the
+    // detail is open, so no ref survives.
     document
-      .querySelector<HTMLElement>(`[data-model-row="${CSS.escape(id)}"]`)
+      .querySelector<HTMLElement>(`[${target.attr}="${CSS.escape(target.id)}"]`)
       ?.focus();
   }, [selectedModel]);
 
@@ -179,15 +190,24 @@ export function Models() {
       <span aria-live="polite" className="sr-only">
         {selectedModel ? `${selectedModel.name} details` : ""}
       </span>
-      {selectedModel ? (
+      {selected ? (
         <div className="flex flex-col gap-6">
           <ModelDetailPage
-            // Remount on id change so no state from a previously inspected
-            // model (expanded description, column sort) can leak into the
-            // next one. Detail parity is per-model.
-            key={selectedModel.id}
-            model={selectedModel}
-            onBack={() => setSelectedModel(null)}
+            free={selected.free}
+            // Remount on id AND path change so no state from a previously
+            // inspected page (expanded description, column sort, snippet tab)
+            // can leak into the next one, including free -> paid of the SAME
+            // model through the "Pay as you go version" link, and paid -> free
+            // through the "Free version" link. The remount re-runs the back
+            // link focus handoff, so keyboard focus lands at the top of the
+            // new view instead of on the link that just unmounted.
+            key={`${selected.free ? "free" : "paid"}:${selected.model.id}`}
+            model={selected.model}
+            onBack={() => setSelected(null)}
+            onOpenFree={(free) => setSelected({ model: selected.model, free })}
+            onOpenPaid={() =>
+              setSelected({ model: selected.model, free: null })
+            }
           />
         </div>
       ) : (
@@ -198,6 +218,17 @@ export function Models() {
     </DashboardChrome>
   );
 }
+
+/** Which entry point opened a detail page. */
+type SelectPath = "free" | "paid";
+
+type ModelSelection = {
+  model: Model;
+  /** The free row when opened from "Free models from Gate" or the paid
+   *  page's "Free version" link; null on the paid page (catalog row,
+   *  Featured card, or the free page's pay as you go link). */
+  free: FreeModel | null;
+};
 
 /* ─── Filtering helpers ──────────────────────────────────────────────────── */
 
@@ -213,7 +244,21 @@ function matchesQuery(model: Model, q: string): boolean {
 
 /* ─── Surface ────────────────────────────────────────────────────────────── */
 
-function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
+function ModelsSurface({
+  onSelect,
+}: {
+  onSelect: (model: Model, path: SelectPath) => void;
+}) {
+  // Two stable callbacks so the shelves and the table can tell the detail
+  // page which path opened it without knowing about paths themselves.
+  const selectPaid = useCallback(
+    (model: Model) => onSelect(model, "paid"),
+    [onSelect]
+  );
+  const selectFree = useCallback(
+    (model: Model) => onSelect(model, "free"),
+    [onSelect]
+  );
   const [modality, setModality] = useState<"all" | Modality>("all");
   const [search, setSearch] = useState("");
   const [provider, setProvider] = useState("all");
@@ -281,11 +326,11 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           free models, and the catalog, separated by a rule. */}
       <Separator />
 
-      <FeaturedModels onSelect={onSelect} />
+      <FeaturedModels onSelect={selectPaid} />
 
       <Separator />
 
-      <FreeModels onSelect={onSelect} />
+      <FreeModels onSelect={selectFree} />
 
       <Separator />
 
@@ -296,9 +341,9 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
           (`src/pages/models/curation.ts`) and tests stay so the block can
           return by re-mounting it here. */}
 
-      {/* Catalog header + Tabs share one gap-4 column so the header reads as
+      {/* Catalog header + Tabs share one gap-6 column so the header reads as
           the Tabs' own heading rather than as a third free-floating block. */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
           <h2 className="type-heading-24 m-0 text-foreground">
             Explore our catalog
@@ -390,7 +435,7 @@ function ModelsSurface({ onSelect }: { onSelect: (model: Model) => void }) {
               />
             ) : (
               <>
-                <ModelsTable onSelect={onSelect} rows={pageRows} />
+                <ModelsTable onSelect={selectPaid} rows={pageRows} />
 
                 <TablePaginationFooter
                   minRowsPerPage={25}
@@ -837,11 +882,31 @@ export function ProviderStack({ providers }: { providers: ModelProvider[] }) {
 
 function ModelDetailPage({
   model,
+  free = null,
   onBack,
+  onOpenFree,
+  onOpenPaid,
 }: {
   model: Model;
+  /** Set on the FREE detail page. Four things differ from the paid page and
+   *  nothing else: the id line shows `free.constellationId`, a "Pay as you
+   *  go version" line links to the paid page (where a "Free version" line
+   *  links back), Input / Output read "Free",
+   *  and the Quick start + Example request snippets send the constellation
+   *  id. */
+  free?: FreeModel | null;
   onBack: () => void;
+  /** Paid page of a model with a free companion only: switch the view to
+   *  that model's free detail page. */
+  onOpenFree?: (free: FreeModel) => void;
+  /** Free page only: switch the view to this model's paid detail page. */
+  onOpenPaid?: () => void;
 }) {
+  // The id this page tells the customer to send.
+  const handle = free ? free.constellationId : model.id;
+  // Paid page only: the free row of the same model, when one exists. Drives
+  // the "Free version" line, the mirror of the free page's pay as you go one.
+  const freeCompanion = free ? null : (findFreeModel(model.id) ?? null);
   const [lang, setLang] = useState<"TypeScript" | "Python" | "cURL">(
     "TypeScript"
   );
@@ -853,13 +918,13 @@ function ModelDetailPage({
   const { ref: descRef, isTruncated: descClipped } = useIsTruncated();
   const activeLines = useMemo(() => {
     if (lang === "TypeScript") {
-      return tsSnippet(model.id);
+      return tsSnippet(handle);
     }
     if (lang === "Python") {
-      return pySnippet(model.id);
+      return pySnippet(handle);
     }
-    return curlSnippet(model.id);
-  }, [lang, model.id]);
+    return curlSnippet(handle);
+  }, [lang, handle]);
 
   // Hand focus to the back link once the detail is on screen. See the comment
   // on the link itself for why this is a query and not a ref.
@@ -903,14 +968,48 @@ function ModelDetailPage({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="type-mono-14 text-foreground">{model.id}</span>
+            <span className="type-mono-14 text-foreground">{handle}</span>
             <CopyButton
-              ariaLabel={`Copy ${model.id}`}
+              ariaLabel={`Copy ${handle}`}
               label="model handle"
               size="inline-xs"
-              value={model.id}
+              value={handle}
             />
           </div>
+
+          {/* Free page only: the switch to the paid twin. Muted copy label,
+              the catalog id as a mono TextLink (the EventsTable precedent:
+              a `type-mono-14` span around the link), so the id reads as the
+              same kind of value as the handle above it. */}
+          {free ? (
+            <p className="type-copy-14 m-0 text-muted-foreground">
+              Pay as you go version:{" "}
+              <span className="type-mono-14">
+                <TextLink
+                  aria-label={`Open pay as you go version, ${model.id}`}
+                  onClick={onOpenPaid}
+                >
+                  {model.id}
+                </TextLink>
+              </span>
+            </p>
+          ) : null}
+
+          {/* Paid page only, when the model has a free companion: the mirror
+              of the line above, same markup, linking to the free twin. */}
+          {freeCompanion ? (
+            <p className="type-copy-14 m-0 text-muted-foreground">
+              Free version:{" "}
+              <span className="type-mono-14">
+                <TextLink
+                  aria-label={`Open free version, ${freeCompanion.constellationId}`}
+                  onClick={() => onOpenFree?.(freeCompanion)}
+                >
+                  {freeCompanion.constellationId}
+                </TextLink>
+              </span>
+            </p>
+          ) : null}
         </div>
 
         {/* Hidden for now (user, 2026-10-01), not deleted: swap `hidden` back
@@ -970,7 +1069,7 @@ function ModelDetailPage({
       </div>
 
       {/* KPI strip — locked 4-tile recipe. */}
-      <ModelKpiRail model={model} />
+      <ModelKpiRail free={free !== null} model={model} />
 
       {/* Providers */}
       <section className="flex flex-col gap-4">
@@ -1015,7 +1114,7 @@ function ModelDetailPage({
           </div>
           {/* Per-tool terminal/CLI config. Shared with the PAYG Manual setup
             page via <PaygToolConfigCard>. */}
-          <PaygToolConfigCard handle={model.id} />
+          <PaygToolConfigCard handle={handle} />
         </section>
 
         <section className="flex flex-col gap-4">
@@ -1107,10 +1206,10 @@ function ModelDetailPage({
   );
 }
 
-function ModelKpiRail({ model }: { model: Model }) {
-  // The two Free models (`FREE_MODELS`) cost the customer nothing, so their
-  // price tiles read "Free" rather than the catalog list price.
-  const isFree = FREE_MODELS.some((f) => f.id === model.id);
+function ModelKpiRail({ model, free }: { model: Model; free: boolean }) {
+  // The FREE detail page costs the customer nothing, so its price tiles read
+  // "Free". The paid page always shows the list price, even for a model that
+  // also has a free twin: that page is the pay as you go version.
   return (
     <KpiRailShell columns={4}>
       <ModelKpiTile
@@ -1123,15 +1222,11 @@ function ModelKpiRail({ model }: { model: Model }) {
       />
       <ModelKpiTile
         label="Input"
-        value={
-          isFree ? "Free" : formatPricePerM(listPrice(model, "inputPer1M"))
-        }
+        value={free ? "Free" : formatPricePerM(listPrice(model, "inputPer1M"))}
       />
       <ModelKpiTile
         label="Output"
-        value={
-          isFree ? "Free" : formatPricePerM(listPrice(model, "outputPer1M"))
-        }
+        value={free ? "Free" : formatPricePerM(listPrice(model, "outputPer1M"))}
       />
     </KpiRailShell>
   );

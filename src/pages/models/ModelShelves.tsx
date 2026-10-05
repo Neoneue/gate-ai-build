@@ -58,7 +58,7 @@ export function FeaturedModels({
 }) {
   const models = featuredModels();
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h2 className="type-heading-24 m-0 text-foreground">Featured models</h2>
         <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
@@ -101,7 +101,7 @@ export function FeaturedCard({
   onSelect,
   badge,
   stats,
-  dimmed = false,
+  focusId,
 }: {
   model: Model;
   onSelect: (model: Model) => void;
@@ -110,11 +110,11 @@ export function FeaturedCard({
   /** Overrides the default Context + Input + Output set. Three entries. A
    *  value may be a node (the capability strip) rather than a string. */
   stats?: { label: string; value: ReactNode }[];
-  /** Rests at 75% opacity (well above the primitives' 50% disabled wash so
-   *  every line stays legible) with no hover fill. The drill-in stays live so
-   *  the detail page is reachable. Used for a Pro-only free model on a Free
-   *  surface; the upgrade banner below is the action. */
-  dimmed?: boolean;
+  /** Stamped on the drill-in as `data-free-model` so `Models.tsx` can hand
+   *  focus back to THIS card when its detail page closes (WCAG 2.4.3). Set
+   *  by the Free models block only; the same model's catalog row restores
+   *  through `data-model-row`. */
+  focusId?: string;
 }) {
   const tagline = badge ?? featuredTagline(model);
   const { ref: nameRef, isTruncated } = useIsTruncated();
@@ -140,29 +140,23 @@ export function FeaturedCard({
     // Card (`interactive`) so the whole framed card presses as one object;
     // the button keeps the focus ring.
     <Card
-      className={cn(
-        // `@container/card` makes the stat grid below answer to THIS card's
-        // width rather than to the page's. The same card is 274px wide in a
-        // 4-up row, 450px in a 2-up row and 574px 1-up, and only the card
-        // knows which it is.
-        "group/card @container/card relative",
-        dimmed && "cursor-pointer opacity-75"
-      )}
+      // `@container/card` makes the stat grid below answer to THIS card's
+      // width rather than to the page's. The same card is 274px wide in a
+      // 4-up row, 450px in a 2-up row and 574px 1-up, and only the card
+      // knows which it is.
+      className="group/card @container/card relative"
       density="flush"
-      interactive={!dimmed}
+      interactive
     >
       {/* Hover reveal (user call 2026-09-14): the monochrome vendor mark,
           clipped in the top-right corner, fades from 0 to 10% ink on hover.
           At rest the card is plain so it does not read as OpenRouter's
-          watermark motif; on hover it is the reward for the pointer. Skipped
-          on a dimmed card, which has no hover state. */}
-      {dimmed ? null : (
-        <LobeMark
-          className="pointer-events-none absolute -top-4 -right-4 text-foreground/10 opacity-0 transition-opacity duration-150 ease-out group-hover/card:opacity-100 motion-reduce:transition-none"
-          size={96}
-          vendor={model.vendor}
-        />
-      )}
+          watermark motif; on hover it is the reward for the pointer. */}
+      <LobeMark
+        className="pointer-events-none absolute -top-4 -right-4 text-foreground/10 opacity-0 transition-opacity duration-150 ease-out group-hover/card:opacity-100 motion-reduce:transition-none"
+        size={96}
+        vendor={model.vendor}
+      />
       {/* `gap-5` (20px) sets badge -> identity here; the inner group keeps
           `gap-4` between identity and stats, so the badge sits 4px further
           from the name than the name does from the stats. With `p-4`, the
@@ -171,6 +165,7 @@ export function FeaturedCard({
       <RowActionButton
         aria-label={`Inspect ${model.name}`}
         className="relative h-full justify-start gap-5 rounded-md p-4 focus-visible:ring-inset focus-visible:ring-offset-0"
+        data-free-model={focusId}
         layout="stack"
         onClick={() => onSelect(model)}
       >

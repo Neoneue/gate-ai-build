@@ -1557,13 +1557,43 @@ const CURATED_ROWS: Model[] = [
 const CURATED_IDS = new Set(CURATED_ROWS.map((m) => m.id));
 
 /**
+ * Fields the gateway feed leaves empty, filled from the serving provider's
+ * public catalog. Qwen3.8 Flash routes through OpenRouter, whose
+ * `GET /api/v1/models` (+ `/endpoints`, Alibaba) lists `qwen/qwen3.8-flash`
+ * at a 1,000,000-token context, 131,072 max completion tokens, text + image +
+ * video input, cache-read pricing, and the `tools`, `reasoning` and
+ * `response_format` / `structured_outputs` parameters (checked 2026-10-05).
+ * Applied on top of the generated rows so a regeneration cannot drop them.
+ */
+const CATALOG_FILLS: Record<
+  string,
+  Pick<Model, "contextWindow" | "maxOutputTokens" | "modality" | "capabilities">
+> = {
+  "qwen/qwen3-8-flash": {
+    contextWindow: 1_000_000,
+    maxOutputTokens: 131_072,
+    modality: "multimodal",
+    capabilities: [
+      "tools",
+      "reasoning",
+      "vision",
+      "promptCaching",
+      "responseSchema",
+      "videoInput",
+    ],
+  },
+};
+
+/**
  * The full routable catalog: curated rows first, then every other row of
  * the gateway's public `GET /v1/models` (see models-catalog.ts, generated
  * 2026-09-14, 416 ids in total).
  */
 export const MODELS: Model[] = [
   ...CURATED_ROWS,
-  ...CATALOG_ROWS.filter((m) => !CURATED_IDS.has(m.id)),
+  ...CATALOG_ROWS.filter((m) => !CURATED_IDS.has(m.id)).map((m) =>
+    CATALOG_FILLS[m.id] ? { ...m, ...CATALOG_FILLS[m.id] } : m
+  ),
 ];
 
 /* ─── Static derivations ─────────────────────────────────────────────────── */

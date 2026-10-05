@@ -165,6 +165,8 @@ export const VENDOR_ENDPOINT: Record<Vendor, string> = {
   // open platform), so neither needs a bespoke wire format.
   moonshotai: "/v1/chat/completions",
   qwen: "/v1/chat/completions",
+  // Z.ai's OpenAI-compatible chat path (docs.z.ai, API reference).
+  "z-ai": "/api/paas/v4/chat/completions",
 };
 
 /** Upstream API host per vendor — the thing the gateway actually forwards to.
@@ -186,6 +188,7 @@ export const VENDOR_HOST: Record<Vendor, string> = {
   // Alibaba Model Studio's international endpoint, matching the OpenAI-
   // compatible surface the endpoint map above assumes.
   qwen: "dashscope-intl.aliyuncs.com",
+  "z-ai": "api.z.ai",
 };
 
 export function responseVariant(row: RequestRow): "success" | "destructive" {

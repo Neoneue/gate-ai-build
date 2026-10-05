@@ -196,10 +196,11 @@ describe("Billing `?state=` is a preview param and is KEPT", () => {
 });
 
 /**
- * The two upgrade CTAs that used to carry `?manage=1` now navigate straight
- * to the nested Manage subscription page. They are buttons, not anchors
- * (`SidebarUpgradeCard`, the Free Models banner), so the assertion is the
- * landing URL rather than an `href`.
+ * The upgrade CTA that used to carry `?manage=1` now navigates straight to
+ * the nested Manage subscription page. It is a button, not an anchor
+ * (`SidebarUpgradeCard`), so the assertion is the landing URL rather than an
+ * `href`. (The Free Models upgrade banner was removed 2026-10-05 with the
+ * Pro-only free model.)
  */
 describe("upgrade CTAs land on the Manage subscription page", () => {
   it.each([
@@ -216,22 +217,6 @@ describe("upgrade CTAs land on the Manage subscription page", () => {
       await user.click(card);
       await waitFor(() => {
         expect(location().pathname).toBe(to);
-      });
-    },
-    SLOW
-  );
-
-  it(
-    "/models-free upgrade banner navigates to /billing-free/plans",
-    async () => {
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-      const { location } = await mountRoute("/models-free");
-      const cta = await screen.findByRole("button", {
-        name: "Upgrade to Pro",
-      });
-      await user.click(cta);
-      await waitFor(() => {
-        expect(location().pathname).toBe("/billing-free/plans");
       });
     },
     SLOW

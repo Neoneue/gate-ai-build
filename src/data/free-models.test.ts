@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  canUseFreeModel,
-  effectivePlan,
   FREE_MODELS,
+  findFreeModel,
   freeModelRows,
   isExhausted,
   nextResetUtc,
@@ -20,26 +19,21 @@ describe("free models", () => {
     expect(freeModelRows()).toHaveLength(FREE_MODELS.length);
   });
 
-  it("Default and Free surfaces read as Free access, Pro and Enterprise as Pro", () => {
-    expect(effectivePlan("/models-default")).toBe("free");
-    expect(effectivePlan("/models-free")).toBe("free");
-    expect(effectivePlan("/models")).toBe("pro");
-    expect(effectivePlan("/models-enterprise")).toBe("pro");
+  it("ships the live build's two free twins, each a -free constellation id", () => {
+    expect(FREE_MODELS.map((f) => [f.id, f.constellationId])).toEqual([
+      ["qwen/qwen3-8-flash", "constellation/qwen3-8-flash-free"],
+      ["z-ai/glm-5-3-flash", "constellation/glm-5-3-flash-free"],
+    ]);
+    expect(findFreeModel("qwen/qwen3-8-flash")?.tagline).toBe("Lightweight");
+    expect(findFreeModel("openai/gpt-oss-20b")).toBeUndefined();
   });
 
-  it("Pro-only rows are locked for Free users and open for Pro users", () => {
-    const proOnly = FREE_MODELS.find((f) => f.access === "pro-only");
-    const shared = FREE_MODELS.find((f) => f.access === "free-and-pro");
-    expect(proOnly && shared).toBeTruthy();
-    expect(
-      canUseFreeModel(proOnly as (typeof FREE_MODELS)[number], "free")
-    ).toBe(false);
-    expect(
-      canUseFreeModel(proOnly as (typeof FREE_MODELS)[number], "pro")
-    ).toBe(true);
-    expect(
-      canUseFreeModel(shared as (typeof FREE_MODELS)[number], "free")
-    ).toBe(true);
+  it("has no plan gate: every free row is open to every plan", () => {
+    for (const f of FREE_MODELS) {
+      expect(Object.keys(f).sort()).toEqual(
+        ["constellationId", "id", "tagline", "usage"].sort()
+      );
+    }
   });
 
   it("usage clamps to 0..100 and exhaustion names the reached period", () => {

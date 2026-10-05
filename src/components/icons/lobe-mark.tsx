@@ -335,7 +335,7 @@ const VENDOR_MARKS: Record<string, ComponentType<MarkProps>> = {
   qwen: QwenMark,
   "x-ai": GrokMark,
   xai: GrokMark,
-  "z-ai": ZhipuMark,
+  "z-ai": ZaiMark,
   zai: ZaiMark,
   zhipu: ZhipuMark,
 };
