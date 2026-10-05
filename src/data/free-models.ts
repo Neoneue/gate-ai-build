@@ -1,37 +1,33 @@
 import { MODELS, type Model } from "@/data/models";
-import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
 
 /**
  * Free model access (Notion "Free models", AG-829, Approved 2026-09-07).
  *
- * Operators pick catalog models and enable them for Free, Pro or both plans
- * with per-user weekly and monthly allowances. Customers see them at the top
- * of the Models page under a Constellation ID (`constellation/<model-name>`),
- * with THEIR OWN usage ("Your usage") as Week and Month progress with a
- * percentage used, and the UTC reset time when a period is exhausted.
- * Internal USD limits never reach the customer surface, so this module
- * carries percentages only.
+ * Operators pick catalog models and enable them at no cost with per-user
+ * weekly and monthly allowances. Every plan, Free and Pro, gets the same set.
+ * Customers see them at the top of the Models page under a Constellation ID
+ * (`constellation/<model-name>-free`), with THEIR OWN usage ("Your usage") as
+ * Week and Month progress with a percentage used, and the UTC reset time when
+ * a period is exhausted. Internal USD limits never reach the customer
+ * surface, so this module carries percentages only.
  *
- * Mock data: two operator-configured rows, chosen as the two cheapest
- * tool-capable models in the live catalog (2026-09-14: gpt-oss-20b at
- * $0.03 / $0.14 per million, DeepSeek V4 Flash 0731 at $0.07 / $0.13 with a
- * 1M context), the price band where Gate can fund them as unpaid access.
- * The more capable of the two is Pro-only so both plan states render.
- * Usage percentages are sample values for the logged-in user; the shared
- * reset calendar is real (Monday 00:00 UTC weekly, first of the month
+ * Mock data: the two operator-configured rows the live build ships
+ * (2026-10-05), Qwen3.8 Flash and GLM 5.3 Flash, each a free twin of a pay
+ * as you go catalog model. The detail page links the free twin to its paid
+ * version through `id`. Usage percentages are sample values for the
+ * logged-in user (one row exhausted for the week so that state renders); the
+ * shared reset calendar is real (Monday 00:00 UTC weekly, first of the month
  * 00:00 UTC monthly).
  */
 
-export type FreeAccess = "free-and-pro" | "pro-only";
-
 export type FreeModel = {
-  /** Catalog id, resolves to a `Model` row for name, vendor, context. */
+  /** Catalog id of the pay as you go version; resolves to a `Model` row for
+   *  name, vendor, context, description and providers. */
   id: string;
-  /** The id customers copy and send. */
+  /** The id customers copy and send for the free version. */
   constellationId: string;
-  access: FreeAccess;
   /** Two or three word positioning line, same vocabulary as the Featured
-   *  badges (a property, not a rank). The plan lives in the price text. */
+   *  badges (a property, not a rank). */
   tagline: string;
   /** Logged-in user's consumption of the current periods, 0 to 100. */
   usage: { weekPct: number; monthPct: number };
@@ -39,37 +35,24 @@ export type FreeModel = {
 
 export const FREE_MODELS: readonly FreeModel[] = [
   {
-    id: "openai/gpt-oss-20b",
-    constellationId: "constellation/gpt-oss-20b",
-    access: "free-and-pro",
+    id: "qwen/qwen3-8-flash",
+    constellationId: "constellation/qwen3-8-flash-free",
     tagline: "Lightweight",
     usage: { weekPct: 42, monthPct: 18 },
   },
   {
-    id: "deepseek/deepseek-v4-flash-0731",
-    constellationId: "constellation/deepseek-v4-flash-0731",
-    access: "pro-only",
-    tagline: "Long context",
+    id: "z-ai/glm-5-3-flash",
+    constellationId: "constellation/glm-5-3-flash-free",
+    tagline: "Fastest",
     usage: { weekPct: 100, monthPct: 63 },
   },
 ];
 
-export type EffectivePlan = "free" | "pro";
-
-/** A user has Pro access while they belong to at least one active Pro
- *  workspace; the Default and Free surfaces model a user with none. */
-export function effectivePlan(pathname: string): EffectivePlan {
-  return isDefaultSurface(pathname) || isFreeSurface(pathname) ? "free" : "pro";
+/** The free row for a catalog id, or undefined when the model has no free
+ *  twin. */
+export function findFreeModel(id: string): FreeModel | undefined {
+  return FREE_MODELS.find((f) => f.id === id);
 }
-
-export function canUseFreeModel(row: FreeModel, plan: EffectivePlan): boolean {
-  return row.access === "free-and-pro" || plan === "pro";
-}
-
-export const FREE_ACCESS_LABEL: Record<FreeAccess, string> = {
-  "free-and-pro": "Free + Pro",
-  "pro-only": "Pro only",
-};
 
 export function freeModelRows(
   models: Model[] = MODELS

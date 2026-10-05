@@ -29,7 +29,7 @@ export function VendorAvatar({
   if (!meta) {
     // Vendors without a brand mark (most of the 50+ `owned_by` slugs in the
     // live feed) get a two-letter initials tile, the same fallback prod's
-    // Models table shows for Z.ai and friends.
+    // Models table shows for unbranded vendors.
     const initials = vendor.replace(/[^a-z0-9]/gi, "").slice(0, 2);
     return (
       <span className="inline-flex shrink-0 items-center">

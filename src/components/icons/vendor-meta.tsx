@@ -12,6 +12,7 @@ import {
   MoonshotAIIcon,
   OpenAIIcon,
   QwenIcon,
+  ZaiIcon,
 } from "./model-providers";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -42,7 +43,8 @@ export type Vendor =
   | "deepseek"
   | "cohere"
   | "moonshotai"
-  | "qwen";
+  | "qwen"
+  | "z-ai";
 
 /** Any `owned_by` slug the catalog feed can carry. Known vendors narrow to
  *  `Vendor` and get a brand mark; unknown ones fall back to initials. */
@@ -52,11 +54,18 @@ export function isKnownVendor(slug: VendorSlug): slug is Vendor {
   return Object.hasOwn(VENDOR_META, slug);
 }
 
+/** Alternate `owned_by` spellings of a known vendor. The catalog feed
+ *  carries `z-ai`; lobehub and some upstreams spell it `zai`. Resolved by
+ *  `vendorMeta` / `vendorLabel` only, so `isKnownVendor` stays a strict
+ *  narrowing to the canonical key. */
+const VENDOR_ALIASES: Partial<Record<string, Vendor>> = { zai: "z-ai" };
+
 export function vendorMeta(slug: VendorSlug): VendorMeta | undefined {
-  return isKnownVendor(slug) ? VENDOR_META[slug] : undefined;
+  const canonical = VENDOR_ALIASES[slug] ?? slug;
+  return isKnownVendor(canonical) ? VENDOR_META[canonical] : undefined;
 }
 
-/** Brand label for known vendors; a humanized slug ("z-ai" -> "Z Ai") for
+/** Brand label for known vendors; a humanized slug ("ai21" -> "Ai21") for
  *  the rest, so aria labels and filter menus never show a raw slug. */
 export function vendorLabel(slug: VendorSlug): string {
   const meta = vendorMeta(slug);
@@ -124,6 +133,10 @@ export const VENDOR_META: Record<Vendor, VendorMeta> = {
   // Gradient-filled mark, so `color` never paints it; the value is kept for
   // parity with the other entries and for any future non-icon use.
   qwen: { color: BRAND_COLORS.qwen.primary, icon: QwenIcon, label: "Qwen" },
+  // Mono mark (lobehub ships no color variant), so it takes the same
+  // theme-following ink as OpenAI / xAI / MoonshotAI. Keyed by the catalog's
+  // `owned_by` slug; `zai` resolves here through VENDOR_ALIASES.
+  "z-ai": { color: MONO_MARK_COLOR, icon: ZaiIcon, label: "Z.ai" },
 };
 
 /**

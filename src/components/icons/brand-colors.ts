@@ -58,6 +58,6 @@ export const BRAND_COLORS = {
 export type BrandId = keyof typeof BRAND_COLORS;
 
 /** Theme-following ink for monochrome marks (OpenAI, xAI, MoonshotAI,
- *  OpenRouter). Not a brand colour; listed so `VENDOR_META` has one word
+ *  Z.ai, OpenRouter). Not a brand colour; listed so `VENDOR_META` has one word
  *  for "paint me with the current foreground". */
 export const MONO_MARK_COLOR = "var(--foreground)";
