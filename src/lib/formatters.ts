@@ -77,13 +77,17 @@ export function formatNumber(
   return numberFormat(LOCALE, options).format(n);
 }
 
-/** Compact "millions" formatter for KPI-tile COUNT values (tokens, messages,
- *  requests, turns, detections…). At or above 1,000,000 the value collapses to
- *  one rounded decimal + "M" (19_386_865 → "19.4M"); below that it renders the
- *  full comma-grouped integer (59_938 → "59,938"). M tier only — no K, no B.
+/** Compact formatter for KPI-tile COUNT values (tokens, messages, requests,
+ *  turns, detections…). At or above 1,000,000 the value collapses to one
+ *  rounded decimal + "M" (19_386_865 → "19.4M"), and once that would round to
+ *  1000.0M it steps to "B" (1_526_400_000 → "1.5B"); below a million it renders
+ *  the full comma-grouped integer (59_938 → "59,938"). No K tier.
  *  KPI tiles only; tables and chart axes/tooltips keep full numbers. Not for
  *  currency, durations, or percentages. */
 export function formatCompactCount(n: number): string {
+  if (Math.abs(n) >= 999_950_000) {
+    return `${(n / 1_000_000_000).toFixed(1)}B`;
+  }
   if (Math.abs(n) >= 1_000_000) {
     return `${(n / 1_000_000).toFixed(1)}M`;
   }
