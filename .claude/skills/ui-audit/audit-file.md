@@ -132,6 +132,7 @@ Verdict (run 1): Qualified. <one sentence>
    | pick-ui-library | `pick` |
    | color-audit (manual token sweep) | `col` |
    | test-smoke (vitest + Playwright; a run on its own, or the verify step after every apply pass) | `smk` |
+   | ux-laws (one `## ux-laws: <Law>` section per law that found something) | `ux` |
 
    A new skill gets its alias added here on its first run; section headings
    keep the full skill name (`## web-design-guidelines`).
