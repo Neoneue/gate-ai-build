@@ -40,8 +40,10 @@ Shared project instructions, kept minimal; per-area detail lives in
   commits of UI files) until the session has read the kit INDEX.md once,
   then per change ux-laws, visual-hierarchy and one build skill; it resets
   after each commit. It gates every session, the main one included, so a
-  direct-edited class move needs the same four reads. Inside a subagent it
-  checks the subagent's own transcript. It fails open: if it never blocks,
+  direct-edited class move needs the same four reads. A UI commit also
+  passes when one of the session's subagents loaded all four since the last
+  commit (the subagent built it; the main session only commits it). Inside
+  a subagent it checks the subagent's own transcript. It fails open: if it never blocks,
   check that the hook is registered. Other edits under `src/` and `e2e/`
   need the editing agent's own kit INDEX.md read, then one skill.
 - **Other agents** (`.claude/agents/`, kits in `agents/<name>/skills/`, read

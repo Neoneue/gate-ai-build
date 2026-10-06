@@ -16,6 +16,9 @@
 //   perl, a redirect or tee into the file, cp/mv/rm/touch on it, a python,
 //   node, ruby or awk write naming it); and, as the backstop for anything
 //   the command text hides, a git commit whose staged files hold UI.
+//   A UI commit also passes when one of this session's subagents loaded the
+//   full set since the session's last landed commit (subagentCovers): the
+//   subagent built the UI, the main session only commits it.
 // - Other product code (src/, e2e/) needs the kit INDEX.md read once per
 //   session, then a skill loaded after it. Reads through cat, sed, head and
 //   the like count.
@@ -23,7 +26,7 @@
 // Exit 2 blocks the call and tells the agent what to load. Anything it
 // cannot read passes, so a broken hook never locks work.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -183,11 +186,14 @@ function eventsOf(part) {
  * "visual-hierarchy" (read it), "pick" (load one build skill, after reading
  * the index). A commit counts once its result came back without an error,
  * so a blocked or failed commit, or the one being checked now, resets
- * nothing.
+ * nothing. `lastCommitAt` is when the last landed commit's result came back.
+ * With `after` (a time from another transcript, in ms), a per-change step
+ * counts only when it happened after it; an event with no timestamp then
+ * never counts.
  */
-export function skillState(text) {
+export function skillState(text, { after = null } = {}) {
   const events = [];
-  const landed = new Set();
+  const landedAt = new Map();
   for (const line of text.split("\n")) {
     let entry;
     try {
@@ -200,31 +206,34 @@ export function skillState(text) {
     if (!Array.isArray(parts)) {
       continue;
     }
+    const ts = Date.parse(entry.timestamp ?? "");
     for (const part of parts) {
       if (typeof part === "string" || part?.type === "text") {
         const said = typeof part === "string" ? part : (part.text ?? "");
         if (entry.type === "user" && UX_COMMAND.test(said)) {
-          events.push({ kind: "ux" });
+          events.push({ kind: "ux", ts });
         }
       } else if (part?.type === "tool_result") {
         if (!part.is_error) {
-          landed.add(part.tool_use_id);
+          landedAt.set(part.tool_use_id, ts);
         }
       } else if (part?.type === "tool_use") {
         for (const kind of eventsOf(part)) {
-          events.push({ id: part.id, kind });
+          events.push({ id: part.id, kind, ts });
         }
       }
     }
   }
   const anySkill = events.some((e) => SKILL_KINDS.includes(e.kind));
   let from = 0;
+  let lastCommitAt = null;
   events.forEach((e, i) => {
-    if (e.kind === "commit" && landed.has(e.id)) {
+    if (e.kind === "commit" && landedAt.has(e.id)) {
       from = i + 1;
+      lastCommitAt = landedAt.get(e.id);
     }
   });
-  const since = events.slice(from);
+  const fresh = (e, i) => i >= from && (after === null || e.ts > after);
   // The index is read once per session (a full re-read before every small
   // fix costs too much); the UX skills and the pick are per change, and the
   // pick still comes after the index.
@@ -233,14 +242,14 @@ export function skillState(text) {
   if (indexAt === -1) {
     missing.push("index");
   }
-  if (!since.some((e) => e.kind === "ux")) {
+  if (!events.some((e, i) => e.kind === "ux" && fresh(e, i))) {
     missing.push("ux-laws");
   }
-  if (!since.some((e) => e.kind === "vh")) {
+  if (!events.some((e, i) => e.kind === "vh" && fresh(e, i))) {
     missing.push("visual-hierarchy");
   }
   const picked = events.some(
-    (e, i) => e.kind === "build" && i >= from && i > indexAt
+    (e, i) => e.kind === "build" && fresh(e, i) && i > indexAt
   );
   if (indexAt === -1 || !picked) {
     missing.push("pick");
@@ -254,7 +263,41 @@ export function skillState(text) {
   if (!events.some((e, i) => i > indexAt && SKILL_KINDS.includes(e.kind))) {
     codeMissing.push("skill");
   }
-  return { anySkill, missing, codeMissing };
+  return { anySkill, missing, codeMissing, lastCommitAt };
+}
+
+/**
+ * Whether one of this session's subagents loaded the full UI set since
+ * `after` (the session's last landed commit, or null for none). Reads
+ * <dir of transcript_path>/<session_id>/subagents/*.jsonl. With no such
+ * folder, or nothing readable in it, nothing is credited: the commit is
+ * judged on the committer's own transcript (fail closed).
+ */
+export function subagentCovers(input, after, { readTranscript, listDir }) {
+  if (!(input.transcript_path && input.session_id)) {
+    return false;
+  }
+  const dir = path.join(
+    path.dirname(input.transcript_path),
+    String(input.session_id),
+    "subagents"
+  );
+  let files = [];
+  try {
+    files = listDir(dir).filter((f) => f.endsWith(".jsonl"));
+  } catch {
+    return false;
+  }
+  return files.some((f) => {
+    try {
+      return (
+        skillState(readTranscript(path.join(dir, f)), { after }).missing
+          .length === 0
+      );
+    } catch {
+      return false;
+    }
+  });
 }
 
 /**
@@ -305,7 +348,7 @@ function commitFiles(command, cwd) {
 
 /**
  * The verdict for one hook input: null to pass, or why it is blocked.
- * `readTranscript`, `filesOf` and `exists` are passed in by tests.
+ * `readTranscript`, `filesOf`, `exists` and `listDir` are passed in by tests.
  */
 export function verdict(
   input,
@@ -313,12 +356,14 @@ export function verdict(
     readTranscript = (p) => readFileSync(p, "utf8"),
     filesOf = commitFiles,
     exists = existsSync,
+    listDir = (d) => readdirSync(d),
   } = {}
 ) {
   const tool = input.tool_name;
   const toolInput = input.tool_input ?? {};
   let ui = null;
   let guarded = false;
+  let commitUi = false;
   if (tool === "Bash") {
     const command = String(toolInput.command ?? "");
     if (shellWritesUi(command)) {
@@ -336,6 +381,7 @@ export function verdict(
         return null;
       }
       ui = files.find(isUiPath) ?? null;
+      commitUi = ui !== null;
     }
     if (!ui) {
       return null;
@@ -361,7 +407,26 @@ export function verdict(
     return null;
   }
   if (ui) {
-    return state.missing.length === 0 ? null : uiMessage(ui, state.missing);
+    if (state.missing.length === 0) {
+      return null;
+    }
+    if (commitUi) {
+      // The session's last commit lives in the main transcript.
+      let after = state.lastCommitAt;
+      if (transcript !== input.transcript_path) {
+        try {
+          after = skillState(
+            readTranscript(input.transcript_path)
+          ).lastCommitAt;
+        } catch {
+          return uiMessage(ui, state.missing, true);
+        }
+      }
+      if (subagentCovers(input, after, { readTranscript, listDir })) {
+        return null;
+      }
+    }
+    return uiMessage(ui, state.missing, commitUi);
   }
   return guarded && state.codeMissing.length > 0
     ? codeMessage(state.codeMissing)
@@ -378,11 +443,14 @@ const STEP = {
   pick: "after reading the index, load the ONE build skill that fits this job (for example shadcn for a component or a button, ask-sonner for a toast): Read agents/front-end-developer/skills/<name>/SKILL.md. One build skill, not several",
 };
 
-function uiMessage(file, missing) {
+function uiMessage(file, missing, commit = false) {
   const steps = missing.map((m, i) => `${i + 1}. ${STEP[m]}.`).join(" ");
   return (
     `Blocked (UI gate): this changes UI (${file}). Still missing: ${steps} ` +
     "Then retry. The index is read once per session; ux-laws, visual-hierarchy and the pick cover your work until your next commit, then repeat for the next change. " +
+    (commit
+      ? "A commit also passes when one of this session's subagents loaded all four since the last commit. "
+      : "") +
     "Shell edits and commits of UI files are checked too. Name the skill you picked in your report.\n"
   );
 }

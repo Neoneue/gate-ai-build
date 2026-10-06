@@ -4,6 +4,7 @@ import {
   isUiPath,
   shellWritesUi,
   skillState,
+  subagentCovers,
   transcriptPathOf,
   verdict,
 } from "./require-skill.mjs";
@@ -418,5 +419,120 @@ describe("verdict", () => {
     expect(
       verdict({ tool_name: "Edit", tool_input: { file_path: "src/index.css" } })
     ).toBeNull();
+  });
+});
+
+// Option 3 (G2, the owner, 2026-10-05): a UI commit passes when one of this
+// session's subagents loaded the full set since the last landed commit. The
+// subagent built the UI; the main session only commits it.
+describe("verdict: a commit of UI a subagent built", () => {
+  const MAIN = "/p/proj/sess-1.jsonl";
+  const DIR = "/p/proj/sess-1/subagents";
+  const SUB = `${DIR}/agent-a7.jsonl`;
+  const T0 = "2026-10-05T10:00:00.000Z"; // before the commit
+  const T1 = "2026-10-05T11:00:00.000Z"; // the commit lands
+  const T2 = "2026-10-05T12:00:00.000Z"; // after it
+  /** Stamp every line of the groups with one ISO time. */
+  const at = (iso, ...groups) =>
+    groups
+      .flat()
+      .map((l) => JSON.stringify({ ...JSON.parse(l), timestamp: iso }));
+  const commitInput = {
+    tool_name: "Bash",
+    tool_input: { command: "git commit -m x" },
+    transcript_path: MAIN,
+    session_id: "sess-1",
+    cwd: "/r",
+  };
+  /** A fake disk: `texts` maps a path to its transcript text. */
+  const judge = (input, texts, files = ["src/components/a.tsx"]) =>
+    verdict(input, {
+      readTranscript: (p) => {
+        if (!(p in texts)) {
+          throw new Error(`no ${p}`);
+        }
+        return texts[p];
+      },
+      exists: (p) => p in texts,
+      filesOf: () => files,
+      listDir: (d) => {
+        const names = Object.keys(texts)
+          .filter((p) => p.startsWith(`${d}/`))
+          .map((p) => p.slice(d.length + 1));
+        if (names.length === 0) {
+          throw new Error(`no ${d}`);
+        }
+        return names;
+      },
+    });
+  const mainWithCommit = () => transcript(at(T1, COMMIT()));
+
+  it("passes when a subagent loaded the full set after the last commit", () => {
+    const texts = {
+      [MAIN]: mainWithCommit(),
+      [SUB]: transcript(at(T2, INDEX(), UX(), VH(), SHADCN())),
+    };
+    expect(judge(commitInput, texts)).toBeNull();
+  });
+
+  it("does not count a subagent's reads from before the last commit", () => {
+    const straddling = {
+      [MAIN]: mainWithCommit(),
+      [SUB]: transcript(at(T0, INDEX(), UX(), VH()), at(T2, SHADCN())),
+    };
+    const why = judge(commitInput, straddling);
+    expect(why).toMatch(/UI gate/);
+    expect(why).toMatch(/subagents loaded all four/);
+    // The index is once per session, so an index read before the commit
+    // still counts when the per-change reads come after it.
+    const indexBefore = {
+      [MAIN]: mainWithCommit(),
+      [SUB]: transcript(at(T0, INDEX()), at(T2, UX(), VH(), SHADCN())),
+    };
+    expect(judge(commitInput, indexBefore)).toBeNull();
+  });
+
+  it("with no subagents folder, judges the main transcript alone and blocks without reads", () => {
+    expect(judge(commitInput, { [MAIN]: mainWithCommit() })).toMatch(/UI gate/);
+  });
+
+  it("passes on the main session's own full set, as before", () => {
+    const own = transcript(
+      at(T1, COMMIT()),
+      at(T2, INDEX(), UX(), VH(), SHADCN())
+    );
+    expect(judge(commitInput, { [MAIN]: own })).toBeNull();
+  });
+
+  it("before any commit in the session, any subagent's full set counts", () => {
+    const texts = { [MAIN]: "", [SUB]: FULL() };
+    expect(judge(commitInput, texts)).toBeNull();
+  });
+
+  it("after a commit, a subagent read with no timestamp does not count", () => {
+    const texts = { [MAIN]: mainWithCommit(), [SUB]: FULL() };
+    expect(judge(commitInput, texts)).toMatch(/UI gate/);
+  });
+
+  it("credits commits only: a UI edit in the main session still needs its own reads", () => {
+    const texts = {
+      [MAIN]: mainWithCommit(),
+      [SUB]: transcript(at(T2, INDEX(), UX(), VH(), SHADCN())),
+    };
+    const edit = {
+      ...commitInput,
+      tool_name: "Edit",
+      tool_input: { file_path: "src/components/a.tsx" },
+    };
+    expect(judge(edit, texts)).toMatch(/UI gate/);
+  });
+
+  it("subagentCovers has nothing to read without a session id", () => {
+    expect(
+      subagentCovers({ transcript_path: MAIN }, null, {
+        readTranscript: () => FULL(),
+        listDir: () => ["agent-a7.jsonl"],
+      })
+    ).toBe(false);
   });
 });
