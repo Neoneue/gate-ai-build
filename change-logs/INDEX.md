@@ -19,6 +19,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Models: 24px between section headings and their content
 - Tests: model detail paths
 - Agent tooling: UX-first front-end agent and the UI gate
+- Agent tooling: seven agents ported from agent-room
 
 ### [2026-10-01](./2026-10/changelog-10-1.md)
 

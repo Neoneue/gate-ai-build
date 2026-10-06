@@ -120,3 +120,19 @@ Prior day: [`changelog-10-1.md`](./changelog-10-1.md)
   subagent, until the INDEX, ux-laws, visual-hierarchy and one build skill
   are read; a subagent is judged by its own transcript. Its tests run
   under vitest (`scripts/**/*.test.mjs`). No UI change.
+
+### Agent tooling: seven agents ported from agent-room (`.claude/agents/`, `agents/<name>/skills/`, `CLAUDE.md`) `43ad064`
+
+- **Before:** the repo had one agent with a kit (`front-end-developer`)
+  plus the four `impeccable-*` agents.
+- **After:** six kits copied as they are (architect, backend-engineer,
+  orchestrator, researcher, security-reviewer, tester; 40 skills-lock
+  entries), each agent file and kit INDEX.md rewritten for this repo, plus
+  the `designer` seat persona. `backend-engineer` is the data-layer agent
+  (`src/data/`, `src/lib/`, generator scripts, contracts in
+  `data-model.md`); `tester` covers vitest, the Playwright smoke and CI;
+  `security-reviewer` reviews the public bundle, client-side sinks,
+  secrets, dependencies, CI and agent tooling. The orchestrator,
+  researcher, architect and designer are room seat personas. `CLAUDE.md`
+  lists them; the skill gate's message names the editing agent's own kit
+  INDEX.md. No UI change.
