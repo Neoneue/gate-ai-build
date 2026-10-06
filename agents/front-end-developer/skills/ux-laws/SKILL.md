@@ -68,12 +68,9 @@ so a fix starts at the flow, not the styling.
 
 ## 3. Patterns the user already corrected
 
-Ported from another project on 2026-10-05. Items marked *(from another
-project, confirm with your human)* are not yet confirmed for gate-ai-build.
-
 - Hierarchy: the title is foreground and largest; section titles and names are foreground; supporting text is `type-copy-14` (or `type-copy-12` in dense chrome) in `muted-foreground`; a child section never shares its parent's role. If everything is foreground, nothing is important.
-- A collapsible section is a full-width section-header row (section title, chevron at the right edge, whole row clickable, hover fill), never a small ghost button. *(from another project, confirm with your human)*
-- A list item that opens something is a full-width selectable row with a hover fill and focus ring, never an underlined link. *(from another project, confirm with your human)*
+- A collapsible section is a full-width section-header row (section title, chevron at the right edge, whole row clickable, hover fill), never a small ghost button.
+- A list item that opens something is a full-width selectable row with a hover fill and focus ring, never an underlined link.
 - One primary action per view; the rest are outline or ghost.
 - Destructive actions are quiet at rest and confirm or undo on use, never the loudest thing on screen.
 - Each section's edit action sits in the same place everywhere.

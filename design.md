@@ -5,8 +5,7 @@
 # source line. Confidence tags: `code-direct` = read from index.css or a
 # primitive file in this repo (highest trust for this codebase since these
 # files ARE the contract — no transpile loss). `decided` = locked policy from
-# brand-guidelines.md (retired; this file supersedes it) or CLAUDE.md "Things
-# to not change without asking".
+# brand-guidelines.md (retired; this file supersedes it) or CLAUDE.md "Things to not change without asking".
 
 version: alpha
 name: "Constellation Gate AI"
@@ -1310,7 +1309,7 @@ Driven by `--radius` (0.625rem = 10px base) plus a **locked override** at `--rad
 
 **Concentric example:** a 4px Badge sits inside an 8px Card, which sits inside (when drilled into) a 16px Dialog. Ratios: 2× between every tier, deliberately. **Card-in-card steps down one tier (sharpened 2026-06-04):** when a card nests inside another card, the inner card drops to the next radius down — outer panel `rounded-md` (8px) → inner card `rounded-xs` (4px). Full ladder `24 → 16 → 8 → 4`; surfaces at the *same* nesting level match, and matching radii across a parent/child boundary is the bug. Override shared primitives (`DetailList`, `CodeCard`) at the usage site, not in the primitive. **Don't override `rounded-xl` on modals.**
 
-Iconography: `lucide-react` stroke `1.75`, **one global value, never keyed to the adjacent text weight** (decided 2026-09-14 after a survey: every fixed-geometry SVG set, Lucide, Heroicons, Radix, Tabler, Feather, Atlassian, ships one stroke for the whole set; stroke-to-text-weight matching is native to variable-weight font systems, SF Symbols and Material Symbols, and the `better-ui` skill's 1.5 / 2 / 2.5 table is overridden here). Sizes: `size-3` (12px) / `size-3.5` / `size-4` (16px) / `size-5` (20px). In Buttons, set `data-icon="inline-start"` or `"inline-end"` for variant-aware padding trim.
+Iconography: `lucide-react` stroke `1.75`, **one value for the whole set, passed at every call site (`strokeWidth={1.75}`; there is no global provider, and lucide's own default is 2), never keyed to the adjacent text weight** (decided 2026-09-14 after a survey: every fixed-geometry SVG set, Lucide, Heroicons, Radix, Tabler, Feather, Atlassian, ships one stroke for the whole set; stroke-to-text-weight matching is native to variable-weight font systems, SF Symbols and Material Symbols, and the `better-ui` skill's 1.5 / 2 / 2.5 table is overridden here). Sizes: `size-3` (12px) / `size-3.5` / `size-4` (16px) / `size-5` (20px). In Buttons, set `data-icon="inline-start"` or `"inline-end"` for variant-aware padding trim.
 
 ---
 

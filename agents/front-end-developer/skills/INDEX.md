@@ -177,9 +177,9 @@ recorded.
   card steps down one tier; full ladder 24 / 16 / 8 / 4
   (design.md:1310).
 - **Icons**: `lucide-react`, stroke 1.75, one value for the whole set;
-  sizes `size-3` to `size-5` (design.md:1312). The global mechanism is not
-  verified: no stroke rule in `src/index.css` or `src/main.tsx`; some call
-  sites pass `strokeWidth={1.75}` themselves.
+  sizes `size-3` to `size-5` (design.md:1312). Passed at every call site as
+  `strokeWidth={1.75}`: there is no global provider, and lucide's own
+  default is 2.
 - **Touch targets**: buttons 36px (`h-9`), 32px (`sm`), 24px (`xs`);
   icon-only buttons 36 / 32 / 24 with a 16px icon (14px at `icon-xs`);
   checkbox and radio 16px plus hit-target padding (design.md:1963-1968).

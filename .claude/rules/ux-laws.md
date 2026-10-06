@@ -12,7 +12,7 @@ only what must never depend on a skill being loaded.
   OpenAI / Anthropic consoles before inventing one.
 - **Hierarchy:** the title and names are foreground; supporting text is
   `muted-foreground`. If everything is foreground, nothing is important.
-- **Corrected patterns:** one primary action; destructive stays quiet; each
-  section's edit action sits in the same place everywhere. From another
-  project, confirm with your human: collapsibles are full-width section rows;
-  list items that open something are selectable rows with a hover fill.
+- **Corrected patterns:** collapsibles are full-width section rows; list
+  items that open something are selectable rows with a hover fill; one
+  primary action; destructive stays quiet; each section's edit action sits in
+  the same place everywhere.
