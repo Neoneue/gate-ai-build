@@ -22,6 +22,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Agent tooling: seven agents ported from agent-room
 - Agent tooling: UI gate credits a subagent's reads on a commit
 - Agent tooling: no agent limits, room rules, port follow-ups closed
+- Design docs: design.md line numbers restored, icon stroke reworded, ux-laws patterns confirmed
 
 ### [2026-10-01](./2026-10/changelog-10-1.md)
 

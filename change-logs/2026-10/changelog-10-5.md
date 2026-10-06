@@ -163,3 +163,16 @@ Prior day: [`changelog-10-1.md`](./changelog-10-1.md)
   added to `ui-audit/audit-file.md`; the duplicate deleted; design.md cites
   `index.css:192-194` and marks `brand-guidelines.md` retired; `--ease-in`
   removed (identical to Tailwind's default, so no visual change).
+
+### Design docs: design.md line numbers restored, icon stroke reworded, ux-laws patterns confirmed (`design.md`, `agents/front-end-developer/skills/`, `.claude/rules/ux-laws.md`) `9badd36`
+
+- **Before:** `01bfb2a` split design.md:8 in two, so every `design.md:N`
+  cite after it (24 in the INDEX, the agent file and the audit files) was off
+  by one; design.md:1312 called the 1.75 icon stroke "one global value",
+  though nothing sets it globally; two ux-laws patterns carried a "from
+  another project, confirm" mark.
+- **After:** design.md:8 is one line again (2,008 lines, cites land on the
+  right text); design.md:1312 says the stroke is passed at every call site,
+  with no global provider and lucide's default of 2; the collapsible
+  section row and the selectable list row are confirmed patterns in both the
+  skill and the rule. No UI change.
