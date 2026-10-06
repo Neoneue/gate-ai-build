@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-05](./2026-10/changelog-10-5.md)
 
+- Audit: ux-laws baseline, whole site (`audits/2026-10/audit-10-5.md`)
 - Models: separate free and paid detail pages
 - Models: free models are Qwen3.8 Flash and GLM 5.3 Flash, open to every plan
 - Models: Z.ai logo

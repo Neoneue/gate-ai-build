@@ -7,6 +7,14 @@ Prior day: [`changelog-10-1.md`](./changelog-10-1.md)
 
 ---
 
+## Audits
+
+- [`audits/2026-10/audit-10-5.md`](../../audits/2026-10/audit-10-5.md):
+  ux-laws baseline, whole site, ux-1 to ux-96, 88 items after 8 unwired
+  mockup controls were removed (6 HIGH / 48 MEDIUM / 34 LOW), one section
+  per law that found something; part 2 in `audit-10-5-2.md`. Qualified,
+  nothing applied. Alias `ux` added to the ui-audit alias table. `30693fa`
+
 ## Sections & surfaces
 
 ### Models: separate free and paid detail pages (`pages/Models.tsx`, `pages/models/FreeModels.tsx`) `a3d6e73`
