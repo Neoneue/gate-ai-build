@@ -136,3 +136,14 @@ Prior day: [`changelog-10-1.md`](./changelog-10-1.md)
   researcher, architect and designer are room seat personas. `CLAUDE.md`
   lists them; the skill gate's message names the editing agent's own kit
   INDEX.md. No UI change.
+
+### Agent tooling: UI gate credits a subagent's reads on a commit (`scripts/require-skill.mjs`, `CLAUDE.md`) `bd797eb`
+
+- **Before:** a commit holding UI files needed the committing session's own
+  four skill reads, so the main session re-read the skills to commit UI a
+  front-end-developer subagent had already built under the gate.
+- **After:** a UI commit also passes when one of the session's subagents
+  loaded the INDEX, ux-laws, visual-hierarchy and one build skill since the
+  last landed commit, ordered by transcript timestamps. With no subagents
+  folder nothing is credited (fail closed). Edits and shell writes still
+  need the session's own reads. No UI change.
