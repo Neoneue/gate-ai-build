@@ -1179,7 +1179,7 @@ pricing contract (§5.1.1) exactly:
 conversation's lane models, favourites, memory rows and both memory-tool
 switches are written to a module-scoped `useSyncExternalStore` store on top of
 the seeds, in memory, reset on reload (the notifications-store lifecycle).
-Sending is inert: the composer keeps its draft and no turn is added.
+Sending never adds a turn. From a new chat (`/chat` and its tier twins), Send or a starter prompt navigates (push) to the seeded conversation `chat_8f2c41d7` and clears the draft, so the mockup goes from the clean landing to a full thread and Back returns to it; inside a conversation, Send is inert and the composer keeps its draft.
 
 ## 6. Page Inventory
 

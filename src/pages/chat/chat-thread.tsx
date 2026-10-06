@@ -1,5 +1,6 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ScrollToLatestFab } from "@/components/ui/ask-ai-scroll-to-latest";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { cn } from "@/lib/utils";
 import { CHAT_MEASURE } from "./chat-layout";
 import { ChatMessage } from "./chat-message";
@@ -15,6 +16,15 @@ export interface ChatThreadProps {
 /** How far from the bottom a reader can be and still count as following. */
 const FOLLOW_SLACK_PX = 80;
 
+/** Desktop (lg+) scrolls the thread's own box; below lg the document
+ *  scrolls (ChatLayout), so follow-latest reads and moves the page. */
+const scrollportFor = (isDesktop: boolean, box: HTMLElement | null) =>
+  isDesktop ? box : document.scrollingElement;
+
+const awayFromBottom = (scrollport: Element) =>
+  scrollport.scrollHeight - scrollport.scrollTop - scrollport.clientHeight >
+  FOLLOW_SLACK_PX;
+
 export function ChatThread({
   turns,
   onRetry,
@@ -22,6 +32,7 @@ export function ChatThread({
   className,
 }: ChatThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isDesktop = useIsDesktop();
   const followLatestRef = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
   const latestTurn = turns.at(-1);
@@ -31,46 +42,62 @@ export function ChatThread({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: contentKey is the trigger; the effect reads the DOM, not the key
   useLayoutEffect(() => {
-    const scrollport = scrollRef.current;
-    if (!(scrollport && followLatestRef.current)) {
+    const target = scrollportFor(isDesktop, scrollRef.current);
+    if (!(target && followLatestRef.current)) {
       return;
     }
     const frame = requestAnimationFrame(() => {
-      scrollport.scrollTop = scrollport.scrollHeight;
+      target.scrollTop = target.scrollHeight;
       setShowLatest(false);
     });
     return () => cancelAnimationFrame(frame);
-  }, [contentKey]);
+  }, [contentKey, isDesktop]);
 
   const handleScroll = () => {
-    const scrollport = scrollRef.current;
-    if (!scrollport) {
+    const target = scrollportFor(isDesktop, scrollRef.current);
+    if (!target) {
       return;
     }
-    const awayFromBottom =
-      scrollport.scrollHeight - scrollport.scrollTop - scrollport.clientHeight >
-      FOLLOW_SLACK_PX;
-    followLatestRef.current = !awayFromBottom;
-    setShowLatest(awayFromBottom);
+    const away = awayFromBottom(target);
+    followLatestRef.current = !away;
+    setShowLatest(away);
   };
 
-  const scrollToLatest = () => {
-    const scrollport = scrollRef.current;
-    if (!scrollport) {
+  // Below lg the scroll events come from the window, not the thread's box.
+  useEffect(() => {
+    if (isDesktop) {
       return;
     }
-    scrollport.scrollTop = scrollport.scrollHeight;
+    const target = document.scrollingElement;
+    if (!target) {
+      return;
+    }
+    const handleWindowScroll = () => {
+      const away = awayFromBottom(target);
+      followLatestRef.current = !away;
+      setShowLatest(away);
+    };
+    window.addEventListener("scroll", handleWindowScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleWindowScroll);
+  }, [isDesktop]);
+
+  const scrollToLatest = () => {
+    const target = scrollportFor(isDesktop, scrollRef.current);
+    if (!target) {
+      return;
+    }
+    target.scrollTop = target.scrollHeight;
     followLatestRef.current = true;
     setShowLatest(false);
   };
 
   return (
-    <div className={cn("relative min-h-0 flex-1", className)}>
+    <div className={cn("relative flex-1 lg:min-h-0", className)}>
       {/* design-allow-clip: the inner column carries the 16px / 24px measure
           gutter (CHAT_MEASURE px-4 sm:px-6), well clear of the 4px ring. */}
       <div
-        className="h-full overflow-y-auto"
-        onScroll={handleScroll}
+        className="lg:h-full lg:overflow-y-auto"
+        onScroll={isDesktop ? handleScroll : undefined}
         ref={scrollRef}
       >
         <div
@@ -93,8 +120,10 @@ export function ChatThread({
           ))}
         </div>
       </div>
+      {/* Below lg it rides above the floating composer (and the keyboard):
+          main's `--chat-composer-h` plus `--kb-inset`, 12px clear. */}
       <ScrollToLatestFab
-        className="absolute bottom-3 left-1/2 -translate-x-1/2"
+        className="fixed bottom-[calc(var(--chat-composer-h,0px)+var(--kb-inset,0px)+--spacing(3))] left-1/2 -translate-x-1/2 max-lg:z-20 lg:absolute lg:bottom-3"
         onClick={scrollToLatest}
         visible={showLatest}
       />

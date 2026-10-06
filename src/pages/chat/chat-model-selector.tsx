@@ -369,178 +369,185 @@ export function ChatModelSelector({
     </ul>
   );
 
+  const content = (
+    <>
+      <DialogScrollHeader className="gap-3 pb-3 sm:gap-4 sm:pb-4">
+        <div className="flex items-start gap-3 pr-8 sm:gap-4">
+          <span className="hidden size-12 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground sm:inline-flex">
+            <Boxes aria-hidden className="size-5" strokeWidth={1.75} />
+          </span>
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <DialogTitle>{CHAT_COPY.chooseModel}</DialogTitle>
+              {slotLabel ? (
+                <span className="type-label-12 inline-flex h-5 shrink-0 items-center rounded-full bg-muted px-2 text-muted-foreground">
+                  {slotLabel}
+                </span>
+              ) : null}
+            </div>
+            <DialogDescription>
+              {CHAT_COPY.chooseModelDescription}
+            </DialogDescription>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              strokeWidth={1.75}
+            />
+            <Input
+              aria-label={CHAT_COPY.searchModels}
+              autoFocus
+              className="pl-9"
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") {
+                  return;
+                }
+                const first = visibleModels.find((model) => model.available);
+                if (first) {
+                  select(first);
+                }
+              }}
+              placeholder={CHAT_COPY.searchModels}
+              value={query}
+            />
+          </div>
+          <Select
+            onValueChange={(value) => setProvider(value ?? ALL_PROVIDERS)}
+            value={provider}
+          >
+            {/* Full width under the search field on a phone; beside it from sm. */}
+            <SelectTrigger
+              aria-label={CHAT_COPY.allProviders}
+              className="w-full sm:w-fit"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_PROVIDERS}>
+                {CHAT_COPY.allProviders}
+              </SelectItem>
+              {providerOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p
+          aria-live="polite"
+          className="type-copy-12 text-muted-foreground"
+          role="status"
+        >
+          {resultSummary}
+        </p>
+      </DialogScrollHeader>
+
+      <DialogScrollBody className="flex min-h-0 flex-1 flex-col pt-0">
+        {mutationError ? (
+          <div
+            className="mb-3 rounded-md border border-destructive-subtle bg-danger-50 p-3 dark:bg-destructive/15"
+            role="alert"
+          >
+            <span className="type-copy-12 text-danger-800 dark:text-danger-300">
+              {mutationError}
+            </span>
+          </div>
+        ) : null}
+        {error ? (
+          <div
+            className="flex flex-col items-start gap-2 rounded-md border border-border p-4"
+            role="alert"
+          >
+            <span className="type-copy-12 text-muted-foreground">
+              The model catalog could not be loaded.
+            </span>
+            {onRetry ? (
+              <TextLink className="type-label-12" onClick={onRetry}>
+                Retry
+              </TextLink>
+            ) : null}
+          </div>
+        ) : isLoading && models.length === 0 ? (
+          <div className="type-copy-12 p-4 text-muted-foreground" role="status">
+            Loading models…
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col gap-3 sm:gap-4">
+            <Tabs
+              onValueChange={(value) => setView(value as ModelView)}
+              value={view}
+            >
+              <TabsList
+                aria-label="Model categories"
+                className="h-auto w-full px-0"
+                variant="line"
+              >
+                {VISIBLE_MODEL_VIEWS.map((modelView) => (
+                  <TabsTrigger
+                    className="shrink-0"
+                    key={modelView}
+                    value={modelView}
+                  >
+                    {MODEL_VIEW_LABELS[modelView]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            {visibleModels.length === 0 ? (
+              <div
+                className="type-copy-12 p-4 text-muted-foreground"
+                role="status"
+              >
+                {query.trim() || provider !== ALL_PROVIDERS
+                  ? "No models in this tab match your filters."
+                  : view === "favorites"
+                    ? "No favorites yet. Star a model in All models to add it here."
+                    : view === "recent"
+                      ? "Models you use will appear here."
+                      : view === "free"
+                        ? "No models have confirmed free input and output pricing."
+                        : "No models in this category yet."}
+              </div>
+            ) : (
+              <>
+                {view === "featured" ? (
+                  <div className="flex items-start gap-3 px-1">
+                    <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-muted text-foreground">
+                      <ShieldCheck
+                        aria-hidden
+                        className="size-4"
+                        strokeWidth={1.75}
+                      />
+                    </span>
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <h3 className="type-label-14 text-foreground">
+                        {CHAT_COPY.recommendedModels}
+                      </h3>
+                      <p className="type-copy-12 text-muted-foreground">
+                        {CHAT_COPY.recommendedModelsDescription}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+                {renderModelList(visibleModels, view === "featured")}
+              </>
+            )}
+          </div>
+        )}
+      </DialogScrollBody>
+    </>
+  );
+
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger render={trigger}>{children}</DialogTrigger>
       <DialogScrollContent className="h-[min(88dvh,42rem)] max-w-[calc(100%-1rem)] sm:h-[min(76dvh,38rem)] sm:max-w-2xl lg:max-w-4xl">
-        <DialogScrollHeader className="gap-3 pb-3 sm:gap-4 sm:pb-4">
-          <div className="flex items-start gap-3 pr-8 sm:gap-4">
-            <span className="hidden size-12 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground sm:inline-flex">
-              <Boxes aria-hidden className="size-5" strokeWidth={1.75} />
-            </span>
-            <div className="flex min-w-0 flex-col gap-1">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <DialogTitle>{CHAT_COPY.chooseModel}</DialogTitle>
-                {slotLabel ? (
-                  <span className="type-label-12 inline-flex h-5 shrink-0 items-center rounded-full bg-muted px-2 text-muted-foreground">
-                    {slotLabel}
-                  </span>
-                ) : null}
-              </div>
-              <DialogDescription>
-                {CHAT_COPY.chooseModelDescription}
-              </DialogDescription>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto]">
-            <div className="relative min-w-0 flex-1">
-              <Search
-                aria-hidden
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                strokeWidth={1.75}
-              />
-              <Input
-                aria-label={CHAT_COPY.searchModels}
-                autoFocus
-                className="pl-9"
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key !== "Enter") {
-                    return;
-                  }
-                  const first = visibleModels.find((model) => model.available);
-                  if (first) {
-                    select(first);
-                  }
-                }}
-                placeholder={CHAT_COPY.searchModels}
-                value={query}
-              />
-            </div>
-            <Select
-              onValueChange={(value) => setProvider(value ?? ALL_PROVIDERS)}
-              value={provider}
-            >
-              <SelectTrigger aria-label={CHAT_COPY.allProviders}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_PROVIDERS}>
-                  {CHAT_COPY.allProviders}
-                </SelectItem>
-                {providerOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <p
-            aria-live="polite"
-            className="type-copy-12 text-muted-foreground"
-            role="status"
-          >
-            {resultSummary}
-          </p>
-        </DialogScrollHeader>
-
-        <DialogScrollBody className="flex min-h-0 flex-1 flex-col pt-0">
-          {mutationError ? (
-            <div
-              className="mb-3 rounded-md border border-destructive-subtle bg-danger-50 p-3 dark:bg-destructive/15"
-              role="alert"
-            >
-              <span className="type-copy-12 text-danger-800 dark:text-danger-300">
-                {mutationError}
-              </span>
-            </div>
-          ) : null}
-          {error ? (
-            <div
-              className="flex flex-col items-start gap-2 rounded-md border border-border p-4"
-              role="alert"
-            >
-              <span className="type-copy-12 text-muted-foreground">
-                The model catalog could not be loaded.
-              </span>
-              {onRetry ? (
-                <TextLink className="type-label-12" onClick={onRetry}>
-                  Retry
-                </TextLink>
-              ) : null}
-            </div>
-          ) : isLoading && models.length === 0 ? (
-            <div
-              className="type-copy-12 p-4 text-muted-foreground"
-              role="status"
-            >
-              Loading models…
-            </div>
-          ) : (
-            <div className="flex min-h-0 flex-1 flex-col gap-3 sm:gap-4">
-              <Tabs
-                onValueChange={(value) => setView(value as ModelView)}
-                value={view}
-              >
-                <TabsList
-                  aria-label="Model categories"
-                  className="h-auto w-full px-0"
-                  variant="line"
-                >
-                  {VISIBLE_MODEL_VIEWS.map((modelView) => (
-                    <TabsTrigger
-                      className="shrink-0"
-                      key={modelView}
-                      value={modelView}
-                    >
-                      {MODEL_VIEW_LABELS[modelView]}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-              {visibleModels.length === 0 ? (
-                <div
-                  className="type-copy-12 p-4 text-muted-foreground"
-                  role="status"
-                >
-                  {query.trim() || provider !== ALL_PROVIDERS
-                    ? "No models in this tab match your filters."
-                    : view === "favorites"
-                      ? "No favorites yet. Star a model in All models to add it here."
-                      : view === "recent"
-                        ? "Models you use will appear here."
-                        : view === "free"
-                          ? "No models have confirmed free input and output pricing."
-                          : "No models in this category yet."}
-                </div>
-              ) : (
-                <>
-                  {view === "featured" ? (
-                    <div className="flex items-start gap-3 px-1">
-                      <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-muted text-foreground">
-                        <ShieldCheck
-                          aria-hidden
-                          className="size-4"
-                          strokeWidth={1.75}
-                        />
-                      </span>
-                      <div className="flex min-w-0 flex-col gap-1">
-                        <h3 className="type-label-14 text-foreground">
-                          {CHAT_COPY.recommendedModels}
-                        </h3>
-                        <p className="type-copy-12 text-muted-foreground">
-                          {CHAT_COPY.recommendedModelsDescription}
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
-                  {renderModelList(visibleModels, view === "featured")}
-                </>
-              )}
-            </div>
-          )}
-        </DialogScrollBody>
+        {content}
       </DialogScrollContent>
     </Dialog>
   );
