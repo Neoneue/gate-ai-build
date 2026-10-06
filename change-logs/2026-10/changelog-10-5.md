@@ -104,3 +104,19 @@ Prior day: [`changelog-10-1.md`](./changelog-10-1.md)
   link lands on the paid page (catalog id, `$` prices, snippet on the
   catalog id), and that a catalog row opens the paid page. The Pro-only and
   banner tests are gone with the feature. No UI change.
+
+### Agent tooling: UX-first front-end agent and the UI gate (`.claude/agents/front-end-developer.md`, `agents/front-end-developer/skills/`, `scripts/require-skill.mjs`, `.claude/settings.json`) `4fa1d0f`
+
+- **Before:** the front-end-developer kit had 13 skills and a 55-line
+  INDEX.md; `design.md` was law and skills only filled gaps; nothing
+  checked that a UI edit followed any skill.
+- **After:** ported from the agent-room project. The kit gains 14 skills
+  plus `ux-laws` (read by path, with an always-loaded
+  `.claude/rules/ux-laws.md`). INDEX.md is a routing index: the core four,
+  pick by task, the UX-first order, and current values re-derived from
+  `design.md` with line cites. `design.md` is the current record: a skill
+  that differs becomes a proposed `design.md` update. A PreToolUse hook
+  (`scripts/require-skill.mjs`) blocks UI writes, in every session and
+  subagent, until the INDEX, ux-laws, visual-hierarchy and one build skill
+  are read; a subagent is judged by its own transcript. Its tests run
+  under vitest (`scripts/**/*.test.mjs`). No UI change.

@@ -18,6 +18,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Models: Qwen3.8 Flash context, max output and capabilities
 - Models: 24px between section headings and their content
 - Tests: model detail paths
+- Agent tooling: UX-first front-end agent and the UI gate
 
 ### [2026-10-01](./2026-10/changelog-10-1.md)
 
