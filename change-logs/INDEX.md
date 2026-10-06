@@ -9,6 +9,17 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-06](./2026-10/changelog-10-6.md)
+
+- Count formatter: billions tier
+- `keyboard-open` variant
+- Touch text fields at 16px
+- Gate Chat: mobile layout and keyboard
+- Gate Chat: landing steps aside for the keyboard
+- Gate Chat: new chat opens the demo conversation
+- Gate Chat: phone composer details
+- Gate Chat: model picker provider filter
+
 ### [2026-10-05](./2026-10/changelog-10-5.md)
 
 - Audit: ux-laws baseline, whole site (`audits/2026-10/audit-10-5.md`)
