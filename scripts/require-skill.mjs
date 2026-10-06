@@ -389,7 +389,7 @@ function uiMessage(file, missing) {
 
 const CODE_STEP = {
   index:
-    "read the skills INDEX.md in full, once this session (agents/front-end-developer/skills/INDEX.md, or .claude/skills/INDEX.md)",
+    "read your kit's skills INDEX.md in full, once this session (agents/<your-agent>/skills/INDEX.md, or .claude/skills/INDEX.md)",
   skill:
     "after reading the index, load the skill it names for this job (read its SKILL.md with Read, cat or sed -n, or the Skill tool for a general skill)",
 };

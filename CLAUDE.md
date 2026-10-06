@@ -42,7 +42,19 @@ Shared project instructions, kept minimal; per-area detail lives in
   after each commit. It gates every session, the main one included, so a
   direct-edited class move needs the same four reads. Inside a subagent it
   checks the subagent's own transcript. It fails open: if it never blocks,
-  check that the hook is registered.
+  check that the hook is registered. Other edits under `src/` and `e2e/`
+  need the editing agent's own kit INDEX.md read, then one skill.
+- **Other agents** (`.claude/agents/`, kits in `agents/<name>/skills/`, read
+  by path):
+  - `backend-engineer`: the data layer (`src/data/`, `src/lib/`, generator
+    scripts, data tests, contracts in `data-model.md`).
+  - `tester`: vitest, the Playwright smoke, CI failures, read-only deploy
+    checks.
+  - `security-reviewer` (read-only): the public bundle, client-side sinks,
+    secrets, dependencies, CI, hooks and agent files; before every
+    promotion.
+  - Seat personas, launched with `claude --agent <name>` and never spawned:
+    `orchestrator`, `researcher`, `architect`, `designer`.
 
 Detailed rules live in `.claude/rules/` and are auto-discovered. The design
 ones (`design-tokens`, `no-hardcoding`, `no-handrolling`) are path-scoped to
