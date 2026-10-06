@@ -118,6 +118,18 @@ Verdict (run 1): Qualified. <one sentence>
    | brand | `brand` |
    | oklch-skill | `oklch` |
    | svg-animations | `svga` |
+   | better-typography | `btyp` |
+   | better-accessibility | `ba11y` |
+   | user-flow-diagram | `flow` |
+   | animate | `anim` |
+   | review-animations | `rvan` |
+   | apple-design | `apl` |
+   | emil-design-eng | `emil` |
+   | animation-vocabulary | `avoc` |
+   | ask-sonner | `sonner` |
+   | prototype | `proto` |
+   | break-ui | `break` |
+   | pick-ui-library | `pick` |
    | color-audit (manual token sweep) | `col` |
    | test-smoke (vitest + Playwright; a run on its own, or the verify step after every apply pass) | `smk` |
 

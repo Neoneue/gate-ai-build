@@ -149,10 +149,8 @@ recorded.
 - **Three easing tokens**: `--ease-out` (`cubic-bezier(0.23, 1, 0.32, 1)`)
   is the default for color, shadow and scale; `--ease-in-out` for symmetric
   moves; `--ease-drawer` for slide-in surfaces (Sheet, sidebar)
-  (design.md:1280-1282). Declared in `@theme` at `src/index.css:192-195`
-  (design.md:1291 still cites the old lines 168-171). `src/index.css:193`
-  also declares `--ease-in`, undocumented in design.md and unused in
-  `src/`: don't reach for it; propose documenting or removing it.
+  (design.md:1280-1282). Declared in `@theme` at `src/index.css:192-194`
+  (design.md:1291).
 - **Durations**: 100ms overlay fade and MenuItem highlight; 150ms default
   control transition; 200ms Dialog enter, sliding indicator and toast;
   120ms Dialog close; 300ms Sheet slide-in (design.md:1283-1287).
