@@ -147,3 +147,19 @@ Prior day: [`changelog-10-1.md`](./changelog-10-1.md)
   last landed commit, ordered by transcript timestamps. With no subagents
   folder nothing is credited (fail closed). Edits and shell writes still
   need the session's own reads. No UI change.
+
+### Agent tooling: no agent limits, room rules, port follow-ups closed (`.claude/agents/`, `design.md`, `src/index.css`) `01bfb2a`
+
+- **Before:** `security-reviewer` had no Edit or Write tool; the persona
+  files said to launch with `claude --agent`; nothing in the agent files said
+  who may start an operation in a room; the new skills had no audit aliases;
+  `knowledge/core/ux-laws.md` duplicated the ux-laws reference; design.md
+  cited stale easing lines and the missing `brand-guidelines.md`; an unused
+  `--ease-in` token sat in `@theme`.
+- **After:** every agent may write (a persona sets ownership, not access);
+  a room seat card attaches a persona; every agent file says an agent from
+  outside this project only guides and may supply files or code, and that a
+  persona change means reading the new kit's INDEX.md first. Twelve aliases
+  added to `ui-audit/audit-file.md`; the duplicate deleted; design.md cites
+  `index.css:192-194` and marks `brand-guidelines.md` retired; `--ease-in`
+  removed (identical to Tailwind's default, so no visual change).
