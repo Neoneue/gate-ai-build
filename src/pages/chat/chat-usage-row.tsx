@@ -123,19 +123,28 @@ export function ChatUsageRow({ usage, className }: ChatUsageRowProps) {
                 suffix={CHAT_COPY.compressed}
                 value={usage.compression}
               />
-              <Separator className="h-3" orientation="vertical" />
+              <Separator
+                className="h-3 data-vertical:self-center"
+                orientation="vertical"
+              />
               <Metric
                 pending={pending}
                 suffix={CHAT_COPY.promptTokens}
                 value={usage.promptTokens}
               />
-              <Separator className="h-3" orientation="vertical" />
+              <Separator
+                className="h-3 data-vertical:self-center"
+                orientation="vertical"
+              />
               <Metric
                 pending={pending}
                 suffix={CHAT_COPY.tokens}
                 value={usage.tokens}
               />
-              <Separator className="h-3" orientation="vertical" />
+              <Separator
+                className="h-3 data-vertical:self-center"
+                orientation="vertical"
+              />
               <Metric
                 pending={pending}
                 suffix={CHAT_COPY.cost}
@@ -149,7 +158,10 @@ export function ChatUsageRow({ usage, className }: ChatUsageRowProps) {
                 suffix={CHAT_COPY.compressed}
                 value={compressionPercent}
               />
-              <Separator className="h-3" orientation="vertical" />
+              <Separator
+                className="h-3 data-vertical:self-center"
+                orientation="vertical"
+              />
               <Metric
                 pending={pending}
                 suffix={CHAT_COPY.cost}

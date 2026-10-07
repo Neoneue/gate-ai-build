@@ -17,4 +17,7 @@ Kits are not linted (`agents/**` is excluded in markdownlint, Biome and
 ESLint) because most of their content is vendored. Per-machine binaries stay
 gitignored; see `.gitignore` for the impeccable engine.
 
-Current agents: `front-end-developer`.
+Current agents: `architect`, `backend-engineer`, `front-end-developer`,
+`orchestrator`, `researcher`, `security-reviewer`, `tester` (each with a
+kit here), plus the `designer` seat persona and the four `impeccable-*`
+agents, which have a `.claude/agents/` file only.

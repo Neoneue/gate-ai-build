@@ -7,6 +7,13 @@ applied. Rules and the alias table: `.claude/skills/ui-audit/audit-file.md`.
 
 **Find the day, then open only that file.**
 
+## October 2026
+
+### [2026-10-05](./2026-10/audit-10-5.md)
+
+- `ux` ux-laws, whole site (six review agents, every route twin plus shell and primitives): ux-1 to ux-96 (8 unwired mockup controls removed), 0/88 applied.
+  Qualified; 6 HIGH / 48 MEDIUM / 34 LOW, one section per law. Part 2: ux-59 to ux-96 in [`audit-10-5-2.md`](./2026-10/audit-10-5-2.md).
+
 ## September 2026
 
 ### [2026-09-21](./2026-09/audit-9-21.md)

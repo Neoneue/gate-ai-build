@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CodeLine } from "@/components/ui/code-card";
-import { formatCurrency, formatNumber, linesToString } from "@/lib/formatters";
+import {
+  formatCompactCount,
+  formatCurrency,
+  formatNumber,
+  linesToString,
+} from "@/lib/formatters";
 import { randomHex } from "@/lib/utils";
 
 describe("linesToString", () => {
@@ -24,6 +29,21 @@ describe("formatters", () => {
 
   it("formatCurrency renders dollars", () => {
     expect(formatCurrency(238)).toMatch(/^\$238/);
+  });
+});
+
+describe("formatCompactCount", () => {
+  it.each([
+    [59_938, "59,938"],
+    [19_386_865, "19.4M"],
+    [999_940_000, "999.9M"],
+    // Would round to "1000.0M" on the M step, so it reads as a billion.
+    [999_960_000, "1.0B"],
+    [1_000_000_000, "1.0B"],
+    [1_526_400_000, "1.5B"],
+    [19_142_100_000, "19.1B"],
+  ])("renders %d as %s", (n, want) => {
+    expect(formatCompactCount(n)).toBe(want);
   });
 });
 

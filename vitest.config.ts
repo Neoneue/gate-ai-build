@@ -8,7 +8,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.mjs"],
     environment: "node",
     // Pins Date so demo-clock shifts are stable across real days; see the file.
     setupFiles: ["src/test/setup.ts"],

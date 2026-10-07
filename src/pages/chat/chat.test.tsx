@@ -1,7 +1,14 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CHAT_SEED_CONVERSATIONS } from "@/data/gate-chat";
+import { mountRoute } from "@/test/mount-with-location";
 import { renderRoute, resetViewRole } from "@/test/render";
 import { chatStore } from "./chat-store";
 import { CHAT_COPY } from "./copy";
@@ -99,63 +106,93 @@ describe("Gate Chat routes", () => {
   });
 });
 
-describe("no chatting", () => {
-  it("keeps the draft and adds no turn when sent", async () => {
-    const { container } = await renderRoute("/chat");
+describe("sending (UI only)", () => {
+  const DEMO = COMPARISON.id;
+
+  async function send(text: string) {
     const field = (await screen.findByPlaceholderText(
       "Message Gate Chat"
     )) as HTMLTextAreaElement;
-    fireEvent.change(field, { target: { value: "Hello Gate" } });
-    fireEvent.keyDown(field, { key: "Enter" });
+    fireEvent.change(field, { target: { value: text } });
     fireEvent.click(screen.getByRole("button", { name: CHAT_COPY.sendPrompt }));
-    expect(field.value).toBe("Hello Gate");
-    expect(container.querySelectorAll("[data-slot=chat-lane]")).toHaveLength(0);
+    return field;
+  }
+
+  it("opens the seeded conversation when a new chat is sent", async () => {
+    const view = await mountRoute("/chat");
+    await send("Hello Gate");
+    await waitFor(() => expect(view.location().pathname).toBe(`/chat/${DEMO}`));
     expect(
-      screen.getByRole("heading", { name: CHAT_COPY.landingTitle })
-    ).toBeTruthy();
+      (await screen.findAllByRole("heading", { name: COMPARISON.title })).length
+    ).toBeGreaterThan(0);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("seeds the draft from a starter prompt without sending it", async () => {
-    await renderRoute("/chat");
-    const starter = await screen.findByRole("button", {
+  it("stays on the tier twin's route", async () => {
+    const view = await mountRoute("/chat-free");
+    await send("Hello Gate");
+    await waitFor(() =>
+      expect(view.location().pathname).toBe(`/chat-free/${DEMO}`)
+    );
+  });
+
+  it("opens the seeded conversation from a landing starter in one tap", async () => {
+    const view = await mountRoute("/chat");
+    // jsdom applies no CSS, so both surfaces mount: the landing list (shown
+    // from `sm`) first, then the chip row on the composer (shown below it).
+    const [listPrompt] = await screen.findAllByRole("button", {
       name: "Compare two models on a technical decision",
     });
-    fireEvent.click(starter);
-    const field = screen.getByPlaceholderText(
-      "Message Gate Chat"
-    ) as HTMLTextAreaElement;
-    expect(field.value).toBe("Compare two models on a technical decision");
+    fireEvent.click(listPrompt);
+    await waitFor(() => expect(view.location().pathname).toBe(`/chat/${DEMO}`));
+  });
+
+  it("opens the seeded conversation from a phone starter chip", async () => {
+    const view = await mountRoute("/chat");
+    const chipRow = await screen.findByRole("group", {
+      name: "Starter prompts",
+    });
+    fireEvent.click(
+      within(chipRow).getByRole("button", {
+        name: "Summarize a document and list the key risks",
+      })
+    );
+    await waitFor(() => expect(view.location().pathname).toBe(`/chat/${DEMO}`));
+  });
+
+  it("keeps the draft and stays put when sent inside a conversation", async () => {
+    const view = await mountRoute(`/chat/${REDACTED.id}`);
+    const lanesBefore = view.container.querySelectorAll(
+      "[data-slot=chat-lane]"
+    ).length;
+    const field = await send("Hello Gate");
+    expect(field.value).toBe("Hello Gate");
+    expect(view.location().pathname).toBe(`/chat/${REDACTED.id}`);
+    expect(
+      view.container.querySelectorAll("[data-slot=chat-lane]")
+    ).toHaveLength(lanesBefore);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
 
 describe("top bar", () => {
-  it("collapses and expands the chat rail from the top-bar toggle", async () => {
-    const { container } = await renderRoute(`/chat/${COMPARISON.id}`);
-    const toggle = await screen.findByRole("button", {
-      name: "Collapse sidebar",
-    });
-    const rail = () =>
-      container.querySelector(
-        "aside[data-slot=chat-sidebar].hidden"
-      ) as HTMLElement;
-    expect(rail().className).toContain("w-72");
-    fireEvent.click(toggle);
-    expect(rail().className).toContain("w-16");
-    fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }));
-    expect(rail().className).toContain("w-72");
-  });
-
-  it("draws the logo mark, never the full lockup", async () => {
+  it("draws the logo mark below lg and the full lockup from lg, with no rail toggle", async () => {
     const { container } = await renderRoute("/chat");
     await screen.findByRole("heading", { name: CHAT_COPY.landingTitle });
     const header = container.querySelector("header") as HTMLElement;
-    const images = [...header.querySelectorAll("img")].map((img) =>
-      img.getAttribute("src")
-    );
-    expect(images).toEqual(["/gate-ai-logo-mark.png"]);
-    expect(container.innerHTML).not.toContain("/gate-ai-logo.png");
-    expect(container.innerHTML).not.toContain("/gate-ai-logo-dark.png");
+    const mark = header.querySelector('img[src="/gate-ai-logo-mark.png"]');
+    const lockups = [
+      header.querySelector('img[src="/gate-ai-logo.png"]'),
+      header.querySelector('img[src="/gate-ai-logo-dark.png"]'),
+    ];
+    // jsdom applies no CSS, so both mount; the classes decide the breakpoint.
+    expect(mark?.closest("a")?.className).toContain("lg:hidden");
+    for (const lockup of lockups) {
+      expect(lockup?.closest("div.hidden")?.className).toContain("lg:flex");
+    }
+    expect(
+      screen.queryByRole("button", { name: /(Collapse|Expand) sidebar/ })
+    ).toBeNull();
   });
 });
 

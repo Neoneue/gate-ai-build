@@ -4,7 +4,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { ChatAttachmentPicker } from "./chat-attachment-picker";
+import {
+  ChatAttachmentChips,
+  ChatAttachmentPicker,
+  type ChatPickedFile,
+} from "./chat-attachment-picker";
 import { CHAT_TOUCH_TARGET } from "./chat-layout";
 import { ChatModelLogo } from "./chat-model-logo";
 import { ChatModelSelector } from "./chat-model-selector";
@@ -19,6 +23,23 @@ import type { ChatModel, ChatNotice, ChatNoticeTone } from "./types";
 
 /** Far enough from the ceiling to warn in time, late enough that a normal prompt never sees it. */
 const COMPOSER_COUNT_VISIBLE_CHARS = 20_000;
+
+/**
+ * A ghost icon key at a toolbar edge draws no box at rest, so the eye reads
+ * its glyph as the edge, not its target. Pulling the key out by its own
+ * inset, (target - glyph) / 2, lands the 16px glyph on the prompt's text
+ * edge: a 32px `icon-sm` target gives 8px, the 44px coarse target
+ * (CHAT_TOUCH_TARGET, same two pointer variants) gives 14px. The 14px only
+ * cancels the half step that centring 16 in 44 creates; the glyph itself
+ * lands on the shell's 16px padding line. Measured at 390px: paperclip ink
+ * 34.4 against the placeholder's 34.3.
+ */
+const EDGE_KEY_START =
+  "-ml-2 pointer-coarse:-ml-3.5 any-pointer-coarse:-ml-3.5";
+/** The trailing twin, for the remove-comparison key that ends the phone's
+ *  model row. From `sm` that key sits mid-row, so the pull stops there. */
+const EDGE_KEY_END_PHONE =
+  "max-sm:-mr-2 max-sm:pointer-coarse:-mr-3.5 max-sm:any-pointer-coarse:-mr-3.5";
 
 /** The composer notice is an inline note inside the composer, so it takes the
  *  15% rung of the status wash ladder (design.md §2). */
@@ -80,6 +101,8 @@ export function ChatComposer({
   const fieldRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
   const [limitHit, setLimitHit] = useState(false);
+  const [attachments, setAttachments] = useState<ChatPickedFile[]>([]);
+  const comparing = models.length > 1;
   const usedModelIds = new Set(models.map((model) => model.id));
   const comparisonCandidates = catalog.filter(
     (model) => model.available && !usedModelIds.has(model.id)
@@ -162,15 +185,30 @@ export function ChatComposer({
         </div>
       ) : null}
 
+      {/* Picked files sit with the prompt they ride with, above it, so the
+          toolbar row below keeps one height (audit ux-75). */}
+      {attachments.length > 0 ? (
+        <ChatAttachmentChips
+          files={attachments}
+          onRemove={(id) =>
+            setAttachments((current) =>
+              current.filter((entry) => entry.id !== id)
+            )
+          }
+        />
+      ) : null}
+
       <label className="sr-only" htmlFor={fieldId}>
         {CHAT_COPY.prompt}
       </label>
-      {/* The Ask AI composer's content-sized field: one quiet line at rest,
-          four lines before it scrolls, with the shell carrying every edge.
+      {/* The Ask AI composer's content-sized field: one quiet line at rest
+          with 8px of room under it (28px, 32px on touch, where the
+          index.css touch rule sets 16/24), four lines before it scrolls,
+          with the shell carrying every edge.
           design-allow-clip: the textarea IS the control and holds no
           focusable children; the shell draws its focus state. */}
       <textarea
-        className="type-copy-14 field-sizing-content block max-h-20 min-h-5 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-foreground outline-none placeholder:text-muted-foreground"
+        className="type-copy-14 field-sizing-content block max-h-20 pointer-coarse:max-h-24 min-h-7 pointer-coarse:min-h-8 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 text-foreground outline-none placeholder:text-muted-foreground"
         id={fieldId}
         onChange={(event) => handleChange(event.target.value)}
         onKeyDown={handleKeyDown}
@@ -198,29 +236,44 @@ export function ChatComposer({
         </div>
       ) : null}
 
-      {/* One wrapping row. On a phone the model controls take a full-width
-          line of their own (order 1) and the send and attach controls share
-          the line below. From `sm` up the four parts sit on one line. */}
-      <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+      {/* One toolbar row, the ChatGPT / Claude mobile composer: attach, the
+          model picker and its compare key, then send at the far edge. The
+          model group is flex-1, so the free space falls between compare and
+          send and the row never wraps; the picker label truncates first.
+          Phone gap 4px matches the group's own gap-1, so every key sits at
+          one pitch (29px glyph to glyph on a 44px target). In compare mode
+          the two lanes take a full-width row of their own on a phone, first
+          in visual order, with attach and send on the row below. From `sm`
+          up the separator returns and the gap opens to 12px. */}
+      <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-1 gap-y-2 sm:gap-x-3">
         <ChatAttachmentPicker
-          className="order-2 shrink-0 sm:order-1"
+          className={cn("shrink-0", EDGE_KEY_START)}
           models={models}
+          onPick={(files) =>
+            setAttachments((current) => [...current, ...files])
+          }
         />
 
         {models.length > 0 && onSelectLaneModel ? (
           <>
             <Separator
-              className="order-2 hidden h-5 shrink-0 self-center sm:order-2 sm:block"
+              className="hidden h-5 shrink-0 data-vertical:self-center sm:block"
               orientation="vertical"
             />
             <div
               aria-label="Models"
-              className="order-1 flex w-full min-w-0 items-center gap-1 sm:order-3 sm:w-auto sm:flex-1"
+              className={cn(
+                "flex min-w-0 items-center gap-1",
+                comparing
+                  ? "w-full max-sm:order-first sm:w-auto sm:flex-1"
+                  : "flex-1"
+              )}
               role="group"
             >
               {models.map((model, index) => {
-                const slot =
-                  models.length > 1 ? modelSlotLabel(index) : CHAT_COPY.model;
+                const slot = comparing
+                  ? modelSlotLabel(index)
+                  : CHAT_COPY.model;
                 const laneCatalog = catalog.filter(
                   (candidate) =>
                     candidate.id === model.id ||
@@ -239,12 +292,24 @@ export function ChatComposer({
                     onSelect={(modelId) => onSelectLaneModel(index, modelId)}
                     onToggleFavorite={onToggleFavorite}
                     selectedId={model.id}
-                    slotLabel={models.length > 1 ? slot : undefined}
+                    slotLabel={comparing ? slot : undefined}
                     trigger={
                       <Button
                         className={cn(
                           CHAT_TOUCH_TARGET,
-                          "min-w-0 flex-1 basis-0 sm:max-w-44"
+                          // Phone: hugs its label and gives way to its
+                          // neighbours, the label truncating first, so the
+                          // logo leads the trigger instead of floating in a
+                          // stretched box. From `sm`: the shipped 176px lane.
+                          "min-w-0 shrink sm:max-w-44 sm:flex-1 sm:basis-0",
+                          // One step up on touch: 14px label, 20px logo and
+                          // chevron (the sm Button gives 12px and 16px).
+                          "pointer-coarse:text-sm pointer-coarse:[&_img]:size-5 pointer-coarse:[&_svg]:size-5",
+                          // The first lane leads the phone's compare row:
+                          // pulling back the Button's own 10px icon padding
+                          // (the sanctioned px-2.5) lands its "1" on the
+                          // prompt's text edge (ink 34.5 against 34.3).
+                          comparing && index === 0 && "max-sm:-ml-2.5"
                         )}
                         size="sm"
                         type="button"
@@ -253,7 +318,7 @@ export function ChatComposer({
                     }
                   >
                     <span className="sr-only">{slot}: </span>
-                    {models.length > 1 ? (
+                    {comparing ? (
                       <span
                         aria-hidden
                         className="type-label-12 shrink-0 text-muted-foreground"
@@ -295,7 +360,7 @@ export function ChatComposer({
                 >
                   <Plus
                     aria-hidden
-                    className="size-4"
+                    className="pointer-coarse:size-5 size-4"
                     data-icon="inline-start"
                     strokeWidth={1.75}
                   />
@@ -305,10 +370,14 @@ export function ChatComposer({
                 </ChatModelSelector>
               ) : null}
 
-              {models.length > 1 && onRemoveComparisonModel ? (
+              {comparing && onRemoveComparisonModel ? (
                 <Button
                   aria-label={CHAT_COPY.removeComparisonModel}
-                  className={cn(CHAT_TOUCH_TARGET, "shrink-0")}
+                  className={cn(
+                    CHAT_TOUCH_TARGET,
+                    "shrink-0",
+                    EDGE_KEY_END_PHONE
+                  )}
                   onClick={onRemoveComparisonModel}
                   size="icon-sm"
                   title={CHAT_COPY.removeComparisonModel}
@@ -323,10 +392,7 @@ export function ChatComposer({
         ) : null}
         <Button
           aria-label={CHAT_COPY.sendPrompt}
-          className={cn(
-            CHAT_TOUCH_TARGET,
-            "order-3 ml-auto shrink-0 sm:order-4 sm:ml-0"
-          )}
+          className={cn(CHAT_TOUCH_TARGET, "ml-auto shrink-0 sm:ml-0")}
           disabled={disabled || draft.trim().length === 0}
           onClick={submit}
           shape="circle"

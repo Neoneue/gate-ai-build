@@ -9,8 +9,25 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-06](./2026-10/changelog-10-6.md)
+
+- Count formatter: billions tier
+- `keyboard-open` variant
+- Touch text fields at 16px
+- Gate Chat: mobile layout and keyboard
+- Gate Chat: landing steps aside for the keyboard
+- Gate Chat: new chat opens the demo conversation
+- Gate Chat: phone composer details
+- Gate Chat: model picker provider filter
+- Vertical separators centre on their row
+- Gate Chat: landing polish
+- Gate Chat: top bar logo and rail
+- Gate Chat: conversation header
+- Gate Chat: Memories dialog
+
 ### [2026-10-05](./2026-10/changelog-10-5.md)
 
+- Audit: ux-laws baseline, whole site (`audits/2026-10/audit-10-5.md`)
 - Models: separate free and paid detail pages
 - Models: free models are Qwen3.8 Flash and GLM 5.3 Flash, open to every plan
 - Models: Z.ai logo
@@ -18,6 +35,11 @@ tokens; this index exists so nothing has to glob the directory.
 - Models: Qwen3.8 Flash context, max output and capabilities
 - Models: 24px between section headings and their content
 - Tests: model detail paths
+- Agent tooling: UX-first front-end agent and the UI gate
+- Agent tooling: seven agents ported from agent-room
+- Agent tooling: UI gate credits a subagent's reads on a commit
+- Agent tooling: no agent limits, room rules, port follow-ups closed
+- Design docs: design.md line numbers restored, icon stroke reworded, ux-laws patterns confirmed
 
 ### [2026-10-01](./2026-10/changelog-10-1.md)
 

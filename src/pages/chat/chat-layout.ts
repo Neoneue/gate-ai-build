@@ -24,7 +24,6 @@ export const CHAT_RAIL_COLLAPSED = "w-16";
  *  exists (`lg`+). Below `lg` the rail is a drawer, so the column hugs the
  *  logo mark instead of reserving 288px of a 390px phone bar. */
 export const CHAT_BRAND_EXPANDED = "lg:w-72";
-export const CHAT_BRAND_COLLAPSED = "lg:w-16";
 
 /** The site's `.chat-touch-target` utility, expressed through Tailwind's
  *  pointer variants instead of a bespoke class: chat interaction targets

@@ -1,17 +1,10 @@
-import { useMemo, useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-  useParams,
-} from "react-router-dom";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { WORKSPACE_NAME } from "@/data/team-members";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
-import type { ChatLayoutContext } from "@/layouts/ChatLayout";
 import { cn } from "@/lib/utils";
 import { ChatComposer } from "@/pages/chat/chat-composer";
 import {
@@ -26,7 +19,7 @@ import {
   toChatConversation,
 } from "@/pages/chat/chat-data";
 import { ChatHeader } from "@/pages/chat/chat-header";
-import { ChatLanding } from "@/pages/chat/chat-landing";
+import { ChatLanding, ChatStarterChips } from "@/pages/chat/chat-landing";
 import { CHAT_MEASURE } from "@/pages/chat/chat-layout";
 import {
   chatBillingUrl,
@@ -60,25 +53,80 @@ const NEW_CONVERSATION: ChatConversation = {
  * in the in-memory `chat-store.ts`. Nothing here makes a network call, and
  * sending produces no reply: the composer accepts a draft and keeps it.
  */
+/** The seeded conversation a new chat's send or starter opens. */
+const DEMO_CONVERSATION_ID = "chat_8f2c41d7";
+
+/** Router state on that navigation, so a refresh can tell it apart. */
+const DEMO_STATE = { chatDemo: true } as const;
+
+/** The refresh check runs once per page load, on the first Chat mount. */
+let reloadChecked = false;
+
+const isDemoState = (state: unknown): boolean =>
+  typeof state === "object" &&
+  state !== null &&
+  (state as { chatDemo?: unknown }).chatDemo === true;
+
 export function Chat() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, state: locationState } = useLocation();
   const isDesktop = useIsDesktop();
+  const mainRef = useRef<HTMLElement>(null);
+  const composerRef = useRef<HTMLDivElement>(null);
 
-  // Owned by `ChatLayout`: the top bar's brand column, its toggle and this
-  // rail draw two halves of one line, so in the app they read one value.
-  const outlet = useOutletContext<ChatLayoutContext | null>();
-  const railCollapsed = outlet?.railCollapsed ?? false;
+  // Below lg the composer is fixed, out of flow: mirror its live height
+  // (chips, a growing field, notices) onto main as `--chat-composer-h`,
+  // which main pads by and the thread's jump-to-latest button sits above.
+  // A layout effect, set once before paint, so the thread's first
+  // scroll-to-latest (a frame later) already sees the padding.
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    const composer = composerRef.current;
+    if (!(main && composer)) {
+      return;
+    }
+    const sync = () =>
+      main.style.setProperty(
+        "--chat-composer-h",
+        `${composer.getBoundingClientRect().height}px`
+      );
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(composer);
+    return () => observer.disconnect();
+  }, []);
 
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [draftModelIds, setDraftModelIds] = useState<string[] | null>(null);
-  const [draftRequest, setDraftRequest] = useState<{
-    id: number;
-    text: string;
-  } | null>(null);
   const [lowBalanceDismissed, setLowBalanceDismissed] = useState(false);
+
+  // UI only, no model behind it: a send or a starter from a new chat opens
+  // the seeded demo conversation, so the mockup goes from the clean landing
+  // to a full thread. A push, so Back returns to the clean state. Inside a
+  // conversation a send stays inert (the composer keeps its draft).
+  const openDemoConversation = () =>
+    navigate(chatConversationPath(pathname, DEMO_CONVERSATION_ID), {
+      state: DEMO_STATE,
+    });
+
+  // A browser refresh on that demo thread goes back a step to the clean
+  // landing, so the mockup can be replayed. The router keeps its state in
+  // history.state, which survives a reload; a conversation opened any other
+  // way (rail, link, typed URL) carries none and stays put on refresh.
+  useEffect(() => {
+    if (reloadChecked) {
+      return;
+    }
+    reloadChecked = true;
+    const [entry] = performance.getEntriesByType?.("navigation") ?? [];
+    const reloaded =
+      (entry as { type?: string } | undefined)?.type === "reload";
+    if (reloaded && isDemoState(locationState)) {
+      navigate(chatHomePath(pathname), { replace: true });
+    }
+  }, [locationState, navigate, pathname]);
 
   // The lane selection and the seeded draft are per conversation: navigating
   // away must not carry one conversation's onto the next. Adjusted during
@@ -88,7 +136,6 @@ export function Chat() {
   if (previousConversationId !== conversationId) {
     setPreviousConversationId(conversationId);
     setDraftModelIds(null);
-    setDraftRequest(null);
   }
 
   // A drawer opened on a narrow window must not survive the move to the
@@ -172,9 +219,15 @@ export function Chat() {
     setLaneModels([models[0].id]);
   }
 
-  // UI only: no reply, no stream. Returning false keeps the draft on screen,
-  // the composer's own contract for a send that did not go out.
-  const handleSend = () => false;
+  // Returning true clears the draft (the composer's contract for a send that
+  // went out); false keeps it on screen.
+  const handleSend = () => {
+    if (conversationId) {
+      return false;
+    }
+    openDemoConversation();
+    return true;
+  };
 
   const buildExport = (id: string, format: ChatExportFormat) => {
     const input = conversations.find((entry) => entry.seed.id === id);
@@ -222,7 +275,11 @@ export function Chat() {
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden bg-card">
+    <div
+      className={cn(
+        "flex bg-card max-lg:flex-1 lg:h-full lg:min-h-0 lg:overflow-hidden"
+      )}
+    >
       <Sheet onOpenChange={setMobileRailOpen} open={mobileRailOpen}>
         {/* No corner close key: at 288px it landed on top of New chat, ink on
             ink, so it was invisible and stole that button's taps. The drawer
@@ -260,7 +317,7 @@ export function Chat() {
       <ChatSidebar
         {...sidebarProps}
         className="hidden lg:flex"
-        collapsed={railCollapsed}
+        collapsed={false}
         onNewChat={() => navigate(chatHomePath(pathname))}
         onSelectConversation={(id) =>
           navigate(chatConversationPath(pathname, id))
@@ -268,6 +325,7 @@ export function Chat() {
       />
       <div className="flex min-w-0 flex-1 flex-col bg-card-muted">
         <ChatHeader
+          className="max-lg:sticky max-lg:top-16 max-lg:z-20"
           conversation={conversation}
           credits={credits}
           onMemoryToolsOverride={(value) => {
@@ -278,7 +336,19 @@ export function Chat() {
           onOpenNavigation={() => setMobileRailOpen(true)}
           totals={totals}
         />
-        <main className="ask-ai-canvas relative flex min-h-0 flex-1 flex-col">
+        {/* Below lg the composer floats over the document, so main reserves its measured
+            height (`--chat-composer-h`) at the bottom: the last bubble always
+            clears it. `isolate` below lg: everything that scrolls under the
+            sticky bars (the masked canvas texture, scrolling code blocks,
+            pulse dots, the floating composer) is grouped in one stacking
+            context at z 0, beneath the bars' z-20 / z-30. iOS was painting
+            those composited parts over the bars during scroll. */}
+        <main
+          className={cn(
+            "ask-ai-canvas relative flex flex-1 flex-col max-lg:isolate max-lg:pb-(--chat-composer-h) lg:min-h-0"
+          )}
+          ref={mainRef}
+        >
           {lowBalanceNotice ? (
             <div
               className="type-copy-14 relative flex shrink-0 flex-wrap items-center gap-3 border-warning-200 border-b bg-warning-50 px-6 py-3 text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300"
@@ -326,24 +396,38 @@ export function Chat() {
           ) : conversation.turns.length > 0 ? (
             <ChatThread turns={conversation.turns} />
           ) : (
-            <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 py-8 sm:px-6">
+            <div
+              className={cn(
+                "relative flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:min-h-0 lg:overflow-y-auto"
+              )}
+            >
               <ChatLanding
-                onPromptSelect={(text) =>
-                  setDraftRequest((current) => ({
-                    id: (current?.id ?? 0) + 1,
-                    text,
-                  }))
-                }
+                onPromptSelect={openDemoConversation}
                 organizationName={WORKSPACE_NAME}
               />
             </div>
           )}
-          <div className="relative shrink-0 pt-2 pb-3 sm:pb-4">
-            <div className={cn(CHAT_MEASURE, "flex flex-col gap-2")}>
+          {/* Below lg it floats: fixed to the bottom of the screen and lifted
+              by `--kb-inset`, the keyboard's height over the layout
+              (useVisualViewportVars), so only the composer and its chips
+              move and the header bars stay put. 0 with no keyboard. The
+              opaque fill hides the thread scrolling behind it. */}
+          <div
+            className={cn(
+              "relative z-10 shrink-0 translate-y-[calc(var(--kb-inset,0px)*-1)] pt-2 pb-3 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:bg-card-muted sm:pb-4"
+            )}
+            ref={composerRef}
+          >
+            <div className={cn(CHAT_MEASURE, "flex flex-col gap-3")}>
+              {conversationMissing || conversation.turns.length > 0 ? null : (
+                <ChatStarterChips
+                  className="sm:hidden"
+                  onPromptSelect={openDemoConversation}
+                />
+              )}
               <ChatComposer
                 catalog={catalogList}
                 disabled={conversationMissing}
-                draftRequest={conversationId ? null : draftRequest}
                 key={conversationId ?? "new"}
                 models={models}
                 notice={composerNotice}
@@ -357,10 +441,6 @@ export function Chat() {
                   chatStore.setFavorite(modelId, favorite)
                 }
               />
-              <p className="type-copy-12 px-2 text-center text-muted-foreground">
-                AI can make mistakes. Review important answers. Gate records
-                usage and security details for every response.
-              </p>
             </div>
           </div>
         </main>

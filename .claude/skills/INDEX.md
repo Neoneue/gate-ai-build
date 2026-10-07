@@ -1,9 +1,10 @@
 # Skills and commands index: orchestrator
 
 What lives in `.claude/skills/` (skills I load on my own when the task
-matches) and `.claude/commands/` (slash commands the user types). Design
-skills are not here; they belong to the `front-end-developer` agent and are
-indexed at `agents/front-end-developer/skills/INDEX.md`.
+matches) and `.claude/commands/` (slash commands the user types). Skills an
+agent owns are not here: each lives in its agent's kit and is indexed at
+`agents/<agent>/skills/INDEX.md` (design skills at
+`agents/front-end-developer/skills/INDEX.md`).
 
 ## Pick by situation
 

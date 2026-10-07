@@ -10,6 +10,11 @@
 @import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));
+/* An on-screen keyboard is open: set on <html> by useVisualViewportVars
+   (Gate Chat) only while a field has focus AND the visible area is 150px+
+   short, so a desktop or DevTools device mode, where no keyboard opens,
+   never matches. */
+@custom-variant keyboard-open (&:is([data-keyboard-open] *));
 @custom-variant hover-fine ((@media (hover: hover)
 and (pointer: fine)) and (&:hover));
 
@@ -190,7 +195,6 @@ and (pointer: fine)) and (&:hover));
      utility resolve to the strong curve site-wide. Drawer is named
      separately for slide-in surfaces (Sheet, sidebar). */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -1419,5 +1423,41 @@ body {
   .animate-ellipsis::after {
     content: "…";
     animation: none;
+  }
+}
+
+/* ─── Touch text fields: 16px, never smaller ────────────────────────────
+   iOS Safari zooms the page when focus lands in a field under 16px and does
+   not zoom back out, so every touch device gets 16/24 in every text field.
+   Unlayered on purpose: the type voices (`type-copy-14`) live in the
+   utilities layer after Tailwind's own classes, so a `pointer-coarse:`
+   utility at a call site loses to them; an unlayered rule beats every layer.
+   design.md §Inputs & Forms. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+  textarea,
+  select {
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+}
+
+/* ─── Gate Chat below lg: keyboard room on the scrolling document ───────
+   While an on-screen keyboard is open (`data-keyboard-open`, set by
+   useVisualViewportVars; never on a desktop or in DevTools' phone mode,
+   where focus alone left a blank half-screen to scroll into) the document
+   gets a keyboard's height of extra room at the bottom, so iOS scrolls the page to
+   reveal the field instead of panning the visual viewport (which carries
+   the sticky header bars with it). A CONSTANT, not `--kb-inset`: that value
+   moves with the scroll, and padding tied to it changed the scroll range
+   mid-scroll. 50svh covers an iPhone keyboard plus its bar.
+   Content-box padding on the shell: its min-h-svh applies to the content,
+   so the room is added below it and nothing inside reflows. (Not on body:
+   html, body and #root are height 100%, so body padding cannot grow the
+   scroll.) */
+@media (width < 64rem) {
+  [data-keyboard-open] [data-chat-shell] {
+    box-sizing: content-box;
+    padding-bottom: 50svh;
   }
 }

@@ -58,7 +58,7 @@ export function ChatHeader({
   return (
     <header
       className={cn(
-        "flex h-14 w-full min-w-0 shrink-0 items-center gap-3 border-border border-b bg-card px-4 sm:px-6",
+        "flex h-14 w-full min-w-0 shrink-0 items-center gap-3 border-border border-b bg-card px-4 sm:px-6 lg:h-16",
         className
       )}
     >
@@ -108,7 +108,7 @@ export function ChatHeader({
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <div className="hidden items-center gap-2 xl:flex">
-          <span className="type-label-12 text-muted-foreground">
+          <span className="type-label-14 text-muted-foreground">
             {CHAT_COPY.credits}
           </span>
           {credits.low ? (
@@ -122,7 +122,7 @@ export function ChatHeader({
         {credits.pro ? null : (
           <>
             <Separator
-              className="hidden h-6 self-center xl:block"
+              className="hidden h-6 data-vertical:self-center xl:block"
               orientation="vertical"
             />
             <Button

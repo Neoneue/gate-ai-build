@@ -596,3 +596,7 @@ function DefaultUserArea({
     </>
   );
 }
+
+/** The full logo lockup (light + dark PNG), linked to Overview when a path is
+ *  given. Exported for Gate Chat's top bar, which has no rail brand. */
+export { DefaultBrand as BrandLockup };
