@@ -25,7 +25,7 @@ agents).
 - **Descriptions are routing rules.** Before: backend-engineer claimed
   "contracts in data-model.md" and pulled in architect work. After: each
   description says when to use the agent. Jev on a fresh blind holdout set:
-  20/33 to 26/33 routed correctly.
+  20/33 to 24/33 routed correctly.
 - **Roles.** The architect owns site structure, project cleanliness and
   `data-model.md`. The researcher researches, relays findings and writes
   plans. The orchestrator owns edits to `.claude/rules/`, `CLAUDE.md` and
@@ -36,3 +36,22 @@ agents).
   is checked against its Contract, and its proving command is re-run. A
   FAIL goes back with numbered fixes. Three rounds max, then the best result
   goes up with the open objections.
+
+### Seat personas: security review fixes `186e8ca`
+
+No UI change; agent tooling only (`.claude/agents/` orchestrator,
+researcher, architect, designer).
+
+- **Seat descriptions.** Before: "do not spawn it as a subagent". After:
+  "do not spawn it as a subagent or delegate to it automatically", in all
+  four seat descriptions.
+- **Spawned designer.** Before: no rule for a designer spawned as a
+  subagent. After: a spawned copy never calls room tools, since it would
+  post on its parent's seat (`designer.md`).
+- **Orchestrator gated actions.** Before: commit, push, promote, deleting
+  data, spending money, new dependencies. After: also edits to
+  `.claude/rules/`, `CLAUDE.md`, `.claude/agents/`, `.claude/settings.json`
+  and `scripts/`.
+- **Jev in the critic loop.** Before: any claim audit could run Jev. After:
+  Jev runs only from the orchestrator or researcher seat, and never with
+  Constellation-only evidence (`orchestrator.md` Workflow step 5).
