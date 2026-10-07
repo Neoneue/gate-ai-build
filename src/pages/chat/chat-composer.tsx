@@ -257,7 +257,7 @@ export function ChatComposer({
         {models.length > 0 && onSelectLaneModel ? (
           <>
             <Separator
-              className="hidden h-5 shrink-0 self-center sm:block"
+              className="hidden h-5 shrink-0 data-vertical:self-center sm:block"
               orientation="vertical"
             />
             <div

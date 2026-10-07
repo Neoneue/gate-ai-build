@@ -176,32 +176,23 @@ describe("sending (UI only)", () => {
 });
 
 describe("top bar", () => {
-  it("collapses and expands the chat rail from the top-bar toggle", async () => {
-    const { container } = await renderRoute(`/chat/${COMPARISON.id}`);
-    const toggle = await screen.findByRole("button", {
-      name: "Collapse sidebar",
-    });
-    const rail = () =>
-      container.querySelector(
-        "aside[data-slot=chat-sidebar].hidden"
-      ) as HTMLElement;
-    expect(rail().className).toContain("w-72");
-    fireEvent.click(toggle);
-    expect(rail().className).toContain("w-16");
-    fireEvent.click(screen.getByRole("button", { name: "Expand sidebar" }));
-    expect(rail().className).toContain("w-72");
-  });
-
-  it("draws the logo mark, never the full lockup", async () => {
+  it("draws the logo mark below lg and the full lockup from lg, with no rail toggle", async () => {
     const { container } = await renderRoute("/chat");
     await screen.findByRole("heading", { name: CHAT_COPY.landingTitle });
     const header = container.querySelector("header") as HTMLElement;
-    const images = [...header.querySelectorAll("img")].map((img) =>
-      img.getAttribute("src")
-    );
-    expect(images).toEqual(["/gate-ai-logo-mark.png"]);
-    expect(container.innerHTML).not.toContain("/gate-ai-logo.png");
-    expect(container.innerHTML).not.toContain("/gate-ai-logo-dark.png");
+    const mark = header.querySelector('img[src="/gate-ai-logo-mark.png"]');
+    const lockups = [
+      header.querySelector('img[src="/gate-ai-logo.png"]'),
+      header.querySelector('img[src="/gate-ai-logo-dark.png"]'),
+    ];
+    // jsdom applies no CSS, so both mount; the classes decide the breakpoint.
+    expect(mark?.closest("a")?.className).toContain("lg:hidden");
+    for (const lockup of lockups) {
+      expect(lockup?.closest("div.hidden")?.className).toContain("lg:flex");
+    }
+    expect(
+      screen.queryByRole("button", { name: /(Collapse|Expand) sidebar/ })
+    ).toBeNull();
   });
 });
 

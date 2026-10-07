@@ -1,17 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-  useParams,
-} from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { WorkspaceSwitcher } from "@/components/ui/workspace-switcher";
 import { WORKSPACE_NAME } from "@/data/team-members";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
-import type { ChatLayoutContext } from "@/layouts/ChatLayout";
 import { cn } from "@/lib/utils";
 import { ChatComposer } from "@/pages/chat/chat-composer";
 import {
@@ -103,11 +96,6 @@ export function Chat() {
     observer.observe(composer);
     return () => observer.disconnect();
   }, []);
-
-  // Owned by `ChatLayout`: the top bar's brand column, its toggle and this
-  // rail draw two halves of one line, so in the app they read one value.
-  const outlet = useOutletContext<ChatLayoutContext | null>();
-  const railCollapsed = outlet?.railCollapsed ?? false;
 
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -329,7 +317,7 @@ export function Chat() {
       <ChatSidebar
         {...sidebarProps}
         className="hidden lg:flex"
-        collapsed={railCollapsed}
+        collapsed={false}
         onNewChat={() => navigate(chatHomePath(pathname))}
         onSelectConversation={(id) =>
           navigate(chatConversationPath(pathname, id))
@@ -430,7 +418,7 @@ export function Chat() {
             )}
             ref={composerRef}
           >
-            <div className={cn(CHAT_MEASURE, "flex flex-col gap-2")}>
+            <div className={cn(CHAT_MEASURE, "flex flex-col gap-3")}>
               {conversationMissing || conversation.turns.length > 0 ? null : (
                 <ChatStarterChips
                   className="sm:hidden"
@@ -453,10 +441,6 @@ export function Chat() {
                   chatStore.setFavorite(modelId, favorite)
                 }
               />
-              <p className="type-copy-12 px-2 text-center text-muted-foreground">
-                AI can make mistakes. Review important answers. Gate records
-                usage and security details for every response.
-              </p>
             </div>
           </div>
         </main>

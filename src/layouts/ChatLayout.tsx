@@ -1,4 +1,3 @@
-import { type Dispatch, type SetStateAction, useState } from "react";
 import { Outlet, useOutletContext } from "react-router-dom";
 import type { LayoutContext } from "@/App";
 import { AskAiSurface } from "@/components/ui/ask-ai-surface";
@@ -19,17 +18,9 @@ import { ChatTopBar } from "@/pages/chat/chat-top-bar";
  * in `DashboardChrome`. Its open state is App's hoisted `askAiOpen`, so the
  * panel survives navigation between conversations.
  */
-export interface ChatLayoutContext {
-  railCollapsed: boolean;
-  setRailCollapsed: Dispatch<SetStateAction<boolean>>;
-}
-
 export function ChatLayout() {
   const { askAiOpen, setAskAiOpen } = useOutletContext<LayoutContext>();
   const isDesktop = useIsDesktop();
-  // Lifted out of the page so the top bar's brand column, its toggle and the
-  // rail below read ONE value: they draw two halves of the same vertical line.
-  const [railCollapsed, setRailCollapsed] = useState(false);
   useVisualViewportVars();
 
   return (
@@ -49,16 +40,10 @@ export function ChatLayout() {
         askAiOpen={askAiOpen}
         className="max-lg:sticky max-lg:top-0 max-lg:z-30"
         onToggleAskAi={() => setAskAiOpen((open) => !open)}
-        onToggleRail={() => setRailCollapsed((collapsed) => !collapsed)}
-        railCollapsed={railCollapsed}
       />
       <div className="flex flex-1 lg:min-h-0">
         <div className="flex min-w-0 flex-1 flex-col">
-          <Outlet
-            context={
-              { railCollapsed, setRailCollapsed } satisfies ChatLayoutContext
-            }
-          />
+          <Outlet />
         </div>
         <AskAiSurface
           isDesktop={isDesktop}

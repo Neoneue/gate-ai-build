@@ -28,6 +28,15 @@ const STEP_ASIDE =
 const STEP_ASIDE_ENTER =
   "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:fill-mode-backwards";
 
+/** From `md` (768px) the starter buttons join the same entrance, between the
+ *  description and the workspace line: 100 / 150 / 200ms, 200ms each, then
+ *  the workspace line at 250ms (user, 2026-10-06). Below `md` they appear at
+ *  once. */
+const STARTER_ENTER =
+  "md:motion-safe:animate-in md:motion-safe:fade-in-0 md:motion-safe:slide-in-from-bottom-2 md:motion-safe:fill-mode-backwards";
+const STARTER_DELAY_START_MS = 100;
+const STARTER_DELAY_STEP_MS = 50;
+
 /** Per-line delays: [return, exit]. Literal strings so Tailwind sees them. */
 const STEP_ASIDE_DELAY = [
   "motion-safe:delay-150 motion-safe:keyboard-open:delay-0",
@@ -76,7 +85,7 @@ export function ChatLanding({
         </h2>
         <p
           className={cn(
-            "type-copy-16 max-w-xl text-pretty text-muted-foreground",
+            "type-copy-16 max-w-135 text-pretty text-muted-foreground",
             STEP_ASIDE,
             STEP_ASIDE_DELAY[1],
             STEP_ASIDE_ENTER
@@ -87,31 +96,42 @@ export function ChatLanding({
         </p>
       </div>
 
-      {/* From `sm` up the prompts are a centered list. On a phone they move
-          into ChatStarterChips, a one-line row docked on the composer. */}
+      {/* From `sm` up the prompts are a centered list, capped at the
+          description's own 540px (max-w-135, user 2026-10-06) so both share
+          one column edge. On a
+          phone they move into ChatStarterChips, a one-line row docked on
+          the composer. */}
       {onPromptSelect ? (
         <div
           aria-label="Starter prompts"
-          className="hidden w-full flex-col gap-2 sm:flex"
+          className="hidden w-full max-w-135 flex-col gap-2 sm:flex"
         >
-          {CHAT_STARTER_PROMPTS.map((prompt) => (
+          {CHAT_STARTER_PROMPTS.map((prompt, index) => (
             // The Ask AI suggestion-row recipe (outline + pill + default).
-            // `h-auto min-h-9 whitespace-normal` lets a long prompt wrap
+            // `h-auto min-h-10 whitespace-normal` lets a long prompt wrap
             // instead of overflowing the row. The pill inset is 16px, not
             // the Button's 10px icon padding: a fully round end eats into a
             // 10px inset, so the label crowded the curve. Overriding that
             // same `has-data-[icon=inline-end]` variant is what lets the call
             // site win (a bare `px-4` loses to it on specificity), padding
-            // only. A coarse pointer gets the chat surface's 44px floor.
+            // only. 40px with a mouse; a coarse pointer gets the chat
+            // surface's 44px floor (user, 2026-10-06).
             <Button
               className={cn(
                 CHAT_TOUCH_TARGET,
-                "h-auto min-h-9 w-full justify-between whitespace-normal text-left has-data-[icon=inline-end]:px-4"
+                "h-auto min-h-10 w-full justify-between whitespace-normal text-left has-data-[icon=inline-end]:px-4",
+                STARTER_ENTER
               )}
               key={prompt}
               onClick={() => onPromptSelect(prompt)}
               shape="pill"
               size="default"
+              style={{
+                animationDelay: `${STARTER_DELAY_START_MS + index * STARTER_DELAY_STEP_MS}ms`,
+                // The Button's own duration-150 would set the entrance to
+                // 150ms; inline so its hover transition keeps 150ms.
+                animationDuration: "200ms",
+              }}
               type="button"
               variant="outline"
             >
@@ -134,7 +154,8 @@ export function ChatLanding({
           STEP_ASIDE_DELAY[2],
           STEP_ASIDE_ENTER
         )}
-        style={{ animationDelay: "100ms" }}
+        // Last in the entrance, after the starter buttons (100-200ms).
+        style={{ animationDelay: "250ms" }}
       >
         <ShieldCheck
           aria-hidden
@@ -178,7 +199,12 @@ export function ChatStarterChips({
     >
       {CHAT_STARTER_PROMPTS.map((prompt) => (
         <Button
-          className={cn(CHAT_TOUCH_TARGET, "has-data-[icon=inline-end]:px-4")}
+          // 40px with a mouse, the chat surface's 44px floor on touch
+          // (user, 2026-10-06).
+          className={cn(
+            CHAT_TOUCH_TARGET,
+            "h-10 has-data-[icon=inline-end]:px-4"
+          )}
           key={prompt}
           onClick={() => onPromptSelect(prompt)}
           shape="pill"

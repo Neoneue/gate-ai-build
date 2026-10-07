@@ -61,7 +61,7 @@ function MemoryToolsControls({
 
   return (
     <div className="flex flex-col gap-3 rounded-sm border border-border p-3">
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <Label htmlFor={userSwitchId}>{CHAT_COPY.memoryToolsUser}</Label>
           <p className="type-copy-12 text-muted-foreground">
@@ -101,7 +101,10 @@ function MemoryRow({ memory }: { memory: ChatMemory }) {
 
   return (
     <div className="flex flex-col gap-3 border-border border-b py-3 last:border-b-0">
-      <div className="flex items-start gap-3">
+      {/* Switch and delete centre on the text block, and every switch in the
+          dialog is the default size (user, 2026-10-06: they read as
+          misaligned top-pinned at two sizes). */}
+      <div className="flex items-center gap-3">
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="type-label-14 truncate text-foreground">{memory.key}</p>
           <p className="type-copy-12 text-muted-foreground">{memory.content}</p>
@@ -117,7 +120,6 @@ function MemoryRow({ memory }: { memory: ChatMemory }) {
               enabled,
             })
           }
-          size="sm"
         />
         <Button
           aria-label={`Delete memory ${memory.key}`}
@@ -203,7 +205,8 @@ export function ChatMemoryPanel({
           )
         }
       />
-      <DialogContent>
+      {/* 400px (max-w-100, user 2026-10-06) over the primitive's 384px. */}
+      <DialogContent className="w-full sm:max-w-100">
         <DialogHeader>
           <DialogTitle>{CHAT_COPY.memories}</DialogTitle>
           <DialogDescription>
