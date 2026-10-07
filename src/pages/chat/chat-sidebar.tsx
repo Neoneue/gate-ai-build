@@ -248,9 +248,7 @@ export function ChatSidebar({
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
               <nav aria-labelledby={headingId}>
-                {/* "Chats" and the date headings sit on the panel's 16px
-                    left padding, flush with New chat (user, 2026-10-06). */}
-                <div className="flex items-center justify-between gap-3 pr-3 pb-3">
+                <div className="flex items-center justify-between gap-3 px-3 pb-3">
                   <h2 id={headingId}>
                     <Eyebrow>{CHAT_COPY.history}</Eyebrow>
                   </h2>
@@ -324,7 +322,7 @@ export function ChatSidebar({
                       return (
                         <section aria-labelledby={groupId} key={group.label}>
                           <h3
-                            className="type-copy-12 pr-3 pb-2 text-muted-foreground"
+                            className="type-copy-12 px-3 pb-2 text-muted-foreground"
                             id={groupId}
                           >
                             {group.label}

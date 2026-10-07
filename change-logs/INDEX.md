@@ -12,7 +12,7 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-10-06](./2026-10/changelog-10-6.md)
 
 - Count formatter: billions tier
-- Gate Chat: desktop, mobile and phone (`10afc67`, `1e42ade`, `757bf58`)
+- Gate Chat: desktop, mobile and phone (`10afc67`, `1e42ade`, `757bf58`, `6527e81`)
   - `keyboard-open` variant
   - Touch text fields at 16px
   - Vertical separators centre on their row
@@ -27,6 +27,7 @@ tokens; this index exists so nothing has to glob the directory.
   - Memories dialog
   - Top bar and header actions
   - Sidebar credits, drawer and alignment
+  - Sidebar heading indent restored
 
 ### [2026-10-05](./2026-10/changelog-10-5.md)
 

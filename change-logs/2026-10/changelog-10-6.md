@@ -25,6 +25,7 @@ its own. Commits, in order:
 - `10afc67` feat(chat): mobile Gate Chat keyboard, document scroll and demo send
 - `1e42ade` fix(chat): landing, header, logo and memories polish
 - `757bf58` fix(chat): header actions, sidebar credits and alignment
+- `6527e81` fix(chat): restore the sidebar heading indent
 
 ### Conventions
 
@@ -162,3 +163,10 @@ its own. Commits, in order:
   more button; "Chats" and the date headings sit on the 16px panel edge,
   flush with New chat; the date headings are regular weight
   (`type-copy-12`).
+
+#### Gate Chat: sidebar heading indent restored (`pages/chat/chat-sidebar.tsx`) `6527e81`
+
+- **Before:** (`757bf58`) "Chats" and the date headings sat flush on the
+  16px panel edge.
+- **After:** back on their 12px inset (`px-3`, x28), in line with the row
+  titles (user, after review). The date headings keep regular weight.
