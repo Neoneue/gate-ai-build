@@ -45,6 +45,10 @@ type NotificationsMenuProps = {
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;
+  /** The bell's look. Default `ghost-to-outline` (the dashboard top bar);
+   *  Gate Chat passes `ghost`, its theme toggle's look. */
+  triggerVariant?: "ghost-to-outline" | "ghost";
+  triggerClassName?: string;
 };
 
 /** The bell-button corner badge — the MENU-level unread indicator, and the
@@ -83,6 +87,8 @@ function NotificationsMenu({
   side = "bottom",
   align = "end",
   sideOffset = 8,
+  triggerVariant = "ghost-to-outline",
+  triggerClassName,
 }: NotificationsMenuProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -123,9 +129,9 @@ function NotificationsMenu({
                 ? `Notifications, ${unreadCount} unread`
                 : "Notifications"
             }
-            className="relative"
+            className={cn("relative", triggerClassName)}
             size="icon"
-            variant="ghost-to-outline"
+            variant={triggerVariant}
           >
             <BellIcon
               aria-hidden

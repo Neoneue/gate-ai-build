@@ -248,7 +248,9 @@ export function ChatSidebar({
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
               <nav aria-labelledby={headingId}>
-                <div className="flex items-center justify-between gap-3 px-3 pb-3">
+                {/* "Chats" and the date headings sit on the panel's 16px
+                    left padding, flush with New chat (user, 2026-10-06). */}
+                <div className="flex items-center justify-between gap-3 pr-3 pb-3">
                   <h2 id={headingId}>
                     <Eyebrow>{CHAT_COPY.history}</Eyebrow>
                   </h2>
@@ -322,7 +324,7 @@ export function ChatSidebar({
                       return (
                         <section aria-labelledby={groupId} key={group.label}>
                           <h3
-                            className="type-label-12 px-3 pb-2 text-muted-foreground"
+                            className="type-copy-12 pr-3 pb-2 text-muted-foreground"
                             id={groupId}
                           >
                             {group.label}
@@ -362,38 +364,44 @@ export function ChatSidebar({
 
             <Separator />
             {credits || showUpgrade ? (
-              <div
-                className="flex shrink-0 flex-col gap-3 px-4 pt-4 xl:hidden"
-                data-slot="chat-sidebar-credits"
-              >
-                {credits ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="type-label-12 text-muted-foreground">
-                      {CHAT_COPY.credits}
-                    </span>
-                    {credits.low ? (
-                      <Badge variant="warning">{credits.balance}</Badge>
-                    ) : (
-                      <span className="type-mono-14 text-foreground">
-                        {credits.balance}
+              <>
+                <div
+                  className="flex shrink-0 flex-col gap-3 p-4 xl:hidden"
+                  data-slot="chat-sidebar-credits"
+                >
+                  {credits ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="type-label-14 text-muted-foreground">
+                        {CHAT_COPY.credits}
                       </span>
-                    )}
-                  </div>
-                ) : null}
-                {showUpgrade ? (
-                  <Button
-                    className={cn("w-full", touchFriendly && "h-11")}
-                    nativeButton={false}
-                    render={<Link to={chatBillingUrl(pathname)} />}
-                    size="sm"
-                    variant="outline"
-                  >
-                    {CHAT_COPY.upgrade}
-                  </Button>
-                ) : null}
-              </div>
+                      {credits.low ? (
+                        <Badge variant="warning">{credits.balance}</Badge>
+                      ) : (
+                        <span className="type-mono-14 text-foreground">
+                          {credits.balance}
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
+                  {showUpgrade ? (
+                    <Button
+                      className={cn("w-full", touchFriendly && "h-11")}
+                      nativeButton={false}
+                      render={<Link to={chatBillingUrl(pathname)} />}
+                      size="sm"
+                      variant="outline"
+                    >
+                      {CHAT_COPY.upgrade}
+                    </Button>
+                  ) : null}
+                </div>
+                {/* Separates credits from Back to dashboard (user,
+                  2026-10-06); shown wherever the credits block is. */}
+                <Separator className="xl:hidden" />
+              </>
             ) : null}
-            <div className="shrink-0 p-4">
+            {/* 12px above and below in the phone drawer, 16px in the rail. */}
+            <div className={cn("shrink-0 p-4", touchFriendly && "py-3")}>
               <Button
                 className={cn("w-full justify-start", touchFriendly && "h-11")}
                 nativeButton={false}
@@ -453,7 +461,13 @@ function ConversationRow({
       <button
         aria-current={active ? "page" : undefined}
         aria-label={conversation.title}
-        className={cn(rowBase, active ? rowActive : rowIdle)}
+        // Phone drawer: the name truncates 20px earlier (pr-16, not pr-11),
+        // clear of the always-visible 44px more button (user, 2026-10-06).
+        className={cn(
+          rowBase,
+          active ? rowActive : rowIdle,
+          touchFriendly && "pr-16"
+        )}
         disabled={conversation.id === null}
         onClick={() => conversation.id && onSelect(conversation.id)}
         type="button"
