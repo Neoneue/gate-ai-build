@@ -386,7 +386,10 @@ export function AppRoutes() {
         <Route element={<TeamsEnterprise />} path="/teams" />
         <Route element={<TeamDetailEnterprise />} path="/teams/:teamId" />
         <Route element={<Notifications />} path="/notifications" />
-        <Route element={<Settings showCancelPlan={false} />} path="/settings" />
+        <Route
+          element={<Settings retentionTier="pro" showCancelPlan={false} />}
+          path="/settings"
+        />
         <Route element={<ApiKeys />} path="/api-keys" />
         <Route element={<ApiKeysDefault />} path="/api-keys-default" />
         <Route element={<Billing />} path="/billing" />
@@ -486,7 +489,9 @@ export function AppRoutes() {
         <Route element={<ApiKeys />} path="/api-keys-enterprise" />
         <Route element={<Notifications />} path="/notifications-enterprise" />
         <Route
-          element={<Settings showCancelPlan={false} />}
+          element={
+            <Settings retentionTier="enterprise" showCancelPlan={false} />
+          }
           path="/settings-enterprise"
         />
         {/* Unknown routes fall back to Requests. */}
