@@ -1,4 +1,4 @@
-import { KeyRound, TriangleAlert } from "lucide-react";
+import { Eraser, KeyRound, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { toast } from "sonner";
@@ -38,10 +38,10 @@ import { useViewRole } from "@/pages/teams/teams-store";
  *                  state and shared Save / Reset footer.
  *   2. Security  — section title + subtitle ABOVE the card; passkey
  *                  registration (static, no dirty state).
- *   3. Account   — section title + subtitle ABOVE the cards; two
- *      management   `tone="danger"` cards, one per irreversible flow
- *                  (cancel plan / delete account), each confirming through
- *                  an AlertDialog.
+ *   3. Account   — section title + subtitle ABOVE the cards; one
+ *      management   `tone="danger"` card per irreversible flow (erase
+ *                  stored data first, then cancel plan on paid tiers, then
+ *                  delete account), each confirming through an AlertDialog.
  *
  * Section titles sit above their card, never inside it (design.md §3 /
  * SectionTitle). The cards carry data only — no CardHeader.
@@ -116,9 +116,10 @@ function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
             <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
               {showCancelPlan
                 ? "Manage your plan, organization, and other account-level actions."
-                : "Manage your organization and other account-level actions."}
+                : "Erase stored data or delete this organization."}
             </p>
           </div>
+          <EraseStoredDataCard />
           {showCancelPlan && <CancelPlanCard />}
           <DeleteAccountCard />
         </div>
@@ -303,7 +304,7 @@ function SecurityCard() {
 }
 
 /* ─── Account management cards ─────────────────────────────────────────────
- * Two irreversible flows, one card each. `tone="danger"` puts the
+ * Three irreversible flows, one card each. `tone="danger"` puts the
  * `--destructive` edge on the surface (danger-600 light / danger-400 dark)
  * — the border is the only thing that changes, so the fill, the ink, and
  * the card's rhythm stay identical to Profile and Security above and the
@@ -336,6 +337,97 @@ const DELETE_CONSEQUENCES = [
   "Fingerprinted Digital Evidence proofs and billing records are retained for legal reasons.",
   "If you solely own a shared organization, it is torn down too and its members are notified.",
 ];
+
+/** Typed verbatim, case-sensitive, to arm the erase confirm. */
+const ERASE_CONFIRM_PHRASE = "Erase data";
+
+const ERASE_CONSEQUENCES = [
+  "Every stored prompt, response, and cached body is permanently deleted.",
+  "Exports and request history for the erased content will be empty afterward.",
+  "This cannot be undone.",
+];
+
+/* Same shape as `DeleteAccountCard` below: danger card, destructive trigger
+ * in the footer, AlertDialog with the shared consequence callout and a
+ * type-to-confirm field. Erases content only; the org, keys, members and
+ * billing stay. */
+function EraseStoredDataCard() {
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const confirmed = confirmText === ERASE_CONFIRM_PHRASE;
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    // Reopening always starts from an empty field, so a stale match cannot
+    // arm the confirm on the next visit.
+    if (!next) {
+      setConfirmText("");
+    }
+  }
+
+  function handleConfirm() {
+    handleOpenChange(false);
+    toast("Stored data erased");
+  }
+
+  return (
+    <AlertDialog onOpenChange={handleOpenChange} open={open}>
+      <Card tone="danger">
+        <CardContent className="flex max-w-2xl flex-col gap-1">
+          <CardTitle>Erase stored data</CardTitle>
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+            Permanently delete every stored prompt, response, and cached body
+            for this organization. Your account, subscription, API keys,
+            members, and billing stay active — only the stored content is
+            removed. This cannot be undone.
+          </p>
+        </CardContent>
+        <CardFooter className="justify-end gap-2 border-border border-t py-2">
+          <AlertDialogTrigger
+            render={<Button size="sm" variant="destructive" />}
+          >
+            <Eraser aria-hidden data-icon="inline-start" />
+            Erase stored data
+          </AlertDialogTrigger>
+        </CardFooter>
+      </Card>
+      <AlertDialogContent className="data-[size=default]:sm:max-w-[500px]">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Erase all stored data</AlertDialogTitle>
+          <AlertDialogDescription>
+            This permanently deletes all stored prompts, responses, and cached
+            content for this organization. Your account keeps working — keys,
+            members, subscription, billing, and pay-as-you-go balance are
+            untouched.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <ConsequenceCallout items={ERASE_CONSEQUENCES} />
+        <Field>
+          <FieldLabel htmlFor="settings-erase-confirm">
+            To confirm, type &quot;{ERASE_CONFIRM_PHRASE}&quot;
+          </FieldLabel>
+          <Input
+            autoComplete="off"
+            id="settings-erase-confirm"
+            onChange={(e) => setConfirmText(e.target.value)}
+            spellCheck={false}
+            value={confirmText}
+          />
+        </Field>
+        <AlertDialogFooter className="mt-2">
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!confirmed}
+            onClick={handleConfirm}
+            variant="destructive"
+          >
+            Erase stored data
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 function CancelPlanCard() {
   const [open, setOpen] = useState(false);
