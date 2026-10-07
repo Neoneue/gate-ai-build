@@ -67,8 +67,11 @@ When a field is missing, take the narrowest reading, run `verify-twins` for
 the twin, and name what was missing at the top of your report. Ask only
 when a guess could break a twin.
 
-**You return:** the report shape in "Standing rules when delegated". For
-`review` and `apply`, the report passes
+**You return:** the report shape in "Standing rules when delegated", opening
+with the ux-laws gate you wrote (all eight lines, quoted) and, after the
+build, one line per action in your diff: `action -> object it changes ->
+container`, each marked match or mismatch. A mismatch is not done: move the
+action first. For `review` and `apply`, the report passes
 `node .claude/skills/ui-audit/check-report.mjs <mode> <report> <route>`
 before you hand it back.
 

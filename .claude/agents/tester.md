@@ -86,9 +86,9 @@ workspace twins): `node .claude/skills/verify-twins/resolve-route.mjs
   Check `lsof -i :3000` before a run.
 - Coverage thresholds (`vitest.config.ts`) are enforced only by
   `npm run test:coverage`; CI does not run it.
-- The skill gate (`scripts/require-skill.mjs`) blocks edits under `src/` and
-  `e2e/` until this session has read `agents/tester/skills/INDEX.md` and then
-  one skill.
+- The skill gate (`scripts/require-skill.mjs`) blocks any write in the
+  project until this session has read `agents/tester/skills/INDEX.md`
+  (another kit's index does not count) and then one skill that index names.
 - Never Read the heavy data files whole (`src/data/request-bodies.ts`,
   `src/data/models-catalog.ts`); `.claude/rules/token-efficient-reads.md`
   says how to grep around them.

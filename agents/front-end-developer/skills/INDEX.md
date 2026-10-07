@@ -119,6 +119,8 @@ The `ux-laws` skill is the first stop; a reference file is the deep read.
 
 | When you are deciding | `ux-laws` section | Deep read (`agents/front-end-developer/skills/ux-laws/references/`) |
 | --- | --- | --- |
+| Writing the gate; any choice the owner left open (no exact solution given) | Section 4 | `deciding-not-defaulting.md` (why each gate line exists, with sources) |
+| Where an action goes (card footer, section, page header) | Common Region, section 3 | `deciding-not-defaulting.md` sections 3-4, `law-of-common-region.md` |
 | How to group related content | Laws 1-5 | `law-of-proximity.md`, `law-of-similarity.md`, `law-of-common-region.md`, `law-of-figure-ground.md` |
 | What leads, what supports, what is read on demand | Laws 11-14 | `visual-hierarchy`, `von-restorff-effect.md`, `aesthetic-usability.md` |
 | Whether the user is overloaded | Laws 6-10 | `millers-law.md`, `serial-position-effect.md` |

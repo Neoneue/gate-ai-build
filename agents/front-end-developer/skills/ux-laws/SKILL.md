@@ -22,7 +22,7 @@ so a fix starts at the flow, not the styling.
 **Grouping: how the eye finds structure**
 - **Proximity:** near things read as one group. Check: is the space inside a group smaller than the space between groups? `references/law-of-proximity.md`
 - **Similarity:** things that look alike read as the same kind. Check: does every element with one role look the same, and only those? `references/law-of-similarity.md`
-- **Common Region:** a shared surface or border groups its contents. Check: does each container hold exactly one group, with no cards inside cards? `references/law-of-common-region.md`
+- **Common Region:** a shared surface or border groups its contents, actions included: a button inside a card reads as that card's action. Check: does each container hold exactly one group, with no cards inside cards, and does every action inside it change that container's own object? `references/law-of-common-region.md`
 - **Uniform Connectedness:** a connecting line or fill groups more strongly than proximity. Check: are related controls visibly tied together? `references/overview.md`
 - **Prägnanz:** people read the simplest shape. Check: can the eye tell what is "one thing" at a glance? `references/overview.md`
 - **Figure-Ground:** one layer is the foreground and acts; the rest recedes. Check: is it obvious what's on top and clickable? `references/law-of-figure-ground.md`
@@ -74,14 +74,32 @@ so a fix starts at the flow, not the styling.
 - One primary action per view; the rest are outline or ghost.
 - Destructive actions are quiet at rest and confirm or undo on use, never the loudest thing on screen.
 - Each section's edit action sits in the same place everywhere.
+- An action acts on the object of the container it sits in. A card or section footer holds only actions on that card's own object; a plan, account, workspace or page action (Upgrade plan, Billing, Invite) goes in the page header or on that object's own surface, never in another card's footer. (Corrected 2026-10-07: "Upgrade plan" in a Settings card footer read as the card's action.)
 - gate-ai-build is an Operate surface, so it is dense: tight section rhythm, no marketing spacing.
 
 ## 4. The gate before building
 
-Write it in the plan or report:
-1. The three UX lines from section 1.
-2. Every law this change touches, with one clause on how it passes.
-3. Which corrected patterns apply, and that they hold.
+Write it in your reply, one labelled line each, before any UI write (the UI
+gate hook checks the eight labels). Objects come before screens and actions
+attach to objects (OOUX), so the order matters. Why each line exists, with
+sources: `references/deciding-not-defaulting.md`.
+1. `Job:` what the user came to do.
+2. `Path:` entry, steps, exit, errors.
+3. `Expectation:` which app they think this works like.
+4. `Objects:` the things on screen the user acts on (plan, key, member,
+   policy), and which container shows each one.
+5. `Actions:` every action this change adds or moves, as
+   `action -> object it changes -> container it sits in`. The object and
+   the container's object must match; if not, move the action. `none` if the
+   change adds or moves no action.
+6. `Laws:` each law this change touches and how it passes, in one clause. A
+   law's name alone is not a pass.
+7. `Patterns:` the corrected patterns from section 3 that apply, and that
+   they hold.
+8. `Rejected:` at least one alternative you considered and why it lost.
+   A design with no rejected alternative was not decided, only defaulted.
 
 If any answer is "no" or "I don't know", stop and fix the design before
-writing code.
+writing code. After building, re-check the built result against this gate
+line by line: every action in the diff names the object it changes, and that
+object is its container's.

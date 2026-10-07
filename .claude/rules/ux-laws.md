@@ -15,4 +15,8 @@ only what must never depend on a skill being loaded.
 - **Corrected patterns:** collapsibles are full-width section rows; list
   items that open something are selectable rows with a hover fill; one
   primary action; destructive stays quiet; each section's edit action sits in
-  the same place everywhere.
+  the same place everywhere; an action acts on its container's own object
+  (a plan or page action never sits in another card's footer).
+- **Decide, don't default:** before UI, write the ux-laws gate (objects, then
+  actions on them, then laws, then at least one rejected alternative). A
+  design with no rejected alternative was defaulted, not decided.

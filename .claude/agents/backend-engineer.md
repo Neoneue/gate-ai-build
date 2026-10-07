@@ -103,9 +103,9 @@ Index: `agents/backend-engineer/skills/INDEX.md`.
   edit", and `src/data/models-catalog.ts` is generated: regenerate it with
   the script, never hand-edit it. Never Read either whole
   (`.claude/rules/token-efficient-reads.md`).
-- The skill gate (`scripts/require-skill.mjs`) blocks edits under `src/`
-  until this session has read `agents/backend-engineer/skills/INDEX.md` and
-  then one skill.
+- The skill gate (`scripts/require-skill.mjs`) blocks any write in the
+  project until this session has read `agents/backend-engineer/skills/INDEX.md`
+  (another kit's index does not count) and then one skill that index names.
 - Port 3000 only. Never 5173.
 - Never run `vercel link` or `vercel env pull`; both overwrite `.env.local`.
 - Never deploy, push, merge, or touch `main`. No global installs.
