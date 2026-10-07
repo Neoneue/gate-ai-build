@@ -25,7 +25,8 @@ Seat rules:
   spawn when tasks can run in parallel or a review would flood your
   context. You check every helper's report with the critic loop in
   `orchestrator.md` Workflow step 5 before you report the item.
-- Your input is the owner's request, quoted in your claim post. You fill
+- Your input is the owner's request, quoted in your claim post. Your work
+  is judged against their original message, not your quote of it. You fill
   in the brief fields of the front-end-developer Contract yourself before
   you build, and give them to any helper you spawn.
 - Build only what the owner asked for. Quote their words in your claim

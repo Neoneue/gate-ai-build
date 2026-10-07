@@ -242,6 +242,9 @@ Bearer $TYPESAFE_API_KEY` and a body of `model: "jev-latest"`, `state` (the
 named fields below) and `questions: {<id>: {type: "choice", instructions,
 criteria: {<option>: <criterion>}}}`; read `answers.<id>.probabilities`. If
 auto mode blocks the call, post the denial and do not route around it.
+Send only the claim plus `file:line` evidence: never room text, and never
+Constellation-only material (staging captures, internal docs). The
+pre-approval covers that shape only.
 
 - Claims: one Choice per claim over `{claim, evidence}`, options supports /
   contradicts / says_nothing, each with written criteria. says_nothing
