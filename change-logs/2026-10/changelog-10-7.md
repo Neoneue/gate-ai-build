@@ -76,6 +76,46 @@ security finding 2.
   `.claude/settings*.json`, and owning those files means editing them
   only once approved (`orchestrator.md`).
 
+### Agent team: copywriter and animator agents `afda60d`
+
+No UI change; agent tooling only (`.claude/agents/`, `agents/`,
+`CLAUDE.md`, `scripts/check-design-tokens.mjs`).
+
+- **New agents.** Before: the front-end-developer owned copy and motion.
+  After: `copywriter` writes every user-facing string, grounded in the PRD
+  (kit `agents/copywriter/`), and `animator` owns every animation: CSS,
+  GSAP and `motion/react` icons (kit `agents/animator/`).
+- **Routing.** Copy and motion requests route through the orchestrator
+  (the main session only when no orchestrator runs); a helper lists the
+  strings or motion it needs in its report (`CLAUDE.md`, `orchestrator.md`,
+  `front-end-developer.md` task table).
+- **Design-token lint scope.** Before: lint-staged passed vendored kit CSS
+  to `check-design-tokens.mjs`, which flagged the animator kit's
+  `transitions-dev/_root.css`. After: passed files are kept to `src/`.
+
+### Agent team: own-kit skills and UX-first gate `1670cb1`
+
+No UI change; agent tooling only (`scripts/require-skill.mjs` and its
+test, `agents/front-end-developer/skills/ux-laws/`, `.claude/rules/ux-laws.md`,
+`.claude/agents/`, `CLAUDE.md`).
+
+- **UI gate order.** Before: kit INDEX once, then ux-laws,
+  visual-hierarchy and one build skill. After: in order, kit INDEX,
+  ux-laws, a written 8-line gate (Job, Path, Expectation, Objects, Actions,
+  Laws, Patterns, Rejected), visual-hierarchy, one build skill; a step out
+  of order does not count.
+- **Every write picks a skill.** Before: only `src/` and `e2e/` edits
+  needed a kit read. After: every Write or Edit in the project needs the
+  writer's own kit INDEX (by `agent_type`) and then a skill it names; the
+  pick resets per commit, `change-logs/` is exempt.
+- **Actions on their container's object.** New ux-laws pattern: a card
+  footer holds only actions on that card's own object; plan and account
+  actions go in the page header or on their own surface. New reference
+  `ux-laws/references/deciding-not-defaulting.md`.
+- **Critic loop.** The orchestrator checks each built action against its
+  container's object; the front-end-developer report quotes the gate and
+  lists `action -> object -> container` per action.
+
 ## Sections
 
 ### Settings: Erase stored data card and dialog `63179f8`
@@ -100,3 +140,32 @@ Settings, Account management (`src/pages/Settings.tsx`,
 - **Section subtitle.** Before: "Manage your organization and other
   account-level actions." After: "Erase stored data or delete this
   organization."
+
+### Settings: Data retention card and shorten dialog `d81cbaf`
+
+Settings, new Data retention section between Security and Account
+management (`src/pages/settings/DataRetentionCard.tsx`, AG-1021). Admin
+only. Tier set by the `retentionTier` prop: `/settings` Pro,
+`/settings-enterprise` Enterprise, `/settings-free` and
+`/settings-default` Free.
+
+- **Window field.** A responsive `Field` with a `w-20` days input. Free:
+  fixed at 30 days, disabled, no footer, and the Free plan banner under
+  the card. Pro: 0 to 90; above that, an inline `FieldError` naming the
+  ceiling with a "move to Enterprise" link. Enterprise: 0 to the contract
+  ceiling (365), with "contact support" as plain text. At 0 days an info
+  `Callout` says what turns off.
+- **Facts.** A `dl` under a hairline in the Teams budget fact grid (1 / 2
+  / 4 columns): Oldest message, Messages in window, Next deletion run,
+  Last change. Counts and dates derive from the Messages rows
+  (`src/lib/retention.ts`, `settings/retention-data.ts`, with tests).
+- **Footer.** Save changes is the one primary; an outline Cancel appears
+  only while an edit is unsaved. Lengthening saves at once with a toast;
+  shortening opens an AlertDialog (500px, `ConsequenceCallout`, Messages
+  export link, destructive "Shorten to N days").
+- **Free plan banner.** Before: private to `Policies.tsx`. After: shared
+  `src/pages/free-plan-notice-banner.tsx`, taking the per-surface sentence
+  as children; Policies (Free) and Data retention (Free) both use it.
+- **Field primitive.** Before: an invalid `Field` turned its label red.
+  After: only the control border and `FieldError` show the error
+  (`src/components/ui/field.tsx`).
