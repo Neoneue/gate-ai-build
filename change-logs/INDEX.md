@@ -12,18 +12,21 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-10-06](./2026-10/changelog-10-6.md)
 
 - Count formatter: billions tier
-- `keyboard-open` variant
-- Touch text fields at 16px
-- Gate Chat: mobile layout and keyboard
-- Gate Chat: landing steps aside for the keyboard
-- Gate Chat: new chat opens the demo conversation
-- Gate Chat: phone composer details
-- Gate Chat: model picker provider filter
-- Vertical separators centre on their row
-- Gate Chat: landing polish
-- Gate Chat: top bar logo and rail
-- Gate Chat: conversation header
-- Gate Chat: Memories dialog
+- Gate Chat: desktop, mobile and phone (`10afc67`, `1e42ade`, `757bf58`)
+  - `keyboard-open` variant
+  - Touch text fields at 16px
+  - Vertical separators centre on their row
+  - Mobile layout and keyboard
+  - Landing steps aside for the keyboard
+  - New chat opens the demo conversation
+  - Phone composer details
+  - Model picker provider filter
+  - Landing polish
+  - Top bar logo and rail
+  - Conversation header
+  - Memories dialog
+  - Top bar and header actions
+  - Sidebar credits, drawer and alignment
 
 ### [2026-10-05](./2026-10/changelog-10-5.md)
 
