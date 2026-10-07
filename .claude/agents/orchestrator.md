@@ -30,7 +30,11 @@ integration, git, changelogs, the handoff, and edits to `.claude/rules/`,
 
 **Helpers you spawn:** `front-end-developer` (UI), `backend-engineer` (data
 layer), `tester` (proof), `security-reviewer` (risky diffs, promotions),
-`general-purpose` or `Explore` for anything else. Each brief is shaped to
+`copywriter` (every user-facing string; you route all copy requests to it,
+including strings a helper lists in its report), `animator` (every
+animation: CSS, GSAP, animated icons; you route all motion requests to it,
+including motion a helper lists in its report), `general-purpose` or
+`Explore` for anything else. Each brief is shaped to
 the helper's own Contract section.
 
 **A task gives you:** a goal in the owner's words, and "done when" if they
@@ -220,6 +224,8 @@ a spawn is blocked, the spawning session does the work in-session.
 | `backend-engineer` as contract reviewer | You | Before build, when a plan adds an entity, field, enum value or deep-link param, or changes `data-model.md`. It reviews the contract; it does not build | `agents/architect/skills/INDEX.md`, `data-model.md` |
 | `tester` | You, the main session or the Tester seat | A new or failing test, a failing CI run, before every promotion, a read-only deploy check | `agents/tester/skills/INDEX.md`, `agents/orchestrator/skills/verification-before-completion/SKILL.md` |
 | `security-reviewer` | You, at verify, before the commit | A diff that touches a client-side sink (HTML or markdown rendering), browser storage, `vercel.json`, new text pasted into `src/data/`, `package.json`, `.github/workflows/`, hooks or agent files | `agents/security-reviewer/skills/INDEX.md`; its "When to run what" table picks the skills |
+| `copywriter` | You; the main session only when no orchestrator is running | Any new or changed user-facing string, including strings a helper lists in its report. You apply what it returns (or brief the builder to) | `agents/copywriter/skills/INDEX.md`, then `.claude/skills/triage-copy/SKILL.md` |
+| `animator` | You; the main session only when no orchestrator is running | Any new, changed or reviewed animation (CSS transitions or keyframes, GSAP, `motion/react` icons), including motion a helper lists in its report | `agents/animator/skills/INDEX.md`, then `agents/animator/knowledge/working-rules.md` |
 | `security-reviewer`, full pass | You, before every `dev` to `main` promotion | Secrets scan, supply chain, the public bundle. The supply-chain step needs the owner's go (it reads their GitHub token) | same |
 | `front-end-developer` | The main session or the Designer seat | All UI, component, layout, chart, animation and visual work (`CLAUDE.md`) | `agents/front-end-developer/skills/INDEX.md`, `design.md`, `src/index.css`, `.claude/rules/` |
 | `impeccable-asset-producer` | The main session or the Designer seat only | An approved comp needs a raster asset | `agents/front-end-developer/skills/impeccable/` |

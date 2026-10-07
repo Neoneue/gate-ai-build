@@ -1,0 +1,60 @@
+# Working rules: animator in gate-ai-build
+
+The site is the Constellation Gate AI dashboard: Vite + React + TypeScript,
+Tailwind v4, Base UI primitives, mock data. It is an Operate surface: dense,
+scanned many times a day. Motion here is product feedback, not showcase.
+
+## Current values (from design.md "Motion"; build with these)
+
+`design.md` is the current record. When a skill prescribes a different
+value, build with the value below and report the difference to the lead as
+a proposed `design.md` update (skill, its value, current value, why).
+
+- **Easing tokens** (`src/index.css`, `@theme`): `--ease-out`
+  (`cubic-bezier(0.23, 1, 0.32, 1)`) is the default for color, shadow and
+  scale; `--ease-in-out` for symmetric moves; `--ease-drawer` for slide-in
+  surfaces (Sheet, sidebar).
+- **Durations:** 100 ms overlay fade and menu highlight; 150 ms default
+  control transition; 200 ms dialog enter, sliding indicator and toast;
+  120 ms dialog close; 300 ms sheet slide-in.
+- **Properties:** only color, background, border, shadow, opacity, scale and
+  transform. Never `transition-all`.
+- **Reduced motion always wins:** `motion-reduce:transition-none`,
+  `motion-reduce:animate-none`, and `gsap.matchMedia()` in GSAP code.
+- **Press:** `active:scale-[0.98]` on Button and interactive Card, with
+  `motion-reduce:active:scale-100`. Popup triggers do not scale.
+- **Dialogs** (Base UI): 200 ms fade plus `zoom-in-95` on enter, 120 ms
+  close; exits need `data-closed:fill-mode-forwards` on popup and overlay.
+- **Toast** (sonner): 200 ms enter, 4 s hold, 200 ms exit.
+- **Stagger:** one exists, 100 ms on the Models Featured cards. Never stagger
+  table rows or high-frequency state.
+
+## Which tool
+
+| Job | Tool |
+| --- | --- |
+| Hover, focus, press, a single enter or exit | CSS / Tailwind transition on the primitive, with the tokens above |
+| Dialog, sheet, popover, menu motion | The Base UI primitive's own data-state classes; change the primitive, never a call site |
+| Animated icons (`src/components/ui/*.tsx`, 13 files) | `motion/react` (`m`, `useAnimation`), the existing pattern in `bell.tsx` |
+| Sequenced choreography, split text, scramble, morph, drawn strokes | GSAP via `@gsap/react` (`skills/gsap/SKILL.md`) |
+| Toast timing or wording | sonner (`ask-sonner` lives in the front-end kit) |
+
+Never two systems on one property.
+
+## The UI gate
+
+`scripts/require-skill.mjs` blocks any edit to a UI file until this session
+has read, in order: a skills `INDEX.md` (yours counts), then
+`agents/front-end-developer/skills/ux-laws/SKILL.md`, then the written gate
+(labelled lines Job, Path, Expectation, Objects, Actions, Laws, Patterns,
+Rejected, in visible text), then
+`agents/front-end-developer/skills/visual-hierarchy/SKILL.md`, then one
+build skill. For motion work the build skill is usually `animate` or
+`gsap`. It resets after each commit.
+
+## Proof
+
+A green build proves nothing about motion. Check it in the browser at
+normal speed and with reduced motion on (Playwright
+`emulateMedia({ reducedMotion: "reduce" })`), one tab, and delete any
+screenshot afterwards.

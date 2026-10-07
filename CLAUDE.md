@@ -23,7 +23,7 @@ Shared project instructions, kept minimal; per-area detail lives in
   `ultracite fix` to apply. `fix` applies UNSAFE fixes, so read the diff. The
   pre-commit and `PostToolUse` hooks both run a fix pass already.
 - **UI work routes to the agent.** Substantive UI / component / layout /
-  chart / animation / visual work MUST be delegated to the
+  chart / visual work MUST be delegated to the
   `front-end-developer` subagent (`subagent_type: front-end-developer`),
   **regardless of the active model** — don't hand-edit UI yourself. It
   self-loads its design knowledge and binds to `design.md` + `src/index.css` +
@@ -55,6 +55,16 @@ Shared project instructions, kept minimal; per-area detail lives in
   - `security-reviewer` (reviews; writes reports): the public bundle,
     client-side sinks, secrets, dependencies, CI, hooks and agent files;
     before every promotion.
+  - `copywriter`: every user-facing string (labels, helper lines, buttons,
+    errors, toasts, dialogs, banners), grounded in the PRD. **All copy goes
+    through it.** Copy requests route through the `orchestrator` (the main
+    session only when no orchestrator is running), which spawns the
+    copywriter and applies what it returns; a helper that needs copy names
+    the strings in its report.
+  - `animator`: every animation on the site (CSS transitions and
+    keyframes, GSAP via `@gsap/react`, `motion/react` icons), built to
+    `design.md` Motion and proven under reduced motion. Motion requests
+    route through the `orchestrator` the same way as copy.
   - Seat personas, attached by a room seat card and never spawned
     (`claude --agent <name>` only for a standalone session):
     `orchestrator`, `researcher`, `architect`, `designer`.
