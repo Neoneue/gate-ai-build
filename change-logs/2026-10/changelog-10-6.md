@@ -32,6 +32,14 @@ Prior day: [`changelog-10-5.md`](./changelog-10-5.md)
   `textarea` and `select` to `--text-base`, so iOS no longer zooms into
   a field under 16px. Recorded in design.md §Inputs & Forms.
 
+### Vertical separators centre on their row (`pages/chat/chat-composer.tsx`, `pages/chat/chat-header.tsx`, `pages/chat/chat-usage-row.tsx`) `1e42ade`
+
+- **Before:** a fixed-height vertical `Separator` asked for `self-center`
+  but the primitive's `data-vertical:self-stretch` outranks it, so the
+  composer divider sat 6px high and the usage-row dividers 3px high.
+- **After:** call sites use `data-vertical:self-center`; every chat
+  divider's centre now equals its row's. The primitive is unchanged.
+
 ## Sections & surfaces
 
 ### Gate Chat: mobile layout and keyboard (`layouts/ChatLayout.tsx`, `pages/Chat.tsx`, `pages/chat/chat-thread.tsx`, `hooks/use-visual-viewport-vars.ts`) `10afc67`
@@ -84,3 +92,34 @@ Prior day: [`changelog-10-5.md`](./changelog-10-5.md)
 - **After:** full width below sm (`w-full sm:w-fit`); beside the search
   field from sm, unchanged. The picker stays the centered Dialog at every
   width.
+
+### Gate Chat: landing polish (`pages/chat/chat-landing.tsx`, `pages/Chat.tsx`) `1e42ade`
+
+- **Before:** the "AI can make mistakes" line sat under the composer;
+  chips 8px above it; starter buttons 36px (44 touch); starter list
+  624px wide; only the title, description and workspace line animated in.
+- **After:** the helper line is gone; chips sit 12px (`gap-3`) above the
+  composer; chips and the landing list are 40px with a mouse and keep
+  44px on touch; description and list share one 540px column
+  (`max-w-135`); from `md` the buttons join the entrance stagger
+  (100 / 150 / 200ms, workspace line 250ms).
+
+### Gate Chat: top bar logo and rail (`pages/chat/chat-top-bar.tsx`, `layouts/ChatLayout.tsx`, `components/ui/sidebar.tsx`) `1e42ade`
+
+- **Before:** the logo mark at every width, and a rail collapse toggle.
+- **After:** the full lockup (`BrandLockup`, the dashboard rail's own,
+  now exported) from `lg`, the mark below it; the rail is always
+  expanded and the toggle and its state are removed.
+
+### Gate Chat: conversation header (`pages/chat/chat-header.tsx`) `1e42ade`
+
+- **Before:** 56px at every width; Credits label 12px.
+- **After:** 64px from `lg` (`lg:h-16`), meeting the docked Ask AI header
+  (both 64 to 128); Credits label `type-label-14`, level with the balance.
+
+### Gate Chat: Memories dialog (`pages/chat/chat-memory-panel.tsx`) `1e42ade`
+
+- **Before:** 384px; row switches `sm` (24x14) pinned to the row top, 9px
+  off the delete button's centre.
+- **After:** 400px (`sm:max-w-100`); every switch default (32x20); each
+  row centres its switch and delete button on the text.

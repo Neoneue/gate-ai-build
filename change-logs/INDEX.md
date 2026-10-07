@@ -19,6 +19,11 @@ tokens; this index exists so nothing has to glob the directory.
 - Gate Chat: new chat opens the demo conversation
 - Gate Chat: phone composer details
 - Gate Chat: model picker provider filter
+- Vertical separators centre on their row
+- Gate Chat: landing polish
+- Gate Chat: top bar logo and rail
+- Gate Chat: conversation header
+- Gate Chat: Memories dialog
 
 ### [2026-10-05](./2026-10/changelog-10-5.md)
 
