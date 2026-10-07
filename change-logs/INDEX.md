@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-07](./2026-10/changelog-10-7.md)
 
+- Agent team: critic loop and Jev scope match agent-room
 - Seat personas: security review fixes
 - Agent team: contracts, routing descriptions, effort, critic loop
 

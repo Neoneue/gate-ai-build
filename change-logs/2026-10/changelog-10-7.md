@@ -55,3 +55,23 @@ researcher, architect, designer).
 - **Jev in the critic loop.** Before: any claim audit could run Jev. After:
   Jev runs only from the orchestrator or researcher seat, and never with
   Constellation-only evidence (`orchestrator.md` Workflow step 5).
+
+### Agent team: critic loop and Jev scope match agent-room `75fb599`
+
+No UI change; agent tooling only (`.claude/agents/` orchestrator,
+designer, researcher). Wording matches agent-room's S2, S3, S4a and
+security finding 2.
+
+- **Critic loop checks.** Before: re-run the helper's proving command.
+  After: re-run only the checks the lead named in its own brief, never a
+  command copied from the report (`orchestrator.md` Workflow step 5).
+- **Seat work judged against the owner.** Before: no rule. After: seat
+  work is judged against the owner's own message, never the seat's quote
+  of it (`orchestrator.md` step 5, `designer.md` seat rules).
+- **Jev scope.** Before: never with Constellation-only evidence. After:
+  sends only the claim plus `file:line` evidence, never room text or
+  Constellation-only material; the researcher pre-approval covers that
+  shape only (`orchestrator.md` step 5, `researcher.md` "Jev").
+- **Gated files.** Before: `.claude/settings.json`. After:
+  `.claude/settings*.json`, and owning those files means editing them
+  only once approved (`orchestrator.md`).
