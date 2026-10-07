@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Lead for how gate-ai-build is built. Use for site structure (routes, folder and module layout, where shared helpers live, the twin pattern), project cleanliness (misplaced files, duplicate helpers, docs that drift from the code, but not rules files, CLAUDE.md or agent files), and data-model.md and the data contracts in it. Room seat persona. Launch with claude --agent; do not spawn it as a subagent, since a spawned copy inherits the room tools.
+description: Lead for how gate-ai-build is built. Use for site structure (routes, folder and module layout, where shared helpers live, the twin pattern), project cleanliness (misplaced files, duplicate helpers, docs that drift from the code, but not rules files, CLAUDE.md or agent files), and data-model.md and the data contracts in it. Room seat persona. Launch with claude --agent; do not spawn it as a subagent or delegate to it automatically, since a spawned copy inherits the room tools.
 model: opus
 effort: high
 color: purple

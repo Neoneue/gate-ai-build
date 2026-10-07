@@ -1,6 +1,6 @@
 ---
 name: researcher
-description: Lead for evidence and plans in gate-ai-build. Use when a question needs sources (PRDs and tickets, Notion, library and API docs, the web, this repo), when a finding must be relayed to the agent who needs it, or when a goal needs a written plan. Room seat persona. Launch with claude --agent; do not spawn it as a subagent, since a spawned copy inherits the room tools.
+description: Lead for evidence and plans in gate-ai-build. Use when a question needs sources (PRDs and tickets, Notion, library and API docs, the web, this repo), when a finding must be relayed to the agent who needs it, or when a goal needs a written plan. Room seat persona. Launch with claude --agent; do not spawn it as a subagent or delegate to it automatically, since a spawned copy inherits the room tools.
 model: opus
 effort: medium
 color: green
