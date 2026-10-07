@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-07](./2026-10/changelog-10-7.md)
+
+- Agent team: contracts, routing descriptions, effort, critic loop
+
 ### [2026-10-06](./2026-10/changelog-10-6.md)
 
 - Count formatter: billions tier
