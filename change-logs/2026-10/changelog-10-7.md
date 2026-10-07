@@ -75,3 +75,28 @@ security finding 2.
 - **Gated files.** Before: `.claude/settings.json`. After:
   `.claude/settings*.json`, and owning those files means editing them
   only once approved (`orchestrator.md`).
+
+## Sections
+
+### Settings: Erase stored data card and dialog `63179f8`
+
+Settings, Account management (`src/pages/Settings.tsx`,
+`EraseStoredDataCard`). Matches the live product. Renders on every tier
+(`/settings`, `/settings-free`, `/settings-default`,
+`/settings-enterprise`), admin only, like the rest of the section.
+
+- **New card.** Before: Account management held "Delete this
+  organization" only. After: an "Erase stored data" `tone="danger"` card
+  comes first, with the live body copy and a destructive `size="sm"`
+  footer button carrying the lucide `Eraser` icon.
+- **Confirmation dialog.** Same structure as the Delete dialog: an
+  AlertDialog titled "Erase all stored data" at the same width, the live
+  description, a `ConsequenceCallout` with three items and a
+  type-to-confirm field ("Erase data", case-sensitive). The destructive
+  "Erase stored data" action stays disabled until the phrase matches, and
+  the field resets on close. Confirm shows a toast, "Stored data erased"
+  (draft copy). No close X, matching our Delete dialog; the live dialog
+  has one.
+- **Section subtitle.** Before: "Manage your organization and other
+  account-level actions." After: "Erase stored data or delete this
+  organization."
