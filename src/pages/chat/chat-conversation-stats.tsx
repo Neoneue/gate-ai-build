@@ -57,7 +57,7 @@ export function ChatConversationStats({
         render={
           <Button
             aria-label={CHAT_COPY.conversationStats}
-            className={cn(CHAT_TOUCH_TARGET, "shrink-0 text-muted-foreground")}
+            className={cn(CHAT_TOUCH_TARGET, "shrink-0")}
             size="icon"
             type="button"
             variant="ghost"

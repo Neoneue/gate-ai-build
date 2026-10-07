@@ -71,7 +71,11 @@ export function ChatTopBar({
       </div>
 
       <div className="flex shrink-0 items-center gap-2 px-4 sm:px-6">
-        <NotificationsMenu />
+        {/* Ghost like the theme toggle beside it, never outlined. */}
+        <NotificationsMenu
+          triggerClassName="text-muted-foreground hover:text-foreground"
+          triggerVariant="ghost"
+        />
         <ThemeToggle />
         <Button
           aria-expanded={askAiOpen}

@@ -380,6 +380,11 @@ export interface ChatConversationInput {
   title: string;
 }
 
+/** "yesterday" -> "Yesterday"; a label that starts with a digit is unchanged. */
+function sentenceCase(label: string): string {
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export function toChatConversation(
   input: ChatConversationInput,
   catalog: ChatModelCatalog,
@@ -388,7 +393,9 @@ export function toChatConversation(
   return {
     id: input.seed.id,
     title: input.title,
-    updatedLabel: formatRelative(lastActivity(input.seed), now),
+    // Sentence case ("Yesterday", not Intl's "yesterday"): the header and
+    // the rail both print it.
+    updatedLabel: sentenceCase(formatRelative(lastActivity(input.seed), now)),
     ...conversationModel(input.modelIds),
     memoryToolsEnabled: input.memoryToolsEnabled,
     turns: toChatTurns(input.seed, catalog),

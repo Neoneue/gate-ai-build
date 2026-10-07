@@ -73,7 +73,7 @@ export function ChatHeader({
         <Menu aria-hidden className="size-4" strokeWidth={1.75} />
       </Button>
 
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <div className="flex min-w-0 items-center gap-1" data-slot="chat-title">
           <h1 className="type-heading-14 min-w-0 truncate text-foreground">
             {recordUrl ? (
@@ -92,15 +92,11 @@ export function ChatHeader({
               CHAT_COPY.newChat
             )}
           </h1>
-          {conversation.id ? (
-            <ChatConversationStats
-              conversationId={conversation.id}
-              totals={totals}
-            />
-          ) : null}
         </div>
+        {/* "Title · Yesterday": a muted bullet, 8px either side. */}
         {conversation.updatedLabel ? (
-          <p className="type-copy-12 hidden shrink-0 text-muted-foreground sm:block">
+          <p className="type-copy-12 hidden shrink-0 items-center gap-2 text-muted-foreground sm:flex">
+            <span aria-hidden>·</span>
             {conversation.updatedLabel}
           </p>
         ) : null}
@@ -152,6 +148,14 @@ export function ChatHeader({
             </Button>
           }
         />
+        {/* Far right, after Memories: both conversation actions in the
+            foreground, one 12px gap apart (user, 2026-10-06). */}
+        {conversation.id ? (
+          <ChatConversationStats
+            conversationId={conversation.id}
+            totals={totals}
+          />
+        ) : null}
       </div>
     </header>
   );
