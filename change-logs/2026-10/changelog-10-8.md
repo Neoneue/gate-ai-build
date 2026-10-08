@@ -121,3 +121,40 @@ sidebar, user menu, feedback form, Settings profile, Notifications, the
 Default team roster, the captured transcripts and their PII finding matches,
 and docs. Onboarding's setup-link email and workspace use the mockup
 placeholders (`alex@example.com`, "Alex's workspace").
+
+## Components
+
+### Sidebar upgrade card: corner dismiss, sparkle inset `83257d6`
+
+`src/components/ui/sidebar-upgrade-card.tsx`, rendered by
+`src/components/ui/sidebar.tsx` on Free and Default workspaces.
+
+- **Sparkle.** Before: 8px from the top and right (`top-2 right-2`). After:
+  12px from the top, 16px from the right (`top-3 right-4`).
+- **Dismiss.** Before: none. After: a round outline X (`Button`
+  `variant="outline" size="icon-xs" shape="circle"`, 24px, aria-label
+  "Dismiss") floating on the card's top-right corner, 8px out
+  (`-top-2 -right-2`). It is a sibling of the card button inside a
+  `relative` wrapper, not nested in it.
+- **State.** Dismissing hides the card and its `px-3 pb-4` slot for the
+  visit; it comes back on a full reload (`src/data/upgrade-card-store.ts`,
+  in memory, the notifications-store shape).
+
+## Conventions
+
+### UI gate requires `Precedent:` and a written gate file `64cac04`
+
+The ux-laws gate is nine labelled lines. `Precedent:` names the tested
+competitor pattern and the repo component it maps to (file:line), or
+`new component:` and why; `scripts/require-skill.mjs` blocks UI writes
+without it. A gate counts when written with the Write tool or an Edit that
+holds it. Updated: `ux-laws` SKILL.md section 4, `.claude/rules/ux-laws.md`,
+`.claude/agents/front-end-developer.md`, `CLAUDE.md`, the animator note;
+`require-skill.test.mjs` 75/75.
+
+### Animator kit lessons `0e9f43b`
+
+`agents/animator/knowledge/working-rules.md`: illustration art is tuned by
+craft (design.md Motion is for primitives); art that depicts the live UI
+copies its styling and words. `agents/animator/skills/INDEX.md`: a final
+`emil-design-eng` polish pass on every build and a polish-skills table.
