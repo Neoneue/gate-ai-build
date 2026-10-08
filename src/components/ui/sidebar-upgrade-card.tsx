@@ -1,3 +1,5 @@
+import { XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { SparklesIcon } from "@/components/ui/sparkles";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +27,15 @@ import { cn } from "@/lib/utils";
  *             words read as the app's own voice on top of it, which is also
  *             what keeps the small 10px line legible on both themes without
  *             an opacity knock-back.
- *   sparkle   24px lucide `sparkles` at 50% opacity, 8px in from the top
- *             right, on --promo-accent
+ *   sparkle   24px lucide `sparkles` at 50% opacity, 12px from the top and
+ *             16px from the right (owner 2026-10-08: 4px down and 8px left
+ *             of the Figma 8px),
+ *             on --promo-accent
+ *   dismiss   (owner 2026-10-08) a round outline X, `Button` `icon-xs`
+ *             `shape="circle"` (24px, WCAG 2.5.8), floating on the top-right
+ *             corner, 8px out. A sibling of the card button, never inside
+ *             it: a button cannot hold a button. Shown only when the
+ *             consumer passes `onDismiss`
  *
  * The card is width-flexible by design, not fixed: the two Figma twins draw
  * it at 220 and 248 wide inside 236 / 264 rails, i.e. it fills whatever
@@ -46,44 +55,61 @@ export interface SidebarUpgradeCardProps {
   className?: string;
   /** Fired on click. Wire this to the tier's billing route. */
   onClick?: () => void;
+  /** Shows the corner X; fired when it is pressed. */
+  onDismiss?: () => void;
 }
 
 export function SidebarUpgradeCard({
   className,
   onClick,
+  onDismiss,
 }: SidebarUpgradeCardProps) {
   return (
-    <button
-      className={cn(
-        "shadow-(color:--promo-shadow) relative flex w-full flex-col items-start justify-center overflow-hidden rounded-md border border-promo-border bg-card p-3 text-left shadow-sm transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-        className
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      {/* Decorative dot field + wash. Full-bleed under the copy; the card's
+    <div className={cn("relative w-full", className)}>
+      <button
+        className={cn(
+          "shadow-(color:--promo-shadow) relative flex w-full flex-col items-start justify-center overflow-hidden rounded-md border border-promo-border bg-card p-3 text-left shadow-sm transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+        )}
+        onClick={onClick}
+        type="button"
+      >
+        {/* Decorative dot field + wash. Full-bleed under the copy; the card's
           own `overflow-hidden` is what rounds its corners. */}
-      <span
-        aria-hidden
-        className="sidebar-upgrade-texture pointer-events-none absolute inset-0"
-      />
-      {/* `user-meta` in Figma: a full-width column. Figma draws 2px between
+        <span
+          aria-hidden
+          className="sidebar-upgrade-texture pointer-events-none absolute inset-0"
+        />
+        {/* `user-meta` in Figma: a full-width column. Figma draws 2px between
           the two lines; this is `gap-1` (4px), the nearest step on the grid —
           the half-step carve-out that once justified 2px was reverted
           2026-08-04, so `gap-0.5` is off-token again. */}
-      <span className="relative flex w-full flex-col items-start gap-1">
-        <span className="type-label-12 whitespace-nowrap text-foreground">
-          Upgrade to Pro plan
+        <span className="relative flex w-full flex-col items-start gap-1">
+          <span className="type-label-12 whitespace-nowrap text-foreground">
+            Upgrade to Pro plan
+          </span>
+          <span className="type-copy-10 text-pretty text-muted-foreground">
+            Unlock premium security and compression settings for your team
+          </span>
         </span>
-        <span className="type-copy-10 text-pretty text-muted-foreground">
-          Unlock premium security and compression settings for your team
-        </span>
-      </span>
-      <SparklesIcon
-        aria-hidden
-        className="pointer-events-none absolute top-2 right-2 text-promo-accent opacity-50"
-        size={24}
-      />
-    </button>
+        <SparklesIcon
+          aria-hidden
+          className="pointer-events-none absolute top-3 right-4 text-promo-accent opacity-50"
+          size={24}
+        />
+      </button>
+      {onDismiss ? (
+        <Button
+          aria-label="Dismiss"
+          className="absolute -top-2 -right-2"
+          onClick={onDismiss}
+          shape="circle"
+          size="icon-xs"
+          type="button"
+          variant="outline"
+        >
+          <XIcon aria-hidden />
+        </Button>
+      ) : null}
+    </div>
   );
 }
