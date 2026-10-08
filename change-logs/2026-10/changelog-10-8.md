@@ -58,3 +58,66 @@ Improved flow is presented; the Current flow's screens are built and hidden.
   or keyboard focus only; reduced motion fades each art in over 200ms with
   no movement. Method cards press to `scale-[0.99]` and their art stage has
   a 1px `border-border`.
+
+### Data retention card follows the PRD `a325048`
+
+Settings > Data retention (`src/pages/settings/DataRetentionCard.tsx`,
+AG-1021), every tier: `/settings` (Pro), `/settings-free` and
+`/settings-default` (Free), `/settings-enterprise`. Built to the PRD text and
+the Free mockup's content (mockups are illustrative; styling is ours).
+
+- **Section subtitle.** Before: "How long Gate keeps prompt and response
+  content…". After, PRD verbatim: "How long Gate keeps request logs and
+  prompt and response content for this organization." (`Settings.tsx`).
+- **Card header.** "Retention window" (`CardHeader` / `CardTitle`) with the
+  PRD description: records deleted within 24 hours of expiry, cannot be
+  recovered, audit hashes, proofs and Digital Evidence anchors kept.
+- **Field row.** A hairline above it. Before: the card title doubled as the
+  label. After: the label is the plan name ("Free plan", "Pro plan",
+  "Enterprise plan"), the input keeps its 80px width and "days" beside it,
+  screen-reader name "Retention window in days". Helper, plain muted:
+  Free "Retention is set by your plan. Upgrade to Pro to shorten the
+  window, or to Enterprise to shorten or extend it."; Pro and Enterprise
+  "Ceiling: 90 days. Minimum 0 days. Shortening deletes older records on
+  the next run and cannot be undone." The 2026-10-07 bold plan limit is
+  gone (the plan-name label is the one foreground line).
+- **Readouts.** Before: four label-over-value facts. After: a framed
+  details list (`DetailList` new `flush` variant, `dl` / `dt` / `dd`, label
+  `w-44` column, full-width row dividers inside a `rounded-md border` frame;
+  term over value below 448px of list width, nothing wraps). Rows, PRD
+  labels: Current window, Oldest retained record, Records in window, Next
+  deletion run, Last changed (Pro and Enterprise only; "Never" until a
+  save), Usage metrics (owner addition: Free 90 days, Pro and Enterprise
+  180, `metricsRetentionDays(tier)`, Info tooltip "Set by your plan,
+  separate from the retention window." on the label, the Teams budget
+  trigger).
+- **Footer (Pro and Enterprise).** Before: Save, with Cancel only while
+  editing. After: "Every change is recorded on the audit trail." left;
+  Reset (outline, disabled until edited) and Save changes right. Free: no
+  footer (not mutable); the Free plan banner below is unchanged.
+- **Enterprise.** A one-line note card under the Retention window card:
+  "Enterprise ceiling: 90 days. Your contract sets the ceiling; to raise
+  it, contact support." (PRD: the Extended retention card becomes a
+  one-line note with a Contact support link). Ceiling is the 90-day
+  default (owner).
+- **Lengthen toast.** "Records already deleted are not restored. Their
+  audit anchors remain verifiable."
+- **Shorten dialog.** Before: "Your N messages from before <date> will be
+  deleted on <run>." plus a consequence callout, "Keep N days". After:
+  "<N> records older than <date> become eligible for deletion on the next
+  run, <run>. This cannot be undone, and raising the window later does not
+  restore them."; a boxed `DetailList` (`labelClassName` `w-52`) with
+  Current window, New window, Records eligible for deletion "<n> of
+  <total>", Audit hashes and anchors "Kept"; the 0-day note at 0; "Need the
+  content? Export CSV from Messages[, or push to your SIEM,] before the run."
+  (SIEM on Enterprise only); Cancel and destructive "Shorten to N days".
+- **Not built.** Pending clamp state: built, then removed (no way to show
+  more than one state per route yet).
+
+### Owner email replaced with a placeholder `fa0039f`
+
+The mock owner keeps their name; the address is `chad@example.com` in the
+sidebar, user menu, feedback form, Settings profile, Notifications, the
+Default team roster, the captured transcripts and their PII finding matches,
+and docs. Onboarding's setup-link email and workspace use the mockup
+placeholders (`alex@example.com`, "Alex's workspace").
