@@ -46,7 +46,7 @@ export const contactFlowTitle = (tier: PlanTier, flow: ContactKind): string => {
 };
 
 const TIER_BY_SUFFIX: Record<
-  "" | "-default" | "-free" | "-enterprise",
+  "" | "-default" | "-free" | "-enterprise" | "-onboarding",
   PlanTier
 > = {
   "": "pro",
@@ -54,6 +54,8 @@ const TIER_BY_SUFFIX: Record<
   // The Default workspace is on the Free plan.
   "-default": "free",
   "-enterprise": "enterprise",
+  // The Onboarding workspace is a brand-new workspace on the Free plan.
+  "-onboarding": "free",
 };
 
 /** The org's plan, read off the pathname rather than passed as a prop, so

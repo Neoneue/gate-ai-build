@@ -287,6 +287,51 @@ graph LR
   **nothing in `src/` navigates TO it** — like the two params in §7 it is an
   orphaned entry point: re-link it or retire it deliberately.
 
+**Onboarding workspace (`-onboarding`, added 2026-10-08).** A fifth entry in
+the workspace switcher ("Onboarding" badge): a brand-new user's first-run
+setup, rebuilt from the onboarding mockup (`docs/onboarding-mockup/`, local
+only). Its own track, like Default: `isOnboardingSurface()` in
+`src/lib/plan.ts` gates every branch (no roles, Free plan via
+`planTierOf`, the Default nav with Overview pointing at
+`/overview-onboarding` = `ONBOARDING_SIDEBAR_SECTIONS`, the Default upgrade
+path). Switching in always lands on `ONBOARDING_FIRST_STEP`
+(`toOnboardingPath()`); switching out goes to the target tier's Overview.
+
+- **State is in memory only.** `OnboardingLayout` (layout route, file
+  `src/pages/onboarding/OnboardingLayout.tsx`) owns `OnboardingProvider`
+  (`onboarding-state.tsx`); no localStorage / sessionStorage. A refresh, a
+  typed URL or a cold load of any step other than `/overview-onboarding`
+  redirects there; leaving the workspace unmounts the layout and resets it.
+- **Only the Improved flow is presented** (owner, 2026-10-08). The Current
+  flow's screens are built but hidden: its routes exist and redirect to step 1.
+
+```mermaid
+graph LR
+    OVO["/overview-onboarding (choose: Gate Chat / Gate Connect / Manual)"] -->|Gate Chat| CHO["/chat-onboarding (existing Gate Chat)"]
+    OVO -->|Connect or Manual| ICO["/improved-connect-onboarding"]
+    OVO -->|phone: email a setup link| IHO["/improved-handoff-onboarding"]
+    IHO -->|auto after 3s| ILO["/improved-link-onboarding (valid by default)"]
+    ILO --> ICO
+    ICO --> IVO["/improved-verify-onboarding"]
+    IVO --> IDO["/improved-complete-onboarding"]
+    CHO -->|first send, then top-bar Setup complete| IDO
+```
+
+| Route | Component (`src/pages/onboarding/`) | Notes |
+| --- | --- | --- |
+| `/overview-onboarding` | `OnboardingOverview` → `ImprovedStart` | Desktop: three method cards + Continue / Open Gate Chat. Phone (`max-width: 767px` or short touch): Gate Chat or "Continue on desktop". |
+| `/improved-handoff-onboarding` | `ImprovedHandoff` | Phone: "Check your email"; auto-opens the link after 3s. Desktop: the picker. |
+| `/improved-link-onboarding` | `ImprovedLink` | Valid link restores the phone's setup (toast) and resumes on `/improved-connect-onboarding`; expired / other-account / other-workspace screens are built for a `linkRedemption.scenario` that names them. |
+| `/improved-connect-onboarding` | `ImprovedConnect` | App, Billing (provider account or Gate credits + model + Add credits), Gate Connect download or API key + client config (`client-configs.tsx`, six clients). |
+| `/improved-verify-onboarding` | `ImprovedVerify` | "Check connection" simulates the check (900ms) then "Message received". |
+| `/improved-complete-onboarding` | `ImprovedComplete` | Route figure done, next steps, optional protection demo. |
+| `/chat-onboarding`, `/chat-onboarding/:conversationId` | existing `Chat` under `ChatLayout` | The first send marks setup complete. |
+| `/setup-connect-onboarding`, `/setup-gate-connect-onboarding`, `/setup-manual-onboarding`, `/setup-listening-onboarding`, `/setup-attack-onboarding`, `/setup-complete-onboarding` | `current-setup.tsx`, `current-verify.tsx` | Current flow, hidden: redirect to step 1. |
+
+Exits ("Explore first", "Open Overview", next-step links) land on the Default
+workspace twin (`ONBOARDING_EXITS` in `onboarding-routes.ts`). Assets:
+`public/onboarding/image-*.png`, `public/icons/providers/{codex,claude-code,hermes,openclaw-color}.svg`.
+
 ---
 
 ## 3. TypeScript Type System

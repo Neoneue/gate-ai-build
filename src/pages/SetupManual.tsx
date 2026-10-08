@@ -360,7 +360,7 @@ function StepHeading({
 
 /* ─── Model combobox ─────────────────────────────────────────────────────── */
 
-function ModelPicker({
+export function ModelPicker({
   value,
   open,
   onOpenChange,

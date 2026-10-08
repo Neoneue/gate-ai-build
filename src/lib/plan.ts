@@ -1,6 +1,7 @@
 const DEFAULT_SEGMENT = /-default(?=\/|$)/;
 const FREE_SEGMENT = /-free(?=\/|$)/;
 const ENTERPRISE_SEGMENT = /-enterprise(?=\/|$)/;
+const ONBOARDING_SEGMENT = /-onboarding(?=\/|$)/;
 
 /** Returns true for `-default` routes (the "default workspace" tier). */
 export const isDefaultSurface = (pathname: string): boolean =>
@@ -16,13 +17,23 @@ export const isFreeSurface = (pathname: string): boolean =>
 export const isEnterpriseSurface = (pathname: string): boolean =>
   ENTERPRISE_SEGMENT.test(pathname);
 
+/** Returns true for `-onboarding` routes: the first-run Onboarding workspace
+ *  (a brand-new single-owner workspace on the Free plan, walked through the
+ *  setup flow). It shares the Default workspace's nav and has no roles. */
+export const isOnboardingSurface = (pathname: string): boolean =>
+  ONBOARDING_SEGMENT.test(pathname);
+
 /** Returns true on the tiers that have teams, budgets, roll-up and the
  *  team-manager role: Pro (no suffix) and Enterprise (PRD
  *  `docs/prds/org-team-hierarchy-prd.md` §3 "Plan availability" — only the
  *  org/team FORCED settings are Enterprise-only). Default and Free are
  *  single-owner workspaces with no roles, so they are the exclusions. */
 export const isTeamRoleSurface = (pathname: string): boolean =>
-  !(isDefaultSurface(pathname) || isFreeSurface(pathname));
+  !(
+    isDefaultSurface(pathname) ||
+    isFreeSurface(pathname) ||
+    isOnboardingSurface(pathname)
+  );
 
 /** Teams list path for the tier the user is currently in. One Teams build
  *  serves Pro and Enterprise (and the Default twin); the pathname, not a
@@ -40,7 +51,7 @@ export const teamsListPath = (
 };
 
 /** Any tier suffix, on any segment — strip to recover the PRO base path. */
-const TIER_SUFFIX = /-(default|free|enterprise)(?=\/|$)/;
+const TIER_SUFFIX = /-(default|free|enterprise|onboarding)(?=\/|$)/;
 
 const toBasePath = (pathname: string): string =>
   pathname.replace(TIER_SUFFIX, "");
@@ -135,7 +146,7 @@ const withSuffix = (
 /** Tier suffix of the pathname the user is currently on ("" for Pro). */
 export const tierSuffixOf = (
   pathname: string
-): "" | "-default" | "-free" | "-enterprise" => {
+): "" | "-default" | "-free" | "-enterprise" | "-onboarding" => {
   if (isDefaultSurface(pathname)) {
     return "-default";
   }
@@ -144,6 +155,9 @@ export const tierSuffixOf = (
   }
   if (isEnterpriseSurface(pathname)) {
     return "-enterprise";
+  }
+  if (isOnboardingSurface(pathname)) {
+    return "-onboarding";
   }
   return "";
 };
@@ -207,9 +221,20 @@ export const toEnterprisePath = (pathname: string): string => {
   );
 };
 
-/** Non-PRO path → its PRO twin (strip the tier suffix). */
+/** The Onboarding workspace has no per-page twins: it is the first-run
+ *  setup flow, so switching into it ALWAYS lands on its first step. */
+export const ONBOARDING_FIRST_STEP = "/overview-onboarding";
+
+/** Any path → the Onboarding workspace's first step (no drill-in survives
+ *  the switch, by design: the workspace is demoed from the start). */
+export const toOnboardingPath = (): string => ONBOARDING_FIRST_STEP;
+
+/** Non-PRO path → its PRO twin (strip the tier suffix). The Onboarding
+ *  workspace's steps have no PRO twins, so leaving it lands on Overview. */
 export const toProPath = (pathname: string): string =>
-  toBasePath(pathname) || "/overview";
+  isOnboardingSurface(pathname)
+    ? "/overview"
+    : toBasePath(pathname) || "/overview";
 
 /** The Overview route for the workspace the pathname is on: `/teams-enterprise`
  *  -> `/overview-enterprise`, `/teams-default` -> `/overview-default`, else

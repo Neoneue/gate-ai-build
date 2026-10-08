@@ -179,12 +179,17 @@ export function CreditsCard({
 
 const CREDIT_PRESETS = [25, 50, 100, 500] as const;
 
-function AddCreditsDialog({
+export function AddCreditsDialog({
   open,
   onOpenChange,
+  onCheckout,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
+  /** Optional: receives the chosen USD amount when checkout is pressed. The
+   *  Onboarding workspace uses it to simulate a top-up; Billing passes
+   *  nothing and behaves exactly as before. */
+  onCheckout?: (amountUsd: number) => void;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState("");
@@ -202,6 +207,9 @@ function AddCreditsDialog({
   const presetRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
 
   const handleCheckout = () => {
+    if (amount !== null) {
+      onCheckout?.(amount);
+    }
     onOpenChange(false);
     setSelected(null);
     setCustom("");

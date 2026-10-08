@@ -1,0 +1,538 @@
+/* ─── Onboarding art motion ─────────────────────────────────────────────────
+ * Ported value-for-value from the mockup (docs/onboarding-mockup,
+ * preview-CEK5nK-p.css): keyframes, durations, delays, staggers and easing
+ * are the owner's choice, not design.md Motion values (2026-10-08).
+ * Selectors key on the builder's hooks: `data-motion-root` on each art root,
+ * `data-motion` on each part, `data-motion-index` for staggers. The trigger
+ * state (armed / play / paused) is `data-motion-play`, set by
+ * use-onboarding-motion.ts; the sequences run only once it is set.
+ * Mockup `--improved-brand` (blue-600) maps to `--info`.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes improved-pulse {
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes improved-fly {
+  0% {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 24px);
+  }
+}
+
+@keyframes improved-row {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes improved-signal {
+  0% {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 72deg - 90deg)) translate(64px);
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: rotate(calc(var(--i) * 72deg - 90deg)) translate(28px);
+  }
+}
+
+@keyframes improved-hub {
+  40% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes improved-deliver {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.6);
+  }
+}
+
+/* The one curve the restyled art (chat, code, mobile chat) shares. */
+[data-motion-root] {
+  --art-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Stagger index for the connect art (mockup `--i`). */
+[data-motion-index="0"] {
+  --i: 0;
+}
+[data-motion-index="1"] {
+  --i: 1;
+}
+[data-motion-index="2"] {
+  --i: 2;
+}
+[data-motion-index="3"] {
+  --i: 3;
+}
+[data-motion-index="4"] {
+  --i: 4;
+}
+
+/* Hold every sequence until the root is in view; pause it off screen. */
+[data-motion-play="armed"] *,
+[data-motion-play="paused"] * {
+  animation-play-state: paused !important;
+}
+
+/* ─── Chat art ─────────────────────────────────────────────────────────────
+ * Not mockup-exact (owner, 2026-10-08): an explanatory illustration that
+ * reads like Gate Chat itself and tells one story, one beat at a time.
+ * design.md Motion governs components, not illustration art, so these
+ * values are tuned for the story (expo-out curve, longer beats):
+ *   100ms    the prompt bubble rises from its bottom-right corner (480ms)
+ *   700ms    the reply card rises from its bottom-left corner (480ms) with
+ *            the chat's "preparing reply" dots pulsing in a wave
+ *   1600ms   as the dots fade, the two reply lines write in left to right
+ *            (520ms, 140ms apart; an 80ms overlap so the swap reads as one
+ *            change)
+ *   2400ms   the next message starts: the composer border darkens to the
+ *            chat's focused border (150ms, the composer's own timing), a
+ *            line of text draws in (600ms), then the send key turns from
+ *            grey to enabled blue (250ms). Settles at about 3.5s.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes art-focus {
+  from {
+    border-color: var(--input);
+  }
+}
+
+@keyframes art-ready {
+  from {
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+  }
+}
+
+@keyframes art-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+}
+
+@keyframes art-wait {
+  0%,
+  88% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes art-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes art-line {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+/* Text bars (`data-art-bar`): a light band sweeps left to right across each
+ * bar as it appears, then it rests on its solid darkest value (owner,
+ * 2026-10-08). The band sits in the middle third of a 300%-wide gradient
+ * whose outer thirds are the solid color, so both ends of the sweep match
+ * the resting bar and nothing snaps. A bar sets --art-bar (rest) and
+ * --art-bar-light (band); the default is border over muted. */
+[data-art-bar] {
+  --art-bar: var(--border);
+  --art-bar-light: var(--muted);
+}
+
+@keyframes art-sweep {
+  from {
+    background-image: linear-gradient(
+      90deg,
+      var(--art-bar) 33%,
+      var(--art-bar-light) 50%,
+      var(--art-bar) 67%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0;
+  }
+  to {
+    background-image: linear-gradient(
+      90deg,
+      var(--art-bar) 33%,
+      var(--art-bar-light) 50%,
+      var(--art-bar) 67%
+    );
+    background-size: 300% 100%;
+    background-position: 0 0;
+  }
+}
+
+/* Static bars sweep as their card arrives (--art-sweep-at on the card). */
+[data-motion-play] [data-art-bar]:not([data-motion]) {
+  animation: art-sweep 800ms var(--art-sweep-at, 0ms) ease-in-out backwards;
+}
+[data-motion-root="chat-art"] [data-motion="bubble-user"] {
+  --art-sweep-at: 200ms;
+}
+[data-motion-root="chat-art"] [data-motion="bubble-reply"] {
+  --art-sweep-at: 800ms;
+}
+[data-motion-root="code-art"] [data-motion="editor"] {
+  --art-sweep-at: 200ms;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="bubble-user"] {
+  transform-origin: 100% 100%;
+  animation: art-enter 480ms 100ms var(--art-ease) backwards;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="bubble-reply"] {
+  transform-origin: 0 100%;
+  animation: art-enter 480ms 700ms var(--art-ease) backwards;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="reply-dots"] {
+  animation: art-wait 980ms 700ms linear backwards;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="reply-dot"] {
+  animation: art-dot 600ms calc(800ms + var(--i) * 120ms) ease-in-out 2;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="reply-line"] {
+  transform-origin: 0 50%;
+  animation:
+    art-line 520ms 1600ms var(--art-ease) backwards,
+    art-sweep 800ms 1600ms ease-in-out backwards;
+}
+[data-motion-root="chat-art"][data-motion-play]
+  [data-motion="reply-line"]:nth-child(2) {
+  animation-delay: 1740ms, 1740ms;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="composer"] {
+  animation: art-focus 150ms 2400ms var(--ease-out) backwards;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="composer-text"] {
+  transform-origin: 0 50%;
+  animation:
+    art-line 600ms 2600ms ease-out backwards,
+    art-sweep 800ms 2600ms ease-in-out backwards;
+}
+
+[data-motion-root="chat-art"][data-motion-play] [data-motion="send"] {
+  animation: art-ready 250ms 3250ms var(--ease-out) backwards;
+}
+
+/* ─── Mobile chat stage ────────────────────────────────────────────────────
+ * Same family as the desktop chat art: the prompt bubble rises at 100ms,
+ * the reply at 700ms, then the three itinerary rows settle in order. */
+
+[data-motion-play] [data-motion="mini-bubble-user"] {
+  transform-origin: 100% 100%;
+  animation: art-enter 480ms 100ms var(--art-ease) backwards;
+}
+
+[data-motion-play] [data-motion="mini-reply"] {
+  transform-origin: 0 100%;
+  animation: art-enter 480ms 700ms var(--art-ease) backwards;
+}
+
+[data-motion-play] [data-motion="mini-row"] {
+  animation: improved-row 400ms var(--art-ease) backwards;
+}
+[data-motion-play] [data-motion="mini-row"]:nth-child(1) {
+  animation-delay: 1300ms;
+}
+[data-motion-play] [data-motion="mini-row"]:nth-child(2) {
+  animation-delay: 1440ms;
+}
+[data-motion-play] [data-motion="mini-row"]:nth-child(3) {
+  animation-delay: 1580ms;
+}
+
+/* ─── Connect art ──────────────────────────────────────────────────────────
+ * Retimed (owner, 2026-10-08): each app lights its 1px blue ring, then sends
+ * its packet while the ring is lit. The beats below are written at pace 1;
+ * every duration and delay in this block is multiplied by --pace, set to
+ * 1.4 so the whole sequence runs one second slower (2.5s -> 3.5s):
+ *   app i at i x 280ms   ring fades in and the card swells to 1.11,
+ *                        holds, then both settle (600ms)
+ *   + 200ms              the packet leaves at the ring's peak (700ms flight)
+ *   2000ms               the last packet lands; the hub swells and its
+ *                        border turns blue and stays. Settles at about 2.5s.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+[data-motion-root="connect-art"] {
+  --pace: 1.4;
+}
+
+@keyframes art-tap {
+  30%,
+  60% {
+    box-shadow:
+      0 0 0 1px var(--info),
+      var(--shadow-sm);
+    transform: scale(1.11);
+  }
+}
+
+[data-motion-play] [data-motion="satellite"] {
+  animation: art-tap calc(600ms * var(--pace))
+    calc(var(--i) * 280ms * var(--pace)) ease-in-out backwards;
+}
+
+/* The top app taps again when the orbit run comes home to it (peak at
+ * ~1580ms, as the run arrives). The second run has no fill, so it cannot
+ * mask the first tap while it waits. */
+[data-motion-play] [data-motion="satellite"][data-motion-index="0"] {
+  animation:
+    art-tap calc(600ms * var(--pace)) 0ms ease-in-out backwards,
+    art-tap calc(600ms * var(--pace)) calc(1400ms * var(--pace)) ease-in-out;
+}
+
+[data-motion-play] [data-motion="signal"] {
+  animation: improved-signal calc(700ms * var(--pace))
+    calc((var(--i) * 280ms + 200ms) * var(--pace)) ease-in;
+}
+
+/* A blue run of the orbit's dashes laps the orbit app to app and back to
+ * the top (owner, 2026-10-08). The mask circle draws one 36px arc, short enough to hide
+ * fully behind a 40px app card (stroke-dasharray), over the 502.65px
+ * orbit, so it only shows while it travels; stroke-dashoffset =
+ * 18 - n x 100.53 centers it on app n (apps sit 72deg apart from 12
+ * o'clock; n = 5 is the top again, one full lap). It fades in behind the
+ * top app, reaches each app as that app's ring peaks (n x 280 + 180ms),
+ * dwells 80ms, hops to the next in 200ms, and after the last app it hops
+ * home and fades out behind the top app. */
+[data-motion="orbit-arc"] {
+  stroke-dasharray: 36 466.65;
+  stroke-dashoffset: 18;
+}
+
+@keyframes art-orbit {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 18;
+  }
+  10.59%,
+  15.29% {
+    opacity: 1;
+    stroke-dashoffset: 18;
+    animation-timing-function: var(--ease-in-out);
+  }
+  27.06%,
+  31.76% {
+    opacity: 1;
+    stroke-dashoffset: -82.53;
+    animation-timing-function: var(--ease-in-out);
+  }
+  43.53%,
+  48.24% {
+    opacity: 1;
+    stroke-dashoffset: -183.06;
+    animation-timing-function: var(--ease-in-out);
+  }
+  60%,
+  64.71% {
+    opacity: 1;
+    stroke-dashoffset: -283.59;
+    animation-timing-function: var(--ease-in-out);
+  }
+  76.47%,
+  81.18% {
+    opacity: 1;
+    stroke-dashoffset: -384.12;
+    animation-timing-function: var(--ease-in-out);
+  }
+  92.94% {
+    opacity: 1;
+    stroke-dashoffset: -484.65;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -484.65;
+  }
+}
+
+[data-motion-play] [data-motion="orbit-arc"] {
+  animation: art-orbit calc(1700ms * var(--pace)) linear;
+}
+
+/* The hub's border lights up in the signal blue as the last of the five
+   packets lands and the hub swells. It rests blue: that is the end state,
+   and what reduced motion shows. */
+@keyframes art-hub-lit {
+  from {
+    border-color: var(--border);
+  }
+}
+
+[data-motion-play] [data-motion="hub"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)) calc(2000ms * var(--pace)),
+    art-hub-lit calc(200ms * var(--pace)) calc(2000ms * var(--pace))
+    var(--ease-out) backwards;
+}
+
+/* ─── Code art ─────────────────────────────────────────────────────────────
+ * Not mockup-exact (owner, 2026-10-08): told like the chat art, same curve
+ * and pacing, and it borrows the chat art's keyframes so the two cards read
+ * as one family:
+ *   100ms    the client file rises in (480ms)
+ *   700ms    the old baseURL value erases right to left (320ms)
+ *   1050ms   Gate's /v1 pill appears focused (150ms) and its text types in
+ *            three keystrokes (360ms)
+ *   1800ms   Gate's reply card rises in (480ms)
+ *   2400ms   the 200 chip turns from grey to success green (250ms), then the reply
+ *            lines write in (520ms, 140ms apart). Settles at about 3.2s.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes code-art-erase {
+  from {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+}
+
+@keyframes art-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes code-art-type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+[data-motion-root="code-art"][data-motion-play] [data-motion="editor"] {
+  transform-origin: 50% 100%;
+  animation: art-enter 480ms 100ms var(--art-ease) backwards;
+}
+
+[data-motion-root="code-art"][data-motion-play] [data-motion="old-url"] {
+  transform-origin: 0 50%;
+  animation: code-art-erase 320ms 700ms ease-in-out backwards;
+}
+
+[data-motion-root="code-art"][data-motion-play] [data-motion="new-url"] {
+  animation: art-fade 150ms 1050ms ease-out backwards;
+}
+
+[data-motion-root="code-art"][data-motion-play] [data-motion="new-url-text"] {
+  animation: code-art-type 360ms 1200ms steps(3, jump-start) backwards;
+}
+
+[data-motion-root="code-art"][data-motion-play] [data-motion="response"] {
+  transform-origin: 0 100%;
+  animation: art-enter 480ms 1800ms var(--art-ease) backwards;
+}
+
+[data-motion-root="code-art"][data-motion-play] [data-motion="status"] {
+  animation: art-ready 250ms 2400ms var(--ease-out) backwards;
+}
+
+[data-motion-root="code-art"][data-motion-play] [data-motion="response-line"] {
+  transform-origin: 0 50%;
+  animation:
+    art-line 520ms 2550ms var(--art-ease) backwards,
+    art-sweep 800ms 2550ms ease-in-out backwards;
+}
+[data-motion-root="code-art"][data-motion-play]
+  [data-motion="response-line"]:nth-child(2) {
+  animation-delay: 2690ms, 2690ms;
+}
+
+/* ─── Continue on desktop thumbnail ────────────────────────────────────── */
+
+[data-motion-root="desktop-mini"][data-motion-play] [data-motion="letter"] {
+  animation: improved-deliver 0.7s 0.2s ease-in;
+}
+
+[data-motion-root="desktop-mini"][data-motion-play] [data-motion="app-row"] {
+  animation: improved-row 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+[data-motion-root="desktop-mini"][data-motion-play]
+  [data-motion="app-row"]:nth-child(1) {
+  animation-delay: 0.85s;
+}
+[data-motion-root="desktop-mini"][data-motion-play]
+  [data-motion="app-row"]:nth-child(2) {
+  animation-delay: 0.95s;
+}
+[data-motion-root="desktop-mini"][data-motion-play]
+  [data-motion="app-row"]:nth-child(3) {
+  animation-delay: 1.05s;
+}
+
+/* ─── State loops (run on data-state, not on the trigger) ──────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The letter travels phone -> laptop while the email sends. `translate`
+     is cleared so `left` alone places it, as in the mockup. */
+  [data-motion-root="handoff-art"][data-state="sending"]
+    [data-motion="letter"] {
+    translate: none;
+    animation: improved-fly 0.9s ease-in-out infinite;
+  }
+
+  /* The pulse rides the wires while Gate listens for the first message. */
+  [data-motion-root="route"][data-state="live"] [data-motion="route-pulse"] {
+    left: -24px;
+    opacity: 1;
+    animation: improved-pulse 0.9s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Mockup end state: the pulse fills the wire, no movement. */
+  [data-motion-root="route"][data-state="live"] [data-motion="route-pulse"] {
+    left: 0;
+    width: 100%;
+    opacity: 1;
+  }
+
+  [data-motion-play] *,
+  [data-motion-play] {
+    animation: none !important;
+  }
+
+  /* Gentler, not zero: each art piece fades in at its end state, with no
+     movement (the trigger never arms under reduce, so nothing else runs). */
+  [data-motion-root] {
+    animation: art-fade 200ms ease-out backwards;
+  }
+}

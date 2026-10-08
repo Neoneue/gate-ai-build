@@ -31,7 +31,11 @@ import {
   formatRelative,
   formatTime,
 } from "@/lib/formatters";
-import { isDefaultSurface, isFreeSurface } from "@/lib/plan";
+import {
+  isDefaultSurface,
+  isFreeSurface,
+  isOnboardingSurface,
+} from "@/lib/plan";
 import type { ChatErrorCode, ChatModelUnavailableReason } from "./contract";
 import {
   CHAT_COPY,
@@ -473,7 +477,11 @@ export function chatConversationTotals(
  *  configured anywhere in this build, so the balance is never low and the
  *  once-per-crossing latch never set. */
 export function chatCredits(pathname: string): ChatCredits {
-  const pro = !(isFreeSurface(pathname) || isDefaultSurface(pathname));
+  const pro = !(
+    isFreeSurface(pathname) ||
+    isDefaultSurface(pathname) ||
+    isOnboardingSurface(pathname)
+  );
   return {
     balance: formatExactUsd(CREDIT_BALANCE_USD),
     low: false,

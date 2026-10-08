@@ -266,6 +266,75 @@ const SetupModels = lazy(() =>
   import("@/pages/SetupModels").then((m) => ({ default: m.SetupModels }))
 );
 
+/* Onboarding workspace (`-onboarding` suffix): the first-run setup flow in
+ * two versions (Current / Improved), rebuilt from the onboarding mockup.
+ * Its layout owns the in-memory flow state. */
+const OnboardingLayout = lazy(() =>
+  import("@/pages/onboarding/OnboardingLayout").then((m) => ({
+    default: m.OnboardingLayout,
+  }))
+);
+const OnboardingOverview = lazy(() =>
+  import("@/pages/onboarding/OnboardingOverview").then((m) => ({
+    default: m.OnboardingOverview,
+  }))
+);
+const OnboardingCurrentConnect = lazy(() =>
+  import("@/pages/onboarding/current-setup").then((m) => ({
+    default: m.CurrentConnect,
+  }))
+);
+const OnboardingCurrentGateConnect = lazy(() =>
+  import("@/pages/onboarding/current-setup").then((m) => ({
+    default: m.CurrentGateConnect,
+  }))
+);
+const OnboardingCurrentManual = lazy(() =>
+  import("@/pages/onboarding/current-setup").then((m) => ({
+    default: m.CurrentManual,
+  }))
+);
+const OnboardingCurrentListening = lazy(() =>
+  import("@/pages/onboarding/current-verify").then((m) => ({
+    default: m.CurrentListening,
+  }))
+);
+const OnboardingCurrentAttack = lazy(() =>
+  import("@/pages/onboarding/current-verify").then((m) => ({
+    default: m.CurrentAttack,
+  }))
+);
+const OnboardingCurrentComplete = lazy(() =>
+  import("@/pages/onboarding/current-verify").then((m) => ({
+    default: m.CurrentComplete,
+  }))
+);
+const OnboardingImprovedHandoff = lazy(() =>
+  import("@/pages/onboarding/improved-start").then((m) => ({
+    default: m.ImprovedHandoff,
+  }))
+);
+const OnboardingImprovedLink = lazy(() =>
+  import("@/pages/onboarding/improved-start").then((m) => ({
+    default: m.ImprovedLink,
+  }))
+);
+const OnboardingImprovedConnect = lazy(() =>
+  import("@/pages/onboarding/improved-setup").then((m) => ({
+    default: m.ImprovedConnect,
+  }))
+);
+const OnboardingImprovedVerify = lazy(() =>
+  import("@/pages/onboarding/improved-setup").then((m) => ({
+    default: m.ImprovedVerify,
+  }))
+);
+const OnboardingImprovedComplete = lazy(() =>
+  import("@/pages/onboarding/improved-setup").then((m) => ({
+    default: m.ImprovedComplete,
+  }))
+);
+
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
  *  per-page state duplication or a Context provider. */
@@ -494,6 +563,62 @@ export function AppRoutes() {
           }
           path="/settings-enterprise"
         />
+        {/* Onboarding workspace — reached via the workspace switcher, always
+         * on its first step. The layout owns the flow state in memory, so a
+         * refresh (or a cold load of any later step) starts over at
+         * /overview-onboarding. The Improved flow's chat path reuses the Gate
+         * Chat page under its own ChatLayout. */}
+        <Route element={<OnboardingLayout />}>
+          <Route element={<ChatLayout />}>
+            <Route element={<Chat />} path="/chat-onboarding" />
+            <Route element={<Chat />} path="/chat-onboarding/:conversationId" />
+          </Route>
+          <Route element={<OnboardingOverview />} path="/overview-onboarding" />
+          <Route
+            element={<OnboardingCurrentConnect />}
+            path="/setup-connect-onboarding"
+          />
+          <Route
+            element={<OnboardingCurrentGateConnect />}
+            path="/setup-gate-connect-onboarding"
+          />
+          <Route
+            element={<OnboardingCurrentManual />}
+            path="/setup-manual-onboarding"
+          />
+          <Route
+            element={<OnboardingCurrentListening />}
+            path="/setup-listening-onboarding"
+          />
+          <Route
+            element={<OnboardingCurrentAttack />}
+            path="/setup-attack-onboarding"
+          />
+          <Route
+            element={<OnboardingCurrentComplete />}
+            path="/setup-complete-onboarding"
+          />
+          <Route
+            element={<OnboardingImprovedHandoff />}
+            path="/improved-handoff-onboarding"
+          />
+          <Route
+            element={<OnboardingImprovedLink />}
+            path="/improved-link-onboarding"
+          />
+          <Route
+            element={<OnboardingImprovedConnect />}
+            path="/improved-connect-onboarding"
+          />
+          <Route
+            element={<OnboardingImprovedVerify />}
+            path="/improved-verify-onboarding"
+          />
+          <Route
+            element={<OnboardingImprovedComplete />}
+            path="/improved-complete-onboarding"
+          />
+        </Route>
         {/* Unknown routes fall back to Requests. */}
         <Route element={<Navigate replace to="/overview" />} path="*" />
       </Route>
