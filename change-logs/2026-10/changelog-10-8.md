@@ -102,13 +102,13 @@ the Free mockup's content (mockups are illustrative; styling is ours).
   default (owner).
 - **Lengthen toast.** "Records already deleted are not restored. Their
   audit anchors remain verifiable."
-- **Shorten dialog.** Before: "Your N messages from before <date> will be
-  deleted on <run>." plus a consequence callout, "Keep N days". After:
-  "<N> records older than <date> become eligible for deletion on the next
-  run, <run>. This cannot be undone, and raising the window later does not
+- **Shorten dialog.** Before: "Your N messages from before {date} will be
+  deleted on {run}." plus a consequence callout, "Keep N days". After:
+  "{N} records older than {date} become eligible for deletion on the next
+  run, {run}. This cannot be undone, and raising the window later does not
   restore them."; a boxed `DetailList` (`labelClassName` `w-52`) with
-  Current window, New window, Records eligible for deletion "<n> of
-  <total>", Audit hashes and anchors "Kept"; the 0-day note at 0; "Need the
+  Current window, New window, Records eligible for deletion "{n} of
+  {total}", Audit hashes and anchors "Kept"; the 0-day note at 0; "Need the
   content? Export CSV from Messages[, or push to your SIEM,] before the run."
   (SIEM on Enterprise only); Cancel and destructive "Shorten to N days".
 - **Not built.** Pending clamp state: built, then removed (no way to show
