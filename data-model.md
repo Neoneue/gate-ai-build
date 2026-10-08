@@ -2254,7 +2254,7 @@ text. The primitive contract lives in `design.md` §7 "Skeleton".
 
 **State:** `displayName`, `email`, `organization` with dirty-tracking for Save/Reset.
 
-**Mock identity:** Chad Ponticas / <chad@constellationnetwork.io>
+**Mock identity:** Chad Ponticas / <chad@example.com>
 
 **Sections:** Profile · Security (Passkey) · Account management (added 2026-08-05). Account management holds two danger-tone cards (Profile-style button footers): **Delete account and data** (warning callout + "Delete my account" type-to-confirm gating the destructive button) and **Cancel plan** (opens the shared `CancelPlanDialog`). Tier fork via a `showCancelPlan` prop: the PRO route passes `false` (card hidden for now, code retained); the Free/Default twins already omit it.
 

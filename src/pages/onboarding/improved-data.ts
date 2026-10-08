@@ -1,4 +1,3 @@
-import { MEMBER_ROWS, WORKSPACE_NAME } from "@/data/team-members";
 import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 
 /* ─── Improved flow: data and pure helpers ──────────────────────────────── */
@@ -43,9 +42,9 @@ export const IMPROVED_CLIENTS = [
   },
 ] as const;
 
-/** The signed-in owner's email: where the setup link is sent. */
-export const OWNER_EMAIL =
-  MEMBER_ROWS.find((member) => member.role === "owner")?.email ?? "your email";
+/** The signed-in owner's email: where the setup link is sent. A placeholder
+ *  identity (the mockup's own fixture), never a real person's address. */
+export const OWNER_EMAIL = "alex@example.com";
 
 /** The other account / workspace a mismatched link was opened in (mockup
  *  fixtures, verbatim). */
@@ -53,7 +52,7 @@ export const OTHER_SESSION = {
   email: "sam@example.com",
   workspace: "Sam’s team",
 } as const;
-export const LINK_WORKSPACE = WORKSPACE_NAME;
+export const LINK_WORKSPACE = "Alex’s workspace";
 export const LINK_VALIDITY = "Links stay valid for 24 hours.";
 
 /** Simulated network latency for sends and checks (mockup). */

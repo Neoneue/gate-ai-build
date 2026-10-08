@@ -27,7 +27,7 @@ export const MEMBER_ROWS: MemberRow[] = [
   {
     id: "usr_chad",
     name: "Chad Ponticas",
-    email: "chad@constellationnetwork.io",
+    email: "chad@example.com",
     avatarTone: "blue",
     role: "owner",
     joined: authoredDate(2026, 3, 20),

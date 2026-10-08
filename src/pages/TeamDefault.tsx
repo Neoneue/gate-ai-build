@@ -24,7 +24,7 @@ import { InviteMemberDialog } from "@/pages/Team";
 
 const OWNER = {
   name: "Chad Ponticas",
-  email: "chad@constellationnetwork.io",
+  email: "chad@example.com",
   joined: authoredDate(2026, 3, 20),
 };
 

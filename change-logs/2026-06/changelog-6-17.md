@@ -56,7 +56,7 @@ Follow-up polish on the Findings panel (`Requests.tsx`, `requests.ts`):
 - Pager reads `Finding N of M` (was `N / M`); the `‹ ›` paddles gained the
   system `focus-visible` ring.
 - `req_8389e4` Authored-by trailers wrap the email in angle brackets
-  (`NeoNeue <chad@constellationnetwork.io>`) to match the Co-Authored-By
+  (`NeoNeue <chad@example.com>`) to match the Co-Authored-By
   trailer convention.
 
 ### Findings switcher generalized + two-turn evidence `c3bf0d0`
@@ -188,7 +188,7 @@ raw value is revealed when Unredact is on (before → `<EMAIL>`, after →
 
 ### req_8389e4: chad@ trailers + generic PII banner `843c706`
 
-Added `Authored-by: NeoNeue chad@constellationnetwork.io` before each
+Added `Authored-by: NeoNeue chad@example.com` before each
 `Co-Authored-By` line in `req_8389e4` (`requests.ts`), giving 4 PII email
 instances (chad + noreply, two occurrences each) to page through. The findings
 banner now names a generic, stable entity descriptor (`emailAddress`) instead

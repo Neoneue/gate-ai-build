@@ -498,9 +498,9 @@ function SidebarAccountRows({
           </span>
           <span
             className="type-copy-12 truncate text-muted-foreground leading-tight"
-            title="chad@constellationnetwork.io"
+            title="chad@example.com"
           >
-            chad@constellationnetwork.io
+            chad@example.com
           </span>
         </div>
       </div>
