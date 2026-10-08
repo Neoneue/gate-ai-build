@@ -20,7 +20,9 @@ inference or extension, not a published rule.
   solving, who is the target user, and what constraints exist". Snippet.
   <https://blog.uxtweak.com/design-critique/>
 
-Gate lines: `Job:`, `Path:`, `Expectation:`.
+Gate lines: `Job:`, `Path:`, `Expectation:`, `Precedent:` (the tested
+pattern and the repo component it maps to; added 2026-10-08 after two
+invented layouts lost to Stripe's PropertyList built from our `DetailList`).
 
 ## 2. A law's name is not a check
 

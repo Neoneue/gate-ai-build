@@ -60,6 +60,7 @@ const GATE_ALL = [
   "Job",
   "Path",
   "Expectation",
+  "Precedent",
   "Objects",
   "Actions",
   "Laws",
@@ -639,6 +640,17 @@ describe("skillState: UX first, in order, with the gate written", () => {
     }
   });
 
+  it("(e5) a gate without Precedent does not count (owner 2026-10-08)", () => {
+    const t = transcript(
+      INDEX(),
+      UX(),
+      GATE(GATE_ALL.filter((l) => l !== "Precedent")),
+      VH(),
+      SHADCN()
+    );
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
   it("(e2) labels in bullets or bold still count", () => {
     const t = transcript(
       INDEX(),
@@ -647,6 +659,7 @@ describe("skillState: UX first, in order, with the gate written", () => {
         "- **Job**",
         "- **Path**",
         "- Expectation",
+        "- Precedent",
         "- Objects",
         "1. Actions",
         "**Laws**",
@@ -696,6 +709,8 @@ describe("skillState: UX first, in order, with the gate written", () => {
     expect(why).toMatch(/UI gate/);
     expect(why).toMatch(/Job:/);
     expect(why).toMatch(/Patterns:/);
+    expect(why).toMatch(/Precedent:/);
+    expect(why).toMatch(/nine labelled lines/);
   });
 });
 
@@ -729,6 +744,78 @@ describe("verdict: a subagent's UI needs its gate too (h)", () => {
 
   it("a subagent's reads without the gate do not", () => {
     expect(judge(transcript(INDEX(), UX(), VH(), SHADCN()))).toMatch(/UI gate/);
+  });
+});
+
+describe("skillState: one shell command can read several skills", () => {
+  it("counts every SKILL.md a single command prints, in order", () => {
+    const gateText = GATE_ALL.map((l) => `${l}: x`).join("\n");
+    const t = transcript(
+      INDEX(),
+      UX(),
+      call("Write", { file_path: "/tmp/s/ux-gate.md", content: gateText }),
+      call("Bash", {
+        command:
+          "cat agents/front-end-developer/skills/visual-hierarchy/SKILL.md; sed -n 1,80p agents/front-end-developer/skills/shadcn/SKILL.md",
+      })
+    );
+    expect(skillState(t).missing).toEqual([]);
+  });
+});
+
+describe("skillState: the gate written to a file", () => {
+  // Reply text after a tool result can stay off disk until the turn ends,
+  // so a reply gate may be invisible to the hook. A Write is a tool call,
+  // which is on disk at once.
+  const gateText = GATE_ALL.map((l) => `${l}: something concrete`).join("\n");
+  const GATE_FILE = (content = gateText) =>
+    call("Write", { file_path: "/tmp/scratch/ux-gate.md", content });
+
+  it("a gate written with Write counts", () => {
+    const t = transcript(INDEX(), UX(), GATE_FILE(), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual([]);
+  });
+
+  it("a gate file missing a label does not count", () => {
+    const thin = gateText.replace(/^Rejected:.*$/m, "");
+    const t = transcript(INDEX(), UX(), GATE_FILE(thin), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("a gate file written before the ux-laws read does not count", () => {
+    const t = transcript(INDEX(), GATE_FILE(), UX(), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("an Edit whose new text is the gate counts too", () => {
+    const t = transcript(
+      INDEX(),
+      UX(),
+      call("Edit", {
+        file_path: "/tmp/scratch/ux-gate.md",
+        old_string: "x",
+        new_string: gateText,
+      }),
+      VH(),
+      SHADCN()
+    );
+    expect(skillState(t).missing).toEqual([]);
+  });
+
+  it("the block message tells the agent to write the gate to a file", () => {
+    const why = verdict(
+      {
+        tool_name: "Edit",
+        tool_input: { file_path: "src/components/a.tsx" },
+        transcript_path: "/dev/null",
+        cwd: "/r",
+      },
+      {
+        readTranscript: () => transcript(INDEX(), UX(), VH(), SHADCN()),
+        filesOf: () => [],
+      }
+    );
+    expect(why).toMatch(/ux-gate\.md/);
   });
 });
 

@@ -38,8 +38,11 @@ Shared project instructions, kept minimal; per-area detail lives in
 - **The UI gate enforces it.** `scripts/require-skill.mjs` (PreToolUse in
   `.claude/settings.json`) blocks UI writes (Write, Edit, shell writes,
   commits of UI files) until, in order: the kit INDEX.md is read (once per
-  session), then per change ux-laws, the written ux-laws gate (eight
-  labelled lines, ux-laws section 4), visual-hierarchy and one build skill;
+  session), then per change ux-laws, the ux-laws gate written to a file
+  with the Write tool, e.g. `<scratchpad>/ux-gate.md` (nine
+  labelled lines, ux-laws section 4, including `Precedent:`, the tested
+  competitor pattern and the repo component it maps to), visual-hierarchy
+  and one build skill;
   a step out of order does not count, and it resets after each commit. It
   gates every session, the main one included, so a direct-edited class move
   needs the same steps. A UI commit also passes when one of the session's

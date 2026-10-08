@@ -68,7 +68,8 @@ the twin, and name what was missing at the top of your report. Ask only
 when a guess could break a twin.
 
 **You return:** the report shape in "Standing rules when delegated", opening
-with the ux-laws gate you wrote (all eight lines, quoted) and, after the
+with the ux-laws gate you wrote (all nine lines, quoted, including the
+`Precedent:` competitor pattern and the repo component it maps to) and, after the
 build, one line per action in your diff: `action -> object it changes ->
 container`, each marked match or mismatch. A mismatch is not done: move the
 action first. For `review` and `apply`, the report passes

@@ -8,9 +8,12 @@
 // - UI files (isUiPath: src/components/, src/pages/, any src/ .tsx or .css
 //   that is not a test, the root design.md) need five steps, IN ORDER, since
 //   this session's last landed git commit (skillState): read the skills
-//   INDEX.md (once per session), read the ux-laws skill, WRITE its gate in
-//   visible text (labelled Job:, Path:, Expectation:, Objects:, Actions:,
-//   Laws:, Patterns:, Rejected:; ux-laws SKILL.md section 4),
+//   INDEX.md (once per session), read the ux-laws skill, WRITE its gate
+//   (labelled Job:, Path:, Expectation:, Precedent:, Objects:, Actions:,
+//   Laws:, Patterns:, Rejected:; ux-laws SKILL.md section 4) with the Write tool
+//   to a file, or as reply text from an earlier turn (reply text reaches the
+//   transcript only when its turn ends, so a gate written this turn is
+//   invisible until then),
 //   read visual-hierarchy, then load ONE build skill picked from that index.
 //   UX before UI: a step out of order does not count. One round covers one
 //   change: after a commit, the next change does them again.
@@ -214,6 +217,10 @@ const GATE_LABELS = [
   "Job",
   "Path",
   "Expectation",
+  // The tested pattern the design follows and the repo component it maps
+  // to, or why a new component is needed (owner 2026-10-08: "no more
+  // invented ui that doesn't fit our work").
+  "Precedent",
   "Objects",
   "Actions",
   "Laws",
@@ -242,6 +249,15 @@ function skillEvent(name) {
 
 function eventsOf(part) {
   const input = part.input ?? {};
+  // The gate written to a file (Write, or an Edit whose new text holds it).
+  // Reply text after a tool result can stay off disk until the turn ends;
+  // a tool call is on disk at once, so this is the reliable route.
+  if (
+    (part.name === "Write" && writesGate(String(input.content ?? ""))) ||
+    (part.name === "Edit" && writesGate(String(input.new_string ?? "")))
+  ) {
+    return [{ kind: "gate" }];
+  }
   if (part.name === "Skill") {
     return [skillEvent(input.skill)];
   }
@@ -263,9 +279,9 @@ function eventsOf(part) {
     if (INDEX_SHELL_READ.test(command)) {
       events.push({ kind: "index", kit: kitOfIndex(command) });
     }
-    const skill = command.match(SKILL_SHELL_READ)?.[1];
-    if (skill) {
-      events.push(skillEvent(skill));
+    // Every SKILL.md the command prints counts, in the order it names them.
+    for (const m of command.matchAll(new RegExp(SKILL_SHELL_READ, "g"))) {
+      events.push(skillEvent(m[1]));
     }
     return events;
   }
@@ -583,7 +599,7 @@ const STEP = {
     "read the skills INDEX.md in full, once this session (Read agents/front-end-developer/skills/INDEX.md)",
   "ux-laws":
     "after the index, read the ux-laws skill by path (Read agents/front-end-developer/skills/ux-laws/SKILL.md)",
-  gate: "after reading ux-laws, write its gate (ux-laws section 4) in your reply as eight labelled lines: `Job:` what the user came to do; `Path:` entry, steps, exit, errors; `Expectation:` which app they think this works like; `Objects:` the things the user acts on and which container shows each; `Actions:` each action added or moved as action -> object it changes -> container it sits in, where the object must be the container's own (or `none`); `Laws:` each law touched and how it passes; `Patterns:` the corrected patterns that apply and that they hold; `Rejected:` at least one alternative and why it lost. If any answer is no or unknown, fix the design before writing UI",
+  gate: "after reading ux-laws, write its gate (ux-laws section 4) with the Write tool to a file, for example <your scratchpad>/ux-gate.md (a gate only in your reply text may not reach the transcript until your turn ends, so the hook cannot see it), as nine labelled lines: `Job:` what the user came to do; `Path:` entry, steps, exit, errors; `Expectation:` which app they think this works like; `Precedent:` the tested pattern this follows (a competitor such as Stripe, Vercel or the OpenAI / Anthropic consoles, with its URL or name) and the existing repo component or precedent it maps to (file:line), or `new component:` and why nothing existing fits; `Objects:` the things the user acts on and which container shows each; `Actions:` each action added or moved as action -> object it changes -> container it sits in, where the object must be the container's own (or `none`); `Laws:` each law touched and how it passes; `Patterns:` the corrected patterns that apply and that they hold; `Rejected:` at least one alternative and why it lost. If any answer is no or unknown, fix the design before writing UI",
   "visual-hierarchy":
     "after ux-laws, load visual-hierarchy, the second UX skill (Read agents/front-end-developer/skills/visual-hierarchy/SKILL.md), and give every element its tier",
   pick: "after visual-hierarchy, load the ONE build skill from the index that fits this job (for example shadcn for a component or a button, ask-sonner for a toast): Read agents/front-end-developer/skills/<name>/SKILL.md. One build skill, not several",
