@@ -16,9 +16,10 @@ import { formatDate, formatTime } from "@/lib/formatters";
  * Ceilings, per tier (PRD):
  *   free         fixed at 30 days, not editable
  *   pro          0 to 90 days
- *   enterprise   0 to the contract ceiling. The default contract is 90 days
- *                and Constellation raises it per contract; this mock org's
- *                contract sets 365.
+ *   enterprise   0 to the org's maximum, which defaults to 90 days. Only a
+ *                Constellation admin raises it, per contract, in the Admin
+ *                portal. This mock org is on the default (owner 2026-10-08:
+ *                "use 90 for enterprise it's the default").
  * Every org starts at its ceiling.
  * ───────────────────────────────────────────────────────────────────────── */
 
@@ -35,9 +36,10 @@ export const FREE_RETENTION_DAYS = 30;
 /** Highest window Pro accepts. */
 export const PRO_RETENTION_CEILING_DAYS = 90;
 
-/** This mock Enterprise org's contract ceiling. The Enterprise default is 90
- *  days; the contract extends it, which is set by Constellation, not here. */
-export const ENTERPRISE_CONTRACT_CEILING_DAYS = 365;
+/** This mock Enterprise org's ceiling: the Enterprise default, 90 days. Set
+ *  by Constellation per contract (Admin portal), never by the org admin;
+ *  the mock stays on the default (owner 2026-10-08). */
+export const ENTERPRISE_CONTRACT_CEILING_DAYS = 90;
 
 /** The deletion run fires once a day at this UTC hour (the PRD's run time). */
 export const DELETION_RUN_UTC_HOUR = 3;
@@ -54,6 +56,21 @@ export function retentionCeilingDays(tier: RetentionTier): number {
     default:
       return FREE_RETENTION_DAYS;
   }
+}
+
+/** Aggregated usage metrics are kept for a fixed period per tier: Free 90
+ *  days, Pro and Enterprise 180 (PRD "What the window governs": the
+ *  pricing-page figures stay tier-fixed in v1). Nobody edits it, and the
+ *  retention window and the deletion run never touch metrics, so a 0-day
+ *  window still keeps them. */
+export const FREE_METRICS_RETENTION_DAYS = 90;
+export const PAID_METRICS_RETENTION_DAYS = 180;
+
+/** How long the tier keeps aggregated usage metrics. */
+export function metricsRetentionDays(tier: RetentionTier): number {
+  return tier === "free"
+    ? FREE_METRICS_RETENTION_DAYS
+    : PAID_METRICS_RETENTION_DAYS;
 }
 
 /** The first deletion run strictly after `now`. */

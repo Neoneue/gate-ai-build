@@ -7,6 +7,7 @@ import {
   formatDeletionRun,
   type MessageCurveAnchor,
   messagesInWindow,
+  metricsRetentionDays,
   nextDeletionRun,
   normalizeDaysInput,
   oldestInWindow,
@@ -32,7 +33,15 @@ describe("retentionCeilingDays", () => {
       ENTERPRISE_CONTRACT_CEILING_DAYS
     );
     expect([FREE_RETENTION_DAYS, PRO_RETENTION_CEILING_DAYS]).toEqual([30, 90]);
-    expect(ENTERPRISE_CONTRACT_CEILING_DAYS).toBe(365);
+    expect(ENTERPRISE_CONTRACT_CEILING_DAYS).toBe(90);
+  });
+});
+
+describe("metricsRetentionDays", () => {
+  it("is tier-fixed per the pricing page: Free 90, Pro and Enterprise 180", () => {
+    expect(metricsRetentionDays("free")).toBe(90);
+    expect(metricsRetentionDays("pro")).toBe(180);
+    expect(metricsRetentionDays("enterprise")).toBe(180);
   });
 });
 

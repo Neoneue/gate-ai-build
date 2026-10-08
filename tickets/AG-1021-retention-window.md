@@ -2,7 +2,7 @@
 
 Ticket [AG-1021](https://constellationnetwork.atlassian.net/browse/AG-1021), epic [AG-1018](https://constellationnetwork.atlassian.net/browse/AG-1018).
 PRD: [Configurable data retention v1](https://app.notion.com/p/3eca94bd4b4f818aad7ec1372a5adde1)
-(Notion, Horizon 2, owner Dave Berg, status Draft, revised 2026-10-06). The
+(Notion, Horizon 2, status Draft, revised 2026-10-06). The
 PRD is the spec; re-read it live before each chunk, since it is still a draft.
 
 An organization owner or admin sets how long Gate keeps request logs, prompt
@@ -18,8 +18,16 @@ only when every box in it is ticked, including its verify box.
 ## Rules that apply to every chunk
 
 - Free is fixed at 30 days (read-only). Pro: 0 to 90. Enterprise: 0 to a
-  contract ceiling (default 90; the mock uses 365). New orgs start at the
-  ceiling.
+  contract ceiling (default 90, same as Pro; set by Constellation, default 90;
+  the mock uses 90, owner 2026-10-08: "use 90 for enterprise it's the
+  default", over the 365 example in the PRD mockup and Jira AC). New orgs
+  start at the ceiling.
+- Metrics retention is separate from the window and fixed per tier: Free 90
+  days, Pro 180, Enterprise 180 (live pricing page; PRD "What the window
+  governs": "the 90-day and 180-day pricing-page figures stay tier-fixed in
+  v1"). Nobody edits it on any tier. The window, the deletion run and a
+  0-day window never touch metrics. Source of the numbers:
+  `metricsRetentionDays(tier)` in `src/lib/retention.ts`.
 - Only owners and admins see or change the setting. Members and team managers
   see the Messages statement only.
 - The value in Settings and the window stated on Messages are always the same
@@ -61,6 +69,12 @@ Routes: `/settings` (Pro), `/settings-free`, `/settings-default` (Free),
 - [ ] Owner addition (2026-10-07, not in the PRD): Cancel (outline) shows
       next to Save only while an edit is unsaved, and restores the saved
       window
+- [ ] Owner addition (2026-10-07): the plan limit (30 / 90 / 90 days) is
+      emphasized in the description on every tier, and "Retention window"
+      uses the card title style of the sibling Settings cards. Superseded
+      2026-10-08: the field label is the plan name ("Free plan", "Pro plan",
+      "Enterprise plan") and the helper under it is plain muted text, since
+      the bold limit under the label "conflicts visually"
 - [ ] Enterprise line makes clear the window is set here and only the
       contract ceiling goes through Contact support (owner 2026-10-07:
       "Contact support to change it" read as the window)
@@ -68,6 +82,19 @@ Routes: `/settings` (Pro), `/settings-free`, `/settings-default` (Free),
       fingerprints are kept (PRD: every deletion statement names the anchors)
 - [ ] 0 days: card says what it turns off (stored content, response cache,
       Gate Chat history) and that requests stay billed, listed and verifiable
+- [ ] Owner addition (2026-10-08): metrics retention shown read-only,
+      tier-fixed (Free 90, Pro and Enterprise 180), per PRD 'What the window
+      governs'. Built as a fifth fact, "Usage metrics", the last cell of
+      the fact grid, value from `metricsRetentionDays(tier)`. The note "Set
+      by your plan, separate from the retention window." (draft, copywriter
+      to confirm) is a tooltip on an Info icon after the label (owner
+      2026-10-08), the Teams budget fact pattern. Not a control on any
+      tier; no separate card
+- [ ] Metrics fact stays at its tier value at 0 days, before and after Save,
+      and the 0-day callout does not imply metrics are deleted
+- [ ] Verify on localhost: Usage metrics reads 90 days on `/settings-free`
+      and `/settings-default`, 180 days on `/settings` and
+      `/settings-enterprise`, light and dark
 - [ ] Shorten dialog: record count and cutoff date, run time, irreversible,
       raising later restores nothing
 - [ ] Shorten dialog: audit hashes and anchors kept
@@ -116,8 +143,20 @@ Routes: `/chat`, `/chat-free`, `/chat-default`, `/chat-enterprise` (and
       3-day grace period with two reminder emails, not immediately
 - [ ] `src/pages/Settings.tsx:441` (Cancel plan card): same correction
 - [ ] Copy changes go through `triage-copy` before applying
-- [ ] Leave pricing-page and plans copy (`src/data/plans.ts`,
-      `plan-comparison-dialog*.tsx` "30 day retention") to AG-973; note only
+- [ ] In-app plan copy matches the live pricing page (owner 2026-10-08: "we
+      need to not be stale"; overrides the earlier "leave to AG-973" note
+      for the in-app lists only):
+  - [ ] Audit trail detail drops "(30 day retention)" (fingerprints are
+        permanent, PRD): `src/data/plans.ts:153`,
+        `plan-comparison-dialog.tsx:62`, `plan-comparison-dialog-pro.tsx:61`
+  - [ ] Free list gains "Data retention: 30-day log retention, 90-day
+        metrics retention" (plans.ts and both dialogs)
+  - [ ] Pro list gains "Data retention: 90-day log retention, 180-day
+        metrics retention" (plans.ts and both dialogs)
+  - [ ] Enterprise retention row: owner picks keep or live-page wording
+        ("Custom retention periods and volume pricing")
+  - [ ] Dialog rows use the existing feature-row pattern and an icon from
+        the same set (front-end-developer)
 - [ ] Owner approved wording
 
 ## Chunk 5: Audit Trail touchpoint (confirm with owner first)
@@ -133,12 +172,14 @@ audit trail.
 ## Chunk 6: Records and docs
 
 - [ ] `data-model.md` updated (back up to `.bak` first): tier ceilings,
-      retention fields, which surfaces read them
+      retention fields, metrics retention per tier, which surfaces read them
 - [ ] Changelog entry per UI change (`change-logs/`)
 - [ ] Tests for the retention helper (ceiling per tier, eligible count,
       oldest date)
-- [ ] Two DRAFT decisions recorded: type-to-confirm or not; Enterprise mock
-      ceiling of 365
+- [x] Tests for `metricsRetentionDays` (Free 90, Pro and Enterprise 180),
+      `retention.test.ts`
+- [ ] DRAFT decision recorded: type-to-confirm or not. (Enterprise mock
+      ceiling settled 2026-10-08 by the owner: the 90-day default.)
 
 ---
 
@@ -146,18 +187,23 @@ audit trail.
 
 - Admin portal "Maximum retention (days)" override field (admin console)
 - Scheduled clamp state in Settings (PRD P0: new ceiling and clamp date
-  after a downgrade or lowered maximum). The mockup shows one state per
-  route, the normal one (owner 2026-10-07: "we pick a state and show it");
-  the product builds the clamp state from the PRD
+  after a downgrade or lowered maximum; Jira AC: "A pending clamp shows its
+  date in the card"). Built then removed 2026-10-08 (owner: "we'll need a
+  way to show multiple states somehow"). Blocked on a way to demo more than
+  one state per route; the product builds the clamp state from the PRD
 - Deletion run, 0-day write path, response cache off (Gate Core, AG-984)
 - Clamp reminder emails and send log (AG-508, AG-512, AG-823)
-- Pricing page and plans doc copy (AG-973, Dave)
+- Website pricing page and plans doc copy (AG-973, PRD owner). The in-app plan
+  lists are in Chunk 4 (owner 2026-10-08)
 - Admin API read (P1), SIEM push of run summaries (P1)
 - Legal hold, per-key or per-team windows, automatic export (not in v1)
 
 ## Open questions in the PRD (watch for changes)
 
-- Metrics retention: proposed to stay tier-fixed in v1
+- Metrics retention: proposed to stay tier-fixed in v1 (PRD owner to settle).
+  The PRD names no UI for it; the read-only Settings fact is an owner
+  addition (2026-10-08). If the PRD changes to "follows the window", the
+  fact and `metricsRetentionDays` change with it
 - Training pool deletion: engineering to confirm
 - Legal hold demand from sales
 - API write access at launch

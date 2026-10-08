@@ -143,8 +143,8 @@ function SettingsSurface({
           <div className="flex flex-col gap-1">
             <SectionTitle as="h2">Data retention</SectionTitle>
             <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
-              How long Gate keeps prompt and response content for this
-              organization.
+              How long Gate keeps request logs and prompt and response content
+              for this organization.
             </p>
           </div>
           <DataRetentionCard tier={retentionTier} />
@@ -190,7 +190,7 @@ function PageHeader() {
 
 const PROFILE_DEFAULTS = {
   fullName: "Chad Ponticas",
-  email: "chad@constellationnetwork.io",
+  email: "chad@example.com",
   organization: "Chad Ponticas's workspace",
 };
 
