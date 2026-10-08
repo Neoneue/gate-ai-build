@@ -24,13 +24,34 @@ front-end-developer) or words (the copywriter).
 1. **Should it move?** `motion-ux-laws` § First, then `animate` steps 1-2
    (the gate). If the answer is no, say so and stop.
 2. **UX gate:** read `agents/front-end-developer/skills/ux-laws/SKILL.md`,
-   write the eight labelled lines, then read
+   write the nine labelled lines, then read
    `agents/front-end-developer/skills/visual-hierarchy/SKILL.md`
    (`../knowledge/working-rules.md` § The UI gate).
-3. **Pick the tool:** `../knowledge/working-rules.md` § Which tool.
+3. **Pick the tool:** `../knowledge/working-rules.md` § Which tool. If the
+   motion depicts part of the product, read the live code it depicts first
+   (§ Depict the live UI).
 4. **Build** with the one skill the table below names.
 5. **Review** with `review-animations`, then `transitions-polish` for
    timing; check reduced motion in the browser.
+6. **Final polish:** a pass with `emil-design-eng` on every build before you
+   report (§ Polish and refinement). Its Review Checklist and Before / After
+   table are the format; apply what fits and say what it changed.
+
+## Polish and refinement
+
+Pull these when the motion works and the job is making it feel right, or
+when the lead asks for a polish or audit pass:
+
+| Moment | Skill | What it catches |
+| --- | --- | --- |
+| Last step of every build (step 6) | `emil-design-eng` | Touch-gated hover, overlapping a state swap so it reads as one change, cohesion with the live component's own timing, gentler (not zero) reduced motion, stagger and origin details |
+| Timing feels off: too slow, a lag, a close slower than its open | `transitions-polish` | Closes faster than opens, no delay on close or hover-out, trim duration before adding delay |
+| Craft audit, approve or block | `review-animations` | Its ten standards and remedial order |
+| The motion is gesture-driven: drag, swipe, sheet, momentum | `apple-design` | Interruptibility, springs, velocity handoff, rubber-banding (little else here applies to scripted art) |
+
+Two passes on the onboarding art (2026-10-08) set this order: `emil-design-eng`
+produced three of the four refinements; `apple-design` mostly confirmed
+what was already right, so it stays for gesture work.
 
 ## Which skill for what
 
@@ -42,6 +63,7 @@ front-end-developer) or words (the copywriter).
 | A named effect or motion tokens | `transitions-dev` | `transitions-polish` |
 | Existing motion feels off | `transitions-polish` | `review-animations` |
 | Component feel, origin-aware popovers, tooltip delay groups | `emil-design-eng` | `review-animations` |
+| Final polish on any build (order step 6) | | `emil-design-eng` |
 | Gestures, springs, drag, rubber-banding | `apple-design` | `review-animations` |
 | SVG graphic or path animation | `svg-animations` | `review-animations` |
 | Naming an effect | `animation-vocabulary` (reference only) | |
@@ -53,7 +75,9 @@ front-end-developer) or words (the copywriter).
   pure-fade or reduced-motion rule differs from
   `../knowledge/working-rules.md` § Current values, build with the current
   value and report the difference to the lead as a proposed `design.md`
-  update. `motion/react`, not `framer-motion`.
+  update. That applies to components and primitives only; illustration art
+  is tuned by craft (§ Current values, Scope). `motion/react`, not
+  `framer-motion`.
 - **`emil-design-eng`, `animate`, `review-animations`, `apple-design`,
   `animation-vocabulary`**: skip the "Initial Response" block each opens with.
 - **`animate`**: the primary for "should this move" (steps 1-2 are the gate)
