@@ -9,6 +9,25 @@ Prior day: [`changelog-10-8.md`](./changelog-10-8.md)
 
 ## Sections
 
+### Onboarding setup: route motion and model picker `83e06ae`
+
+`/overview-onboarding` setup step (`src/pages/onboarding/improved-setup.tsx`,
+`improved-art.tsx`, `onboarding-motion.css`, `use-onboarding-motion.ts`).
+
+- **Route figure motion:** before, a static figure. After, it plays the
+  ConnectArt beats: an 8px packet with a 36px blue dash trail, the Gate
+  tile border gray to blue to gray, replayed when the app, billing or model
+  changes (React key `app:billing:model`). Hover replay is off on this stage
+  only (`data-motion-no-replay`). Reduced motion shows the end state.
+- **Verify step live pulse:** before, clipped by a 0px padding box. After,
+  fully visible.
+- **Model picker:** before, Claude Code with Gate credits offered the same
+  3-model Select as every app. After, it opens a searchable, scrolling
+  `Combobox` over the whole catalog (`CATALOG_MODELS`, `improved-data.ts`),
+  with "Search models…" and an empty line for no match; the route figure
+  target follows the pick. Other apps keep the 3-model Select, and switching
+  back to Claude Code restores the pick.
+
 ### Onboarding start page (phone and desktop picker) `df20e22`
 
 `/overview-onboarding` (`src/pages/onboarding/improved-start.tsx`).
@@ -111,6 +130,16 @@ the downgrade dialog (`cancel-plan-dialog.tsx`, "Their fingerprints stay,
 unchanged.
 
 ## Components
+
+### `Combobox` primitive `83e06ae`
+
+New `src/components/ui/combobox.tsx`, from the shadcn base-nova `combobox`
+registry source (written by hand; `shadcn add` would have overwritten
+button, input, textarea and input-group). Popup, row, label and empty
+styles follow the Select recipe; it portals like `SelectContent`;
+`ComboboxTrigger size` (opt-in) renders `selectTriggerVariants`; the search
+input sits inset `m-2 mb-1` so its focus ring is not clipped. The chips parts
+were dropped (unused). Documented in `design.md` beside MultiSelect.
 
 ### RadioGroupItem `indicator="check"`, Select `lg`, download link trigger `df20e22`
 

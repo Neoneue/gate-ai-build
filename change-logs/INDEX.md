@@ -11,6 +11,8 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-09](./2026-10/changelog-10-9.md)
 
+- Onboarding setup: route motion and model picker
+- `Combobox` primitive
 - Onboarding start page (phone and desktop picker)
 - Onboarding setup page
 - RadioGroupItem `indicator="check"`, Select `lg`, download link trigger
