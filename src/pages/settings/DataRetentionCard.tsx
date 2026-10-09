@@ -1,6 +1,6 @@
 import { Info } from "lucide-react";
 import { type RefObject, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -30,14 +30,17 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { SparklesIcon } from "@/components/ui/sparkles";
 import { TextLink } from "@/components/ui/text-link";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { type ContactKind, contactFlowTitle } from "@/data/plans";
 import { signedInMember } from "@/data/team-members";
 import { formatDate, formatNumber } from "@/lib/formatters";
 import { withTierOf } from "@/lib/plan";
@@ -58,7 +61,8 @@ import {
   shortenPreview,
 } from "@/lib/retention";
 import { cn } from "@/lib/utils";
-import { FreePlanNoticeBanner } from "@/pages/free-plan-notice-banner";
+import { ContactDialog } from "@/pages/ManageSubscription";
+import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 import { MESSAGE_TIMES, messageCurve } from "@/pages/settings/retention-data";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -69,8 +73,9 @@ import { MESSAGE_TIMES, messageCurve } from "@/pages/settings/retention-data";
  * styled in our design language). Copy is the mockups' and the PRD's own.
  *
  * Card, top to bottom:
- *   1. CardHeader: "Retention window" + the PRD description (deleted within
- *      24 hours, cannot be recovered, hashes, proofs and anchors kept).
+ *   1. CardHeader: "Retention window" + the PRD description, reordered
+ *      (hashes, proofs and fingerprints kept; then deleted within 24 hours,
+ *      cannot be recovered).
  *   2. The field: the plan name as its label ("Free plan", "Pro plan",
  *      "Enterprise plan"; owner 2026-10-08: the card title already names
  *      the window), the input (screen-reader name "Retention window in
@@ -82,13 +87,18 @@ import { MESSAGE_TIMES, messageCurve } from "@/pages/settings/retention-data";
  *      Records in window, Next deletion run, Last changed (Pro and
  *      Enterprise), then Usage metrics (owner addition 2026-10-08, tier-fixed
  *      90 / 180, PRD "What the window governs") with its Info tooltip.
- *   4. Footer (Pro and Enterprise only; Free is not mutable, so no footer):
- *      "Every change is recorded on the audit trail." + Reset + Save
- *      changes.
+ *   4. Footer. Pro and Enterprise: "Every change is recorded on the audit
+ *      trail." + Reset + Save changes. Free: the outline "Upgrade to Pro"
+ *      alone, right-aligned, opening the plan comparison (owner 2026-10-08,
+ *      PRD mockup 03 "the footer action is the upgrade"; it replaced the Free
+ *      plan banner under the card, a page-wide promo for one locked setting).
+ *      No note: every candidate repeated the label, "(fixed)" or the button.
  * Enterprise also gets the one-line ceiling note with Contact support under
  * the card (PRD: the superseded Extended retention card "becomes a one-line
- * note of the ceiling and a Contact support link"). Free keeps the Free plan
- * banner under the card (owner 2026-10-08: keep the upgrade CTA).
+ * note of the ceiling and a Contact support link"). The link opens the plans
+ * page's own Contact support dialog in place: on the Enterprise plans page
+ * that label sits on the Free and Pro rungs, a downgrade route, not a ceiling
+ * request (owner 2026-10-08).
  *
  * Save, by direction: lower opens the shorten AlertDialog (mockup 02);
  * higher saves at once and the toast says deleted records are not restored.
@@ -116,6 +126,14 @@ const PLAN_NAME: Record<RetentionTier, string> = {
 const ZERO_DAYS_NOTE =
   "At 0 days, Gate stores no prompt or response content, turns off the response cache, and keeps no Gate Chat history. Requests are still billed, listed on Messages without content, and their audit hashes still verify.";
 
+/** What the Enterprise ceiling note's link opens: the plans page's contact
+ * dialog, titled by the site's one contact-label rule, so it reads "Contact
+ * support" like the link. Module-level, so the dialog sees one stable value. */
+const SUPPORT_CONTACT: { kind: ContactKind; title: string } = {
+  kind: "contact",
+  title: contactFlowTitle("enterprise", "contact"),
+};
+
 type LastChange = { at: Date; by: string };
 
 /** The shorten dialog's subject. `from` and `to` are snapshotted when it
@@ -142,6 +160,14 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
   });
   // Focus returns to the field when the dialog closes or Reset runs.
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // Enterprise: the Contact support dialog, and the link that opened it, so
+  // closing it returns focus there (ManageSubscription's opener pattern).
+  const [supportOpen, setSupportOpen] = useState(false);
+  const supportOpenerRef = useRef<HTMLButtonElement | null>(null);
+  // Free: the footer's Upgrade to Pro opens the plan comparison, the dialog
+  // the Free plan banner opened before the footer replaced it.
+  const navigate = useNavigate();
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const input = readDaysInput(draft, ceiling);
   const canSave = editable && input.kind === "valid" && input.days !== saved;
@@ -180,10 +206,10 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
     }
     commit(input.days);
     // PRD: lengthening shows at save that records already deleted are not
-    // restored, and every deletion statement says the anchors are kept.
+    // restored, and every deletion statement says the fingerprints are kept.
     toast(`Retention set to ${formatDays(input.days)}`, {
       description:
-        "Records already deleted are not restored. Their audit anchors remain verifiable.",
+        "Records already deleted are not restored. Their Digital Evidence fingerprints remain verifiable.",
     });
   }
 
@@ -198,73 +224,89 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
       <Card>
         <CardHeader>
           <CardTitle>Retention window</CardTitle>
+          {/* The PRD's two sentences, kept-first, and the site's UI term
+              "fingerprints" for the PRD's "anchors" (owner 2026-10-08). */}
           <CardDescription className="text-pretty">
-            Records older than the window are deleted within 24 hours of expiry
-            and cannot be recovered. Audit hashes, proofs, and Digital Evidence
-            anchors are kept, so the record stays verifiable after the content
-            is gone.
+            Audit hashes, proofs, and Digital Evidence fingerprints are kept, so
+            the record stays verifiable after the content is gone. Records older
+            than the window are deleted within 24 hours of expiry and cannot be
+            recovered.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <form
-            className="flex flex-col gap-4 border-border border-t pt-4"
-            id={FORM_ID}
-            onSubmit={handleSave}
-          >
-            {/* The field row we had (owner 2026-10-08: "use what we had,
+          {editable ? (
+            <form
+              className="flex flex-col gap-4 border-border border-t pt-4"
+              id={FORM_ID}
+              onSubmit={handleSave}
+            >
+              {/* The field row we had (owner 2026-10-08: "use what we had,
                 just keep the label"): shadcn's responsive Field, label and
                 helper on the left, the compact input on the right once the
                 card is wide enough, the same shape as the Passkey row in the
                 Security card above. Stacks on a narrow card. */}
-            <FieldGroup>
-              <Field
-                data-invalid={overCeiling || undefined}
-                orientation="responsive"
-              >
-                <FieldContent>
-                  <FieldLabel htmlFor={FIELD_ID}>
-                    {PLAN_NAME[tier]} plan
-                  </FieldLabel>
-                  <FieldDescription id={DESCRIPTION_ID}>
-                    <WindowHelper ceiling={ceiling} tier={tier} />
-                  </FieldDescription>
-                  {overCeiling ? (
-                    <FieldError id={ERROR_ID}>
-                      <CeilingError
-                        ceiling={ceiling}
-                        plansHref={plansHref}
-                        tier={tier}
-                      />
-                    </FieldError>
-                  ) : null}
-                </FieldContent>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Input
-                    aria-describedby={
-                      overCeiling
-                        ? `${DESCRIPTION_ID} ${ERROR_ID}`
-                        : DESCRIPTION_ID
-                    }
-                    aria-invalid={overCeiling || undefined}
-                    aria-label="Retention window in days"
-                    className="w-20"
-                    disabled={!editable}
-                    id={FIELD_ID}
-                    inputMode="numeric"
-                    onChange={(e) =>
-                      setDraft(normalizeDaysInput(e.target.value))
-                    }
-                    ref={inputRef}
-                    value={draft}
-                  />
-                  <span className="type-copy-14 text-muted-foreground">
-                    days
-                  </span>
-                </div>
-              </Field>
-            </FieldGroup>
-            {showZeroNote ? <Callout>{ZERO_DAYS_NOTE}</Callout> : null}
-          </form>
+              <FieldGroup>
+                <Field
+                  data-invalid={overCeiling || undefined}
+                  orientation="responsive"
+                >
+                  <FieldContent>
+                    <FieldLabel htmlFor={FIELD_ID}>
+                      {PLAN_NAME[tier]} plan
+                    </FieldLabel>
+                    <FieldDescription id={DESCRIPTION_ID}>
+                      <WindowHelper ceiling={ceiling} tier={tier} />
+                    </FieldDescription>
+                    {overCeiling ? (
+                      <FieldError id={ERROR_ID}>
+                        <CeilingError
+                          ceiling={ceiling}
+                          plansHref={plansHref}
+                          tier={tier}
+                        />
+                      </FieldError>
+                    ) : null}
+                  </FieldContent>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Input
+                      aria-describedby={
+                        overCeiling
+                          ? `${DESCRIPTION_ID} ${ERROR_ID}`
+                          : DESCRIPTION_ID
+                      }
+                      aria-invalid={overCeiling || undefined}
+                      aria-label="Retention window in days"
+                      className="w-20"
+                      id={FIELD_ID}
+                      inputMode="numeric"
+                      onChange={(e) =>
+                        setDraft(normalizeDaysInput(e.target.value))
+                      }
+                      ref={inputRef}
+                      value={draft}
+                    />
+                    <span className="type-copy-14 text-muted-foreground">
+                      days
+                    </span>
+                  </div>
+                </Field>
+              </FieldGroup>
+              {showZeroNote ? <Callout>{ZERO_DAYS_NOTE}</Callout> : null}
+            </form>
+          ) : (
+            // Free has no input (owner 2026-10-08: the disabled field was
+            // dead UI and repeated "30 days (fixed)" below), so the plan name
+            // is a title, not a label: FieldTitle in the same FieldContent
+            // and hairline as the paid field row, so the tiers line up.
+            <div className="border-border border-t pt-4">
+              <FieldContent>
+                <FieldTitle>Free plan details</FieldTitle>
+                <FieldDescription>
+                  <WindowHelper ceiling={ceiling} tier={tier} />
+                </FieldDescription>
+              </FieldContent>
+            </div>
+          )}
           {/* The readouts: the shared DetailList, flush variant (owner
               2026-10-08, after Stripe's horizontal PropertyList), with the
               PRD mockup's rows and labels, wrapped in its own card (owner
@@ -278,9 +320,17 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
               className="border-t-0 [&>[data-slot=detail-row]]:px-4"
               variant="flush"
             >
+              {/* Free's window is set by the plan, so its value says so
+                  (owner 2026-10-08: "30 days (fixed)"). */}
               <DetailRow
                 label="Current window"
-                value={<FactValue mono>{formatDays(saved)}</FactValue>}
+                value={
+                  <FactValue mono>
+                    {editable
+                      ? formatDays(saved)
+                      : `${formatDays(saved)} (fixed)`}
+                  </FactValue>
+                }
               />
               <DetailRow
                 label="Oldest retained record"
@@ -331,7 +381,7 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
             </DetailList>
           </div>
         </CardContent>
-        {/* Free is not mutable, so it has no footer (owner 2026-10-08). */}
+        {/* Pro and Enterprise: the audit-trail note, Reset and Save. */}
         {editable ? (
           <CardFooter className="flex-wrap justify-between gap-2 border-border border-t py-2">
             <p className="type-copy-14 m-0 text-muted-foreground">
@@ -358,7 +408,22 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
               </Button>
             </div>
           </CardFooter>
-        ) : null}
+        ) : (
+          // Free: the plan is this window's only lever, so its footer action
+          // is the upgrade (PRD mockup 03). Outline, not the promo fill (owner
+          // 2026-10-08); the sparkle marks it as the site's upgrade action.
+          <CardFooter className="justify-end border-border border-t py-2">
+            <Button
+              onClick={() => setCompareOpen(true)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <SparklesIcon aria-hidden data-icon="inline-start" size={14} />
+              <span>Upgrade to Pro</span>
+            </Button>
+          </CardFooter>
+        )}
       </Card>
       {tier === "enterprise" ? (
         <Card>
@@ -366,17 +431,25 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
             <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
               Enterprise ceiling: {formatDays(ceiling)}. Your contract sets the
               ceiling; to raise it,{" "}
-              <TextLink to={plansHref}>contact support</TextLink>.
+              <TextLink
+                onClick={(e) => {
+                  supportOpenerRef.current = e.currentTarget;
+                  setSupportOpen(true);
+                }}
+              >
+                contact support
+              </TextLink>
+              .
             </p>
           </CardContent>
         </Card>
       ) : null}
       {editable ? null : (
-        <FreePlanNoticeBanner>
-          Pro lets you set your own retention window from {RETENTION_FLOOR_DAYS}{" "}
-          to {PRO_RETENTION_CEILING_DAYS} days, where {RETENTION_FLOOR_DAYS}{" "}
-          means Gate stores no prompts or responses.
-        </FreePlanNoticeBanner>
+        <PlanComparisonDialog
+          onOpenChange={setCompareOpen}
+          onUpgrade={() => navigate("/billing")}
+          open={compareOpen}
+        />
       )}
       {editable ? (
         <ShortenDialog
@@ -388,6 +461,18 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
           pathname={pathname}
           request={shorten}
           tier={tier}
+        />
+      ) : null}
+      {tier === "enterprise" ? (
+        <ContactDialog
+          embedState="ready"
+          finalFocus={supportOpenerRef}
+          onOpenChange={(next) => {
+            if (!next) {
+              setSupportOpen(false);
+            }
+          }}
+          opened={supportOpen ? SUPPORT_CONTACT : null}
         />
       ) : null}
     </>
@@ -462,12 +547,17 @@ function WindowHelper({
   ceiling: number;
 }) {
   if (tier === "free") {
-    // No number: the disabled input and the Current window row already say
-    // 30 days (owner 2026-10-08). Both sentences are PRD mockup 03's own.
+    // PRD mockup 03's helper shape ("Upgrade to Pro to ..., or to Enterprise
+    // to ..."), corrected (owner 2026-10-08): Pro goes shorter or longer than
+    // the fixed 30, up to 90; Enterprise's default ceiling is also 90, so only
+    // a contract extends further. The mockup's "Free plan: 30 days, fixed."
+    // lives in the label and the Current window row ("30 days (fixed)"). No
+    // "Upgrade to": the footer button says it (owner 2026-10-08, no repeats).
     return (
       <>
-        Retention is set by your plan. Upgrade to Pro to shorten the window, or
-        to Enterprise to shorten or extend it.
+        Pro plan lets you shorten the window or extend it to{" "}
+        {formatDays(PRO_RETENTION_CEILING_DAYS)}. On Enterprise, a contract can
+        extend it further.
       </>
     );
   }
@@ -480,7 +570,10 @@ function WindowHelper({
 }
 
 /** The above-ceiling error: names the ceiling and, on Pro, the Enterprise
- *  path (PRD: inline, not a toast). */
+ *  path (PRD: inline, not a toast). "can allow": the Enterprise default
+ *  ceiling is also 90, so the contract, not the plan, lifts it (owner
+ *  2026-10-08). "contact us" is the label the plans page's Enterprise card
+ *  carries for a Pro org (`contactFlowTitle`). */
 function CeilingError({
   tier,
   ceiling,
@@ -493,8 +586,9 @@ function CeilingError({
   if (tier === "pro") {
     return (
       <>
-        Pro keeps up to {PRO_RETENTION_CEILING_DAYS} days. For a longer window,{" "}
-        <TextLink to={plansHref}>move to Enterprise</TextLink>.
+        Pro keeps up to {PRO_RETENTION_CEILING_DAYS} days. An Enterprise
+        contract can allow a longer window; to ask about one,{" "}
+        <TextLink to={plansHref}>contact us</TextLink>.
       </>
     );
   }
@@ -575,18 +669,20 @@ function ShortenDialog({
             }
           />
           <DetailRow
-            label="Audit hashes and anchors"
+            label="Audit hashes and fingerprints"
             labelClassName="w-52"
             value="Kept"
           />
         </DetailList>
         {to === 0 ? <Callout>{ZERO_DAYS_NOTE}</Callout> : null}
-        <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+        {/* A Callout, not a muted line, so the export path stands out before
+            the confirm (owner 2026-10-08: it "reads as a sentence"). */}
+        <Callout>
           Need the content? Export CSV from{" "}
           <TextLink to={withTierOf(pathname, "/messages")}>Messages</TextLink>
           {tier === "enterprise" ? ", or push to your SIEM," : ""} before the
           run.
-        </p>
+        </Callout>
         <AlertDialogFooter className="mt-2">
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} variant="destructive">

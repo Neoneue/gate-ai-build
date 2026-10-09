@@ -56,10 +56,13 @@ Routes: `/settings` (Pro), `/settings-free`, `/settings-default` (Free),
 - [ ] Window field in days, with ceiling and floor named
 - [ ] Stat rows: oldest retained record, records in window, next run, last
       change
-- [ ] Free: disabled field fixed at 30 days, no card footer; the shared Free
-      plan banner below the card says briefly what Pro adds, with Upgrade to
-      Pro (owner 2026-10-07: no per-plan list and no upgrade button in the
-      card)
+- [x] Free: no input (owner 2026-10-08: the disabled field was dead UI and
+      repeated the readout); "Free plan details" title over the helper
+      naming what Pro and Enterprise unlock; "Current window: 30 days
+      (fixed)"; the card footer holds only an outline "Upgrade to Pro" that
+      opens the plan comparison (owner 2026-10-08, PRD mockup 03; replaces
+      the Free plan banner and the 2026-10-07 "no upgrade button in the
+      card")
 - [ ] Pro: a value above 90 shows an inline error naming the ceiling and the
       Enterprise path (no toast)
 - [ ] Enterprise: ceiling note with a Contact support link, no purchase
