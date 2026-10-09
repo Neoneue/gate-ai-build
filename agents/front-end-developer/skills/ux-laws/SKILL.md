@@ -22,7 +22,7 @@ so a fix starts at the flow, not the styling.
 **Grouping: how the eye finds structure**
 - **Proximity:** near things read as one group. Check: is the space inside a group smaller than the space between groups? `references/law-of-proximity.md`
 - **Similarity:** things that look alike read as the same kind. Check: does every element with one role look the same, and only those? `references/law-of-similarity.md`
-- **Common Region:** a shared surface or border groups its contents. Check: does each container hold exactly one group, with no cards inside cards? `references/law-of-common-region.md`
+- **Common Region:** a shared surface or border groups its contents, actions included: a button inside a card reads as that card's action. Check: does each container hold exactly one group, with no cards inside cards, and does every action inside it change that container's own object? `references/law-of-common-region.md`
 - **Uniform Connectedness:** a connecting line or fill groups more strongly than proximity. Check: are related controls visibly tied together? `references/overview.md`
 - **Prägnanz:** people read the simplest shape. Check: can the eye tell what is "one thing" at a glance? `references/overview.md`
 - **Figure-Ground:** one layer is the foreground and acts; the rest recedes. Check: is it obvious what's on top and clickable? `references/law-of-figure-ground.md`
@@ -74,14 +74,44 @@ so a fix starts at the flow, not the styling.
 - One primary action per view; the rest are outline or ghost.
 - Destructive actions are quiet at rest and confirm or undo on use, never the loudest thing on screen.
 - Each section's edit action sits in the same place everywhere.
+- An action acts on the object of the container it sits in. A card or section footer holds only actions on that card's own object; a plan, account, workspace or page action (Upgrade plan, Billing, Invite) goes in the page header or on that object's own surface, never in another card's footer. (Corrected 2026-10-07: "Upgrade plan" in a Settings card footer read as the card's action.) Not a breach: a link inside an error or limit message that explains why the user's input was refused and where the limit lifts (for example "Pro keeps up to 90 days" with an Enterprise path), when the PRD asks for it inline. That is information about the field, not the card's action. The PRD wins over this rule. Also not a breach (owner 2026-10-08): on a read-only, plan-locked settings card, the upgrade that unlocks it is that card's own action and sits in its own footer, where Save sits on the editable tiers (Settings > Data retention on Free, outline "Upgrade to Pro", PRD mockup 03). A promo banner under the card is the wrong surface for one locked setting: it reads as an ad and gets skipped.
 - gate-ai-build is an Operate surface, so it is dense: tight section rhythm, no marketing spacing.
 
 ## 4. The gate before building
 
-Write it in the plan or report:
-1. The three UX lines from section 1.
-2. Every law this change touches, with one clause on how it passes.
-3. Which corrected patterns apply, and that they hold.
+Write it with the Write tool to a file (for example `<your scratchpad>/ux-gate.md`),
+one labelled line each, before any UI write, and quote it in your report.
+The UI gate hook checks the nine labels; a gate only in your reply text may
+not reach the transcript until your turn ends, so the hook cannot see it. Objects come before screens and actions
+attach to objects (OOUX), so the order matters. Why each line exists, with
+sources: `references/deciding-not-defaulting.md`.
+1. `Job:` what the user came to do.
+2. `Path:` entry, steps, exit, errors.
+3. `Expectation:` which app they think this works like.
+4. `Precedent:` the tested pattern this design follows and what it maps to
+   in our code. Research it before laying anything out: name the competitor
+   pattern (Stripe, Vercel, the OpenAI / Anthropic consoles, or the leading
+   tool in the domain) with its URL or screen, then the existing component
+   in `src/components/ui/` or the repo precedent it maps to, as file:line.
+   Build from that component, adding a variant if it needs one. Only when
+   nothing existing fits: `new component:` and why, then build it as a
+   primitive. A layout with no precedent was invented, not chosen (owner
+   2026-10-08: "no more invented ui that doesn't fit our work, unless we
+   need to create new components").
+5. `Objects:` the things on screen the user acts on (plan, key, member,
+   policy), and which container shows each one.
+6. `Actions:` every action this change adds or moves, as
+   `action -> object it changes -> container it sits in`. The object and
+   the container's object must match; if not, move the action. `none` if the
+   change adds or moves no action.
+7. `Laws:` each law this change touches and how it passes, in one clause. A
+   law's name alone is not a pass.
+8. `Patterns:` the corrected patterns from section 3 that apply, and that
+   they hold.
+9. `Rejected:` at least one alternative you considered and why it lost.
+   A design with no rejected alternative was not decided, only defaulted.
 
 If any answer is "no" or "I don't know", stop and fix the design before
-writing code.
+writing code. After building, re-check the built result against this gate
+line by line: every action in the diff names the object it changes, and that
+object is its container's.

@@ -23,7 +23,7 @@ Shared project instructions, kept minimal; per-area detail lives in
   `ultracite fix` to apply. `fix` applies UNSAFE fixes, so read the diff. The
   pre-commit and `PostToolUse` hooks both run a fix pass already.
 - **UI work routes to the agent.** Substantive UI / component / layout /
-  chart / animation / visual work MUST be delegated to the
+  chart / visual work MUST be delegated to the
   `front-end-developer` subagent (`subagent_type: front-end-developer`),
   **regardless of the active model** — don't hand-edit UI yourself. It
   self-loads its design knowledge and binds to `design.md` + `src/index.css` +
@@ -37,15 +37,26 @@ Shared project instructions, kept minimal; per-area detail lives in
   proposed `design.md` update for the user.
 - **The UI gate enforces it.** `scripts/require-skill.mjs` (PreToolUse in
   `.claude/settings.json`) blocks UI writes (Write, Edit, shell writes,
-  commits of UI files) until the session has read the kit INDEX.md once,
-  then per change ux-laws, visual-hierarchy and one build skill; it resets
-  after each commit. It gates every session, the main one included, so a
-  direct-edited class move needs the same four reads. A UI commit also
-  passes when one of the session's subagents loaded all four since the last
-  commit (the subagent built it; the main session only commits it). Inside
-  a subagent it checks the subagent's own transcript. It fails open: if it never blocks,
-  check that the hook is registered. Other edits under `src/` and `e2e/`
-  need the editing agent's own kit INDEX.md read, then one skill.
+  commits of UI files) until, in order: the kit INDEX.md is read (once per
+  session), then per change ux-laws, the ux-laws gate written to a file
+  with the Write tool, e.g. `<scratchpad>/ux-gate.md` (nine
+  labelled lines, ux-laws section 4, including `Precedent:`, the tested
+  competitor pattern and the repo component it maps to), visual-hierarchy
+  and one build skill;
+  a step out of order does not count, and it resets after each commit. It
+  gates every session, the main one included, so a direct-edited class move
+  needs the same steps. A UI commit also passes when one of the session's
+  subagents did them all since the last commit. Inside a subagent it checks
+  the subagent's own transcript. It fails open: if it never blocks, check
+  that the hook is registered.
+- **Every agent picks a skill before any write.** The same hook gates every
+  Write or Edit inside the project (outside it, such as the scratchpad, is
+  free): the writer reads its OWN kit's INDEX.md (by `agent_type`; another
+  kit's does not count; designer uses front-end-developer's; the main
+  session, seats and general-purpose may read any), then one skill that
+  index names. The index is once per session; the skill pick resets after
+  each commit, so new work gets a new pick (the `change-logs/` stamp right
+  after a commit is exempt). The `impeccable-*` agents are exempt.
 - **Other agents** (`.claude/agents/`, kits in `agents/<name>/skills/`, read
   by path):
   - `backend-engineer`: the data layer (`src/data/`, `src/lib/`, generator
@@ -55,6 +66,16 @@ Shared project instructions, kept minimal; per-area detail lives in
   - `security-reviewer` (reviews; writes reports): the public bundle,
     client-side sinks, secrets, dependencies, CI, hooks and agent files;
     before every promotion.
+  - `copywriter`: every user-facing string (labels, helper lines, buttons,
+    errors, toasts, dialogs, banners), grounded in the PRD. **All copy goes
+    through it.** Copy requests route through the `orchestrator` (the main
+    session only when no orchestrator is running), which spawns the
+    copywriter and applies what it returns; a helper that needs copy names
+    the strings in its report.
+  - `animator`: every animation on the site (CSS transitions and
+    keyframes, GSAP via `@gsap/react`, `motion/react` icons), built to
+    `design.md` Motion and proven under reduced motion. Motion requests
+    route through the `orchestrator` the same way as copy.
   - Seat personas, attached by a room seat card and never spawned
     (`claude --agent <name>` only for a standalone session):
     `orchestrator`, `researcher`, `architect`, `designer`.

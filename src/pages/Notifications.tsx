@@ -179,7 +179,7 @@ const CHANNEL_COLUMNS: Array<{ key: keyof ChannelSelection; label: string }> = [
 ];
 
 /** The one mock identity, same address Settings' Profile card renders. */
-const ACCOUNT_EMAIL = "chad@constellationnetwork.io";
+const ACCOUNT_EMAIL = "chad@example.com";
 
 /** Security-event narrowing by guardrail action (PRD). Ids match the
  *  `action` values the Policies page writes. */

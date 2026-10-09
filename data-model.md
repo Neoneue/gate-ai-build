@@ -287,6 +287,51 @@ graph LR
   **nothing in `src/` navigates TO it** — like the two params in §7 it is an
   orphaned entry point: re-link it or retire it deliberately.
 
+**Onboarding workspace (`-onboarding`, added 2026-10-08).** A fifth entry in
+the workspace switcher ("Onboarding" badge): a brand-new user's first-run
+setup, rebuilt from the onboarding mockup (`docs/onboarding-mockup/`, local
+only). Its own track, like Default: `isOnboardingSurface()` in
+`src/lib/plan.ts` gates every branch (no roles, Free plan via
+`planTierOf`, the Default nav with Overview pointing at
+`/overview-onboarding` = `ONBOARDING_SIDEBAR_SECTIONS`, the Default upgrade
+path). Switching in always lands on `ONBOARDING_FIRST_STEP`
+(`toOnboardingPath()`); switching out goes to the target tier's Overview.
+
+- **State is in memory only.** `OnboardingLayout` (layout route, file
+  `src/pages/onboarding/OnboardingLayout.tsx`) owns `OnboardingProvider`
+  (`onboarding-state.tsx`); no localStorage / sessionStorage. A refresh, a
+  typed URL or a cold load of any step other than `/overview-onboarding`
+  redirects there; leaving the workspace unmounts the layout and resets it.
+- **Only the Improved flow is presented** (owner, 2026-10-08). The Current
+  flow's screens are built but hidden: its routes exist and redirect to step 1.
+
+```mermaid
+graph LR
+    OVO["/overview-onboarding (choose: Gate Chat / Gate Connect / Manual)"] -->|Gate Chat| CHO["/chat-onboarding (existing Gate Chat)"]
+    OVO -->|Connect or Manual| ICO["/improved-connect-onboarding"]
+    OVO -->|phone: email a setup link| IHO["/improved-handoff-onboarding"]
+    IHO -->|auto after 3s| ILO["/improved-link-onboarding (valid by default)"]
+    ILO --> ICO
+    ICO --> IVO["/improved-verify-onboarding"]
+    IVO --> IDO["/improved-complete-onboarding"]
+    CHO -->|first send, then top-bar Setup complete| IDO
+```
+
+| Route | Component (`src/pages/onboarding/`) | Notes |
+| --- | --- | --- |
+| `/overview-onboarding` | `OnboardingOverview` → `ImprovedStart` | Desktop: three method cards + Continue / Open Gate Chat. Phone (`max-width: 767px` or short touch): Gate Chat or "Continue on desktop". |
+| `/improved-handoff-onboarding` | `ImprovedHandoff` | Phone: "Check your email"; auto-opens the link after 3s. Desktop: the picker. |
+| `/improved-link-onboarding` | `ImprovedLink` | Valid link restores the phone's setup (toast) and resumes on `/improved-connect-onboarding`; expired / other-account / other-workspace screens are built for a `linkRedemption.scenario` that names them. |
+| `/improved-connect-onboarding` | `ImprovedConnect` | App, Billing (provider account or Gate credits + model + Add credits), Gate Connect download or API key + client config (`client-configs.tsx`, six clients). |
+| `/improved-verify-onboarding` | `ImprovedVerify` | "Check connection" simulates the check (900ms) then "Message received". |
+| `/improved-complete-onboarding` | `ImprovedComplete` | Route figure done, next steps, optional protection demo. |
+| `/chat-onboarding`, `/chat-onboarding/:conversationId` | existing `Chat` under `ChatLayout` | The first send marks setup complete. |
+| `/setup-connect-onboarding`, `/setup-gate-connect-onboarding`, `/setup-manual-onboarding`, `/setup-listening-onboarding`, `/setup-attack-onboarding`, `/setup-complete-onboarding` | `current-setup.tsx`, `current-verify.tsx` | Current flow, hidden: redirect to step 1. |
+
+Exits ("Explore first", "Open Overview", next-step links) land on the Default
+workspace twin (`ONBOARDING_EXITS` in `onboarding-routes.ts`). Assets:
+`public/onboarding/image-*.png`, `public/icons/providers/{codex,claude-code,hermes,openclaw-color}.svg`.
+
 ---
 
 ## 3. TypeScript Type System
@@ -1180,6 +1225,49 @@ conversation's lane models, favourites, memory rows and both memory-tool
 switches are written to a module-scoped `useSyncExternalStore` store on top of
 the seeds, in memory, reset on reload (the notifications-store lifecycle).
 Sending never adds a turn. From a new chat (`/chat` and its tier twins), Send or a starter prompt navigates (push) to the seeded conversation `chat_8f2c41d7` and clears the draft, so the mockup goes from the clean landing to a full thread and Back returns to it; inside a conversation, Send is inert and the composer keeps its draft.
+
+### 5.7 Data retention (added 2026-10-08, AG-1021)
+
+One org-wide retention window in days, bounded by the plan (PRD
+"Configurable data retention v1"). Rules and math live in
+`src/lib/retention.ts` (tests `retention.test.ts`); the Settings card is
+`src/pages/settings/DataRetentionCard.tsx`, one component for every tier.
+
+- **Ceilings** (`retentionCeilingDays(tier)`): Free fixed 30
+  (`FREE_RETENTION_DAYS`, read-only), Pro 0 to 90
+  (`PRO_RETENTION_CEILING_DAYS`), Enterprise 0 to the contract ceiling
+  (`ENTERPRISE_CONTRACT_CEILING_DAYS`, the 90-day default; owner). Floor 0
+  (`RETENTION_FLOOR_DAYS`: no content stored). Every org starts at its
+  ceiling.
+- **Metrics retention** is separate and tier-fixed
+  (`metricsRetentionDays`): Free 90, Pro and Enterprise 180. The window
+  never touches it.
+- **Readouts** derive from real rows: counts from `MESSAGE_TOTALS` through
+  `messageCurve` (`src/pages/settings/retention-data.ts`), dates from the
+  Messages rows (`MESSAGE_TIMES`, `oldestInWindow`); the next run is daily
+  at `DELETION_RUN_UTC_HOUR` (03:00 UTC). The shorten dialog's count is
+  `shortenPreview` over the card's own curve, so the dialog and the card
+  agree.
+- **Clamp:** a downgrade (or a lowered Enterprise maximum) schedules a clamp
+  `CLAMP_GRACE_DAYS` (3) out; `clampDate(scheduledAt)` gives the date. The
+  window drops to the new ceiling then.
+- **State:** the saved window, the draft and Last changed are component
+  state, in memory, reset on reload. Nothing is shared with other pages yet;
+  the Messages retention statement (ticket Chunk 2) will need the window from
+  one source.
+- **Preview route:** `/settings-free/clamp` (`SettingsFree clamp` ->
+  `Settings retentionClampPreview` -> `DataRetentionCard clampPreview`)
+  renders a Pro org that just downgraded to Free: Current window 90 days, a
+  "Scheduled change" row (30 days on `clampDate(now)`). Typed, not linked.
+- **Messages statement** (`src/pages/requests/RetentionStatement.tsx`, an
+  info `Callout` between the toolbar and the table on `/messages`,
+  `/messages-free`, `/messages-enterprise`; not on `/messages-default`, which
+  has no messages): the tier's window and `oldestInWindow` date, the same
+  sources as the card. Admins get a "Retention settings" button (Button
+  `info-outline` in the Callout `action` slot). `/messages-free/clamp`
+  (`RequestsFree clamp` -> `Requests retentionClampPreview`) states 90 days
+  and the drop to 30 on `clampDate(now)`, linking to `/settings-free/clamp`.
+  The table is not filtered to the window (the real build's job).
 
 ## 6. Page Inventory
 
@@ -2209,7 +2297,7 @@ text. The primitive contract lives in `design.md` §7 "Skeleton".
 
 **State:** `displayName`, `email`, `organization` with dirty-tracking for Save/Reset.
 
-**Mock identity:** Chad Ponticas / <chad@constellationnetwork.io>
+**Mock identity:** Chad Ponticas / <chad@example.com>
 
 **Sections:** Profile · Security (Passkey) · Account management (added 2026-08-05). Account management holds two danger-tone cards (Profile-style button footers): **Delete account and data** (warning callout + "Delete my account" type-to-confirm gating the destructive button) and **Cancel plan** (opens the shared `CancelPlanDialog`). Tier fork via a `showCancelPlan` prop: the PRO route passes `false` (card hidden for now, code retained); the Free/Default twins already omit it.
 

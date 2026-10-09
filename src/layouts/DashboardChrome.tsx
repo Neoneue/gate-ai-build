@@ -31,6 +31,7 @@ import {
   isDefaultSurface,
   isEnterpriseSurface,
   isFreeSurface,
+  isOnboardingSurface,
   isTeamRoleSurface,
 } from "@/lib/plan";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
@@ -40,6 +41,7 @@ import {
   ENTERPRISE_SIDEBAR_SECTIONS,
   ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
+  ONBOARDING_SIDEBAR_SECTIONS,
   PRO_MEMBER_SIDEBAR_SECTIONS,
   PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
@@ -69,6 +71,11 @@ export interface DashboardChromeProps {
   onNavigate?: (pageId: string) => void;
   onToggleSidebar: () => void;
   sidebarExpanded: boolean;
+  /** Optional workspace-level control rendered in the top bar's right group,
+   *  before Ask AI, from `lg` up. The Onboarding workspace passes its "Get
+   *  started" progress button; every other page passes nothing and renders
+   *  exactly as before. */
+  topBarAction?: ReactNode;
 }
 
 export function DashboardChrome({
@@ -77,6 +84,7 @@ export function DashboardChrome({
   onToggleSidebar,
   onNavigate,
   hideDocsButton = false,
+  topBarAction,
   children,
 }: DashboardChromeProps) {
   // Section set is chosen per workspace tier so nav links stay within their
@@ -88,6 +96,7 @@ export function DashboardChrome({
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
   const isEnterprise = isEnterpriseSurface(pathname);
+  const isOnboarding = isOnboardingSurface(pathname);
   // Teams, budgets, roll-up and the team-manager role exist on BOTH Pro and
   // Enterprise (PRD §3 "Plan availability"); only the org/team forced
   // settings are Enterprise-only.
@@ -104,26 +113,30 @@ export function DashboardChrome({
   }, [hasTeamRoles, viewRole]);
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
-    : isFree
-      ? FREE_SIDEBAR_SECTIONS
-      : isEnterprise
-        ? viewRole === "admin"
-          ? ENTERPRISE_SIDEBAR_SECTIONS
-          : viewRole === "manager"
-            ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
-            : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
-        : viewRole === "admin"
-          ? SIDEBAR_SECTIONS
-          : viewRole === "manager"
-            ? PRO_TEAM_ROLE_SIDEBAR_SECTIONS
-            : PRO_MEMBER_SIDEBAR_SECTIONS;
+    : isOnboarding
+      ? ONBOARDING_SIDEBAR_SECTIONS
+      : isFree
+        ? FREE_SIDEBAR_SECTIONS
+        : isEnterprise
+          ? viewRole === "admin"
+            ? ENTERPRISE_SIDEBAR_SECTIONS
+            : viewRole === "manager"
+              ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
+              : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
+          : viewRole === "admin"
+            ? SIDEBAR_SECTIONS
+            : viewRole === "manager"
+              ? PRO_TEAM_ROLE_SIDEBAR_SECTIONS
+              : PRO_MEMBER_SIDEBAR_SECTIONS;
   const overviewPath = isDefault
     ? "/overview-default"
-    : isFree
-      ? "/overview-free"
-      : isEnterprise
-        ? "/overview-enterprise"
-        : "/overview";
+    : isOnboarding
+      ? "/overview-onboarding"
+      : isFree
+        ? "/overview-free"
+        : isEnterprise
+          ? "/overview-enterprise"
+          : "/overview";
   // Upgrade promo in the rail follows the same tier signal as the workspace
   // badge (see lib/plan.ts): shown on the two non-PRO surfaces, absent on PRO.
   // It lands on that tier's own Billing page rather than the PRO one, so the
@@ -131,11 +144,12 @@ export function DashboardChrome({
   // It lands on the nested Manage subscription page rather than Billing
   // itself, so one click reaches the plan ladder instead of dropping the
   // user on the page to hunt for the button.
-  const upgradePath = isDefault
-    ? "/billing-default/plans"
-    : isFree
-      ? "/billing-free/plans"
-      : undefined;
+  const upgradePath =
+    isDefault || isOnboarding
+      ? "/billing-default/plans"
+      : isFree
+        ? "/billing-free/plans"
+        : undefined;
   // Ask AI panel state is hoisted to App.tsx's Layout (localStorage-backed)
   // and read via the outlet context, so it survives navigation (each page
   // remounts its own DashboardChrome) and refresh. Default closed.
@@ -234,6 +248,7 @@ export function DashboardChrome({
               showViewRole={hasTeamRoles}
               sidebarExpanded={sidebarExpanded}
               switcherInRail={switcherInRail}
+              topBarAction={topBarAction}
               upgradePath={upgradePath}
             />
             {/* Content pane. Below lg the document flows and scrolls naturally
@@ -310,6 +325,7 @@ function DashTopBar({
   switcherInRail,
   upgradePath,
   showViewRole,
+  topBarAction,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -328,6 +344,8 @@ function DashTopBar({
   upgradePath?: string;
   /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
   showViewRole: boolean;
+  /** See `DashboardChromeProps.topBarAction`. */
+  topBarAction?: ReactNode;
 }) {
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
@@ -367,6 +385,9 @@ function DashTopBar({
       <div className="flex items-center gap-2">
         <NotificationsMenu />
         <ThemeToggle className="hidden lg:inline-flex" />
+        {topBarAction ? (
+          <div className="hidden lg:flex">{topBarAction}</div>
+        ) : null}
         <Button
           aria-expanded={askAiOpen}
           aria-label="Ask AI"

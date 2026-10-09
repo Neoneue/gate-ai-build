@@ -13,11 +13,18 @@ import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { RANGE_OPTIONS } from "./requests/data";
 import { HeroMetricCard } from "./requests/HeroMetric";
 import { RequestsTableSection } from "./requests/RequestsTable";
+import { RetentionStatement } from "./requests/RetentionStatement";
 import { rangeStore } from "./requests/range-store";
 
 /* CMP-013 — Requests (Observability) */
 
-export function Requests() {
+export function Requests({
+  retentionClampPreview = false,
+}: {
+  /** `/messages-free/clamp`: the retention statement's pending-clamp
+   *  preview, matching `/settings-free/clamp`. */
+  retentionClampPreview?: boolean;
+} = {}) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -99,7 +106,11 @@ export function Requests() {
         </div>
         <HeroMetricCard />
       </div>
-      <RequestsTableSection customRange={customRange} range={range} />
+      <RequestsTableSection
+        customRange={customRange}
+        range={range}
+        statement={<RetentionStatement clamp={retentionClampPreview} />}
+      />
     </DashboardChrome>
   );
 }

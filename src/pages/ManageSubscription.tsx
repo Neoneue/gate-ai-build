@@ -474,7 +474,7 @@ function PlanActionButton({
  * never written back, exactly the way `?state=` works on BillingEnterprise.
  * ───────────────────────────────────────────────────────────────────────── */
 
-function ContactDialog({
+export function ContactDialog({
   opened,
   embedState,
   onOpenChange,

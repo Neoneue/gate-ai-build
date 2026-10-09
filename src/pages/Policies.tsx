@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
+import { FreePlanNoticeBanner } from "@/pages/free-plan-notice-banner";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 import {
   ACTION_ACTIVE_BORDER,
@@ -92,7 +93,12 @@ export function Policies({ variant = "pro" }: { variant?: "pro" | "free" }) {
           width at the old `md` viewport. */}
       <div className="flex w-full @5xl:max-w-5xl flex-col @2xl:gap-6 gap-8">
         <PageHeader />
-        {variant === "free" ? <FreePlanNoticeBanner /> : null}
+        {variant === "free" ? (
+          <FreePlanNoticeBanner>
+            Pro unlocks full prompt-injection protection with advanced detection
+            and tunable controls.
+          </FreePlanNoticeBanner>
+        ) : null}
         {/* KPI rail hidden for now — restore <KpiSection /> when wired. */}
         <div className="flex flex-col gap-4">
           {visiblePolicies.map(({ cfg, state }) => (
@@ -110,59 +116,6 @@ export function Policies({ variant = "pro" }: { variant?: "pro" | "free" }) {
         </div>
       </div>
     </DashboardChrome>
-  );
-}
-
-function FreePlanNoticeBanner() {
-  const navigate = useNavigate();
-  const [compareOpen, setCompareOpen] = useState(false);
-
-  return (
-    <>
-      {/* Same promo surface as <SidebarUpgradeCard>: `bg-card` + the
-          --promo-* chrome family (border + shadow ink) with the
-          `.sidebar-upgrade-texture` wash + dot field full-bleed underneath.
-          The utility's tile is 10.5x21 and repeats, so it fills this wide,
-          short box at the same pitch it uses in the narrow rail. Card
-          already supplies `overflow-hidden`, which rounds the texture's
-          corners; `relative` is what gives it a positioning context.
-          The COPY is not blue — lead-in on --foreground, body on
-          --muted-foreground (2026-08-04), matching the sidenav card. */}
-      <Card className="shadow-(color:--promo-shadow) relative rounded-sm border-promo-border shadow-sm">
-        <div
-          aria-hidden
-          className="sidebar-upgrade-texture sidebar-upgrade-texture-quiet pointer-events-none absolute inset-0"
-        />
-        <CardContent className="relative">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-                <span className="type-label-14 text-foreground">
-                  You&apos;re on the Free plan.
-                </span>{" "}
-                Pro unlocks full prompt-injection protection with advanced
-                detection and tunable controls.
-              </p>
-            </div>
-            <Button
-              className="shrink-0"
-              onClick={() => setCompareOpen(true)}
-              size="sm"
-              type="button"
-              variant="promo"
-            >
-              <SparklesIcon aria-hidden data-icon="inline-start" size={14} />
-              <span>Upgrade to Pro</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      <PlanComparisonDialog
-        onOpenChange={setCompareOpen}
-        onUpgrade={() => navigate("/billing")}
-        open={compareOpen}
-      />
-    </>
   );
 }
 

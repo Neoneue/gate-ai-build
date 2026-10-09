@@ -1,4 +1,4 @@
-import { KeyRound, TriangleAlert } from "lucide-react";
+import { Eraser, KeyRound, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { toast } from "sonner";
@@ -21,10 +21,12 @@ import { PageTitle } from "@/components/ui/page-title";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SectionTitle } from "@/components/ui/section-title";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import type { RetentionTier } from "@/lib/retention";
 import {
   CancelPlanDialog,
   ConsequenceCallout,
 } from "@/pages/cancel-plan-dialog";
+import { DataRetentionCard } from "@/pages/settings/DataRetentionCard";
 import { useViewRole } from "@/pages/teams/teams-store";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -32,26 +34,37 @@ import { useViewRole } from "@/pages/teams/teams-store";
  *
  * Profile / security configuration surface.
  *
- * Composition: three titled sections stacked in the page column.
+ * Composition: four titled sections stacked in the page column.
  *   1. Profile   — section title + subtitle ABOVE the card; three fields
  *                  (display name, email, org) with a single unified dirty
  *                  state and shared Save / Reset footer.
  *   2. Security  — section title + subtitle ABOVE the card; passkey
  *                  registration (static, no dirty state).
- *   3. Account   — section title + subtitle ABOVE the cards; two
- *      management   `tone="danger"` cards, one per irreversible flow
- *                  (cancel plan / delete account), each confirming through
- *                  an AlertDialog.
+ *   3. Data      — section title + subtitle ABOVE the card; the retention
+ *      retention    window field, its stat rows, and the shorten confirm
+ *                  (`settings/DataRetentionCard.tsx`, AG-1018). Owner /
+ *                  admin only, the same gate as Account management.
+ *   4. Account   — section title + subtitle ABOVE the cards; one
+ *      management   `tone="danger"` card per irreversible flow (erase
+ *                  stored data first, then cancel plan on paid tiers, then
+ *                  delete account), each confirming through an AlertDialog.
  *
  * Section titles sit above their card, never inside it (design.md §3 /
  * SectionTitle). The cards carry data only — no CardHeader.
  *
- * TIER FORK: `showCancelPlan` is the ONLY difference between the Pro page and
- * the Free twin. `SettingsFree` renders `<Settings showCancelPlan={false} />`
- * — a Free workspace has no subscription to stop, so the card would offer an
- * action that cannot happen. Everything else, including "Delete account and
- * data", renders on every tier. The twin passes a prop rather than copying
- * the sections, so this file stays the single source of truth.
+ * TIER FORK: two props, and they are the ONLY differences between the twins.
+ *   `showCancelPlan`  — `SettingsFree` passes false: a Free workspace has no
+ *                       subscription to stop, so the card would offer an
+ *                       action that cannot happen.
+ *   `retentionTier`   — required, passed by every route: `/settings` "pro",
+ *                       `/settings-enterprise` "enterprise", `SettingsFree`
+ *                       "free" (and `SettingsDefault`, which renders it).
+ *                       It sets the Data retention ceiling: Free fixed at 30
+ *                       days and read-only, Pro 0 to 90, Enterprise 0 to the
+ *                       contract ceiling.
+ * Everything else, including "Delete account and data", renders on every
+ * tier. The twins pass props rather than copying the sections, so this file
+ * stays the single source of truth.
  * ───────────────────────────────────────────────────────────────────────── */
 
 type SettingsProps = {
@@ -60,9 +73,23 @@ type SettingsProps = {
    * paid subscription to cancel. Defaults true (Pro).
    */
   showCancelPlan?: boolean;
+  /**
+   * Which plan's data retention rules the Data retention card follows.
+   * Required so a new route cannot silently inherit another tier's ceiling.
+   */
+  retentionTier: RetentionTier;
+  /**
+   * Free only: render the Data retention card's pending-clamp preview (the
+   * `/settings-free/clamp` route). Defaults false.
+   */
+  retentionClampPreview?: boolean;
 };
 
-export function Settings({ showCancelPlan = true }: SettingsProps = {}) {
+export function Settings({
+  showCancelPlan = true,
+  retentionTier,
+  retentionClampPreview = false,
+}: SettingsProps) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -76,14 +103,22 @@ export function Settings({ showCancelPlan = true }: SettingsProps = {}) {
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
     >
-      <SettingsSurface showCancelPlan={showCancelPlan} />
+      <SettingsSurface
+        retentionClampPreview={retentionClampPreview}
+        retentionTier={retentionTier}
+        showCancelPlan={showCancelPlan}
+      />
     </DashboardChrome>
   );
 }
 
 /* ─── Page surface — header + titled sections ───────────────────────────── */
 
-function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
+function SettingsSurface({
+  showCancelPlan,
+  retentionTier,
+  retentionClampPreview,
+}: Required<SettingsProps>) {
   // Account management (cancel plan, delete org) is owner / admin only; the
   // team-manager and member views hide the whole section (AG-695 AC 3,
   // user 2026-09-03). Non-Enterprise routes never leave the admin role.
@@ -109,6 +144,23 @@ function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
         </div>
         <SecurityCard />
       </div>
+      {/* Owner / admin only (PRD): members and team managers never see the
+          section, the same gate as Account management below. */}
+      {isAdmin ? (
+        <div className="mt-2 flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <SectionTitle as="h2">Data retention</SectionTitle>
+            <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+              How long Gate keeps request logs and prompt and response content
+              for this organization.
+            </p>
+          </div>
+          <DataRetentionCard
+            clampPreview={retentionClampPreview}
+            tier={retentionTier}
+          />
+        </div>
+      ) : null}
       {isAdmin ? (
         <div className="mt-2 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
@@ -116,9 +168,10 @@ function SettingsSurface({ showCancelPlan }: Required<SettingsProps>) {
             <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
               {showCancelPlan
                 ? "Manage your plan, organization, and other account-level actions."
-                : "Manage your organization and other account-level actions."}
+                : "Erase stored data or delete this organization."}
             </p>
           </div>
+          <EraseStoredDataCard />
           {showCancelPlan && <CancelPlanCard />}
           <DeleteAccountCard />
         </div>
@@ -148,7 +201,7 @@ function PageHeader() {
 
 const PROFILE_DEFAULTS = {
   fullName: "Chad Ponticas",
-  email: "chad@constellationnetwork.io",
+  email: "chad@example.com",
   organization: "Chad Ponticas's workspace",
 };
 
@@ -303,7 +356,7 @@ function SecurityCard() {
 }
 
 /* ─── Account management cards ─────────────────────────────────────────────
- * Two irreversible flows, one card each. `tone="danger"` puts the
+ * Three irreversible flows, one card each. `tone="danger"` puts the
  * `--destructive` edge on the surface (danger-600 light / danger-400 dark)
  * — the border is the only thing that changes, so the fill, the ink, and
  * the card's rhythm stay identical to Profile and Security above and the
@@ -336,6 +389,97 @@ const DELETE_CONSEQUENCES = [
   "Fingerprinted Digital Evidence proofs and billing records are retained for legal reasons.",
   "If you solely own a shared organization, it is torn down too and its members are notified.",
 ];
+
+/** Typed verbatim, case-sensitive, to arm the erase confirm. */
+const ERASE_CONFIRM_PHRASE = "Erase data";
+
+const ERASE_CONSEQUENCES = [
+  "Every stored prompt, response, and cached body is permanently deleted.",
+  "Exports and request history for the erased content will be empty afterward.",
+  "This cannot be undone.",
+];
+
+/* Same shape as `DeleteAccountCard` below: danger card, destructive trigger
+ * in the footer, AlertDialog with the shared consequence callout and a
+ * type-to-confirm field. Erases content only; the org, keys, members and
+ * billing stay. */
+function EraseStoredDataCard() {
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const confirmed = confirmText === ERASE_CONFIRM_PHRASE;
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    // Reopening always starts from an empty field, so a stale match cannot
+    // arm the confirm on the next visit.
+    if (!next) {
+      setConfirmText("");
+    }
+  }
+
+  function handleConfirm() {
+    handleOpenChange(false);
+    toast("Stored data erased");
+  }
+
+  return (
+    <AlertDialog onOpenChange={handleOpenChange} open={open}>
+      <Card tone="danger">
+        <CardContent className="flex max-w-2xl flex-col gap-1">
+          <CardTitle>Erase stored data</CardTitle>
+          <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+            Permanently delete every stored prompt, response, and cached body
+            for this organization. Your account, subscription, API keys,
+            members, and billing stay active. Only the stored content is
+            removed. This cannot be undone.
+          </p>
+        </CardContent>
+        <CardFooter className="justify-end gap-2 border-border border-t py-2">
+          <AlertDialogTrigger
+            render={<Button size="sm" variant="destructive" />}
+          >
+            <Eraser aria-hidden data-icon="inline-start" />
+            Erase stored data
+          </AlertDialogTrigger>
+        </CardFooter>
+      </Card>
+      <AlertDialogContent className="data-[size=default]:sm:max-w-[500px]">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Erase all stored data</AlertDialogTitle>
+          <AlertDialogDescription>
+            This permanently deletes all stored prompts, responses, and cached
+            content for this organization. Your account keeps working: keys,
+            members, subscription, billing, and pay-as-you-go balance are
+            untouched.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <ConsequenceCallout items={ERASE_CONSEQUENCES} />
+        <Field>
+          <FieldLabel htmlFor="settings-erase-confirm">
+            To confirm, type &quot;{ERASE_CONFIRM_PHRASE}&quot;
+          </FieldLabel>
+          <Input
+            autoComplete="off"
+            id="settings-erase-confirm"
+            onChange={(e) => setConfirmText(e.target.value)}
+            spellCheck={false}
+            value={confirmText}
+          />
+        </Field>
+        <AlertDialogFooter className="mt-2">
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={!confirmed}
+            onClick={handleConfirm}
+            variant="destructive"
+          >
+            Erase stored data
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 function CancelPlanCard() {
   const [open, setOpen] = useState(false);

@@ -180,6 +180,21 @@ export const FREE_SIDEBAR_SECTIONS: SidebarSection[] = buildVariantSections(
 export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] =
   buildVariantSections("-default");
 
+/** Sidebar for the first-run Onboarding workspace. A brand-new workspace is a
+ *  Default workspace that has not been set up yet, so it carries the Default
+ *  nav; only Overview stays inside the workspace and opens the setup flow's
+ *  first step. Every other row lands on its `-default` twin, which ends the
+ *  onboarding walk-through the way finishing setup would. */
+export const ONBOARDING_SIDEBAR_SECTIONS: SidebarSection[] =
+  DEFAULT_SIDEBAR_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.id === "overview"
+        ? { ...item, pageId: "/overview-onboarding" }
+        : item
+    ),
+  }));
+
 /** Sidebar for the Enterprise workspace — every item points at its
  *  `-enterprise` twin. Nothing is hidden: Enterprise is the top tier, so
  *  every surface Pro has, it has. Policies and Token savings sit

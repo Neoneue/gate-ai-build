@@ -596,7 +596,7 @@ Prior day: [`changelog-9-21.md`](./changelog-9-21.md)
   it fits whole even at the floor), each threat type 134.4 vs 150 ("Prompt
   injection" is the widest header and was the binding constraint; at the old
   640px floor it had 102px and already overflowed), Events 84.1 vs 100. The
-  first pass sized Email against `chad@constellationnetwork.io` at 218 vs
+  first pass sized Email against `chad@example.com` at 218 vs
   250; the domain move made the longest address eight characters longer and
   pushed it to 265, so it truncated at the floor and at 1440. The 3 points
   came out of Member, which had the most slack (51.2px), rather than out of

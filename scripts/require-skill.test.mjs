@@ -55,7 +55,32 @@ const VH = () =>
   call("Read", {
     file_path: "/r/agents/front-end-developer/skills/visual-hierarchy/SKILL.md",
   });
-const FULL = () => transcript(INDEX(), UX(), VH(), SHADCN());
+/** The ux-laws gate, written as the agent's visible text. */
+const GATE_ALL = [
+  "Job",
+  "Path",
+  "Expectation",
+  "Precedent",
+  "Objects",
+  "Actions",
+  "Laws",
+  "Patterns",
+  "Rejected",
+];
+const GATE = (labels = GATE_ALL) => [
+  JSON.stringify({
+    type: "assistant",
+    message: {
+      content: [
+        {
+          type: "text",
+          text: labels.map((l) => `${l}: something concrete`).join("\n"),
+        },
+      ],
+    },
+  }),
+];
+const FULL = () => transcript(INDEX(), UX(), GATE(), VH(), SHADCN());
 
 describe("isUiPath", () => {
   it("covers components, pages, layouts, src tsx and css, and the root design.md", () => {
@@ -148,6 +173,7 @@ describe("skillState", () => {
     expect(skillState("").missing).toEqual([
       "index",
       "ux-laws",
+      "gate",
       "visual-hierarchy",
       "pick",
     ]);
@@ -158,28 +184,32 @@ describe("skillState", () => {
     expect(skillState(t).missing).toEqual([
       "index",
       "ux-laws",
+      "gate",
       "visual-hierarchy",
       "pick",
     ]);
     expect(skillState(t).anySkill).toBe(true);
   });
 
-  it("ux-laws alone still needs the index, visual-hierarchy and a pick", () => {
+  it("ux-laws alone, before any index read, counts for nothing", () => {
     expect(skillState(transcript(UX())).missing).toEqual([
       "index",
+      "ux-laws",
+      "gate",
       "visual-hierarchy",
       "pick",
     ]);
   });
 
   it("a skill loaded before reading the index is not a pick", () => {
-    const t = transcript(SHADCN(), INDEX(), UX(), VH());
+    const t = transcript(SHADCN(), INDEX(), UX(), GATE(), VH());
     expect(skillState(t).missing).toEqual(["pick"]);
   });
 
   it("a landed commit resets the per-change steps, not the index read", () => {
     expect(skillState(transcript(FULL(), COMMIT())).missing).toEqual([
       "ux-laws",
+      "gate",
       "visual-hierarchy",
       "pick",
     ]);
@@ -187,7 +217,8 @@ describe("skillState", () => {
 
   it("after a commit, ux-laws, visual-hierarchy and a pick pass without re-reading the index", () => {
     expect(
-      skillState(transcript(FULL(), COMMIT(), UX(), VH(), SHADCN())).missing
+      skillState(transcript(FULL(), COMMIT(), UX(), GATE(), VH(), SHADCN()))
+        .missing
     ).toEqual([]);
   });
 
@@ -220,13 +251,20 @@ describe("skillState", () => {
           message: { content: "<command-name>/ux-laws</command-name>" },
         }),
       ],
+      GATE(),
       VH(),
       call("Skill", { skill: "ask-sonner" })
     );
     expect(skillState(t).missing).toEqual([]);
     expect(
       skillState(
-        transcript(INDEX(), call("Skill", { skill: "ux-laws" }), VH(), SHADCN())
+        transcript(
+          INDEX(),
+          call("Skill", { skill: "ux-laws" }),
+          GATE(),
+          VH(),
+          SHADCN()
+        )
       ).missing
     ).toEqual([]);
   });
@@ -238,6 +276,7 @@ describe("skillState", () => {
         command:
           "sed -n 1,90p agents/front-end-developer/skills/ux-laws/SKILL.md",
       }),
+      GATE(),
       VH(),
       SHADCN()
     );
@@ -247,9 +286,9 @@ describe("skillState", () => {
 
 describe("skillState: the UX skills are not the pick", () => {
   it("ux-laws and visual-hierarchy after the index still need one build skill", () => {
-    expect(skillState(transcript(INDEX(), UX(), VH())).missing).toEqual([
-      "pick",
-    ]);
+    expect(skillState(transcript(INDEX(), UX(), GATE(), VH())).missing).toEqual(
+      ["pick"]
+    );
   });
 
   it("a shell pipe that only names the index is not reading it", () => {
@@ -259,10 +298,18 @@ describe("skillState: the UX skills are not the pick", () => {
           "ls agents/x/skills/ | head; grep -n a agents/x/skills/INDEX.md",
       }),
       UX(),
+      GATE(),
       VH(),
       SHADCN()
     );
-    expect(skillState(t).missing).toEqual(["index", "pick"]);
+    // With no index read, nothing after it counts either.
+    expect(skillState(t).missing).toEqual([
+      "index",
+      "ux-laws",
+      "gate",
+      "visual-hierarchy",
+      "pick",
+    ]);
   });
 });
 
@@ -371,8 +418,10 @@ describe("verdict", () => {
       expect(run(edit(file), transcript(INDEX())), file).toMatch(/skill gate/);
       expect(run(edit(file), transcript(INDEX(), rbp())), file).toBeNull();
     }
-    expect(run(edit("README.md"), "")).toBeNull();
-    expect(run(edit("scripts/lint-copy.mjs"), "")).toBeNull();
+    // Every file in the project is work now, not just src/ and e2e/.
+    expect(run(edit("README.md"), "")).toMatch(/skill gate/);
+    expect(run(edit("scripts/lint-copy.mjs"), "")).toMatch(/skill gate/);
+    expect(run(edit("README.md"), transcript(INDEX(), rbp()))).toBeNull();
   });
 
   it("counts shell reads of the index and of a SKILL.md", () => {
@@ -470,7 +519,7 @@ describe("verdict: a commit of UI a subagent built", () => {
   it("passes when a subagent loaded the full set after the last commit", () => {
     const texts = {
       [MAIN]: mainWithCommit(),
-      [SUB]: transcript(at(T2, INDEX(), UX(), VH(), SHADCN())),
+      [SUB]: transcript(at(T2, INDEX(), UX(), GATE(), VH(), SHADCN())),
     };
     expect(judge(commitInput, texts)).toBeNull();
   });
@@ -478,7 +527,7 @@ describe("verdict: a commit of UI a subagent built", () => {
   it("does not count a subagent's reads from before the last commit", () => {
     const straddling = {
       [MAIN]: mainWithCommit(),
-      [SUB]: transcript(at(T0, INDEX(), UX(), VH()), at(T2, SHADCN())),
+      [SUB]: transcript(at(T0, INDEX(), UX(), GATE(), VH()), at(T2, SHADCN())),
     };
     const why = judge(commitInput, straddling);
     expect(why).toMatch(/UI gate/);
@@ -487,7 +536,7 @@ describe("verdict: a commit of UI a subagent built", () => {
     // still counts when the per-change reads come after it.
     const indexBefore = {
       [MAIN]: mainWithCommit(),
-      [SUB]: transcript(at(T0, INDEX()), at(T2, UX(), VH(), SHADCN())),
+      [SUB]: transcript(at(T0, INDEX()), at(T2, UX(), GATE(), VH(), SHADCN())),
     };
     expect(judge(commitInput, indexBefore)).toBeNull();
   });
@@ -499,7 +548,7 @@ describe("verdict: a commit of UI a subagent built", () => {
   it("passes on the main session's own full set, as before", () => {
     const own = transcript(
       at(T1, COMMIT()),
-      at(T2, INDEX(), UX(), VH(), SHADCN())
+      at(T2, INDEX(), UX(), GATE(), VH(), SHADCN())
     );
     expect(judge(commitInput, { [MAIN]: own })).toBeNull();
   });
@@ -517,7 +566,7 @@ describe("verdict: a commit of UI a subagent built", () => {
   it("credits commits only: a UI edit in the main session still needs its own reads", () => {
     const texts = {
       [MAIN]: mainWithCommit(),
-      [SUB]: transcript(at(T2, INDEX(), UX(), VH(), SHADCN())),
+      [SUB]: transcript(at(T2, INDEX(), UX(), GATE(), VH(), SHADCN())),
     };
     const edit = {
       ...commitInput,
@@ -534,5 +583,377 @@ describe("verdict: a commit of UI a subagent built", () => {
         listDir: () => ["agent-a7.jsonl"],
       })
     ).toBe(false);
+  });
+});
+
+describe("skillState: UX first, in order, with the gate written", () => {
+  it("(f) the full order plus the gate passes", () => {
+    expect(skillState(FULL()).missing).toEqual([]);
+  });
+
+  it("(a) ux-laws read before the index does not count", () => {
+    const t = transcript(UX(), INDEX(), GATE(), VH(), SHADCN());
+    expect(skillState(t).missing).toContain("ux-laws");
+  });
+
+  it("(b) visual-hierarchy read before ux-laws does not count", () => {
+    const t = transcript(INDEX(), VH(), UX(), GATE(), SHADCN());
+    expect(skillState(t).missing).toContain("visual-hierarchy");
+  });
+
+  it("(b2) a build skill read before visual-hierarchy is not the pick", () => {
+    const t = transcript(INDEX(), UX(), GATE(), SHADCN(), VH());
+    expect(skillState(t).missing).toEqual(["pick"]);
+  });
+
+  it("(c) all four reads with no gate written is blocked on the gate", () => {
+    const t = transcript(INDEX(), UX(), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("(d) a gate written before reading ux-laws does not count", () => {
+    const t = transcript(INDEX(), GATE(), UX(), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("(e) a gate missing one label does not count", () => {
+    const t = transcript(
+      INDEX(),
+      UX(),
+      GATE(["Job", "Path", "Expectation", "Laws"]),
+      VH(),
+      SHADCN()
+    );
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("(e4) the old five-line gate, without Objects, Actions or Rejected, does not count", () => {
+    for (const drop of ["Objects", "Actions", "Rejected"]) {
+      const t = transcript(
+        INDEX(),
+        UX(),
+        GATE(GATE_ALL.filter((l) => l !== drop)),
+        VH(),
+        SHADCN()
+      );
+      expect(skillState(t).missing).toEqual(["gate"]);
+    }
+  });
+
+  it("(e5) a gate without Precedent does not count (owner 2026-10-08)", () => {
+    const t = transcript(
+      INDEX(),
+      UX(),
+      GATE(GATE_ALL.filter((l) => l !== "Precedent")),
+      VH(),
+      SHADCN()
+    );
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("(e2) labels in bullets or bold still count", () => {
+    const t = transcript(
+      INDEX(),
+      UX(),
+      GATE([
+        "- **Job**",
+        "- **Path**",
+        "- Expectation",
+        "- Precedent",
+        "- Objects",
+        "1. Actions",
+        "**Laws**",
+        "* Patterns",
+        "8. **Rejected**",
+      ]),
+      VH(),
+      SHADCN()
+    );
+    expect(skillState(t).missing).toEqual([]);
+  });
+
+  it("(e3) a gate inside the user's own message does not count", () => {
+    const userGate = JSON.stringify({
+      type: "user",
+      message: {
+        content: "Job: x\nPath: x\nExpectation: x\nLaws: x\nPatterns: x",
+      },
+    });
+    const t = transcript(INDEX(), UX(), [userGate], VH(), SHADCN());
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("(g) after a landed commit the next change needs a new gate", () => {
+    expect(
+      skillState(transcript(FULL(), COMMIT(), UX(), VH(), SHADCN())).missing
+    ).toEqual(["gate"]);
+    expect(
+      skillState(transcript(FULL(), COMMIT(), UX(), GATE(), VH(), SHADCN()))
+        .missing
+    ).toEqual([]);
+  });
+
+  it("the block message names the gate and its labels", () => {
+    const why = verdict(
+      {
+        tool_name: "Edit",
+        tool_input: { file_path: "src/components/a.tsx" },
+        transcript_path: "/dev/null",
+        cwd: "/r",
+      },
+      {
+        readTranscript: () => transcript(INDEX(), UX(), VH(), SHADCN()),
+        filesOf: () => [],
+      }
+    );
+    expect(why).toMatch(/UI gate/);
+    expect(why).toMatch(/Job:/);
+    expect(why).toMatch(/Patterns:/);
+    expect(why).toMatch(/Precedent:/);
+    expect(why).toMatch(/nine labelled lines/);
+  });
+});
+
+describe("verdict: a subagent's UI needs its gate too (h)", () => {
+  const MAIN = "/q/proj/s2.jsonl";
+  const SUB = "/q/proj/s2/subagents/agent-b1.jsonl";
+  const texts = (sub) => ({
+    [MAIN]: transcript(COMMIT().slice(0, 0)),
+    [SUB]: sub,
+  });
+  const judge = (sub) =>
+    verdict(
+      {
+        tool_name: "Bash",
+        tool_input: { command: "git commit -m x" },
+        transcript_path: MAIN,
+        session_id: "s2",
+        cwd: "/r",
+      },
+      {
+        readTranscript: (p) => texts(sub)[p],
+        exists: (p) => p in texts(sub),
+        filesOf: () => ["src/components/a.tsx"],
+        listDir: () => ["agent-b1.jsonl"],
+      }
+    );
+
+  it("a subagent's full set with the gate covers the UI commit", () => {
+    expect(judge(FULL())).toBeNull();
+  });
+
+  it("a subagent's reads without the gate do not", () => {
+    expect(judge(transcript(INDEX(), UX(), VH(), SHADCN()))).toMatch(/UI gate/);
+  });
+});
+
+describe("skillState: one shell command can read several skills", () => {
+  it("counts every SKILL.md a single command prints, in order", () => {
+    const gateText = GATE_ALL.map((l) => `${l}: x`).join("\n");
+    const t = transcript(
+      INDEX(),
+      UX(),
+      call("Write", { file_path: "/tmp/s/ux-gate.md", content: gateText }),
+      call("Bash", {
+        command:
+          "cat agents/front-end-developer/skills/visual-hierarchy/SKILL.md; sed -n 1,80p agents/front-end-developer/skills/shadcn/SKILL.md",
+      })
+    );
+    expect(skillState(t).missing).toEqual([]);
+  });
+});
+
+describe("skillState: the gate written to a file", () => {
+  // Reply text after a tool result can stay off disk until the turn ends,
+  // so a reply gate may be invisible to the hook. A Write is a tool call,
+  // which is on disk at once.
+  const gateText = GATE_ALL.map((l) => `${l}: something concrete`).join("\n");
+  const GATE_FILE = (content = gateText) =>
+    call("Write", { file_path: "/tmp/scratch/ux-gate.md", content });
+
+  it("a gate written with Write counts", () => {
+    const t = transcript(INDEX(), UX(), GATE_FILE(), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual([]);
+  });
+
+  it("a gate file missing a label does not count", () => {
+    const thin = gateText.replace(/^Rejected:.*$/m, "");
+    const t = transcript(INDEX(), UX(), GATE_FILE(thin), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("a gate file written before the ux-laws read does not count", () => {
+    const t = transcript(INDEX(), GATE_FILE(), UX(), VH(), SHADCN());
+    expect(skillState(t).missing).toEqual(["gate"]);
+  });
+
+  it("an Edit whose new text is the gate counts too", () => {
+    const t = transcript(
+      INDEX(),
+      UX(),
+      call("Edit", {
+        file_path: "/tmp/scratch/ux-gate.md",
+        old_string: "x",
+        new_string: gateText,
+      }),
+      VH(),
+      SHADCN()
+    );
+    expect(skillState(t).missing).toEqual([]);
+  });
+
+  it("the block message tells the agent to write the gate to a file", () => {
+    const why = verdict(
+      {
+        tool_name: "Edit",
+        tool_input: { file_path: "src/components/a.tsx" },
+        transcript_path: "/dev/null",
+        cwd: "/r",
+      },
+      {
+        readTranscript: () => transcript(INDEX(), UX(), VH(), SHADCN()),
+        filesOf: () => [],
+      }
+    );
+    expect(why).toMatch(/ux-gate\.md/);
+  });
+});
+
+describe("verdict: an out-of-order session can recover", () => {
+  const edit = {
+    tool_name: "Edit",
+    tool_input: { file_path: "src/components/a.tsx" },
+    transcript_path: "/dev/null",
+    cwd: "/r",
+  };
+  const run = (text) =>
+    verdict(edit, { readTranscript: () => text, filesOf: () => [] });
+  const oldOrder = () => transcript(UX(), INDEX(), VH(), SHADCN());
+
+  it("the block says re-doing the steps in order is enough", () => {
+    expect(run(oldOrder())).toMatch(/do the listed steps again in this order/);
+  });
+
+  it("re-reading in order after an old-order session passes", () => {
+    expect(
+      run(transcript(oldOrder(), UX(), GATE(), VH(), SHADCN()))
+    ).toBeNull();
+  });
+});
+
+describe("every agent: its own kit's INDEX, then a skill that index names", () => {
+  const KIT_INDEX = (kit) =>
+    call("Read", { file_path: `/r/agents/${kit}/skills/INDEX.md` });
+  const SKILL = (kit, name) =>
+    call("Read", { file_path: `/r/agents/${kit}/skills/${name}/SKILL.md` });
+  const INDEX_TEXT = {
+    "/r/agents/tester/skills/INDEX.md":
+      "| vitest | `agents/tester/skills/vitest/SKILL.md` |",
+    "/r/.claude/skills/INDEX.md": "verify-twins, commit, handoff",
+  };
+  const run = (input, text) =>
+    verdict(
+      { transcript_path: "/dev/null", cwd: "/r", ...input },
+      {
+        readTranscript: () => text,
+        filesOf: () => [],
+        root: "/r",
+        readIndex: (p) => {
+          if (!(p in INDEX_TEXT)) {
+            throw new Error(`no ${p}`);
+          }
+          return INDEX_TEXT[p];
+        },
+      }
+    );
+  const edit = (file_path, agent_type) => ({
+    tool_name: "Edit",
+    tool_input: { file_path },
+    ...(agent_type ? { agent_type, agent_id: "a1" } : {}),
+  });
+
+  it("an agent writing anywhere in the repo with no reads is blocked, pointed at its own index", () => {
+    const why = run(edit("/r/scripts/x.mjs", "tester"), "");
+    expect(why).toMatch(/skill gate/);
+    expect(why).toMatch(/agents\/tester\/skills\/INDEX\.md/);
+  });
+
+  it("another kit's INDEX does not count for a kit agent", () => {
+    const t = transcript(
+      KIT_INDEX("front-end-developer"),
+      SKILL("tester", "vitest")
+    );
+    expect(run(edit("/r/scripts/x.mjs", "tester"), t)).toMatch(
+      /agents\/tester\/skills\/INDEX\.md/
+    );
+  });
+
+  it("its own INDEX, then a skill that index names, passes", () => {
+    const t = transcript(KIT_INDEX("tester"), SKILL("tester", "vitest"));
+    expect(run(edit("/r/scripts/x.mjs", "tester"), t)).toBeNull();
+  });
+
+  it("a skill its own INDEX does not name is not the pick", () => {
+    const t = transcript(KIT_INDEX("tester"), SKILL("tester", "shadcn"));
+    expect(run(edit("/r/scripts/x.mjs", "tester"), t)).toMatch(/names/);
+  });
+
+  it("a skill read before its own INDEX is not the pick", () => {
+    const t = transcript(SKILL("tester", "vitest"), KIT_INDEX("tester"));
+    expect(run(edit("/r/scripts/x.mjs", "tester"), t)).toMatch(/skill gate/);
+  });
+
+  it("a write outside the repo (scratchpad, memory) is not gated", () => {
+    expect(run(edit("/tmp/scratch/x.md", "tester"), "")).toBeNull();
+  });
+
+  it("the main session (no agent_type) is gated too, and any INDEX counts", () => {
+    expect(run(edit("/r/handoff.md"), "")).toMatch(/skill gate/);
+    const t = transcript(
+      call("Read", { file_path: "/r/.claude/skills/INDEX.md" }),
+      call("Skill", { skill: "commit" })
+    );
+    expect(run(edit("/r/handoff.md"), t)).toBeNull();
+  });
+
+  it("designer is held to the front-end-developer kit", () => {
+    const why = run(edit("/r/notes.md", "designer"), "");
+    expect(why).toMatch(/agents\/front-end-developer\/skills\/INDEX\.md/);
+  });
+
+  it("vendored impeccable agents are exempt", () => {
+    expect(run(edit("/r/notes.md", "impeccable-documenter"), "")).toBeNull();
+  });
+
+  it("an INDEX it cannot read lets any skill after it count (fails open)", () => {
+    const t = transcript(
+      KIT_INDEX("architect"),
+      SKILL("architect", "anything")
+    );
+    expect(run(edit("/r/data-model.md", "architect"), t)).toBeNull();
+  });
+
+  it("the skill pick resets after a landed commit: new work needs a new pick", () => {
+    const t = transcript(
+      KIT_INDEX("tester"),
+      SKILL("tester", "vitest"),
+      COMMIT()
+    );
+    expect(run(edit("/r/scripts/x.mjs", "tester"), t)).toMatch(/skill gate/);
+    // The index is still once per session; only the pick is per change.
+    const repicked = transcript(t, SKILL("tester", "vitest"));
+    expect(run(edit("/r/scripts/x.mjs", "tester"), repicked)).toBeNull();
+  });
+
+  it("the changelog stamp right after a commit is not blocked", () => {
+    const t = transcript(
+      KIT_INDEX("tester"),
+      SKILL("tester", "vitest"),
+      COMMIT()
+    );
+    expect(
+      run(edit("/r/change-logs/2026-10/changelog-10-7.md", "tester"), t)
+    ).toBeNull();
+    expect(run(edit("change-logs/INDEX.md"), t)).toBeNull();
   });
 });

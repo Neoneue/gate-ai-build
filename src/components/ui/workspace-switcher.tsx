@@ -8,15 +8,18 @@ import {
   isDefaultSurface,
   isEnterpriseSurface,
   isFreeSurface,
+  isOnboardingSurface,
   toDefaultPath,
   toEnterprisePath,
   toFreePath,
+  toOnboardingPath,
   toProPath,
 } from "@/lib/plan";
 
 /* Workspace switcher — top-bar scope chrome. The trigger shows the workspace
- * name + current-tier badge. The dropdown lists all four tiers, each with
- * its own badge, so switching is a single click. */
+ * name + current-tier badge. The dropdown lists all four tiers plus the
+ * first-run Onboarding workspace, each with its own badge, so switching is a
+ * single click. Onboarding always opens on its first step. */
 
 export function WorkspaceSwitcher({
   className,
@@ -34,7 +37,8 @@ export function WorkspaceSwitcher({
   const isDefault = isDefaultSurface(pathname);
   const isFree = isFreeSurface(pathname);
   const isEnterprise = isEnterpriseSurface(pathname);
-  const isPro = !(isDefault || isFree || isEnterprise);
+  const isOnboarding = isOnboardingSurface(pathname);
+  const isPro = !(isDefault || isFree || isEnterprise || isOnboarding);
 
   const plan = isEnterprise
     ? "Enterprise"
@@ -42,7 +46,9 @@ export function WorkspaceSwitcher({
       ? "Pro"
       : isDefault
         ? "Default"
-        : "Free";
+        : isOnboarding
+          ? "Onboarding"
+          : "Free";
   const badgeLabel = compactBadge && isEnterprise ? "ENT." : plan;
   const badgeVariant = isEnterprise ? "enterprise" : isPro ? "pro" : "neutral";
 
@@ -110,6 +116,18 @@ export function WorkspaceSwitcher({
             <Badge variant="neutral">Free</Badge>
           </span>
           {isFree ? (
+            <Check aria-hidden className="text-primary" strokeWidth={1.75} />
+          ) : null}
+        </MenuItem>
+        <MenuItem
+          active={isOnboarding}
+          onClick={() => navigate(toOnboardingPath())}
+        >
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="truncate">{WORKSPACE_NAME}</span>
+            <Badge variant="neutral">Onboarding</Badge>
+          </span>
+          {isOnboarding ? (
             <Check aria-hidden className="text-primary" strokeWidth={1.75} />
           ) : null}
         </MenuItem>

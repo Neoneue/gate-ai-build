@@ -7,6 +7,10 @@ import { AVATAR_TONE_CLS } from "@/components/ui/monogram-types";
 import { Separator } from "@/components/ui/separator";
 import { SidebarUpgradeCard } from "@/components/ui/sidebar-upgrade-card";
 import { UserMenu } from "@/components/ui/user-menu";
+import {
+  dismissUpgradeCard,
+  useUpgradeCardDismissed,
+} from "@/data/upgrade-card-store";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
@@ -314,6 +318,9 @@ export function SidebarPanel({
   topSlot,
   upgradePath,
 }: SidebarPanelProps) {
+  // The promo's corner X hides it for the rest of the visit (in memory, back
+  // on a reload; owner 2026-10-08).
+  const upgradeDismissed = useUpgradeCardDismissed();
   return (
     <div className="flex h-full w-full flex-col">
       {/* Brand area — logomark + stacked wordmark (Constellation eyebrow,
@@ -398,9 +405,12 @@ export function SidebarPanel({
           destination, and does not belong inside the nav landmark. Aligns to
           the nav items on `px-3`; `pb-4` is the 16px `nav-list` bottom
           padding, measured off the frame. */}
-        {upgradePath ? (
+        {upgradePath && !upgradeDismissed ? (
           <div className="shrink-0 px-3 pb-4">
-            <SidebarUpgradeCard onClick={() => onNavigate?.(upgradePath)} />
+            <SidebarUpgradeCard
+              onClick={() => onNavigate?.(upgradePath)}
+              onDismiss={dismissUpgradeCard}
+            />
           </div>
         ) : null}
 
@@ -498,9 +508,9 @@ function SidebarAccountRows({
           </span>
           <span
             className="type-copy-12 truncate text-muted-foreground leading-tight"
-            title="chad@constellationnetwork.io"
+            title="chad@example.com"
           >
-            chad@constellationnetwork.io
+            chad@example.com
           </span>
         </div>
       </div>

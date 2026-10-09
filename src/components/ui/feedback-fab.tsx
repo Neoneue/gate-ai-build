@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
  * ───────────────────────────────────────────────────────────────────────── */
 
 const MAX_MESSAGE_LENGTH = 8000;
-const DEFAULT_EMAIL = "chad@constellationnetwork.io";
+const DEFAULT_EMAIL = "chad@example.com";
 
 type FeedbackCategory = "bug" | "feature" | "question" | "other";
 

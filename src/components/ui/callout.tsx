@@ -19,18 +19,17 @@ import { cn } from "@/lib/utils";
 export function Callout({
   children,
   className,
+  action,
 }: {
   children: ReactNode;
   className?: string;
+  /** One control at the right edge (added 2026-10-08, design.md Callout):
+   *  a Button `info-outline`, so it stays in the banner's info family. It
+   *  wraps under the text when the column is narrow. */
+  action?: ReactNode;
 }) {
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-2 rounded-md border border-info-border bg-info-surface px-4 py-3",
-        className
-      )}
-      role="note"
-    >
+  const message = (
+    <>
       {/* h-5 wrapper centers the 16px glyph on the first 20px text line, so
           the icon stays aligned when the copy wraps. */}
       <span aria-hidden className="flex h-5 shrink-0 items-center">
@@ -40,9 +39,44 @@ export function Callout({
           strokeWidth={1.75}
         />
       </span>
-      <p className="type-copy-14 m-0 text-pretty text-info-foreground-strong">
+      <p className="type-copy-14 m-0 min-w-0 flex-1 text-pretty text-info-foreground-strong">
         {children}
       </p>
+    </>
+  );
+
+  if (!action) {
+    // 12px icon-to-text on every Callout (owner 2026-10-09), the same gap
+    // as the action branch below.
+    return (
+      <div
+        className={cn(
+          "flex items-start gap-3 rounded-md border border-info-border bg-info-surface px-4 py-3",
+          className
+        )}
+        role="note"
+      >
+        {message}
+      </div>
+    );
+  }
+
+  // With an action: the icon and text are ONE group (12px apart, owner
+  // 2026-10-08), centred against the button as a unit, so the icon never
+  // floats above a single centred line. The group keeps a 16rem floor so on
+  // a narrow column the action wraps below it instead of squeezing it.
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-3 rounded-md border border-info-border bg-info-surface px-4 py-3",
+        className
+      )}
+      role="note"
+    >
+      <div className="flex min-w-0 flex-1 basis-64 items-start gap-3">
+        {message}
+      </div>
+      <div className="ml-auto shrink-0">{action}</div>
     </div>
   );
 }

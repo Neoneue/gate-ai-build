@@ -52,7 +52,7 @@ function firstLine(text: string | undefined): string {
  *  MASKING IS NOT OPTIONAL. Whatever text wins above is run through
  *  `redactFindings` before it leaves this function, so a value the gateway
  *  caught on ingress can never surface on a table row. Four rows leaked real
- *  email addresses (`chad@constellationnetwork.io`, `noreply@anthropic.com`)
+ *  email addresses (`chad@example.com`, `noreply@anthropic.com`)
  *  before this was added — truncation hid them at the current column width,
  *  but the DOM and the tooltip carried them in full. A PII-redaction product
  *  cannot display the PII it claims to have redacted.

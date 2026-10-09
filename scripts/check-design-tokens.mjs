@@ -292,9 +292,15 @@ function walk(dir) {
 
 // Accept explicit file paths (lint-staged passes staged filenames). With no
 // arguments, fall back to a full `src` walk so `npm run lint:design` and CI
-// keep scanning everything.
+// keep scanning everything. Passed files are kept to `src`, the guard's whole
+// scope: lint-staged also hands it vendored kit CSS under `agents/`, which
+// is not app code (2026-10-07, the animator kit's `transitions-dev/_root.css`).
 const argFiles = process.argv.slice(2).filter((f) => /\.(tsx?|css)$/.test(f));
-const files = argFiles.length > 0 ? argFiles : walk(ROOT);
+const inScope = argFiles.filter((f) => {
+  const rel = isAbsolute(f) ? relative(process.cwd(), f) : f;
+  return rel.startsWith(`${ROOT}/`);
+});
+const files = argFiles.length > 0 ? inScope : walk(ROOT);
 
 const violations = [];
 for (const rawFile of files) {
