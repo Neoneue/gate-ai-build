@@ -9,6 +9,7 @@ function Card({
   tone = "default",
   variant = "default",
   interactive = false,
+  elevation = "default",
   ...props
 }: React.ComponentProps<"div"> & {
   size?: "default" | "sm";
@@ -79,6 +80,14 @@ function Card({
    * press onto a call site's `className`.
    */
   interactive?: boolean;
+  /**
+   * Elevation (added 2026-10-09, owner direction). `default` = the card
+   * tier's `shadow-xs`; `raised` = one step up the Tailwind scale,
+   * `shadow-sm`, for a standalone choice card on a phone layout (the
+   * onboarding phone start cards). Never paint a shadow onto a call site's
+   * `className`.
+   */
+  elevation?: "default" | "raised";
 }) {
   return (
     <div
@@ -90,6 +99,7 @@ function Card({
         // Ahead of `className`, so a call site needing its own radius step
         // merges over it.
         variant === "inset" && "rounded-xs bg-transparent shadow-none",
+        elevation === "raised" && "shadow-sm",
         // Interactive: `TableRow`'s hover recipe, verbatim — plain
         // `hover:bg-accent-muted`, `transition-[background-color]` (never
         // `transition-colors`: interpolating the border smudges, see
@@ -106,6 +116,7 @@ function Card({
         className
       )}
       data-density={density}
+      data-elevation={elevation}
       data-interactive={interactive}
       data-size={size}
       data-slot="card"
@@ -140,7 +151,12 @@ function CardTitle({
   as: Tag = "h3",
   className,
   ...props
-}: React.ComponentProps<"h3"> & { as?: React.ElementType }) {
+}: React.ComponentProps<"h3"> & {
+  as?: React.ElementType;
+  /** With `as="label"`: the control this title labels (a settings row whose
+   *  title is also its field's label, e.g. Data retention). */
+  htmlFor?: string;
+}) {
   return (
     <Tag
       className={cn(
