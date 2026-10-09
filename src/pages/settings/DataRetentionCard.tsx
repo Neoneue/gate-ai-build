@@ -112,8 +112,9 @@ const FIELD_ID = "settings-retention-days";
 const DESCRIPTION_ID = "settings-retention-days-description";
 const ERROR_ID = "settings-retention-days-error";
 const FORM_ID = "settings-retention-form";
+const DETAILS_TITLE_ID = "settings-retention-details-title";
 
-/** The field label names the plan whose limits the helper gives. */
+/** The details section's title names the plan whose facts the list gives. */
 const PLAN_NAME: Record<RetentionTier, string> = {
   free: "Free",
   pro: "Pro",
@@ -251,8 +252,11 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
                   orientation="responsive"
                 >
                   <FieldContent>
+                    {/* An action that leads (owner 2026-10-08): the label
+                        says what the input decides; the plan's limits are
+                        in the helper. Same string on Pro and Enterprise. */}
                     <FieldLabel htmlFor={FIELD_ID}>
-                      {PLAN_NAME[tier]} plan
+                      Choose how long to keep records
                     </FieldLabel>
                     <FieldDescription id={DESCRIPTION_ID}>
                       <WindowHelper ceiling={ceiling} tier={tier} />
@@ -293,21 +297,20 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
               </FieldGroup>
               {showZeroNote ? <Callout>{ZERO_DAYS_NOTE}</Callout> : null}
             </form>
-          ) : (
-            // Free has no input (owner 2026-10-08: the disabled field was
-            // dead UI and repeated "30 days (fixed)" below), so the plan name
-            // is a title, not a label: FieldTitle in the same FieldContent
-            // and hairline as the paid field row, so the tiers line up.
-            <div className="border-border border-t pt-4">
-              <FieldContent>
-                <FieldTitle>Free plan details</FieldTitle>
-                <FieldDescription>
-                  <WindowHelper ceiling={ceiling} tier={tier} />
-                </FieldDescription>
-              </FieldContent>
-            </div>
-          )}
-          {/* The readouts: the shared DetailList, flush variant (owner
+          ) : null}
+          {/* The details section, the same on every tier (owner 2026-10-08,
+              Stripe's property list under a short heading): a hairline, the
+              "(Plan) plan details" title, then the framed list. Paid tiers
+              have the action section above it; Free has nothing to adjust,
+              so this is its only section. */}
+          <section
+            aria-labelledby={DETAILS_TITLE_ID}
+            className="flex flex-col gap-3 border-border border-t pt-4"
+          >
+            <FieldTitle id={DETAILS_TITLE_ID}>
+              {PLAN_NAME[tier]} plan details
+            </FieldTitle>
+            {/* The readouts: the shared DetailList, flush variant (owner
               2026-10-08, after Stripe's horizontal PropertyList), with the
               PRD mockup's rows and labels, wrapped in its own card (owner
               2026-10-08): the boxed DetailList's frame (`rounded-md border
@@ -315,71 +318,72 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
               the frame pads the last row. The rows carry the side padding so
               their dividers run the full width of the frame (owner
               2026-10-08). */}
-          <div className="rounded-md border border-border pb-3">
-            <DetailList
-              className="border-t-0 [&>[data-slot=detail-row]]:px-4"
-              variant="flush"
-            >
-              {/* Free's window is set by the plan, so its value says so
+            <div className="rounded-md border border-border pb-3">
+              <DetailList
+                className="border-t-0 [&>[data-slot=detail-row]]:px-4"
+                variant="flush"
+              >
+                {/* Free's window is set by the plan, so its value says so
                   (owner 2026-10-08: "30 days (fixed)"). */}
-              <DetailRow
-                label="Current window"
-                value={
-                  <FactValue mono>
-                    {editable
-                      ? formatDays(saved)
-                      : `${formatDays(saved)} (fixed)`}
-                  </FactValue>
-                }
-              />
-              <DetailRow
-                label="Oldest retained record"
-                value={
-                  oldest ? (
-                    <FactValue mono>{formatDate(oldest)}</FactValue>
-                  ) : (
-                    <FactValue muted>None</FactValue>
-                  )
-                }
-              />
-              <DetailRow
-                label="Records in window"
-                value={<FactValue mono>{formatNumber(held)}</FactValue>}
-              />
-              <DetailRow
-                label="Next deletion run"
-                value={<FactValue mono>{formatDeletionRun(runAt)}</FactValue>}
-              />
-              {/* Mockup 03: Free has no Last changed row (nobody can change it). */}
-              {editable ? (
                 <DetailRow
-                  label="Last changed"
+                  label="Current window"
                   value={
-                    lastChange ? (
-                      <FactValue>
-                        {formatDate(lastChange.at)} by {lastChange.by}
-                      </FactValue>
+                    <FactValue mono>
+                      {editable
+                        ? formatDays(saved)
+                        : `${formatDays(saved)} (fixed)`}
+                    </FactValue>
+                  }
+                />
+                <DetailRow
+                  label="Oldest retained record"
+                  value={
+                    oldest ? (
+                      <FactValue mono>{formatDate(oldest)}</FactValue>
                     ) : (
-                      <FactValue muted>Never</FactValue>
+                      <FactValue muted>None</FactValue>
                     )
                   }
                 />
-              ) : null}
-              <DetailRow
-                label={
-                  <TipLabel
-                    label="Usage metrics"
-                    tip="Set by your plan, separate from the retention window."
+                <DetailRow
+                  label="Records in window"
+                  value={<FactValue mono>{formatNumber(held)}</FactValue>}
+                />
+                <DetailRow
+                  label="Next deletion run"
+                  value={<FactValue mono>{formatDeletionRun(runAt)}</FactValue>}
+                />
+                {/* Mockup 03: Free has no Last changed row (nobody can change it). */}
+                {editable ? (
+                  <DetailRow
+                    label="Last changed"
+                    value={
+                      lastChange ? (
+                        <FactValue>
+                          {formatDate(lastChange.at)} by {lastChange.by}
+                        </FactValue>
+                      ) : (
+                        <FactValue muted>Never</FactValue>
+                      )
+                    }
                   />
-                }
-                value={
-                  <FactValue mono>
-                    {formatDays(metricsRetentionDays(tier))}
-                  </FactValue>
-                }
-              />
-            </DetailList>
-          </div>
+                ) : null}
+                <DetailRow
+                  label={
+                    <TipLabel
+                      label="Usage metrics"
+                      tip="Set by your plan, separate from the retention window."
+                    />
+                  }
+                  value={
+                    <FactValue mono>
+                      {formatDays(metricsRetentionDays(tier))}
+                    </FactValue>
+                  }
+                />
+              </DetailList>
+            </div>
+          </section>
         </CardContent>
         {/* Pro and Enterprise: the audit-trail note, Reset and Save. */}
         {editable ? (
@@ -410,9 +414,14 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
           </CardFooter>
         ) : (
           // Free: the plan is this window's only lever, so its footer action
-          // is the upgrade (PRD mockup 03). Outline, not the promo fill (owner
-          // 2026-10-08); the sparkle marks it as the site's upgrade action.
-          <CardFooter className="justify-end border-border border-t py-2">
+          // is the upgrade (PRD mockup 03). Same shape as the paid footer: the
+          // note on the left is the helper naming what Pro unlocks, beside the
+          // button it explains (owner 2026-10-08). Outline, not the promo
+          // fill; the sparkle marks it as the site's upgrade action.
+          <CardFooter className="flex-wrap justify-between gap-2 border-border border-t py-2">
+            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
+              <WindowHelper ceiling={ceiling} tier={tier} />
+            </p>
             <Button
               onClick={() => setCompareOpen(true)}
               size="sm"
@@ -547,20 +556,35 @@ function WindowHelper({
   ceiling: number;
 }) {
   if (tier === "free") {
-    // PRD mockup 03's helper shape ("Upgrade to Pro to ..., or to Enterprise
-    // to ..."), corrected (owner 2026-10-08): Pro goes shorter or longer than
-    // the fixed 30, up to 90; Enterprise's default ceiling is also 90, so only
-    // a contract extends further. The mockup's "Free plan: 30 days, fixed."
-    // lives in the label and the Current window row ("30 days (fixed)"). No
-    // "Upgrade to": the footer button says it (owner 2026-10-08, no repeats).
+    // PRD mockup 03's helper ("the helper names what each upgrade unlocks"),
+    // the next plan up only (owner 2026-10-08: "no one jumps from free to
+    // enterprise"; the Enterprise line moved to Pro). Pro goes shorter or
+    // longer than the fixed 30, up to 90. Rendered as the Free footer's note,
+    // beside the Upgrade to Pro it explains. The mockup's "Free plan: 30 days,
+    // fixed." lives in the details title and the Current window row ("30 days
+    // (fixed)"). No "Upgrade to": the button says it (no repeats).
     return (
       <>
         Pro plan lets you shorten the window or extend it to{" "}
-        {formatDays(PRO_RETENTION_CEILING_DAYS)}. On Enterprise, a contract can
-        extend it further.
+        {formatDays(PRO_RETENTION_CEILING_DAYS)}.
       </>
     );
   }
+  if (tier === "pro") {
+    // The range in the Free helper's voice, then the next plan up (owner
+    // 2026-10-08: the "Ceiling: 90 days. Minimum 0 days." fragments read
+    // oddly). The title already names the plan, so the helper does not
+    // (owner: "using pro plan twice"). Irreversibility is said by the
+    // description and the shorten dialog, at the moment of the change (PRD
+    // Principles).
+    return (
+      <>
+        Your plan allows any window from {RETENTION_FLOOR_DAYS} to{" "}
+        {formatDays(ceiling)}. On Enterprise, a contract can extend it further.
+      </>
+    );
+  }
+  // Enterprise: not yet reworked (owner 2026-10-08, Pro and Free first).
   return (
     <>
       Ceiling: {formatDays(ceiling)}. Minimum {formatDays(RETENTION_FLOOR_DAYS)}
