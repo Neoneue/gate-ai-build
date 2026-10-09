@@ -13,6 +13,8 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Messages retention statement
 - Retention copy: "fingerprints" only
+- Callout icon gap 12px on every Callout
+- Retention plan details values right-aligned
 - Callout `action` slot, Button `info-outline`
 
 ### [2026-10-08](./2026-10/changelog-10-8.md)

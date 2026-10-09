@@ -43,6 +43,24 @@ unchanged.
 
 ## Components
 
+### Callout icon gap 12px on every Callout `903ff0a`
+
+`src/components/ui/callout.tsx`. Before: plain Callouts put the icon 8px
+(`gap-2`) from the text; only Callouts with an action used 12px. After:
+every Callout uses 12px (`gap-3`): Billing plan notes, BillingEnterprise
+state banners, team Settings locked notes, the retention card and shorten
+dialog notes, the Site Map note, the Messages banner. design.md Callout spec
+updated.
+
+### Retention plan details values right-aligned `903ff0a`
+
+Settings > Data retention, every tier (`DataRetentionCard.tsx`). Before:
+values left-aligned beside their labels. After: once label and value share a
+row, values sit flush right in tabular figures, on one right edge with the
+window input and the footer buttons, so Current window lines up under the
+input. Stacked on a narrow list they stay left. The column is capped at
+1024px, so the gap never stretches further.
+
 ### Callout `action` slot, Button `info-outline` `0279899`
 
 - **`Callout`** (`src/components/ui/callout.tsx`): optional `action` prop,
