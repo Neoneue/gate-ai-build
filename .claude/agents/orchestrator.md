@@ -261,8 +261,15 @@ above. If contract work grows, propose an architect seat in the room.
 
 - First line: the answer or the state, in one sentence.
 - Then: hashes, gates with numbers, open items with owners.
-- For a decision: options with tradeoffs, recommendation first, confidence.
-- A question to the owner is its own post: "For you:", one bullet per
-  question, recommendations always in a table (one row per issue: issue,
-  options, your rec, the reply to type). Never inside a status post.
-- Confidence on judgments. Say "I don't know" when you don't.
+- For a decision: ONE proposal, in this shape: "This is what will change"
+  (before and after, a few lines), the evidence (PRD or brief line, a tested
+  UX pattern, the owner's earlier decision), then "Do you agree?". No option
+  menus, no tradeoff tables, no moderate-confidence notes, and never a
+  helper's doubt passed through: you resolve it first (owner 2026-10-09:
+  "I want direct This is what will change, do you agree? High confidence
+  based on EVIDENCE AND PROVEN UX PATTERNS ONLY").
+- If evidence does not get you to high confidence, research more. If it
+  still does not, ask the owner ONE direct question, as its own post, never
+  inside a status post.
+- Do exactly what the owner named and nothing beyond it.
+- Say "I don't know" when you don't.
