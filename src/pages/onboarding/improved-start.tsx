@@ -1,21 +1,24 @@
-import { Radio as RadioPrimitive } from "@base-ui/react/radio";
-import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
-import { ArrowRight, Check, KeyRound, Mail, MessageSquare } from "lucide-react";
+import {
+  ArrowRight,
+  KeyRound,
+  Loader2,
+  Mail,
+  MessageSquare,
+  Monitor,
+} from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import {
   ChatArt,
   CodeArt,
   ConnectArt,
-  DesktopMini,
   HandoffArt,
-  MiniChat,
 } from "@/pages/onboarding/improved-art";
 import {
   LINK_VALIDITY,
@@ -55,7 +58,11 @@ const METHODS: {
   title: string;
   description: string;
 }[] = [
-  { id: "gate-chat", title: "Gate Chat", description: "In your browser" },
+  {
+    id: "gate-chat",
+    title: "Gate Chat",
+    description: "Start chatting with a model of your choice",
+  },
   {
     id: "gate-connect",
     title: "Gate Connect",
@@ -105,7 +112,7 @@ function DesktopPicker() {
   return (
     <ImprovedColumn>
       <ImprovedHeader title="Get started" />
-      <RadioGroupPrimitive
+      <RadioGroup
         aria-label="Setup method"
         className="grid @5xl:grid-cols-3 @xl:grid-cols-2 gap-4"
         onValueChange={(value) => choose(value as ImprovedConnection)}
@@ -118,7 +125,7 @@ function DesktopPicker() {
             selected={improved.connection === method.id}
           />
         ))}
-      </RadioGroupPrimitive>
+      </RadioGroup>
       <div className="flex justify-end">
         <Button
           onClick={() => {
@@ -137,8 +144,10 @@ function DesktopPicker() {
   );
 }
 
-/** One setup method: a radio rendered as a card. The illustration stage
- *  leads, then the title and description; the check marks the choice. */
+/** One setup method: a card-sized label around the group's
+ *  `RadioGroupItem` (the `Policies.tsx` radio-card pattern). The
+ *  illustration stage leads, then the title and description; the check
+ *  radio in the stage's corner marks the choice. */
 function MethodCard({
   method,
   selected,
@@ -147,14 +156,13 @@ function MethodCard({
   selected: boolean;
 }) {
   return (
-    <RadioPrimitive.Root
+    <label
       className={cn(
-        "group flex min-w-0 cursor-pointer flex-col rounded-md border bg-card p-2 text-left shadow-xs outline-none transition-[background-color,border-color,scale] duration-150 ease-out hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+        "group flex min-w-0 cursor-pointer flex-col rounded-md border bg-card p-2 text-left shadow-xs transition-[background-color,border-color,scale] duration-150 ease-out hover:bg-accent-muted active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
         selected ? "border-foreground" : "border-border hover:border-input",
         method.id === "gate-chat" && "@5xl:col-span-1 @xl:col-span-2"
       )}
       data-method={method.id}
-      value={method.id}
     >
       <span
         className={cn(
@@ -165,22 +173,11 @@ function MethodCard({
         {method.id === "gate-chat" ? <ChatArt /> : null}
         {method.id === "gate-connect" ? <ConnectArt /> : null}
         {method.id === "manual" ? <CodeArt /> : null}
-        {method.id === "gate-chat" ? (
-          <Badge className="absolute top-4 left-4" variant="info">
-            Free model
-          </Badge>
-        ) : null}
-        <span
-          aria-hidden
-          className={cn(
-            "absolute top-4 right-4 grid size-6 place-items-center rounded-full border",
-            selected
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-input bg-card text-transparent"
-          )}
-        >
-          <Check className="size-3.5" strokeWidth={1.75} />
-        </span>
+        <RadioGroupItem
+          className="absolute top-4 right-4"
+          indicator="check"
+          value={method.id}
+        />
       </span>
       <span className="flex flex-col gap-1 px-2 pt-4 pb-2">
         <span className="type-heading-20 text-foreground">{method.title}</span>
@@ -188,26 +185,31 @@ function MethodCard({
           {method.description}
         </span>
       </span>
-    </RadioPrimitive.Root>
+    </label>
   );
 }
 
-/** Email a setup link from the phone (the mockup's `ue`, simulated: a
- *  short "Sending link…" then sent). Shared by the mobile start and the
- *  handoff screen. */
+/** The setup-link button's two beats (owner 2026-10-09): "Sending link…"
+ *  for SEND_MS, then "Email sent!" for SENT_HOLD_MS, then "Re-send
+ *  email". */
+const SEND_MS = 3000;
+const SENT_HOLD_MS = 2000;
+
+/** Email a setup link from the phone (the mockup's `ue`, simulated). The
+ *  button reports it in place: "Sending link…", then "Email sent!", then
+ *  "Re-send email". The phone never leaves the page
+ *  (owner 2026-10-09: sending must not lead into setup on the phone).
+ *  Shared by the mobile start and the handoff screen. */
 function useSendSetupLink() {
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
   const { improved, updateImproved, readImproved } = useOnboarding();
-  const [sending, setSending] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "sending" | "sent">("idle");
 
   const send = async () => {
-    if (sending) {
+    if (phase !== "idle") {
       return;
     }
-    setSending(true);
-    await wait(SIMULATED_MS);
-    setSending(false);
+    setPhase("sending");
+    await wait(SEND_MS);
     const state = readImproved();
     updateImproved({
       handoffSent: true,
@@ -215,18 +217,27 @@ function useSendSetupLink() {
       handoffAttempt: "sent",
       handoffSetup: snapshotDesktopSetup(state),
     });
-    if (pathname !== ONBOARDING_ROUTES.handoff) {
-      navigate(ONBOARDING_ROUTES.handoff);
-    }
+    setPhase("sent");
+    await wait(SENT_HOLD_MS);
+    setPhase("idle");
   };
 
-  const label = sending
-    ? "Sending link…"
-    : improved.handoffSent && pathname === ONBOARDING_ROUTES.handoff
-      ? "Send again"
-      : "Email me a setup link";
+  const label =
+    phase === "sending"
+      ? "Sending link…"
+      : phase === "sent"
+        ? "Email sent!"
+        : improved.handoffSent
+          ? "Re-send email"
+          : "Email me a setup link";
 
-  return { send, sending, label };
+  return {
+    send,
+    sending: phase === "sending",
+    busy: phase !== "idle",
+    sent: phase === "sent",
+    label,
+  };
 }
 
 /** Phone: choose Gate Chat here, or continue on the desktop. */
@@ -259,14 +270,14 @@ function MobileStart() {
     <div className="mx-auto flex w-full max-w-190 flex-col gap-6">
       <PageTitle>How would you like to start?</PageTitle>
       <div className="flex @xl:grid @xl:grid-cols-[3fr_2fr] flex-col @xl:items-start gap-4">
-        <Card density="flush">
+        <Card density="flush" elevation="raised">
           <div className="flex flex-col p-2">
             <section
               aria-labelledby="mobile-chat-title"
               className="flex flex-col"
             >
-              <div className="grid place-items-center rounded-xs bg-card-muted p-4">
-                <MiniChat />
+              <div className="flex h-51 items-center justify-center overflow-hidden rounded-xs border border-border bg-card-muted p-4">
+                <ChatArt className="w-4/3 max-w-none shrink-0 scale-75" loop />
               </div>
               <div className="flex flex-col gap-4 px-2 pt-4 pb-2">
                 <div className="flex flex-col gap-1">
@@ -278,11 +289,11 @@ function MobileStart() {
                   </h2>
                   <p className="type-copy-14 m-0 text-muted-foreground">
                     {resume
-                      ? "Pick up where you left off."
-                      : "Chat here with a free model."}
+                      ? "Your first conversation is saved in your chat history"
+                      : "Start chatting with a model of your choice"}
                   </p>
                 </div>
-                <Button className="w-full" onClick={openChat} size="default">
+                <Button className="w-full" onClick={openChat} size="touch">
                   <MessageSquare aria-hidden data-icon="inline-start" />
                   {resume ? "Resume Gate Chat" : "Open Gate Chat"}
                 </Button>
@@ -290,38 +301,49 @@ function MobileStart() {
             </section>
           </div>
         </Card>
-        <Card density="flush">
+        <Card density="flush" elevation="raised">
           <div className="flex flex-col p-4">
             <section
               aria-labelledby="mobile-desktop-title"
               className="flex flex-col gap-4"
             >
-              <div className="flex min-w-0 items-center gap-3">
-                <DesktopMini />
-                <div className="flex min-w-0 flex-col gap-1">
-                  <h2
-                    className="type-heading-16 m-0 text-foreground"
-                    id="mobile-desktop-title"
-                  >
-                    Continue on desktop
-                  </h2>
-                  <p className="type-copy-14 m-0 text-muted-foreground">
-                    Email a setup link to{" "}
-                    <span className="wrap-anywhere text-foreground">
-                      {OWNER_EMAIL}
-                    </span>
-                  </p>
-                </div>
+              <div className="flex min-w-0 flex-col gap-1">
+                <h2
+                  className="type-heading-16 m-0 flex items-center gap-2 text-foreground"
+                  id="mobile-desktop-title"
+                >
+                  <Monitor
+                    aria-hidden
+                    className="size-4 shrink-0"
+                    strokeWidth={1.75}
+                  />
+                  Continue on desktop
+                </h2>
+                <p className="type-copy-14 m-0 text-muted-foreground">
+                  Email a setup link to{" "}
+                  <span className="wrap-anywhere text-foreground">
+                    {OWNER_EMAIL}
+                  </span>
+                </p>
               </div>
               <Button
                 aria-busy={link.sending}
-                aria-disabled={link.sending}
+                aria-disabled={link.busy}
                 className="w-full"
                 onClick={() => void link.send()}
-                size="default"
+                size="touch"
                 variant="outline"
               >
-                <Mail aria-hidden data-icon="inline-start" />
+                {link.sending ? (
+                  <Loader2
+                    aria-hidden
+                    className="animate-spin motion-reduce:animate-none"
+                    data-icon="inline-start"
+                  />
+                ) : null}
+                {link.busy ? null : (
+                  <Mail aria-hidden data-icon="inline-start" />
+                )}
                 {link.label}
               </Button>
             </section>
@@ -409,10 +431,10 @@ function HandoffCard() {
           <div className="flex w-full flex-col gap-2 px-2">
             <Button
               aria-busy={link.sending}
-              aria-disabled={link.sending}
+              aria-disabled={link.busy}
               className="w-full"
               onClick={() => void link.send()}
-              size="default"
+              size="touch"
               variant={sent ? "outline" : "default"}
             >
               {link.label}
@@ -420,7 +442,7 @@ function HandoffCard() {
             <Button
               className="w-full"
               onClick={openChat}
-              size="default"
+              size="touch"
               variant="ghost"
             >
               <MessageSquare aria-hidden data-icon="inline-start" />

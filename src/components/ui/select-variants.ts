@@ -26,6 +26,10 @@ const selectTriggerVariants = cva(
         // per design.md.
         sm: "h-8 gap-2 pr-2 pl-3 text-xs",
         default: "h-9 gap-2 pr-2 pl-3 text-sm",
+        // `lg` 40px (added 2026-10-09, owner direction): shadcn's `lg`
+        // height, for a lone form field that leads a setup step (the
+        // onboarding "Select an app" picker). Not for filter rows.
+        lg: "h-10 gap-2 pr-2 pl-3 text-sm",
       },
     },
     defaultVariants: {

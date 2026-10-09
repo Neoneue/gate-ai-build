@@ -62,12 +62,23 @@ export function GateMark({ className }: { className?: string }) {
  *  prompt bubble, a reply card with its header row and two lines (and the
  *  "preparing reply" dots the animator plays before them), then the
  *  composer as it is when the next message is typed: focused border, a
- *  line of text, the send key enabled. */
-export function ChatArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
+ *  line of text, the send key enabled. The phone start card passes a
+ *  `scale-*` to fit it in its shorter stage, and `loop` so its sequence
+ *  replays after a hold (use-onboarding-motion.ts). */
+export function ChatArt({
+  ref,
+  className,
+  loop = false,
+}: {
+  ref?: Ref<HTMLSpanElement>;
+  className?: string;
+  loop?: boolean;
+}) {
   return (
     <span
       aria-hidden
-      className="flex w-4/5 max-w-80 flex-col gap-3"
+      className={cn("flex w-4/5 max-w-80 flex-col gap-3", className)}
+      data-motion-loop={loop ? "" : undefined}
       data-motion-root="chat-art"
       ref={ref}
     >
@@ -368,8 +379,8 @@ export function DesktopMini({ ref }: { ref?: Ref<HTMLSpanElement> }) {
       >
         <Mail className="size-3" strokeWidth={1.75} />
       </span>
-      <span className="flex gap-1 rounded-t-xs border-2 border-foreground bg-card p-1">
-        {IMPROVED_CLIENTS.slice(0, 3).map((app) => (
+      <span className="flex h-12 w-20 items-center justify-center gap-1 rounded-t-xs border-2 border-foreground bg-card">
+        {IMPROVED_CLIENTS.slice(0, 2).map((app) => (
           <span
             className="grid size-6 place-items-center rounded-xs bg-card"
             data-motion="app-row"
@@ -449,7 +460,11 @@ export function HandoffArt({
 
 /** App -> Gate -> target. `state`: idle (dashed wires), live (checking: the
  *  pulse rides the wires, `data-state="live"`), done (solid success wires
- *  and the check on the Gate tile). */
+ *  and the check on the Gate tile). The tile columns are exactly tile-wide,
+ *  so each wire runs edge to edge between tiles (owner 2026-10-09); labels
+ *  sit in their own row and may overhang their column up to 128px, which
+ *  the figure's side padding absorbs. The Gate tile is the Connect art's
+ *  hub (card fill, full-colour mark) with the neutral tile border. */
 export function RouteFigure({
   app,
   appIcon,
@@ -457,6 +472,7 @@ export function RouteFigure({
   targetIcon,
   state = "idle",
   caption,
+  centered = false,
   ref,
 }: {
   app: string;
@@ -465,13 +481,20 @@ export function RouteFigure({
   targetIcon: ReactNode;
   state?: "idle" | "live" | "done";
   caption?: ReactNode;
+  /** For a stage that centers the figure (owner 2026-10-09): the tile
+   *  row sits 16px above the stage's centre line (an empty `1fr` row
+   *  above mirrors the labels below; `mb-8` lifts the pair), labels
+   *  reserve two lines so a wrapping target name never moves anything, and
+   *  the caption pins to the stage's top-left corner, 16px in. The stage
+   *  must be a positioned element. */
+  centered?: boolean;
   ref?: Ref<HTMLElement>;
 }) {
   const wire = (
     <span
       aria-hidden
       className={cn(
-        "relative mt-7 h-0.5 overflow-hidden",
+        "relative h-0.5 overflow-hidden",
         state === "done"
           ? "bg-success-600 dark:bg-success-400"
           : "border-input border-t-2 border-dashed"
@@ -483,18 +506,36 @@ export function RouteFigure({
       />
     </span>
   );
-  const node = (label: string, tile: ReactNode, gate = false) => (
-    <span className="flex min-w-0 flex-col items-center gap-2 text-center">
-      <span
-        className={cn(
-          "relative grid place-items-center rounded-md border",
-          gate
-            ? "-mt-2 size-18 border-transparent bg-primary text-primary-foreground"
-            : "size-14 border-border bg-card shadow-xs"
-        )}
-      >
-        {tile}
-        {gate && state === "done" ? (
+  const label = (text: string, column: string) => (
+    <span
+      className={cn(
+        "type-label-14 wrap-anywhere w-max max-w-32 justify-self-center text-center text-foreground",
+        column,
+        centered && "min-h-10"
+      )}
+    >
+      {text}
+    </span>
+  );
+  return (
+    <figure
+      aria-label={`${app} through Gate to ${target}`}
+      className={cn(
+        "m-0 grid w-full grid-cols-[--spacing(14)_minmax(--spacing(4),1fr)_--spacing(18)_minmax(--spacing(4),1fr)_--spacing(14)] items-center gap-y-2 px-9",
+        centered && "mb-8 grid-rows-[1fr_auto_1fr]"
+      )}
+      data-motion-root="route"
+      data-state={state}
+      ref={ref}
+    >
+      {centered ? <span aria-hidden className="col-span-full" /> : null}
+      <span className="grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs">
+        {appIcon}
+      </span>
+      {wire}
+      <span className="relative grid size-18 place-items-center rounded-md border border-border bg-card shadow-xs">
+        <GateMark className="size-9" />
+        {state === "done" ? (
           <span
             className="absolute -right-2 -bottom-2 grid size-6 place-items-center rounded-full border-2 border-background bg-success-600 text-primary-foreground dark:bg-success-400"
             data-motion="route-check"
@@ -503,33 +544,28 @@ export function RouteFigure({
           </span>
         ) : null}
       </span>
-      <span className="type-label-14 wrap-anywhere text-foreground">
-        {label}
+      {wire}
+      <span className="grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs">
+        {targetIcon}
       </span>
-    </span>
-  );
-  return (
-    <figure
-      aria-label={`${app} through Gate to ${target}`}
-      className="m-0 grid w-full grid-cols-[minmax(--spacing(18),--spacing(32))_minmax(--spacing(4),1fr)_auto_minmax(--spacing(4),1fr)_minmax(--spacing(18),--spacing(32))] items-start"
-      data-motion-root="route"
-      data-state={state}
-      ref={ref}
-    >
-      {node(app, appIcon)}
-      {wire}
-      {node(
-        "Gate",
-        <GateMark className="size-9 brightness-0 invert dark:invert-0" />,
-        true
-      )}
-      {wire}
-      {node(target, targetIcon)}
-      {caption ? (
-        <figcaption className="type-copy-12 col-span-full mt-6 justify-self-center rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
-          {caption}
-        </figcaption>
-      ) : null}
+      <span className="col-span-full grid grid-cols-subgrid items-start gap-y-6 self-start">
+        {label(app, "col-start-1")}
+        {label("Gate", "col-start-3")}
+        {label(target, "col-start-5")}
+        {caption ? (
+          <figcaption
+            className={cn(
+              "type-copy-12 col-span-full justify-self-center rounded-full border border-border bg-card px-3 py-1 text-muted-foreground",
+              // `col-auto`: a grid column on an absolutely positioned box
+              // makes the stage's grid lines its frame (inside the
+              // stage padding); auto keeps the frame at the padding edge.
+              centered && "absolute top-4 left-4 col-auto w-max"
+            )}
+          >
+            {caption}
+          </figcaption>
+        ) : null}
+      </span>
     </figure>
   );
 }

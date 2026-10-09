@@ -1,4 +1,4 @@
-import { KeyRound, Sparkles } from "lucide-react";
+import { Cloud, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { PageTitle } from "@/components/ui/page-title";
@@ -18,10 +18,12 @@ export function ImprovedRouteFigure({
   improved,
   state,
   caption,
+  centered,
 }: {
   improved: ImprovedState;
   state?: "idle" | "live" | "done";
   caption?: ReactNode;
+  centered?: boolean;
 }) {
   const chat = improved.connection === "gate-chat";
   const payg = chat || improved.billing === "payg";
@@ -37,6 +39,7 @@ export function ImprovedRouteFigure({
         )
       }
       caption={caption}
+      centered={centered}
       state={state}
       target={chat ? "Free model" : payg ? model.label : "Your provider"}
       targetIcon={
@@ -49,7 +52,7 @@ export function ImprovedRouteFigure({
         ) : payg ? (
           <VendorAvatar decorative size="md" vendor={model.vendor} />
         ) : (
-          <KeyRound
+          <Cloud
             aria-hidden
             className="size-6 text-foreground"
             strokeWidth={1.75}

@@ -2,40 +2,54 @@ import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 
 /* ─── Improved flow: data and pure helpers ──────────────────────────────── */
 
+/** The app picker's sections, in display order (owner 2026-10-09): each
+ *  app is listed under the provider that makes it. */
+export const CLIENT_GROUPS = [
+  { id: "anthropic", label: "Anthropic" },
+  { id: "openai", label: "OpenAI" },
+  { id: "other", label: "Other apps" },
+] as const;
+
 /** Client apps a Gate route can carry (the mockup's `_i`). */
 export const IMPROVED_CLIENTS = [
   {
     id: "codex",
+    group: "openai",
     label: "Codex",
     restart: true,
     icon: "/icons/providers/codex.svg",
   },
   {
     id: "claude-code",
+    group: "anthropic",
     label: "Claude Code",
     restart: true,
     icon: "/icons/providers/claude-code.svg",
   },
   {
     id: "opencode",
+    group: "other",
     label: "OpenCode",
     restart: true,
     icon: "/icons/providers/opencode.svg",
   },
   {
     id: "hermes",
+    group: "other",
     label: "Hermes",
     restart: false,
     icon: "/icons/providers/hermes.svg",
   },
   {
     id: "openclaw",
+    group: "other",
     label: "OpenClaw",
     restart: false,
     icon: "/icons/providers/openclaw-color.svg",
   },
   {
     id: "openai-sdk",
+    group: "openai",
     label: "OpenAI SDK",
     restart: false,
     icon: "/icons/providers/openai.svg",
@@ -44,7 +58,7 @@ export const IMPROVED_CLIENTS = [
 
 /** The signed-in owner's email: where the setup link is sent. A placeholder
  *  identity (the mockup's own fixture), never a real person's address. */
-export const OWNER_EMAIL = "alex@example.com";
+export const OWNER_EMAIL = "user@example.com";
 
 /** The other account / workspace a mismatched link was opened in (mockup
  *  fixtures, verbatim). */

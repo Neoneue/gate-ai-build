@@ -1,28 +1,40 @@
-import { Radio as RadioPrimitive } from "@base-ui/react/radio";
-import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
 import { ArrowLeft, ArrowRight, ChevronRight, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { VendorAvatar } from "@/components/icons/vendor-avatar";
+import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
+import {
+  Field,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import { PageTitle } from "@/components/ui/page-title";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { TextLink } from "@/components/ui/text-link";
+import { formatCurrency } from "@/lib/formatters";
 import { cn, randomHex } from "@/lib/utils";
 import { CreateKeyDialog, KeyCreatedDialog } from "@/pages/ApiKeys";
 import { AddCreditsDialog } from "@/pages/billing/CreditsCard";
 import { DownloadGateConnectDialog } from "@/pages/DashboardDefault";
 import { ClientConfig } from "@/pages/onboarding/client-configs";
+import { StepIndicator } from "@/pages/onboarding/current-parts";
 import { AppIcon } from "@/pages/onboarding/improved-art";
 import {
   appNameOf,
+  CLIENT_GROUPS,
   clientOf,
   IMPROVED_CLIENTS,
   IMPROVED_MODELS,
@@ -64,7 +76,7 @@ const BILLING_OPTIONS: {
 }[] = [
   {
     value: "existing",
-    title: "Provider account",
+    title: "Existing subscriptions",
     detail: "Your provider bills usage",
   },
   { value: "payg", title: "Gate credits", detail: "Pay as you go, any model" },
@@ -113,26 +125,27 @@ function PrepareSetup() {
 
   return (
     <ImprovedColumn>
+      <BackLink href={ONBOARDING_ROUTES.start} label="Setup method" />
       <ImprovedHeader
         step={2}
         title={connect ? "Set up Gate Connect" : "Set up Manual setup"}
       />
       <div className="grid @4xl:grid-cols-[5fr_6fr] items-start gap-10">
         <aside
-          className="@4xl:sticky @4xl:top-6 grid @4xl:min-h-90 place-items-center rounded-md bg-muted px-6 py-10"
+          className="relative @4xl:sticky @4xl:top-6 grid min-h-75 place-items-center rounded-md border border-border bg-muted p-4"
           data-motion-root="route-stage"
         >
           <ImprovedRouteFigure
-            caption={
-              payg
-                ? `$${improved.balanceUsd.toFixed(2)} in credits`
-                : "Billed by your provider"
-            }
+            caption={payg ? "Uses Gate credits" : "Billed by your provider"}
+            centered
             improved={improved}
           />
         </aside>
-        <div className="flex min-w-0 flex-col gap-8">
-          <SetupGroup title="App">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Field className="gap-3">
+            <FieldLabel className="text-muted-foreground" htmlFor="setup-app">
+              Select an app
+            </FieldLabel>
             <Select
               onValueChange={(value) =>
                 updateImproved({
@@ -143,7 +156,7 @@ function PrepareSetup() {
               }
               value={client.id}
             >
-              <SelectTrigger aria-label="App" className="w-full">
+              <SelectTrigger className="w-full" id="setup-app" size="lg">
                 <SelectValue>
                   <span className="flex items-center gap-2">
                     <AppIcon src={client.icon} />
@@ -152,22 +165,39 @@ function PrepareSetup() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {clients.map((option) => (
-                  <SelectItem key={option.id} value={option.id}>
-                    <span className="flex items-center gap-2">
-                      <AppIcon src={option.icon} />
-                      {option.label}
-                    </span>
-                  </SelectItem>
-                ))}
+                {CLIENT_GROUPS.map((group) => {
+                  const members = clients.filter(
+                    (option) => option.group === group.id
+                  );
+                  return members.length > 0 ? (
+                    <SelectGroup key={group.id}>
+                      <SelectLabel>{group.label}</SelectLabel>
+                      {members.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          <span className="flex items-center gap-2">
+                            <AppIcon src={option.icon} />
+                            {option.label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ) : null;
+                })}
               </SelectContent>
             </Select>
-          </SetupGroup>
+          </Field>
 
-          <SetupGroup title="Billing">
-            <RadioGroupPrimitive
-              aria-label="Billing"
-              className="grid @xl:grid-cols-2 gap-2"
+          <FieldSet>
+            <FieldLegend
+              className="mb-3 text-muted-foreground"
+              id="setup-billing"
+              variant="label"
+            >
+              Select your billing type
+            </FieldLegend>
+            <RadioGroup
+              aria-labelledby="setup-billing"
+              className="@xl:grid-cols-2"
               onValueChange={(value) => {
                 if (value !== improved.billing) {
                   updateImproved({
@@ -181,94 +211,145 @@ function PrepareSetup() {
             >
               {BILLING_OPTIONS.map((option) => {
                 const checked = improved.billing === option.value;
+                const detailId = `setup-billing-${option.value}`;
                 return (
-                  <RadioPrimitive.Root
+                  <label
                     className={cn(
-                      "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 rounded-md border bg-card p-4 text-left outline-none transition-[background-color,border-color] duration-150 ease-out hover:bg-accent-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none",
+                      "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 rounded-md border bg-card p-4 text-left transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:bg-accent-muted motion-reduce:transition-none",
                       checked
-                        ? "border-foreground"
-                        : "border-border hover:border-input"
+                        ? "border-foreground shadow-sm"
+                        : "border-border shadow-xs hover:border-input"
                     )}
                     key={option.value}
-                    value={option.value}
                   >
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "grid size-4 place-items-center rounded-full border",
-                        checked
-                          ? "border-primary bg-primary"
-                          : "border-input bg-muted"
-                      )}
-                    >
-                      {checked ? (
-                        <span className="size-2 rounded-full bg-primary-foreground" />
-                      ) : null}
-                    </span>
+                    <RadioGroupItem
+                      aria-describedby={detailId}
+                      value={option.value}
+                    />
                     <span className="type-label-14 text-foreground">
                       {option.title}
                     </span>
-                    <span className="type-copy-12 col-start-2 text-muted-foreground">
+                    <span
+                      className="type-copy-12 col-start-2 text-muted-foreground"
+                      id={detailId}
+                    >
                       {option.detail}
                     </span>
-                  </RadioPrimitive.Root>
+                  </label>
                 );
               })}
-            </RadioGroupPrimitive>
-            {payg ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <Select
-                  onValueChange={(next) =>
-                    updateImproved({ model: String(next), received: false })
-                  }
-                  value={model.id}
-                >
-                  <SelectTrigger aria-label="Model" className="min-w-60">
-                    <SelectValue>{model.label}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {IMPROVED_MODELS.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={() => setCreditsOpen(true)}
-                  size="default"
-                  variant={funded ? "outline" : "default"}
-                >
-                  {funded ? "Add more credits" : "Add credits"}
-                </Button>
-              </div>
-            ) : null}
-          </SetupGroup>
+            </RadioGroup>
+          </FieldSet>
 
-          {connect ? (
+          {payg ? (
+            <Field className="gap-3">
+              <FieldLabel
+                className="text-muted-foreground"
+                htmlFor="setup-model"
+              >
+                Select a model
+              </FieldLabel>
+              <Select
+                onValueChange={(next) =>
+                  updateImproved({ model: String(next), received: false })
+                }
+                value={model.id}
+              >
+                <SelectTrigger className="w-full" id="setup-model" size="lg">
+                  <SelectValue>
+                    <span className="flex items-center gap-2">
+                      <VendorAvatar decorative vendor={model.vendor} />
+                      {model.label}
+                    </span>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {IMPROVED_MODELS.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      <span className="flex items-center gap-2">
+                        <VendorAvatar decorative vendor={option.vendor} />
+                        {option.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          ) : null}
+
+          {payg ? (
+            <SetupGroup title="Add credits">
+              <Card>
+                <CardContent className="flex flex-col gap-4">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    {/* The balance's one home on this page (owner
+                        2026-10-09); `CreditStatRow`'s label and mono
+                        value voices, label over value so the action
+                        can sit on the right. */}
+                    <dl className="m-0 flex flex-col gap-1">
+                      <dt className="type-label-14 text-muted-foreground">
+                        Credit balance
+                      </dt>
+                      <dd className="type-copy-14 m-0 font-mono text-foreground tabular-nums">
+                        {formatCurrency(improved.balanceUsd)}
+                      </dd>
+                    </dl>
+                    <Button
+                      onClick={() => setCreditsOpen(true)}
+                      size="default"
+                      variant={funded ? "outline" : "default"}
+                    >
+                      {funded ? "Add more credits" : "Add credits"}
+                    </Button>
+                  </div>
+                  {funded ? null : (
+                    <p className="type-copy-14 m-0 text-muted-foreground">
+                      Add credits to continue.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </SetupGroup>
+          ) : null}
+
+          {funded && connect ? (
             <SetupGroup
               title={
-                improved.downloaded ? "Route it through Gate" : "Gate Connect"
+                improved.downloaded
+                  ? "Start routing your app"
+                  : "Install Gate Connect"
               }
             >
-              {funded ? (
-                <>
+              <Card>
+                <CardContent className="flex flex-col gap-4">
                   {improved.downloaded ? (
-                    <ol className="type-copy-14 m-0 flex flex-col gap-2 pl-5 text-foreground">
-                      <li>Sign in to Gate Connect.</li>
-                      <li>
-                        Turn on {app}
-                        {payg ? ` with ${model.label}.` : "."}
-                      </li>
-                      {client.restart ? <li>Quit and reopen {app}.</li> : null}
+                    <ol className="m-0 flex list-none flex-col gap-3 p-0">
+                      {[
+                        "Sign in to Gate Connect.",
+                        `Turn routing on for ${app}`,
+                        ...(client.restart ? [`Quit and reopen ${app}.`] : []),
+                      ].map((text, index) => (
+                        <li className="flex items-center gap-3" key={text}>
+                          <StepIndicator n={index + 1} state="upcoming" />
+                          <span className="type-copy-14 text-foreground">
+                            {text}
+                          </span>
+                        </li>
+                      ))}
                     </ol>
                   ) : null}
                   <div className="flex flex-wrap items-center gap-4">
                     {improved.downloaded ? (
-                      <Button onClick={acknowledge} size="default">
-                        I've connected {app}
-                        <ArrowRight aria-hidden data-icon="inline-end" />
-                      </Button>
+                      <>
+                        <Button onClick={acknowledge} size="default">
+                          I've connected {app}
+                          <ArrowRight aria-hidden data-icon="inline-end" />
+                        </Button>
+                        <DownloadGateConnectDialog
+                          trigger="link"
+                          triggerLabel="Re-download Gate Connect"
+                        />
+                      </>
                     ) : (
                       <>
                         <DownloadGateConnectDialog
@@ -285,98 +366,73 @@ function PrepareSetup() {
                       </>
                     )}
                   </div>
-                </>
-              ) : (
-                <p className="type-copy-14 m-0 text-muted-foreground">
-                  Add credits to continue.
-                </p>
-              )}
+                </CardContent>
+              </Card>
             </SetupGroup>
-          ) : (
-            <SetupGroup title="API key">
-              {funded ? (
-                <>
-                  <div className="flex flex-wrap items-center gap-3">
-                    {improved.keys.length > 0 ? (
-                      <Select
-                        onValueChange={(value) =>
-                          updateImproved({
-                            selectedKeyId: value ? String(value) : null,
-                            received: false,
-                          })
-                        }
-                        value={improved.selectedKeyId ?? ""}
-                      >
-                        <SelectTrigger
-                          aria-label="API key"
-                          className="min-w-60"
-                        >
-                          <SelectValue>
-                            {improved.keys.find(
-                              (key) => key.id === improved.selectedKeyId
-                            )?.name ?? "Select an active key"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {improved.keys.map((key) => (
-                            <SelectItem key={key.id} value={key.id}>
-                              {key.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : null}
-                    <Button
-                      onClick={() => setCreateOpen(true)}
-                      size="default"
-                      variant={keySelected ? "outline" : "default"}
-                    >
-                      Create API key
-                    </Button>
-                  </div>
-                  {keySelected ? (
-                    <>
-                      <Card className="flex flex-col" density="flush">
-                        <ClientConfig
-                          client={client.id}
-                          model={model.id}
-                          payg={payg}
-                        />
-                      </Card>
-                      <p className="type-copy-14 m-0 text-muted-foreground">
-                        Paste your saved key secret
-                        {client.restart
-                          ? `, then quit and reopen ${app}.`
-                          : "."}
-                      </p>
-                      <Button
-                        className="self-start"
-                        onClick={acknowledge}
-                        size="default"
-                      >
-                        I've saved my settings
-                        <ArrowRight aria-hidden data-icon="inline-end" />
-                      </Button>
-                    </>
-                  ) : null}
-                </>
-              ) : (
-                <p className="type-copy-14 m-0 text-muted-foreground">
-                  Add credits to continue.
-                </p>
-              )}
-            </SetupGroup>
-          )}
+          ) : null}
 
-          <Button
-            className="self-start"
-            onClick={() => navigate(ONBOARDING_ROUTES.start)}
-            size="sm"
-            variant="ghost"
-          >
-            <ArrowLeft aria-hidden data-icon="inline-start" />
-            Change setup method
-          </Button>
+          {funded && !connect ? (
+            <SetupGroup title="API key">
+              <div className="flex flex-wrap items-center gap-3">
+                {improved.keys.length > 0 ? (
+                  <Select
+                    onValueChange={(value) =>
+                      updateImproved({
+                        selectedKeyId: value ? String(value) : null,
+                        received: false,
+                      })
+                    }
+                    value={improved.selectedKeyId ?? ""}
+                  >
+                    <SelectTrigger aria-label="API key" className="min-w-60">
+                      <SelectValue>
+                        {improved.keys.find(
+                          (key) => key.id === improved.selectedKeyId
+                        )?.name ?? "Select an active key"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {improved.keys.map((key) => (
+                        <SelectItem key={key.id} value={key.id}>
+                          {key.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : null}
+                <Button
+                  onClick={() => setCreateOpen(true)}
+                  size="default"
+                  variant={keySelected ? "outline" : "default"}
+                >
+                  Create API key
+                </Button>
+              </div>
+              {keySelected ? (
+                <>
+                  <Card className="flex flex-col" density="flush">
+                    <ClientConfig
+                      client={client.id}
+                      model={model.id}
+                      payg={payg}
+                    />
+                  </Card>
+                  <p className="type-copy-14 m-0 text-muted-foreground">
+                    Paste your saved key secret
+                    {client.restart ? `, then quit and reopen ${app}.` : "."}
+                  </p>
+                  <Button
+                    className="self-start"
+                    onClick={acknowledge}
+                    size="default"
+                  >
+                    I've saved my settings
+                    <ArrowRight aria-hidden data-icon="inline-end" />
+                  </Button>
+                </>
+              ) : null}
+            </SetupGroup>
+          ) : null}
         </div>
       </div>
 

@@ -251,6 +251,47 @@
   animation: art-ready 250ms 3250ms var(--ease-out) backwards;
 }
 
+/* Loop reset (phone start card only; `data-motion-reset`, set by the hook
+ * after the 3s hold): one 200ms beat clears the conversation and returns the
+ * composer to rest, landing exactly on the sequence's first frame, so the
+ * replay starts from what is on screen with no cut. Declared after the play
+ * rules so it wins at equal specificity. */
+@keyframes art-clear {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes art-blur {
+  to {
+    border-color: var(--input);
+  }
+}
+
+@keyframes art-unready {
+  to {
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+  }
+}
+
+[data-motion-root="chat-art"][data-motion-reset]
+  :is(
+    [data-motion="bubble-user"],
+    [data-motion="bubble-reply"],
+    [data-motion="composer-text"]
+  ) {
+  animation: art-clear 200ms var(--ease-out) forwards;
+}
+
+[data-motion-root="chat-art"][data-motion-reset] [data-motion="composer"] {
+  animation: art-blur 200ms var(--ease-out) forwards;
+}
+
+[data-motion-root="chat-art"][data-motion-reset] [data-motion="send"] {
+  animation: art-unready 200ms var(--ease-out) forwards;
+}
+
 /* ─── Mobile chat stage ────────────────────────────────────────────────────
  * Same family as the desktop chat art: the prompt bubble rises at 100ms,
  * the reply at 700ms, then the three itinerary rows settle in order. */
