@@ -17,6 +17,12 @@
 //   read visual-hierarchy, then load ONE build skill picked from that index.
 //   UX before UI: a step out of order does not count. One round covers one
 //   change: after a commit, the next change does them again.
+// - The animator (agent_type animator, or a session whose latest kit index
+//   read is agents/animator/skills/INDEX.md: animatorPersona) also reads,
+//   after the index and before ux-laws, agents/animator/knowledge/
+//   working-rules.md (once per session), then motion-ux-laws (per change):
+//   its kit's order steps 0 and 1. Its review steps after the build are
+//   require-motion-review.mjs's job.
 // - The gate covers every way a session writes a file: Write, Edit and
 //   MultiEdit by path; Bash by its command (shellWritesUi: in-place sed or
 //   perl, a redirect or tee into the file, cp/mv/rm/touch on it, a python,
@@ -208,6 +214,10 @@ const EXEMPT_AGENT = /^impeccable-/;
 // A kit skill printed by a reader counts as loading it, as a Read does.
 const SKILL_SHELL_READ =
   /\b(?:cat|sed|head|tail|less|bat)\b[^|;&]*skills\/([^/\s"'|;&]+)\/SKILL\.md/;
+// The animator's working rules, read before its first build of a session.
+const RULES_FILE = /agents\/animator\/knowledge\/working-rules\.md\b/;
+const RULES_SHELL_READ =
+  /\b(?:cat|sed|head|tail|less|bat)\b[^|;&]*agents\/animator\/knowledge\/working-rules\.md/;
 
 /**
  * The ux-laws gate (ux-laws SKILL.md section 4) written in the agent's own
@@ -266,6 +276,9 @@ function eventsOf(part) {
     if (INDEX_FILE.test(file)) {
       return [{ kind: "index", kit: kitOfIndex(file) }];
     }
+    if (RULES_FILE.test(file)) {
+      return [{ kind: "rules" }];
+    }
     // A kit skill loads by reading its SKILL.md.
     const skill = file.match(/skills\/([^/"\n]+)\/SKILL\.md$/)?.[1];
     return skill ? [skillEvent(skill)] : [];
@@ -278,6 +291,9 @@ function eventsOf(part) {
     const events = [];
     if (INDEX_SHELL_READ.test(command)) {
       events.push({ kind: "index", kit: kitOfIndex(command) });
+    }
+    if (RULES_SHELL_READ.test(command)) {
+      events.push({ kind: "rules" });
     }
     // Every SKILL.md the command prints counts, in the order it names them.
     for (const m of command.matchAll(new RegExp(SKILL_SHELL_READ, "g"))) {
@@ -298,11 +314,14 @@ function eventsOf(part) {
  * nothing. `lastCommitAt` is when the last landed commit's result came back.
  * With `after` (a time from another transcript, in ms), a per-change step
  * counts only when it happened after it; an event with no timestamp then
- * never counts.
+ * never counts. With `motion` (true, or "auto": when the latest kit index
+ * read is the animator's), the UI steps also need, between the index and
+ * ux-laws, "working-rules" (once per session) and then "motion-ux-laws"
+ * (per change). `lastIndexKit` is the kit of the latest index read.
  */
 export function skillState(
   text,
-  { after = null, kit = null, allows = null } = {}
+  { after = null, kit = null, allows = null, motion = false } = {}
 ) {
   const events = [];
   const landedAt = new Map();
@@ -363,7 +382,22 @@ export function skillState(
     from === -1
       ? -1
       : events.findIndex((e, i) => e.kind === kind && fresh(e, i) && i > from);
-  const uxAt = nextAfter("ux", indexAt);
+  const lastIndexKit = events.findLast((e) => e.kind === "index")?.kit ?? null;
+  const motionOn =
+    motion === true || (motion === "auto" && lastIndexKit === "animator");
+  // The animator's kit order: working rules (once per session), then
+  // motion-ux-laws, before the front-end UX steps.
+  const rulesAt =
+    !motionOn || indexAt === -1
+      ? indexAt
+      : events.findIndex((e, i) => e.kind === "rules" && i > indexAt);
+  const muxAt =
+    !motionOn || rulesAt === -1
+      ? rulesAt
+      : events.findIndex(
+          (e, i) => e.skill === "motion-ux-laws" && fresh(e, i) && i > rulesAt
+        );
+  const uxAt = nextAfter("ux", muxAt);
   const gateAt = nextAfter("gate", uxAt);
   const vhAt = nextAfter("vh", uxAt);
   const pickAt =
@@ -375,6 +409,12 @@ export function skillState(
   const missing = [];
   if (indexAt === -1) {
     missing.push("index");
+  }
+  if (motionOn && rulesAt === -1) {
+    missing.push("working-rules");
+  }
+  if (motionOn && muxAt === -1) {
+    missing.push("motion-ux-laws");
   }
   if (uxAt === -1) {
     missing.push("ux-laws");
@@ -405,7 +445,20 @@ export function skillState(
   ) {
     codeMissing.push("skill");
   }
-  return { anySkill, missing, codeMissing, lastCommitAt };
+  return { anySkill, missing, codeMissing, lastCommitAt, lastIndexKit };
+}
+
+/**
+ * Whether the writer works as the animator: spawned as one, or (with no kit
+ * agent type of its own) its latest kit index read is the animator's, as
+ * when the main session or a room seat takes the animator's lane.
+ */
+export function animatorPersona(agentType, text) {
+  const kit = kitOf(agentType);
+  if (kit !== null) {
+    return kit === "animator";
+  }
+  return skillState(text).lastIndexKit === "animator";
 }
 
 /**
@@ -433,8 +486,10 @@ export function subagentCovers(input, after, { readTranscript, listDir }) {
   return files.some((f) => {
     try {
       return (
-        skillState(readTranscript(path.join(dir, f)), { after }).missing
-          .length === 0
+        skillState(readTranscript(path.join(dir, f)), {
+          after,
+          motion: "auto",
+        }).missing.length === 0
       );
     } catch {
       return false;
@@ -563,7 +618,13 @@ export function verdict(
   }
   let state;
   try {
-    state = skillState(readTranscript(transcript), { kit, allows });
+    state = skillState(readTranscript(transcript), {
+      kit,
+      allows,
+      // A kit agent is the animator by its type; anyone else by the latest
+      // kit index it read.
+      motion: kit === null ? "auto" : kit === "animator",
+    });
   } catch {
     return null;
   }
@@ -597,6 +658,10 @@ export function verdict(
 const STEP = {
   index:
     "read the skills INDEX.md in full, once this session (Read agents/front-end-developer/skills/INDEX.md)",
+  "working-rules":
+    "read the animator working rules in full, once this session (Read agents/animator/knowledge/working-rules.md)",
+  "motion-ux-laws":
+    "after the working rules, read motion-ux-laws, the animator kit's order step 1 (Read agents/animator/skills/motion-ux-laws/SKILL.md), and decide whether it should move at all",
   "ux-laws":
     "after the index, read the ux-laws skill by path (Read agents/front-end-developer/skills/ux-laws/SKILL.md)",
   gate: "after reading ux-laws, write its gate (ux-laws section 4) with the Write tool to a file, for example <your scratchpad>/ux-gate.md (a gate only in your reply text may not reach the transcript until your turn ends, so the hook cannot see it), as nine labelled lines: `Job:` what the user came to do; `Path:` entry, steps, exit, errors; `Expectation:` which app they think this works like; `Precedent:` the tested pattern this follows (a competitor such as Stripe, Vercel or the OpenAI / Anthropic consoles, with its URL or name) and the existing repo component or precedent it maps to (file:line), or `new component:` and why nothing existing fits; `Objects:` the things the user acts on and which container shows each; `Actions:` each action added or moved as action -> object it changes -> container it sits in, where the object must be the container's own (or `none`); `Laws:` each law touched and how it passes; `Patterns:` the corrected patterns that apply and that they hold; `Rejected:` at least one alternative and why it lost. If any answer is no or unknown, fix the design before writing UI",
@@ -614,7 +679,7 @@ function uiMessage(file, missing, commit = false, kit = null) {
     .join(" ");
   return (
     `Blocked (UI gate): this changes UI (${file}). Still missing: ${steps} ` +
-    "Then retry. Order matters: index, ux-laws, the written gate, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry.The index is read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
+    "Then retry. Order matters: index, (the animator: working rules, then motion-ux-laws), ux-laws, the written gate, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry. The index and the working rules are read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
     (commit
       ? "A commit also passes when one of this session's subagents loaded all four since the last commit. "
       : "") +

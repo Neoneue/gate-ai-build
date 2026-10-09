@@ -957,3 +957,82 @@ describe("every agent: its own kit's INDEX, then a skill that index names", () =
     expect(run(edit("change-logs/INDEX.md"), t)).toBeNull();
   });
 });
+
+describe("the animator: working rules and motion-ux-laws before ux-laws", () => {
+  const ANIMATOR_INDEX = () =>
+    call("Read", { file_path: "/r/agents/animator/skills/INDEX.md" });
+  const RULES = () =>
+    call("Read", {
+      file_path: "/r/agents/animator/knowledge/working-rules.md",
+    });
+  const MUX = () =>
+    call("Read", {
+      file_path: "/r/agents/animator/skills/motion-ux-laws/SKILL.md",
+    });
+  const ANIMATE = () =>
+    call("Read", { file_path: "/r/agents/animator/skills/animate/SKILL.md" });
+  const run = (text, agent_type) =>
+    verdict(
+      {
+        transcript_path: "/dev/null",
+        cwd: "/r",
+        tool_name: "Edit",
+        tool_input: { file_path: "src/pages/onboarding/onboarding-motion.css" },
+        ...(agent_type ? { agent_type, agent_id: "a1" } : {}),
+      },
+      {
+        readTranscript: () => text,
+        filesOf: () => [],
+        root: "/r",
+        readIndex: () => "motion-ux-laws animate review-animations",
+      }
+    );
+
+  it("the main session on the animator index must read both first", () => {
+    const why = run(
+      transcript(ANIMATOR_INDEX(), UX(), GATE(), VH(), ANIMATE())
+    );
+    expect(why).toMatch(/working-rules\.md/);
+    expect(why).toMatch(/motion-ux-laws\/SKILL\.md/);
+  });
+
+  it("passes in the kit's order", () => {
+    const t = transcript(
+      ANIMATOR_INDEX(),
+      RULES(),
+      MUX(),
+      UX(),
+      GATE(),
+      VH(),
+      ANIMATE()
+    );
+    expect(run(t)).toBeNull();
+    expect(run(t, "animator")).toBeNull();
+  });
+
+  it("motion-ux-laws read after ux-laws does not count", () => {
+    const t = transcript(
+      ANIMATOR_INDEX(),
+      RULES(),
+      UX(),
+      MUX(),
+      GATE(),
+      VH(),
+      ANIMATE()
+    );
+    expect(run(t)).toMatch(/motion-ux-laws/);
+  });
+
+  it("motion-ux-laws is per change, the working rules once per session", () => {
+    const round = () => transcript(MUX(), UX(), GATE(), VH(), ANIMATE());
+    const t = transcript(ANIMATOR_INDEX(), RULES(), round(), COMMIT());
+    expect(run(transcript(t, UX(), GATE(), VH(), ANIMATE()))).toMatch(
+      /motion-ux-laws/
+    );
+    expect(run(transcript(t, round()))).toBeNull();
+  });
+
+  it("the front-end kit's session is not held to the animator steps", () => {
+    expect(run(FULL())).toBeNull();
+  });
+});

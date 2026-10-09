@@ -73,7 +73,33 @@ reference the motion follows and the existing motion in the repo it
 matches), then
 `agents/front-end-developer/skills/visual-hierarchy/SKILL.md`, then one
 build skill. For motion work the build skill is usually `animate` or
-`gsap`. It resets after each commit.
+`gsap`. It resets after each commit. For the animator (spawned as one, or
+any session whose latest kit index read is `agents/animator/skills/INDEX.md`)
+it also requires, after the index and before ux-laws, this file (once per
+session) and then `motion-ux-laws` (per change).
+
+## The review gate
+
+`scripts/require-motion-review.mjs` runs when you end a turn, when a
+subagent animator stops, and before a `SendMessage` or room post. Once you
+have edited a `src/` file, it blocks until, after your LAST edit and in this
+order, you have read `review-animations`, read `transitions-polish`, checked
+the motion with reduced motion on (a tool call setting `reducedMotion` to
+`"reduce"`), and read `emil-design-eng`. Your report must name the
+review-animations verdict (Approve or Block) and hold the emil-design-eng
+Before / After. Any later edit, a small follow-up fix included, resets all
+of it. There is no skip.
+
+Two ways to stop before the passes are done, neither of which skips them:
+
+- **Ask the owner:** a reply whose first line starts `BLOCKED`, or a room
+  post with `needs_human: true`. The passes are still owed at the next stop.
+- **Hand them off:** spawn an `animator` subagent on Opus (the definition's
+  model; an explicit non-Opus `model` does not count) after your last edit,
+  so you stay free to talk to the owner. That subagent, with no edit of its
+  own, must then do all four steps and put the proof in its report. Running
+  the whole build in an animator subagent works the same way: its own stop
+  is gated.
 
 ## Proof
 
