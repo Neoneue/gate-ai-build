@@ -147,6 +147,28 @@ follow-up to `a325048`.
   Messages…" as a muted line. After: the same line in a `Callout` above
   the footer.
 
+### Data retention card in action, details and footer sections `095623a`
+
+Settings > Data retention (`src/pages/settings/DataRetentionCard.tsx`),
+follow-up to `f205ce4`. Every tier now reads as sections with one job each.
+
+- **Action section (Pro and Enterprise).** Before: label "Pro plan" /
+  "Enterprise plan", helper "Ceiling: 90 days. Minimum 0 days. Shortening
+  deletes older records on the next run and cannot be undone." After: label
+  "Choose how long to keep records"; Pro helper "Your plan allows any window
+  from 0 to 90 days. On Enterprise, a contract can extend it further."
+  (Enterprise helper not reworked yet).
+- **Details section (every tier).** A hairline, then a `FieldTitle`
+  "Free plan details" / "Pro plan details" / "Enterprise plan details"
+  that labels the section (`aria-labelledby`), over the framed readout list.
+  The Current window row stays on every tier (PRD mockup 01: "the figures a
+  customer needs to confirm the setting is working").
+- **Free.** Before: a "Free plan details" title over the helper, above the
+  list, and a button-only footer. After: no action section; the helper "Pro
+  plan lets you shorten the window or extend it to 90 days." is the footer's
+  note beside Upgrade to Pro, the same note-plus-action shape as the paid
+  footer. The "On Enterprise…" sentence moved from Free to Pro.
+
 ### Owner email replaced with a placeholder `fa0039f`
 
 The mock owner keeps their name; the address is `chad@example.com` in the

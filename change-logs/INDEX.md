@@ -14,6 +14,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Onboarding workspace (Improved flow)
 - Data retention card follows the PRD
 - Data retention: Free footer upgrade, Enterprise support, copy
+- Data retention card in action, details and footer sections
 - Owner email replaced with a placeholder
 - Sidebar upgrade card: corner dismiss, sparkle inset
 - UI gate requires `Precedent:` and a written gate file
