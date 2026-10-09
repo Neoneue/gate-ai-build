@@ -169,6 +169,31 @@ follow-up to `f205ce4`. Every tier now reads as sections with one job each.
   note beside Upgrade to Pro, the same note-plus-action shape as the paid
   footer. The "On Enterprise…" sentence moved from Free to Pro.
 
+### Retention copy earns its place, Enterprise path at the moment of need `e7b4be4`
+
+Settings > Data retention (`src/pages/settings/DataRetentionCard.tsx`),
+follow-up to `095623a`. Rule: one home per number (typed value: the input;
+saved value: Current window; range: the helper), and every string says one
+thing nothing else on the card says.
+
+- **Pro.** Helper before: "Your plan allows any window from 0 to 90 days. On
+  Enterprise, a contract can extend it further." After: "Your plan allows
+  any window from 0 to 90 days." Above-ceiling error before: "Pro keeps up to
+  90 days. An Enterprise contract can allow a longer window; to ask about
+  one, contact us." After: "Enter 90 or less. On Enterprise, a contract can
+  extend it further; contact us." (the Enterprise path appears only when the
+  limit is hit).
+- **Enterprise.** Helper: "Your contract allows any window from 0 to 90
+  days. To raise the ceiling, contact support." (the link opens the Contact
+  support dialog). The separate ceiling note card under the card is removed:
+  the helper is the PRD's one-line note of the ceiling. Error: "Enter 90 or
+  less."
+- **Shorten dialog.** Body before: "{N} records older than {date} become
+  eligible for deletion on the next run, {run}. …" After: "Records older
+  than {date} are deleted on the next run, {run}. This cannot be undone, and
+  raising the window later does not restore them." The "New window" row is
+  removed (the title states it).
+
 ### Owner email replaced with a placeholder `fa0039f`
 
 The mock owner keeps their name; the address is `chad@example.com` in the
