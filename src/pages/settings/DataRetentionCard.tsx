@@ -259,7 +259,14 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
                       Choose how long to keep records
                     </FieldLabel>
                     <FieldDescription id={DESCRIPTION_ID}>
-                      <WindowHelper ceiling={ceiling} tier={tier} />
+                      <WindowHelper
+                        ceiling={ceiling}
+                        onContactSupport={(opener) => {
+                          supportOpenerRef.current = opener;
+                          setSupportOpen(true);
+                        }}
+                        tier={tier}
+                      />
                     </FieldDescription>
                     {overCeiling ? (
                       <FieldError id={ERROR_ID}>
@@ -434,25 +441,6 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
           </CardFooter>
         )}
       </Card>
-      {tier === "enterprise" ? (
-        <Card>
-          <CardContent>
-            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              Enterprise ceiling: {formatDays(ceiling)}. Your contract sets the
-              ceiling; to raise it,{" "}
-              <TextLink
-                onClick={(e) => {
-                  supportOpenerRef.current = e.currentTarget;
-                  setSupportOpen(true);
-                }}
-              >
-                contact support
-              </TextLink>
-              .
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
       {editable ? null : (
         <PlanComparisonDialog
           onOpenChange={setCompareOpen}
@@ -543,17 +531,18 @@ function TipLabel({ label, tip }: { label: string; tip: string }) {
 
 /* ─── Field copy ────────────────────────────────────────────────────────── */
 
-/** The helper under the field: ceiling, floor, and that shortening cannot be
- *  undone (PRD mockup 01); Free is the mockup 03 line. Plain muted text: the
- *  plan-name label above it is the one foreground line (owner 2026-10-08,
- *  the bold limit under the label "conflicts visually"; it replaces the
- *  2026-10-07 emphasis). */
+/** The helper under the field: the range, then the next step (PRD mockup 01,
+ *  "the ceiling and floor named under it"); on Free, the footer note naming
+ *  what Pro unlocks. Plain muted text under the foreground label. */
 function WindowHelper({
   tier,
   ceiling,
+  onContactSupport,
 }: {
   tier: RetentionTier;
   ceiling: number;
+  /** Enterprise: opens the Contact support dialog from the helper's link. */
+  onContactSupport?: (opener: HTMLButtonElement) => void;
 }) {
   if (tier === "free") {
     // PRD mockup 03's helper ("the helper names what each upgrade unlocks"),
@@ -571,33 +560,41 @@ function WindowHelper({
     );
   }
   if (tier === "pro") {
-    // The range in the Free helper's voice, then the next plan up (owner
-    // 2026-10-08: the "Ceiling: 90 days. Minimum 0 days." fragments read
-    // oddly). The title already names the plan, so the helper does not
-    // (owner: "using pro plan twice"). Irreversibility is said by the
-    // description and the shorten dialog, at the moment of the change (PRD
-    // Principles).
+    // The range only (owner 2026-10-08). The Enterprise path is disclosed
+    // at the moment of need, in the above-ceiling error (PRD: "sees the
+    // ceiling and the Enterprise path inline"), not as standing text most
+    // Pro admins never need. Irreversibility is said by the description and
+    // the shorten dialog, at the moment of the change (PRD Principles).
     return (
       <>
         Your plan allows any window from {RETENTION_FLOOR_DAYS} to{" "}
-        {formatDays(ceiling)}. On Enterprise, a contract can extend it further.
+        {formatDays(ceiling)}.
       </>
     );
   }
-  // Enterprise: not yet reworked (owner 2026-10-08, Pro and Free first).
+  // Enterprise: the range the contract sets, then where it lifts. This line
+  // IS the PRD's "one-line note of the ceiling and a Contact support link"
+  // (mockup 01 caption), so there is no separate note card: that would give
+  // the ceiling a second home (owner 2026-10-08, every string earns its
+  // place). The link opens the Contact support dialog in place.
   return (
     <>
-      Ceiling: {formatDays(ceiling)}. Minimum {formatDays(RETENTION_FLOOR_DAYS)}
-      . Shortening deletes older records on the next run and cannot be undone.
+      Your contract allows any window from {RETENTION_FLOOR_DAYS} to{" "}
+      {formatDays(ceiling)}. To raise the ceiling,{" "}
+      <TextLink onClick={(e) => onContactSupport?.(e.currentTarget)}>
+        contact support
+      </TextLink>
+      .
     </>
   );
 }
 
-/** The above-ceiling error: names the ceiling and, on Pro, the Enterprise
- *  path (PRD: inline, not a toast). "can allow": the Enterprise default
- *  ceiling is also 90, so the contract, not the plan, lifts it (owner
- *  2026-10-08). "contact us" is the label the plans page's Enterprise card
- *  carries for a Pro org (`contactFlowTitle`). */
+/** The above-ceiling error: the fix, and on Pro the way past the limit,
+ *  shown only when the limit is hit (owner 2026-10-08, progressive
+ *  disclosure; PRD: "sees the ceiling and the Enterprise path inline").
+ *  "contact us" is the label the plans page's Enterprise card carries for a
+ *  Pro org (`contactFlowTitle`). Enterprise needs only the fix: its helper
+ *  already carries the Contact support link. Inline, never a toast. */
 function CeilingError({
   tier,
   ceiling,
@@ -610,13 +607,12 @@ function CeilingError({
   if (tier === "pro") {
     return (
       <>
-        Pro keeps up to {PRO_RETENTION_CEILING_DAYS} days. An Enterprise
-        contract can allow a longer window; to ask about one,{" "}
-        <TextLink to={plansHref}>contact us</TextLink>.
+        Enter {ceiling} or less. On Enterprise, a contract can extend it
+        further; <TextLink to={plansHref}>contact us</TextLink>.
       </>
     );
   }
-  return <>Your contract keeps up to {ceiling} days.</>;
+  return <>Enter {ceiling} or less.</>;
 }
 
 /* ─── Shorten confirmation (PRD mockup 02) ─────────────────────────────────
@@ -665,11 +661,12 @@ function ShortenDialog({
             Shorten retention to {formatDays(to)}?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {count} {preview.count === 1 ? "record" : "records"} older than{" "}
-            {formatDate(preview.cutoff)}{" "}
-            {preview.count === 1 ? "becomes" : "become"} eligible for deletion
-            on the next run, {formatDeletionRun(preview.runAt)}. This cannot be
-            undone, and raising the window later does not restore them.
+            {/* Only what the list below does not hold: the cutoff, the run
+                and irreversibility. The count is the list's "Records
+                eligible for deletion" row (owner 2026-10-08, no repeats). */}
+            Records older than {formatDate(preview.cutoff)} are deleted on the
+            next run, {formatDeletionRun(preview.runAt)}. This cannot be undone,
+            and raising the window later does not restore them.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <DetailList>
@@ -678,11 +675,7 @@ function ShortenDialog({
             labelClassName="w-52"
             value={<span className="type-mono-14">{formatDays(from)}</span>}
           />
-          <DetailRow
-            label="New window"
-            labelClassName="w-52"
-            value={<span className="type-mono-14">{formatDays(to)}</span>}
-          />
+          {/* No "New window" row: the title already says it. */}
           <DetailRow
             label="Records eligible for deletion"
             labelClassName="w-52"
