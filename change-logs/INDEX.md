@@ -13,10 +13,12 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Onboarding workspace (Improved flow)
 - Data retention card follows the PRD
+- Data retention: Free footer upgrade, Enterprise support, copy
 - Owner email replaced with a placeholder
 - Sidebar upgrade card: corner dismiss, sparkle inset
 - UI gate requires `Precedent:` and a written gate file
 - Animator kit lessons
+- ux-laws: a plan-locked card's upgrade may sit in its own footer
 
 ### [2026-10-07](./2026-10/changelog-10-7.md)
 

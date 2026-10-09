@@ -114,6 +114,39 @@ the Free mockup's content (mockups are illustrative; styling is ours).
 - **Not built.** Pending clamp state: built, then removed (no way to show
   more than one state per route yet).
 
+### Data retention: Free footer upgrade, Enterprise support, copy `f205ce4`
+
+Settings > Data retention (`src/pages/settings/DataRetentionCard.tsx`),
+follow-up to `a325048`.
+
+- **Free card.** Before: a disabled 30 input beside "Free plan", the
+  helper "Retention is set by your plan. Upgrade to Pro…", no footer, and
+  the Free plan banner under the card. After: no input (it repeated the
+  readout); a `FieldTitle` "Free plan details" over the helper "Pro plan
+  lets you shorten the window or extend it to 90 days. On Enterprise, a
+  contract can extend it further."; Current window reads "30 days
+  (fixed)"; the card footer holds only an outline "Upgrade to Pro" (sparkle
+  icon) that opens the plan comparison. The banner is removed from this
+  card (Policies keeps its own). PRD mockup 03: "the footer action is the
+  upgrade".
+- **Pro above-ceiling error.** Before: "For a longer window, move to
+  Enterprise." After: "Pro keeps up to 90 days. An Enterprise contract can
+  allow a longer window; to ask about one, contact us." (link to the plans
+  page, whose Enterprise card says "Contact us").
+- **Enterprise ceiling note.** Before: "contact support" linked to
+  `/billing-enterprise/plans`, where that label sits on the Free and Pro
+  rungs. After: it opens the Contact support dialog in place
+  (`ContactDialog`, now exported from `ManageSubscription.tsx`); closing it
+  returns focus to the link.
+- **Description.** Sentences swapped (kept first, then deleted), and
+  "Digital Evidence anchors" became "Digital Evidence fingerprints", the
+  site's UI term. Same swap in the lengthen toast ("Their Digital Evidence
+  fingerprints remain verifiable.") and the shorten dialog row ("Audit
+  hashes and fingerprints").
+- **Shorten dialog.** Before: "Need the content? Export CSV from
+  Messages…" as a muted line. After: the same line in a `Callout` above
+  the footer.
+
 ### Owner email replaced with a placeholder `fa0039f`
 
 The mock owner keeps their name; the address is `chad@example.com` in the
@@ -158,3 +191,12 @@ holds it. Updated: `ux-laws` SKILL.md section 4, `.claude/rules/ux-laws.md`,
 craft (design.md Motion is for primitives); art that depicts the live UI
 copies its styling and words. `agents/animator/skills/INDEX.md`: a final
 `emil-design-eng` polish pass on every build and a polish-skills table.
+
+### ux-laws: a plan-locked card's upgrade may sit in its own footer `37e5e2b`
+
+`.claude/rules/ux-laws.md` and `agents/front-end-developer/skills/ux-laws/SKILL.md`
+section 3. Before: the 2026-10-07 correction kept every plan action out of a
+card footer. After: one exception, a read-only, plan-locked settings card's
+upgrade is that card's own action and sits in its own footer, where Save sits
+on the editable tiers (Data retention on Free). A promo banner for one locked
+setting is named the wrong surface.
