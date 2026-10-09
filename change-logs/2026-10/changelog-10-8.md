@@ -194,6 +194,24 @@ thing nothing else on the card says.
   raising the window later does not restore them." The "New window" row is
   removed (the title states it).
 
+### Pending-clamp preview route, downgrade copy matches the clamp `4ec980a`
+
+- **New preview route `/settings-free/clamp`** (typed, not linked): a Pro org
+  that just downgraded to Free, during the PRD's 3-day grace. On the Data
+  retention card, Current window reads "90 days" (no "(fixed)"), a new
+  "Scheduled change" row reads "30 days on (today + 3 days)", and the footer
+  note reads "Pro plan keeps your current window." beside Upgrade to Pro.
+  `/settings-free` is unchanged. Wiring: `SettingsFree clamp` ->
+  `Settings retentionClampPreview` -> `DataRetentionCard clampPreview`; the
+  grace is `clampDate()` / `CLAMP_GRACE_DAYS` in `src/lib/retention.ts`.
+- **Downgrade dialog** (`src/pages/cancel-plan-dialog.tsx`, Settings Cancel
+  plan and Manage subscription Downgrade to Free). Before: "Data retention
+  reverts to the Free-tier window; anything older is pruned under the
+  retention policy and is not restored if you upgrade again." After: "Three
+  days after Pro ends, you keep only the last 30 days of records and older
+  ones are deleted. Their Digital Evidence fingerprints stay, but upgrading
+  again won't bring the records back."
+
 ### Owner email replaced with a placeholder `fa0039f`
 
 The mock owner keeps their name; the address is `chad@example.com` in the

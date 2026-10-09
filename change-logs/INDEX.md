@@ -16,6 +16,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Data retention: Free footer upgrade, Enterprise support, copy
 - Data retention card in action, details and footer sections
 - Retention copy earns its place, Enterprise path at the moment of need
+- Pending-clamp preview route, downgrade copy matches the clamp
 - Owner email replaced with a placeholder
 - Sidebar upgrade card: corner dismiss, sparkle inset
 - UI gate requires `Precedent:` and a written gate file
