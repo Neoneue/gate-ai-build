@@ -341,7 +341,10 @@ export function DataRetentionCard({
               2026-10-08). */}
             <div className="rounded-md border border-border pb-3">
               <DetailList
-                className="border-t-0 [&>[data-slot=detail-row]]:px-4"
+                // Values flush right in tabular figures once label and
+                // value share a row (owner 2026-10-09, trial); stacked on a
+                // narrow list they stay left under their label.
+                className="border-t-0 [&>[data-slot=detail-row]]:px-4 @md/detail-list:[&_dd]:text-right [&_dd]:tabular-nums"
                 variant="flush"
               >
                 {/* Free's window is set by the plan, so its value says so

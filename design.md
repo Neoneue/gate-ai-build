@@ -1548,13 +1548,13 @@ commit on any of them.
   `rounded-md border border-blue-300 bg-blue-50 px-4 py-3
   dark:border-blue-500/30 dark:bg-blue-500/10` — the dark side mirrors the
   danger banner's 10% wash / 30% border. Ink: `type-copy-14 text-blue-900
-  dark:text-blue-300` with a 16px `Info` glyph in the same ink, in an `h-5`
+  dark:text-blue-300` with a 16px `Info` glyph in the same ink, 12px (`gap-3`) from the text on every Callout (owner 2026-10-09), in an `h-5`
   wrapper so the icon centers on the first text line and stays put when the
   copy wraps. `role="note"`, no dismiss affordance: it states a fact about
   the page, it does not report an event. Warning/error banners keep their own
   status semantics (`BudgetBreachBanner`); do not add tone props here.
   Consumers: the team Settings tab's "Locked by your organization" notes, the
-  Default team's Settings note, the cancel-plan dialog, the Messages retention statement. **Optional `action` slot** (added 2026-10-08): one control at the right edge; the icon and text form one group (12px apart, owner 2026-10-08) centred against it, and it wraps under the text on a narrow column; it takes Button `info-outline` so the control stays inside the banner's info family (first consumer: Messages "Retention settings", admins only).
+  Default team's Settings note, the cancel-plan dialog, the Messages retention statement. **Optional `action` slot** (added 2026-10-08): one control at the right edge; the icon and text form one group (the same 12px) centred against it, and it wraps under the text on a narrow column; it takes Button `info-outline` so the control stays inside the banner's info family (first consumer: Messages "Retention settings", admins only).
 
 ### Data bars & meters *(site-wide rule, 2026-09-01)*
 

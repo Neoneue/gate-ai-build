@@ -46,10 +46,12 @@ export function Callout({
   );
 
   if (!action) {
+    // 12px icon-to-text on every Callout (owner 2026-10-09), the same gap
+    // as the action branch below.
     return (
       <div
         className={cn(
-          "flex items-start gap-2 rounded-md border border-info-border bg-info-surface px-4 py-3",
+          "flex items-start gap-3 rounded-md border border-info-border bg-info-surface px-4 py-3",
           className
         )}
         role="note"
