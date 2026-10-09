@@ -76,6 +76,12 @@ const buttonVariants = cva(
         // `bg-clip-padding` from base keeps every bordered variant intact.
         promo:
           "shadow-(color:--promo-cta-shadow) border-promo-cta-border bg-promo-cta text-promo-cta-foreground shadow-sm hover:bg-promo-cta-hover",
+        // The outline for a control that sits ON an info Callout (added
+        // 2026-10-08, design.md Button). Every value is an existing --info-*
+        // token, both themes; transparent so the banner's wash shows through.
+        // Never on a plain surface: there it is just a faint blue outline.
+        "info-outline":
+          "border-info-border bg-transparent text-info-foreground-strong hover:bg-info-wash aria-expanded:bg-info-wash",
 
         /* ─── The LIFT family (added 2026-09-22) ──────────────────────────
          * Four variants for a control that sits ON a coloured surface, most

@@ -1319,7 +1319,7 @@ The full primitive library is `src/components/ui/*.tsx` (61 primitives as of 202
 
 ### Buttons — `{components.button-default}` and variants
 
-`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with **3 text sizes (xs/sm/default) + 3 icon sizes (icon-xs/icon-sm/icon)**, 9 style variants (default/outline/secondary/ghost/ghost-to-outline/destructive/link/raised/promo), and a `shape` variant (default/pill/circle).
+`src/components/ui/button.tsx` (Base UI under shadcn — wraps `ButtonPrimitive` from `@base-ui/react`, **not Radix**). CVA with **3 text sizes (xs/sm/default) + 3 icon sizes (icon-xs/icon-sm/icon)**, 10 style variants (default/outline/secondary/ghost/ghost-to-outline/destructive/link/raised/promo/info-outline), and a `shape` variant (default/pill/circle). **`info-outline`** (added 2026-10-08) is the outline for a control that sits ON an info `Callout`: `border-info-border bg-transparent text-info-foreground-strong shadow-none hover:bg-info-wash`, every value an existing `--info-*` token (both themes), no opaque fill so the banner's wash shows through; never on a plain surface.
 
 > **`default` is the largest size. There is no `lg`, no `xl`, no `icon-lg`.**
 > Removed 2026-07-28 — see the Sizes bullet below. **This governs `Input` and
@@ -1554,7 +1554,7 @@ commit on any of them.
   the page, it does not report an event. Warning/error banners keep their own
   status semantics (`BudgetBreachBanner`); do not add tone props here.
   Consumers: the team Settings tab's "Locked by your organization" notes, the
-  Default team's Settings note, the cancel-plan dialog.
+  Default team's Settings note, the cancel-plan dialog, the Messages retention statement. **Optional `action` slot** (added 2026-10-08): one control at the right edge; the icon and text form one group (12px apart, owner 2026-10-08) centred against it, and it wraps under the text on a narrow column; it takes Button `info-outline` so the control stays inside the banner's info family (first consumer: Messages "Retention settings", admins only).
 
 ### Data bars & meters *(site-wide rule, 2026-09-01)*
 

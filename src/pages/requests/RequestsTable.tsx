@@ -1,5 +1,5 @@
 import { CreditCard, Info, KeyRound, TriangleAlert } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -106,9 +106,13 @@ const LIVE_KEY_NAMES = API_KEY_SEED_ROWS.filter((k) => !k.revoked).map(
 export function RequestsTableSection({
   range,
   customRange,
+  statement,
 }: {
   range: RangeKey;
   customRange: CustomRange | null;
+  /** The retention statement (PRD mockup 04), between the toolbar and the
+   *  table. */
+  statement?: ReactNode;
 }) {
   // Looked up per render. Pill change → new rows + new total; page resets
   // so a deep-paged All state doesn't carry over into a 24H view that
@@ -551,6 +555,8 @@ export function RequestsTableSection({
           </Button>
         </div>
       </div>
+
+      {statement}
 
       <Card density="flush">
         {isEmpty ? (

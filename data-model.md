@@ -1259,6 +1259,15 @@ One org-wide retention window in days, bounded by the plan (PRD
   `Settings retentionClampPreview` -> `DataRetentionCard clampPreview`)
   renders a Pro org that just downgraded to Free: Current window 90 days, a
   "Scheduled change" row (30 days on `clampDate(now)`). Typed, not linked.
+- **Messages statement** (`src/pages/requests/RetentionStatement.tsx`, an
+  info `Callout` between the toolbar and the table on `/messages`,
+  `/messages-free`, `/messages-enterprise`; not on `/messages-default`, which
+  has no messages): the tier's window and `oldestInWindow` date, the same
+  sources as the card. Admins get a "Retention settings" button (Button
+  `info-outline` in the Callout `action` slot). `/messages-free/clamp`
+  (`RequestsFree clamp` -> `Requests retentionClampPreview`) states 90 days
+  and the drop to 30 on `clampDate(now)`, linking to `/settings-free/clamp`.
+  The table is not filtered to the window (the real build's job).
 
 ## 6. Page Inventory
 

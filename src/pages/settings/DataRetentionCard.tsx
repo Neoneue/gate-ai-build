@@ -225,7 +225,7 @@ export function DataRetentionCard({
     // restored, and every deletion statement says the fingerprints are kept.
     toast(`Retention set to ${formatDays(input.days)}`, {
       description:
-        "Records already deleted are not restored. Their Digital Evidence fingerprints remain verifiable.",
+        "Records already deleted are not restored. Their fingerprints remain verifiable.",
     });
   }
 
@@ -243,10 +243,9 @@ export function DataRetentionCard({
           {/* The PRD's two sentences, kept-first, and the site's UI term
               "fingerprints" for the PRD's "anchors" (owner 2026-10-08). */}
           <CardDescription className="text-pretty">
-            Audit hashes, proofs, and Digital Evidence fingerprints are kept, so
-            the record stays verifiable after the content is gone. Records older
-            than the window are deleted within 24 hours of expiry and cannot be
-            recovered.
+            Audit hashes, proofs, and fingerprints are kept, so the record stays
+            verifiable after the content is gone. Records older than the window
+            are deleted within 24 hours of expiry and cannot be recovered.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">

@@ -500,6 +500,9 @@ export function AppRoutes() {
         {/* Free-tier twins — reached via the workspace switcher. */}
         <Route element={<DashboardFree />} path="/overview-free" />
         <Route element={<RequestsFree />} path="/messages-free" />
+        {/* Preview route (owner 2026-10-08): the retention statement during
+            a downgrade's grace, matching /settings-free/clamp. Typed. */}
+        <Route element={<RequestsFree clamp />} path="/messages-free/clamp" />
         <Route
           element={<RequestsFindings />}
           path="/messages-findings-free/:requestId"

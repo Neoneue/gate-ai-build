@@ -82,7 +82,7 @@ export function ConsequenceCallout({ items }: { items: string[] }) {
 const CANCEL_CONSEQUENCES = [
   // PRD clamp: 3-day grace after the downgrade, then the window drops to
   // Free's 30 days; fingerprints kept; raising later restores nothing.
-  "Three days after Pro ends, you keep only the last 30 days of records and older ones are deleted. Their Digital Evidence fingerprints stay, but upgrading again won't bring the records back.",
+  "Three days after Pro ends, you keep only the last 30 days of records and older ones are deleted. Their fingerprints stay, but upgrading again won't bring the records back.",
   "Unused subscription days are not refunded.",
   "Your prepaid pay-as-you-go balance stays usable.",
 ];
