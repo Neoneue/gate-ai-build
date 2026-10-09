@@ -1,3 +1,5 @@
+import type { VendorSlug } from "@/components/icons/vendor-meta";
+import { MODEL_OPTIONS, modelById } from "@/data/models";
 import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 
 /* ─── Improved flow: data and pure helpers ──────────────────────────────── */
@@ -91,9 +93,37 @@ export const IMPROVED_MODELS = [
   },
 ] as const;
 
-export const modelOf = (state: ImprovedState) =>
-  IMPROVED_MODELS.find((model) => model.id === state.model) ??
-  IMPROVED_MODELS[0];
+/** The app whose model picker lists the whole Gate catalog. Claude Code
+ *  speaks Anthropic Messages, which Gate translates to every upstream, so
+ *  any catalog model routes (owner 2026-10-09, "Start with Claude first").
+ *  Every other app keeps IMPROVED_MODELS for now. */
+export const CATALOG_CLIENT = "claude-code";
+
+/** The catalog as picker rows, in catalog order (curated rows first). */
+export const CATALOG_MODELS: readonly ImprovedModel[] = MODEL_OPTIONS.map(
+  (model) => ({ id: model.handle, label: model.label, vendor: model.vendor })
+);
+
+export type ImprovedModel = {
+  id: string;
+  label: string;
+  vendor: VendorSlug;
+};
+
+/** The model the route uses. A catalog pick resolves only while the app is
+ *  Claude Code; switching to another app shows its own list's first model
+ *  without clearing the pick, so switching back restores it. */
+export const modelOf = (state: ImprovedState): ImprovedModel => {
+  const listed = IMPROVED_MODELS.find((model) => model.id === state.model);
+  if (listed) {
+    return listed;
+  }
+  const catalog =
+    state.client === CATALOG_CLIENT ? modelById(state.model) : undefined;
+  return catalog
+    ? { id: catalog.id, label: catalog.name, vendor: catalog.vendor }
+    : IMPROVED_MODELS[0];
+};
 
 export const clientOf = (state: ImprovedState) =>
   IMPROVED_CLIENTS.find((client) => client.id === state.client) ??

@@ -443,6 +443,120 @@
     var(--ease-out) backwards;
 }
 
+/* ─── Setup route ──────────────────────────────────────────────────────────
+ * The setup step's route figure (owner, 2026-10-09) tells the Connect art's
+ * story in a line: the same tap, packet and hub keyframes, curves and pace
+ * (beats at pace 1, x --pace 1.4). Only the node holding the packet is lit:
+ *   0ms      the app lights its blue ring and swells (art-tap, 600ms)
+ *   200ms    a packet leaves at the ring's peak and crosses wire 1 (700ms)
+ *            with a blue run of the dashes trailing it
+ *   900ms    it lands: Gate swells (improved-hub, 500ms) and its border
+ *            turns blue (200ms)
+ *   1100ms   at Gate's peak a packet crosses wire 2 (700ms)
+ *   1800ms   it lands: the target taps (600ms) while Gate's border settles
+ *            back to the gray rest border (200ms). Settles at 2.4s (3.4s).
+ * improved-setup.tsx keys the figure on app, billing and model, so a change
+ * remounts it and the run restarts from frame one. Labels never move. */
+
+[data-motion-root="route-stage"] {
+  --pace: 1.4;
+}
+
+/* Starts 8px back, hidden under the sending tile, and slides out from it.
+   Full strength across the wire; it fades only as it reaches the next tile
+   (owner, 2026-10-09: it faded too fast). The trail below shares these
+   opacity beats. */
+@keyframes art-route-fly {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  20%,
+  85% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(100% - 8px));
+  }
+}
+
+/* Gray -> blue (200ms) -> held while the packet crosses wire 2 -> gray. */
+@keyframes art-route-lit {
+  18.18%,
+  81.82% {
+    border-color: var(--info);
+  }
+}
+
+/* The blue run of the wire's dashes trails the packet, as the orbit run
+ * does in the Connect art (owner, 2026-10-09): a full-width blue copy of the
+ * dashes shown through a 36px window (the orbit run's length) that ends at
+ * the dot's center. The dot starts 8px back, under the app tile, so its
+ * center sits at p x 100% - 4px: the clip's left inset goes -40px .. 100% -
+ * 40px and its right inset 100% + 4px .. 4px. Same opacity beats, curve and timing as the packet, so the two move
+ * as one. */
+@keyframes art-route-run {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 calc(100% + 4px) 0 -40px);
+  }
+  20%,
+  85% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    clip-path: inset(0 4px 0 calc(100% - 40px));
+  }
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-run"] {
+  animation: art-route-run calc(700ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-run"][data-motion-index="1"] {
+  animation-delay: calc(1100ms * var(--pace));
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-app"] {
+  animation: art-tap calc(600ms * var(--pace)) ease-in-out backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-packet"] {
+  animation: art-route-fly calc(700ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-packet"][data-motion-index="1"] {
+  animation-delay: calc(1100ms * var(--pace));
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-gate"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)) calc(900ms * var(--pace)),
+    art-route-lit calc(1100ms * var(--pace)) calc(900ms * var(--pace))
+    var(--ease-out);
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-target"] {
+  animation: art-tap calc(600ms * var(--pace)) calc(1800ms * var(--pace))
+    ease-in-out backwards;
+}
+
 /* ─── Code art ─────────────────────────────────────────────────────────────
  * Not mockup-exact (owner, 2026-10-08): told like the chat art, same curve
  * and pacing, and it borrows the chat art's keyframes so the two cards read
@@ -575,5 +689,11 @@
      movement (the trigger never arms under reduce, so nothing else runs). */
   [data-motion-root] {
     animation: art-fade 200ms ease-out backwards;
+  }
+
+  /* The setup route remounts on every app or model change; the stage around
+     it has already faded in, so the figure itself stays still. */
+  [data-motion-root="route-stage"] [data-motion-root="route"] {
+    animation: none;
   }
 }

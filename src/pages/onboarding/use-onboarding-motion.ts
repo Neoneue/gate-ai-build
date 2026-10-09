@@ -6,7 +6,9 @@ import { useEffect } from "react";
  * `data-motion-play="armed"` (paused) on mount, "play" once 40% of it is in
  * view on a visible tab, and "paused" when it leaves view or the tab hides.
  * Pointer-enter or focus on the root's card (nearest button, radio or
- * section) replays a sequence that has finished. Under reduced motion no
+ * section) replays a sequence that has finished, unless the root sits inside
+ * `data-motion-no-replay` (the setup route stage, owner 2026-10-09: it
+ * replays on its own app and model changes instead). Under reduced motion no
  * root is ever armed, so the art shows its static end state.
  * A root with `data-motion-loop` (the phone start card's chat art) loops:
  * once its sequence settles it holds the end state for LOOP_HOLD_MS, sets
@@ -22,6 +24,7 @@ const ROOT = "[data-motion-root]";
 const ATTR = "data-motion-play";
 const LOOP = "data-motion-loop";
 const RESET = "data-motion-reset";
+const NO_REPLAY = "[data-motion-no-replay]";
 const LOOP_HOLD_MS = 3000;
 
 function arm(root: HTMLElement): () => void {
@@ -83,7 +86,11 @@ function arm(root: HTMLElement): () => void {
     set("play");
   };
   const replay = () => {
-    if (!played || root.getAnimations({ subtree: true }).length > 0) {
+    if (
+      !played ||
+      root.closest(NO_REPLAY) ||
+      root.getAnimations({ subtree: true }).length > 0
+    ) {
       return;
     }
     restart();

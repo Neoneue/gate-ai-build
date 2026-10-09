@@ -1,10 +1,26 @@
-import { ArrowLeft, ArrowRight, ChevronRight, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronRight,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+  ComboboxValue,
+} from "@/components/ui/combobox";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
   Field,
@@ -12,6 +28,7 @@ import {
   FieldLegend,
   FieldSet,
 } from "@/components/ui/field";
+import { InputGroupAddon } from "@/components/ui/input-group";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -34,10 +51,13 @@ import { StepIndicator } from "@/pages/onboarding/current-parts";
 import { AppIcon } from "@/pages/onboarding/improved-art";
 import {
   appNameOf,
+  CATALOG_CLIENT,
+  CATALOG_MODELS,
   CLIENT_GROUPS,
   clientOf,
   IMPROVED_CLIENTS,
   IMPROVED_MODELS,
+  type ImprovedModel,
   modelOf,
   SIMULATED_MS,
   wait,
@@ -133,12 +153,17 @@ function PrepareSetup() {
       <div className="grid @4xl:grid-cols-[5fr_6fr] items-start gap-10">
         <aside
           className="relative @4xl:sticky @4xl:top-6 grid min-h-75 place-items-center rounded-md border border-border bg-muted p-4"
+          data-motion-no-replay=""
           data-motion-root="route-stage"
         >
+          {/* Keyed on the route it shows: a new app, billing or model
+              remounts the figure, so its sequence replays from frame one
+              (onboarding-motion.css, Setup route). */}
           <ImprovedRouteFigure
             caption={payg ? "Uses Gate credits" : "Billed by your provider"}
             centered
             improved={improved}
+            key={`${client.id}:${improved.billing}:${model.id}`}
           />
         </aside>
         <div className="flex min-w-0 flex-col gap-4">
@@ -249,31 +274,40 @@ function PrepareSetup() {
               >
                 Select a model
               </FieldLabel>
-              <Select
-                onValueChange={(next) =>
-                  updateImproved({ model: String(next), received: false })
-                }
-                value={model.id}
-              >
-                <SelectTrigger className="w-full" id="setup-model" size="lg">
-                  <SelectValue>
-                    <span className="flex items-center gap-2">
-                      <VendorAvatar decorative vendor={model.vendor} />
-                      {model.label}
-                    </span>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {IMPROVED_MODELS.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
+              {client.id === CATALOG_CLIENT ? (
+                <CatalogModelPicker
+                  onChange={(next) =>
+                    updateImproved({ model: next, received: false })
+                  }
+                  value={model.id}
+                />
+              ) : (
+                <Select
+                  onValueChange={(next) =>
+                    updateImproved({ model: String(next), received: false })
+                  }
+                  value={model.id}
+                >
+                  <SelectTrigger className="w-full" id="setup-model" size="lg">
+                    <SelectValue>
                       <span className="flex items-center gap-2">
-                        <VendorAvatar decorative vendor={option.vendor} />
-                        {option.label}
+                        <VendorAvatar decorative vendor={model.vendor} />
+                        {model.label}
                       </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {IMPROVED_MODELS.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        <span className="flex items-center gap-2">
+                          <VendorAvatar decorative vendor={option.vendor} />
+                          {option.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </Field>
           ) : null}
 
@@ -464,6 +498,67 @@ function PrepareSetup() {
         }}
       />
     </ImprovedColumn>
+  );
+}
+
+/** Claude Code's "Select a model": the whole Gate catalog behind the same
+ *  40px trigger as the other apps' Select, with a search input pinned in
+ *  the popup above a scrolling list (owner 2026-10-09). */
+function CatalogModelPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (model: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const selected = CATALOG_MODELS.find((model) => model.id === value) ?? null;
+  return (
+    <Combobox
+      isItemEqualToValue={(item, current) => item.id === current.id}
+      items={CATALOG_MODELS}
+      itemToStringLabel={(item) => item.label}
+      onInputValueChange={setQuery}
+      onValueChange={(next) => {
+        if (next) {
+          onChange(next.id);
+        }
+      }}
+      value={selected}
+    >
+      <ComboboxTrigger className="w-full" id="setup-model" size="lg">
+        <ComboboxValue>
+          {(current: ImprovedModel | null) =>
+            current ? (
+              <>
+                <VendorAvatar decorative vendor={current.vendor} />
+                <span className="truncate">{current.label}</span>
+              </>
+            ) : null
+          }
+        </ComboboxValue>
+      </ComboboxTrigger>
+      <ComboboxContent>
+        <ComboboxInput
+          aria-label="Search models"
+          placeholder="Search models…"
+          showTrigger={false}
+        >
+          <InputGroupAddon>
+            <Search aria-hidden strokeWidth={1.75} />
+          </InputGroupAddon>
+        </ComboboxInput>
+        <ComboboxEmpty>No models match “{query}”</ComboboxEmpty>
+        <ComboboxList>
+          {(item: ImprovedModel) => (
+            <ComboboxItem key={item.id} value={item}>
+              <VendorAvatar decorative vendor={item.vendor} />
+              <span className="truncate">{item.label}</span>
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
   );
 }
 

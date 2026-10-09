@@ -490,20 +490,41 @@ export function RouteFigure({
   centered?: boolean;
   ref?: Ref<HTMLElement>;
 }) {
-  const wire = (
-    <span
-      aria-hidden
-      className={cn(
-        "relative h-0.5 overflow-hidden",
-        state === "done"
-          ? "bg-success-600 dark:bg-success-400"
-          : "border-input border-t-2 border-dashed"
-      )}
-    >
+  // The tiles sit above the wires (z-10), so a packet slides out from under
+  // its sender. Each wire carries the setup stage's packet (an 8px dot, as ConnectArt's
+  // signal) outside the line's clip, so the dot can overhang the 2px line,
+  // and a blue copy of the dashes (same box, so the dashes line up) that
+  // the animator shows through a short travelling window. The verify step's
+  // pulse has its own 2px clip: inside the dashed line, whose 2px is all
+  // border, its 0px padding box clipped the pulse away.
+  const wire = (hop: number) => (
+    <span aria-hidden className="relative h-0.5">
       <span
-        className="absolute top-0 left-0 h-0.5 w-6 bg-info opacity-0"
-        data-motion="route-pulse"
+        className={cn(
+          "absolute inset-0",
+          state === "done"
+            ? "bg-success-600 dark:bg-success-400"
+            : "border-input border-t-2 border-dashed"
+        )}
       />
+      <span className="absolute inset-0 overflow-hidden">
+        <span
+          className="absolute top-0 left-0 h-0.5 w-6 bg-info opacity-0"
+          data-motion="route-pulse"
+        />
+      </span>
+      <span
+        className="absolute inset-0 border-info border-t-2 border-dashed opacity-0"
+        data-motion="route-run"
+        data-motion-index={hop}
+      />
+      <span
+        className="absolute inset-0 opacity-0"
+        data-motion="route-packet"
+        data-motion-index={hop}
+      >
+        <span className="absolute top-1/2 left-0 size-2 -translate-y-1/2 rounded-full bg-info" />
+      </span>
     </span>
   );
   const label = (text: string, column: string) => (
@@ -529,11 +550,17 @@ export function RouteFigure({
       ref={ref}
     >
       {centered ? <span aria-hidden className="col-span-full" /> : null}
-      <span className="grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs">
+      <span
+        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs"
+        data-motion="route-app"
+      >
         {appIcon}
       </span>
-      {wire}
-      <span className="relative grid size-18 place-items-center rounded-md border border-border bg-card shadow-xs">
+      {wire(0)}
+      <span
+        className="relative z-10 grid size-18 place-items-center rounded-md border border-border bg-card shadow-xs"
+        data-motion="route-gate"
+      >
         <GateMark className="size-9" />
         {state === "done" ? (
           <span
@@ -544,8 +571,11 @@ export function RouteFigure({
           </span>
         ) : null}
       </span>
-      {wire}
-      <span className="grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs">
+      {wire(1)}
+      <span
+        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs"
+        data-motion="route-target"
+      >
         {targetIcon}
       </span>
       <span className="col-span-full grid grid-cols-subgrid items-start gap-y-6 self-start">
