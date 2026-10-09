@@ -77,12 +77,14 @@ import { MESSAGE_TIMES, messageCurve } from "@/pages/settings/retention-data";
  *   1. CardHeader: "Retention window" + the PRD description, reordered
  *      (hashes, proofs and fingerprints kept; then deleted within 24 hours,
  *      cannot be recovered).
- *   2. The field: the plan name as its label ("Free plan", "Pro plan",
- *      "Enterprise plan"; owner 2026-10-08: the card title already names
- *      the window), the input (screen-reader name "Retention window in
- *      days"), then the helper naming the ceiling, the floor and that
- *      shortening cannot be undone (Free: the mockup's fixed-30 line). Above the ceiling: the
- *      inline FieldError, never a toast. At 0 days: what 0 turns off.
+ *   2. The field (Pro and Enterprise): "Choose how long to keep records",
+ *      the input (screen-reader name "Retention window in days"), then the
+ *      helper naming the range and the way past it, with a link that opens
+ *      the contact dialog in place (owner 2026-10-09: Pro mirrors
+ *      Enterprise). Above the ceiling: the inline FieldError with the fix
+ *      only, never a toast. At 0 days: what 0 turns off. Free: no field;
+ *      the details title carries a subtitle with the fixed 30 days and
+ *      what Pro unlocks.
  *   3. The readout list, the shared DetailList flush variant (the design
  *      the owner approved 2026-10-08) with the mockup 01 rows: Current window, Oldest retained record,
  *      Records in window, Next deletion run, Last changed (Pro and
@@ -93,13 +95,11 @@ import { MESSAGE_TIMES, messageCurve } from "@/pages/settings/retention-data";
  *      alone, right-aligned, opening the plan comparison (owner 2026-10-08,
  *      PRD mockup 03 "the footer action is the upgrade"; it replaced the Free
  *      plan banner under the card, a page-wide promo for one locked setting).
- *      No note: every candidate repeated the label, "(fixed)" or the button.
- * Enterprise also gets the one-line ceiling note with Contact support under
- * the card (PRD: the superseded Extended retention card "becomes a one-line
- * note of the ceiling and a Contact support link"). The link opens the plans
- * page's own Contact support dialog in place: on the Enterprise plans page
- * that label sits on the Free and Pro rungs, a downgrade route, not a ceiling
- * request (owner 2026-10-08).
+ *      Its note moved up to the Free field slot (owner 2026-10-09).
+ * Enterprise's helper is the PRD's "one-line note of the ceiling and a
+ * Contact support link" (the superseded Extended retention card). Its link
+ * opens the plans page's own Contact support dialog in place (owner
+ * 2026-10-08); Pro's "contact us" opens the same dialog titled "Contact us".
  *
  * Save, by direction: lower opens the shorten AlertDialog (mockup 02);
  * higher saves at once and the toast says deleted records are not restored.
@@ -134,6 +134,14 @@ const ZERO_DAYS_NOTE =
 const SUPPORT_CONTACT: { kind: ContactKind; title: string } = {
   kind: "contact",
   title: contactFlowTitle("enterprise", "contact"),
+};
+
+/** Pro's helper link opens the same dialog in place, titled "Contact us" (the
+ *  label the plans page's Enterprise card carries for a Pro org). Owner
+ *  2026-10-09: Pro mirrors the Enterprise helper. */
+const SALES_CONTACT: { kind: ContactKind; title: string } = {
+  kind: "contact",
+  title: contactFlowTitle("pro", "contact"),
 };
 
 type LastChange = { at: Date; by: string };
@@ -176,10 +184,11 @@ export function DataRetentionCard({
   });
   // Focus returns to the field when the dialog closes or Reset runs.
   const inputRef = useRef<HTMLInputElement | null>(null);
-  // Enterprise: the Contact support dialog, and the link that opened it, so
-  // closing it returns focus there (ManageSubscription's opener pattern).
-  const [supportOpen, setSupportOpen] = useState(false);
-  const supportOpenerRef = useRef<HTMLButtonElement | null>(null);
+  // Pro and Enterprise: the contact dialog the helper's link opens, and the
+  // link that opened it, so closing it returns focus there
+  // (ManageSubscription's opener pattern).
+  const [contactOpen, setContactOpen] = useState(false);
+  const contactOpenerRef = useRef<HTMLButtonElement | null>(null);
   // Free: the footer's Upgrade to Pro opens the plan comparison, the dialog
   // the Free plan banner opened before the footer replaced it.
   const navigate = useNavigate();
@@ -198,7 +207,6 @@ export function DataRetentionCard({
     [now, saved]
   );
   const runAt = useMemo(() => nextDeletionRun(now), [now]);
-  const plansHref = withTierOf(pathname, "/billing/plans");
 
   function handleReset() {
     setDraft(String(saved));
@@ -275,20 +283,16 @@ export function DataRetentionCard({
                     <FieldDescription id={DESCRIPTION_ID}>
                       <WindowHelper
                         ceiling={ceiling}
-                        onContactSupport={(opener) => {
-                          supportOpenerRef.current = opener;
-                          setSupportOpen(true);
+                        onContact={(opener) => {
+                          contactOpenerRef.current = opener;
+                          setContactOpen(true);
                         }}
                         tier={tier}
                       />
                     </FieldDescription>
                     {overCeiling ? (
                       <FieldError id={ERROR_ID}>
-                        <CeilingError
-                          ceiling={ceiling}
-                          plansHref={plansHref}
-                          tier={tier}
-                        />
+                        <CeilingError ceiling={ceiling} />
                       </FieldError>
                     ) : null}
                   </FieldContent>
@@ -323,14 +327,28 @@ export function DataRetentionCard({
               Stripe's property list under a short heading): a hairline, the
               "(Plan) plan details" title, then the framed list. Paid tiers
               have the action section above it; Free has nothing to adjust,
-              so this is its only section. */}
+              so this is its only section, and its subtitle (moved up from
+              the footer, owner 2026-10-09) says what Pro unlocks. During a
+              clamp, upgrading keeps the window (PRD: "On upgrade the ceiling
+              rises and the window stays"). */}
           <section
             aria-labelledby={DETAILS_TITLE_ID}
             className="flex flex-col gap-3 border-border border-t pt-4"
           >
-            <FieldTitle id={DETAILS_TITLE_ID}>
-              {PLAN_NAME[tier]} plan details
-            </FieldTitle>
+            <FieldContent>
+              <FieldTitle id={DETAILS_TITLE_ID}>
+                {PLAN_NAME[tier]} plan details
+              </FieldTitle>
+              {editable ? null : (
+                <FieldDescription>
+                  {clamping ? (
+                    "Pro plan keeps your current window."
+                  ) : (
+                    <WindowHelper ceiling={ceiling} tier={tier} />
+                  )}
+                </FieldDescription>
+              )}
+            </FieldContent>
             {/* The readouts: the shared DetailList, flush variant (owner
               2026-10-08, after Stripe's horizontal PropertyList), with the
               PRD mockup's rows and labels, wrapped in its own card (owner
@@ -449,20 +467,11 @@ export function DataRetentionCard({
           </CardFooter>
         ) : (
           // Free: the plan is this window's only lever, so its footer action
-          // is the upgrade (PRD mockup 03). Same shape as the paid footer: the
-          // note on the left is the helper naming what Pro unlocks, beside the
-          // button it explains (owner 2026-10-08). Outline, not the promo
-          // fill; the sparkle marks it as the site's upgrade action.
-          <CardFooter className="flex-wrap justify-between gap-2 border-border border-t py-2">
-            <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              {/* During a clamp, upgrading keeps the window (PRD: "On
-                  upgrade the ceiling rises and the window stays"). */}
-              {clamping ? (
-                "Pro plan keeps your current window."
-              ) : (
-                <WindowHelper ceiling={ceiling} tier={tier} />
-              )}
-            </p>
+          // is the upgrade (PRD mockup 03), alone on the right: its note moved
+          // up to the Free section above the details (owner 2026-10-09).
+          // Outline, not the promo fill; the sparkle marks it as the site's
+          // upgrade action.
+          <CardFooter className="justify-end border-border border-t py-2">
             <Button
               onClick={() => setCompareOpen(true)}
               size="sm"
@@ -494,16 +503,22 @@ export function DataRetentionCard({
           tier={tier}
         />
       ) : null}
-      {tier === "enterprise" ? (
+      {editable ? (
         <ContactDialog
           embedState="ready"
-          finalFocus={supportOpenerRef}
+          finalFocus={contactOpenerRef}
           onOpenChange={(next) => {
             if (!next) {
-              setSupportOpen(false);
+              setContactOpen(false);
             }
           }}
-          opened={supportOpen ? SUPPORT_CONTACT : null}
+          opened={
+            contactOpen
+              ? tier === "enterprise"
+                ? SUPPORT_CONTACT
+                : SALES_CONTACT
+              : null
+          }
         />
       ) : null}
     </>
@@ -565,44 +580,46 @@ function TipLabel({ label, tip }: { label: string; tip: string }) {
 
 /* ─── Field copy ────────────────────────────────────────────────────────── */
 
-/** The helper under the field: the range, then the next step (PRD mockup 01,
- *  "the ceiling and floor named under it"); on Free, the footer note naming
- *  what Pro unlocks. Plain muted text under the foreground label. */
+/** The helper under the label: the range, then the way past it (PRD mockup
+ *  01, "the ceiling and floor named under it"); on Free, what Pro unlocks.
+ *  Plain muted text under the foreground label. */
 function WindowHelper({
   tier,
   ceiling,
-  onContactSupport,
+  onContact,
 }: {
   tier: RetentionTier;
   ceiling: number;
-  /** Enterprise: opens the Contact support dialog from the helper's link. */
-  onContactSupport?: (opener: HTMLButtonElement) => void;
+  /** Pro and Enterprise: opens the contact dialog from the helper's link. */
+  onContact?: (opener: HTMLButtonElement) => void;
 }) {
   if (tier === "free") {
-    // PRD mockup 03's helper ("the helper names what each upgrade unlocks"),
-    // the next plan up only (owner 2026-10-08: "no one jumps from free to
-    // enterprise"; the Enterprise line moved to Pro). Pro goes shorter or
-    // longer than the fixed 30, up to 90. Rendered as the Free footer's note,
-    // beside the Upgrade to Pro it explains. The mockup's "Free plan: 30 days,
-    // fixed." lives in the details title and the Current window row ("30 days
-    // (fixed)"). No "Upgrade to": the button says it (no repeats).
+    // The subtitle under the shared title, moved up from the footer (owner
+    // 2026-10-09, the owner's copy). The next plan up only (owner 2026-10-08:
+    // "no one jumps from free to enterprise"). No "Upgrade to": the footer
+    // button says it.
     return (
       <>
-        Pro plan lets you shorten the window or extend it to{" "}
+        Retention on the Free plan is fixed at {formatDays(ceiling)}. Pro plan
+        lets you shorten the window or extend it to{" "}
         {formatDays(PRO_RETENTION_CEILING_DAYS)}.
       </>
     );
   }
   if (tier === "pro") {
-    // The range only (owner 2026-10-08). The Enterprise path is disclosed
-    // at the moment of need, in the above-ceiling error (PRD: "sees the
-    // ceiling and the Enterprise path inline"), not as standing text most
-    // Pro admins never need. Irreversibility is said by the description and
-    // the shorten dialog, at the moment of the change (PRD Principles).
+    // The range, then the way past it, the same shape as the Enterprise
+    // helper (owner 2026-10-09: "If Enterprise already does this, Pro can
+    // match it"; PRD: "sees the ceiling and the Enterprise path inline").
+    // The link opens the Contact us dialog in place. The above-ceiling error
+    // states only the fix.
     return (
       <>
         Your plan allows any window from {RETENTION_FLOOR_DAYS} to{" "}
-        {formatDays(ceiling)}.
+        {formatDays(ceiling)}. For a longer window,{" "}
+        <TextLink onClick={(e) => onContact?.(e.currentTarget)}>
+          contact us
+        </TextLink>{" "}
+        about an Enterprise contract.
       </>
     );
   }
@@ -615,7 +632,7 @@ function WindowHelper({
     <>
       Your contract allows any window from {RETENTION_FLOOR_DAYS} to{" "}
       {formatDays(ceiling)}. To raise the ceiling,{" "}
-      <TextLink onClick={(e) => onContactSupport?.(e.currentTarget)}>
+      <TextLink onClick={(e) => onContact?.(e.currentTarget)}>
         contact support
       </TextLink>
       .
@@ -623,29 +640,11 @@ function WindowHelper({
   );
 }
 
-/** The above-ceiling error: the fix, and on Pro the way past the limit,
- *  shown only when the limit is hit (owner 2026-10-08, progressive
- *  disclosure; PRD: "sees the ceiling and the Enterprise path inline").
- *  "contact us" is the label the plans page's Enterprise card carries for a
- *  Pro org (`contactFlowTitle`). Enterprise needs only the fix: its helper
- *  already carries the Contact support link. Inline, never a toast. */
-function CeilingError({
-  tier,
-  ceiling,
-  plansHref,
-}: {
-  tier: RetentionTier;
-  ceiling: number;
-  plansHref: string;
-}) {
-  if (tier === "pro") {
-    return (
-      <>
-        Enter {ceiling} or less. On Enterprise, a contract can extend it
-        further; <TextLink to={plansHref}>contact us</TextLink>.
-      </>
-    );
-  }
+/** The above-ceiling error: the fix only, on Pro and Enterprise alike
+ *  (owner 2026-10-09; GOV.UK: an error never says what the user is not
+ *  eligible for). The way past the ceiling is in each tier's helper above
+ *  it. Inline, never a toast. */
+function CeilingError({ ceiling }: { ceiling: number }) {
   return <>Enter {ceiling} or less.</>;
 }
 

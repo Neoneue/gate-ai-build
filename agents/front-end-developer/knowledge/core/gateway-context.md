@@ -27,17 +27,17 @@ those keys watch, control and pay for that traffic.
 Dashboard roles (Pro and Enterprise carry a "Viewing as" switch; Default and
 Free are single-owner):
 
-| Role | Fixture | Sees | Acts |
-| --- | --- | --- | --- |
-| Admin (org owner) | Chad | every page, whole org | everything, incl. owner-only actions (cancel plan, delete org, assign managers) |
-| Manager | Kira Tan | own keys everywhere, plus ONE team's usage, budget, members, keys, security counts | team-scoped controls |
-| Member | Mateus Silva | own keys only, no Teams surface | own settings |
+| Role | Sees | Acts |
+| --- | --- | --- |
+| Admin (org owner) | every page, whole org | everything, incl. owner-only actions (cancel plan, delete org, assign managers) |
+| Manager | own keys everywhere, plus ONE team's usage, budget, members, keys, security counts | team-scoped controls |
+| Member | own keys only, no Teams surface | own settings |
 
 A page a role cannot see is hidden from the sidebar AND blocked by URL. Prompt
 content of other users stays hidden until AG-697 ships (not built, by design).
 
-Devon (SDK/CLI), Olivia (dashboard defaults), Kate (enterprise org) and Ivan
-(scan API) are ICP fixtures from the PRDs, not dashboard roles.
+The PRD personas (SDK/CLI developer, dashboard-defaults user, enterprise
+admin, scan-API user) are ICP fixtures, not dashboard roles.
 
 ## Workspaces and tiers
 

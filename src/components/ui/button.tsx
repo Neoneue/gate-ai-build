@@ -14,9 +14,12 @@ const buttonVariants = cva(
   "group/button inline-flex shrink-0 touch-manipulation select-none items-center justify-center whitespace-nowrap rounded-sm border border-transparent bg-clip-padding font-medium text-sm outline-none transition-[color,background-color,border-color,opacity,box-shadow,scale] duration-150 ease-out will-change-transform focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 motion-reduce:transition-none motion-reduce:active:scale-100 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
+      // Shadow rule (owner 2026-10-09): every variant with a surface (a fill
+      // or an edge) carries `shadow-xs`, except tinted ones (destructive,
+      // promo, info-outline, the lift family) and `raised` (`shadow-sm`).
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/85 [a]:hover:bg-primary/80",
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/85 [a]:hover:bg-primary/80",
         // `bg-card` / `hover:bg-muted` are UNQUALIFIED — they hold in both
         // themes, so the fill is opaque everywhere. This variant used to carry
         // `dark:bg-input/30 dark:hover:bg-input/50` (shadcn's stock recipe,
@@ -29,7 +32,7 @@ const buttonVariants = cva(
         outline:
           "border-border bg-card shadow-xs hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         /* The ONE responsive variant (added 2026-09-09) — `ghost` below `lg`,
@@ -134,6 +137,12 @@ const buttonVariants = cva(
         sm: "h-8 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
         default:
           "h-9 gap-2 px-3 text-sm has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5",
+        // Touch (added 2026-10-09, owner direction): `default` at 44px, the
+        // Apple HIG / WCAG 2.5.5 touch target, for full-width actions in a
+        // phone-only layout (the onboarding phone start and handoff cards).
+        // Never on a pointer-first surface; there `default` is the size.
+        touch:
+          "h-11 gap-2 px-3 text-sm has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5",
         // Icon-only — one square per text-size step, same heights: xs 24 /
         // sm 32 / icon 36. `icon-lg` is deleted along with `lg`; there is no
         // "lg" anywhere in this API. `icon` tracks `default` at 36px.

@@ -9,6 +9,25 @@ Prior day: [`changelog-10-8.md`](./changelog-10-8.md)
 
 ## Sections
 
+### Retention helper carries the way past the ceiling `95cdb4b`
+
+Settings > Data retention (`src/pages/settings/DataRetentionCard.tsx`).
+
+- **Pro helper.** Before: the range only ("Your plan allows any window from
+  0 to 90 days."), with the Enterprise path disclosed in the over-limit
+  error. After: the range, then "For a longer window, contact us about an
+  Enterprise contract." The link opens the contact dialog in place, titled
+  "Contact us", the same way Enterprise's "contact support" link does.
+- **Over-limit error.** Before (Pro): "Enter 90 or less. On Enterprise, a
+  contract can extend it further; contact us." After, every tier: the fix
+  only, "Enter 90 or less."
+- **Free.** Before: the note sat in the footer beside Upgrade to Pro. After:
+  it is the subtitle under "Free plan details": "Retention on the Free plan
+  is fixed at 30 days. Pro plan lets you shorten the window or extend it to
+  90 days." During a scheduled clamp it reads "Pro plan keeps your current
+  window." The footer keeps only Upgrade to Pro, right-aligned.
+- Enterprise unchanged.
+
 ### Messages retention statement `0279899`
 
 Messages (`src/pages/requests/RetentionStatement.tsx`, mounted by
@@ -42,6 +61,28 @@ the downgrade dialog (`cancel-plan-dialog.tsx`, "Their fingerprints stay,
 unchanged.
 
 ## Components
+
+### Button shadow rule, `touch` size `32354e2`
+
+`src/components/ui/button.tsx`, documented in `design.md` (Buttons, Touch
+Targets).
+
+- **Shadow rule.** Before: `default` and `secondary` had no shadow while
+  `outline` carried `shadow-xs`. After: every variant with a surface (a fill
+  or an edge) carries `shadow-xs` (`default`, `secondary`, `outline`,
+  `ghost-to-outline` from `lg`); tinted variants (`destructive`, `promo`,
+  `info-outline`, the lift family) stay flat and `raised` keeps `shadow-sm`.
+  Every primary and secondary button on the site gains the shadow.
+- **`touch` size.** New: 44px (`h-11`), otherwise `default`, for full-width
+  actions in a phone-only layout. The one exception to "`default` is the
+  largest size". No consumer yet.
+
+### Card `elevation` prop `32354e2`
+
+`src/components/ui/card.tsx`, documented in `design.md` (Cards &
+Containers). New prop: `default` keeps the card tier's `shadow-xs`; `raised`
+is `shadow-sm`, for a standalone choice card on a phone layout. No consumer
+yet. `CardTitle` also accepts `htmlFor` when rendered `as="label"`.
 
 ### Callout icon gap 12px on every Callout `903ff0a`
 

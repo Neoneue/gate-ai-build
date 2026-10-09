@@ -1,0 +1,6 @@
+{
+  "name": "ux-designer",
+  "displayName": "UX Designer",
+  "version": "0.1.0",
+  "description": "A designer agent that does UX thinking before UI: triages the brief, writes a whole-surface spec with a fetched precedent, gets it approved, builds exactly the spec, then proves it with a duplicate check and a fresh-context reviewer. Portable: project specifics live in the host's .claude/ux-designer.md adapter."
+}
