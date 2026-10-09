@@ -1226,6 +1226,40 @@ switches are written to a module-scoped `useSyncExternalStore` store on top of
 the seeds, in memory, reset on reload (the notifications-store lifecycle).
 Sending never adds a turn. From a new chat (`/chat` and its tier twins), Send or a starter prompt navigates (push) to the seeded conversation `chat_8f2c41d7` and clears the draft, so the mockup goes from the clean landing to a full thread and Back returns to it; inside a conversation, Send is inert and the composer keeps its draft.
 
+### 5.7 Data retention (added 2026-10-08, AG-1021)
+
+One org-wide retention window in days, bounded by the plan (PRD
+"Configurable data retention v1"). Rules and math live in
+`src/lib/retention.ts` (tests `retention.test.ts`); the Settings card is
+`src/pages/settings/DataRetentionCard.tsx`, one component for every tier.
+
+- **Ceilings** (`retentionCeilingDays(tier)`): Free fixed 30
+  (`FREE_RETENTION_DAYS`, read-only), Pro 0 to 90
+  (`PRO_RETENTION_CEILING_DAYS`), Enterprise 0 to the contract ceiling
+  (`ENTERPRISE_CONTRACT_CEILING_DAYS`, the 90-day default; owner). Floor 0
+  (`RETENTION_FLOOR_DAYS`: no content stored). Every org starts at its
+  ceiling.
+- **Metrics retention** is separate and tier-fixed
+  (`metricsRetentionDays`): Free 90, Pro and Enterprise 180. The window
+  never touches it.
+- **Readouts** derive from real rows: counts from `MESSAGE_TOTALS` through
+  `messageCurve` (`src/pages/settings/retention-data.ts`), dates from the
+  Messages rows (`MESSAGE_TIMES`, `oldestInWindow`); the next run is daily
+  at `DELETION_RUN_UTC_HOUR` (03:00 UTC). The shorten dialog's count is
+  `shortenPreview` over the card's own curve, so the dialog and the card
+  agree.
+- **Clamp:** a downgrade (or a lowered Enterprise maximum) schedules a clamp
+  `CLAMP_GRACE_DAYS` (3) out; `clampDate(scheduledAt)` gives the date. The
+  window drops to the new ceiling then.
+- **State:** the saved window, the draft and Last changed are component
+  state, in memory, reset on reload. Nothing is shared with other pages yet;
+  the Messages retention statement (ticket Chunk 2) will need the window from
+  one source.
+- **Preview route:** `/settings-free/clamp` (`SettingsFree clamp` ->
+  `Settings retentionClampPreview` -> `DataRetentionCard clampPreview`)
+  renders a Pro org that just downgraded to Free: Current window 90 days, a
+  "Scheduled change" row (30 days on `clampDate(now)`). Typed, not linked.
+
 ## 6. Page Inventory
 
 ### Overview page (`/overview` → `Dashboard.tsx`)

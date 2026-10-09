@@ -143,8 +143,14 @@ Routes: `/chat`, `/chat-free`, `/chat-default`, `/chat-enterprise` (and
 ## Chunk 4: Existing copy that now contradicts the PRD
 
 - [ ] `src/pages/cancel-plan-dialog.tsx:83`: downgrade now clamps after a
-      3-day grace period with two reminder emails, not immediately
-- [ ] `src/pages/Settings.tsx:441` (Cancel plan card): same correction
+      3-day grace period with two reminder emails, not immediately. Built
+      2026-10-08 (copywriter): "Three days after Pro ends, you keep only the
+      last 30 days of records and older ones are deleted. Their Digital
+      Evidence fingerprints stay, but upgrading again won't bring the records
+      back." Awaiting owner check
+- [ ] `src/pages/Settings.tsx:441` (Cancel plan card): same correction. Checked
+      2026-10-08: the card carries no retention copy; the shared dialog above
+      is the one source
 - [ ] Copy changes go through `triage-copy` before applying
 - [ ] In-app plan copy matches the live pricing page (owner 2026-10-08: "we
       need to not be stale"; overrides the earlier "leave to AG-973" note
@@ -191,9 +197,11 @@ audit trail.
 - Admin portal "Maximum retention (days)" override field (admin console)
 - Scheduled clamp state in Settings (PRD P0: new ceiling and clamp date
   after a downgrade or lowered maximum; Jira AC: "A pending clamp shows its
-  date in the card"). Built then removed 2026-10-08 (owner: "we'll need a
-  way to show multiple states somehow"). Blocked on a way to demo more than
-  one state per route; the product builds the clamp state from the PRD
+  date in the card"). Mock preview built 2026-10-08 as the typed route
+  `/settings-free/clamp` (a Pro org just downgraded to Free: Current window
+  90 days, "Scheduled change: 30 days on (now + 3 days)", footer "Pro plan
+  keeps your current window."). The product builds the real clamp from the
+  PRD; the lowered-maximum case on Enterprise is not previewed
 - Deletion run, 0-day write path, response cache off (Gate Core, AG-984)
 - Clamp reminder emails and send log (AG-508, AG-512, AG-823)
 - Website pricing page and plans doc copy (AG-973, PRD owner). The in-app plan

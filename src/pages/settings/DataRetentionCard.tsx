@@ -45,6 +45,7 @@ import { signedInMember } from "@/data/team-members";
 import { formatDate, formatNumber } from "@/lib/formatters";
 import { withTierOf } from "@/lib/plan";
 import {
+  clampDate,
   formatDays,
   formatDeletionRun,
   type MessageCurveAnchor,
@@ -142,17 +143,31 @@ type LastChange = { at: Date; by: string };
  *  confirm has already moved the saved window. */
 type ShortenRequest = { open: boolean; from: number; to: number };
 
-export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
+export function DataRetentionCard({
+  tier,
+  clampPreview = false,
+}: {
+  tier: RetentionTier;
+  /** Free only: the `/settings-free/clamp` preview of a pending clamp. */
+  clampPreview?: boolean;
+}) {
   const { pathname } = useLocation();
   // One clock per mount: the readouts, the dialog and the next-run time all
   // measure from the same instant, so they cannot disagree.
   const [now] = useState(() => new Date());
   const ceiling = retentionCeilingDays(tier);
   const editable = tier !== "free";
+  // Pending clamp (PRD "Clamp to the new ceiling on downgrade ... after a
+  // 3-day grace period, with the date shown in Settings"): the org has just
+  // downgraded from Pro, so during the grace it still holds Pro's window,
+  // and on the clamp date it drops to Free's.
+  const clamping = tier === "free" && clampPreview;
+  const clampAt = useMemo(() => clampDate(now), [now]);
 
-  // Every org starts at its ceiling (PRD).
-  const [saved, setSaved] = useState(ceiling);
-  const [draft, setDraft] = useState(String(ceiling));
+  // Every org starts at its ceiling (PRD); during a clamp, at the old one.
+  const startDays = clamping ? PRO_RETENTION_CEILING_DAYS : ceiling;
+  const [saved, setSaved] = useState(startDays);
+  const [draft, setDraft] = useState(String(startDays));
   const [lastChange, setLastChange] = useState<LastChange | null>(null);
   const [shorten, setShorten] = useState<ShortenRequest>({
     open: false,
@@ -331,17 +346,28 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
                 variant="flush"
               >
                 {/* Free's window is set by the plan, so its value says so
-                  (owner 2026-10-08: "30 days (fixed)"). */}
+                  (owner 2026-10-08: "30 days (fixed)"); during a clamp it
+                  still holds Pro's window, so no "(fixed)". */}
                 <DetailRow
                   label="Current window"
                   value={
                     <FactValue mono>
-                      {editable
+                      {editable || clamping
                         ? formatDays(saved)
                         : `${formatDays(saved)} (fixed)`}
                     </FactValue>
                   }
                 />
+                {clamping ? (
+                  <DetailRow
+                    label="Scheduled change"
+                    value={
+                      <FactValue mono>
+                        {formatDays(ceiling)} on {formatDate(clampAt)}
+                      </FactValue>
+                    }
+                  />
+                ) : null}
                 <DetailRow
                   label="Oldest retained record"
                   value={
@@ -427,7 +453,13 @@ export function DataRetentionCard({ tier }: { tier: RetentionTier }) {
           // fill; the sparkle marks it as the site's upgrade action.
           <CardFooter className="flex-wrap justify-between gap-2 border-border border-t py-2">
             <p className="type-copy-14 m-0 text-pretty text-muted-foreground">
-              <WindowHelper ceiling={ceiling} tier={tier} />
+              {/* During a clamp, upgrading keeps the window (PRD: "On
+                  upgrade the ceiling rises and the window stays"). */}
+              {clamping ? (
+                "Pro plan keeps your current window."
+              ) : (
+                <WindowHelper ceiling={ceiling} tier={tier} />
+              )}
             </p>
             <Button
               onClick={() => setCompareOpen(true)}

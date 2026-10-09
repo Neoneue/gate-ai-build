@@ -78,11 +78,17 @@ type SettingsProps = {
    * Required so a new route cannot silently inherit another tier's ceiling.
    */
   retentionTier: RetentionTier;
+  /**
+   * Free only: render the Data retention card's pending-clamp preview (the
+   * `/settings-free/clamp` route). Defaults false.
+   */
+  retentionClampPreview?: boolean;
 };
 
 export function Settings({
   showCancelPlan = true,
   retentionTier,
+  retentionClampPreview = false,
 }: SettingsProps) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -98,6 +104,7 @@ export function Settings({
       sidebarExpanded={sidebarExpanded}
     >
       <SettingsSurface
+        retentionClampPreview={retentionClampPreview}
         retentionTier={retentionTier}
         showCancelPlan={showCancelPlan}
       />
@@ -110,6 +117,7 @@ export function Settings({
 function SettingsSurface({
   showCancelPlan,
   retentionTier,
+  retentionClampPreview,
 }: Required<SettingsProps>) {
   // Account management (cancel plan, delete org) is owner / admin only; the
   // team-manager and member views hide the whole section (AG-695 AC 3,
@@ -147,7 +155,10 @@ function SettingsSurface({
               for this organization.
             </p>
           </div>
-          <DataRetentionCard tier={retentionTier} />
+          <DataRetentionCard
+            clampPreview={retentionClampPreview}
+            tier={retentionTier}
+          />
         </div>
       ) : null}
       {isAdmin ? (

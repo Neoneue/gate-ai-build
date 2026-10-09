@@ -80,7 +80,9 @@ export function ConsequenceCallout({ items }: { items: string[] }) {
 }
 
 const CANCEL_CONSEQUENCES = [
-  "Data retention reverts to the Free-tier window; anything older is pruned under the retention policy and is not restored if you upgrade again.",
+  // PRD clamp: 3-day grace after the downgrade, then the window drops to
+  // Free's 30 days; fingerprints kept; raising later restores nothing.
+  "Three days after Pro ends, you keep only the last 30 days of records and older ones are deleted. Their Digital Evidence fingerprints stay, but upgrading again won't bring the records back.",
   "Unused subscription days are not refunded.",
   "Your prepaid pay-as-you-go balance stays usable.",
 ];

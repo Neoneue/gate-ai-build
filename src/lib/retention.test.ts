@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { MESSAGE_TOTALS } from "@/data/message-totals";
 import {
+  CLAMP_GRACE_DAYS,
+  clampDate,
   ENTERPRISE_CONTRACT_CEILING_DAYS,
   FREE_RETENTION_DAYS,
   formatDays,
@@ -42,6 +44,15 @@ describe("metricsRetentionDays", () => {
     expect(metricsRetentionDays("free")).toBe(90);
     expect(metricsRetentionDays("pro")).toBe(180);
     expect(metricsRetentionDays("enterprise")).toBe(180);
+  });
+});
+
+describe("clampDate", () => {
+  it("applies the clamp 3 days after it is scheduled (PRD grace)", () => {
+    expect(CLAMP_GRACE_DAYS).toBe(3);
+    expect(clampDate(utc("2026-10-08T22:30:00"))).toEqual(
+      utc("2026-10-11T22:30:00")
+    );
   });
 });
 

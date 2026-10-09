@@ -44,6 +44,15 @@ export const ENTERPRISE_CONTRACT_CEILING_DAYS = 90;
 /** The deletion run fires once a day at this UTC hour (the PRD's run time). */
 export const DELETION_RUN_UTC_HOUR = 3;
 
+/** Days between a downgrade (or a lowered maximum) and the clamp to the new
+ *  ceiling (PRD: "a clamp is scheduled 3 days out"). */
+export const CLAMP_GRACE_DAYS = 3;
+
+/** When a clamp scheduled at `scheduledAt` applies: the end of the grace. */
+export function clampDate(scheduledAt: Date): Date {
+  return new Date(scheduledAt.getTime() + CLAMP_GRACE_DAYS * MS_PER_DAY);
+}
+
 /** Highest window the tier accepts. On Free it is also the only window. */
 export function retentionCeilingDays(tier: RetentionTier): number {
   switch (tier) {

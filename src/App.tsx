@@ -517,6 +517,9 @@ export function AppRoutes() {
         <Route element={<ApiKeysFree />} path="/api-keys-free" />
         <Route element={<NotificationsFree />} path="/notifications-free" />
         <Route element={<SettingsFree />} path="/settings-free" />
+        {/* Preview route (owner 2026-10-08): the Free card's pending-clamp
+            state after a downgrade from Pro, typed, not linked. */}
+        <Route element={<SettingsFree clamp />} path="/settings-free/clamp" />
         {/* Enterprise-workspace twins — reached via the workspace
          * switcher. Every route reuses the Pro page component under the
          * Enterprise chrome, so in-page cross-links may land back on Pro
