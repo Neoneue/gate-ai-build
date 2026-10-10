@@ -13,6 +13,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 - design.md rewritten to DESIGN.md best practice
 - Badge and Button contrast notes
+- Onboarding setup: lit tiles, wider orbit, Claude 5.5 models
 
 ### [2026-10-09](./2026-10/changelog-10-9.md)
 

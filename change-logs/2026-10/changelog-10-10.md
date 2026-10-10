@@ -40,3 +40,22 @@ Prior day: [`changelog-10-9.md`](./changelog-10-9.md)
 `badge.tsx`, `button.tsx`. Comment-only; no rendered change. The measured
 AA contrast for the badge tones and the promo button's dark-mode border
 contrast moved here from `design.md`.
+
+## Sections
+
+### Onboarding setup: lit tiles, wider orbit, Claude 5.5 models `1d0e958`
+
+`/overview-onboarding` setup step (`improved-art.tsx`, `improved-data.ts`,
+`onboarding-motion.css`, `src/data/models-catalog.ts`).
+
+- Art tiles: flat `bg-card` / `bg-chat-bubble-*` with `shadow-xs` became lit
+  from above: `bg-linear-to-b from-card to-card-muted` (dark: `from-muted
+  to-card`), `shadow-md`, and in dark a 1px `inset-shadow-2xs
+  inset-shadow-border` top highlight.
+- Orbit: field 200px to 216px (`size-54`), satellite radius 80px to 88px, so
+  the shadowed tiles keep a 36px gap to the hub; ring dash offsets
+  recomputed for the longer path. The peak shadow tween lists all five
+  layers so it fades instead of jumping. Wire 1 crossing 700ms to 600ms.
+- Model picker: Claude Opus, Sonnet and Haiku 5.5 added to the catalog;
+  each newer version sits right after the one it follows; Claude Code starts
+  on the first row instead of Claude Sonnet 5.
