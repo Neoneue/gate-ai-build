@@ -99,10 +99,20 @@ export const IMPROVED_MODELS = [
  *  Every other app keeps IMPROVED_MODELS for now. */
 export const CATALOG_CLIENT = "claude-code";
 
-/** The catalog as picker rows, in catalog order (curated rows first). */
-export const CATALOG_MODELS: readonly ImprovedModel[] = MODEL_OPTIONS.map(
-  (model) => ({ id: model.handle, label: model.label, vendor: model.vendor })
-);
+/** The model Claude Code starts on: an Anthropic model, so the picker opens
+ *  in the Anthropic block that leads the list (owner 2026-10-09). */
+export const CATALOG_DEFAULT_MODEL = "anthropic/claude-sonnet-5";
+
+/** The catalog as picker rows. Anthropic's models lead, since the app is
+ *  Claude Code (owner 2026-10-09); each part keeps catalog order. */
+export const CATALOG_MODELS: readonly ImprovedModel[] = [
+  ...MODEL_OPTIONS.filter((model) => model.vendor === "anthropic"),
+  ...MODEL_OPTIONS.filter((model) => model.vendor !== "anthropic"),
+].map((model) => ({
+  id: model.handle,
+  label: model.label,
+  vendor: model.vendor,
+}));
 
 export type ImprovedModel = {
   id: string;

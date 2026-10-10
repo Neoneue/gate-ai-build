@@ -52,6 +52,7 @@ import { AppIcon } from "@/pages/onboarding/improved-art";
 import {
   appNameOf,
   CATALOG_CLIENT,
+  CATALOG_DEFAULT_MODEL,
   CATALOG_MODELS,
   CLIENT_GROUPS,
   clientOf,
@@ -73,7 +74,10 @@ import {
   ONBOARDING_EXITS,
   ONBOARDING_ROUTES,
 } from "@/pages/onboarding/onboarding-routes";
-import type { ImprovedBilling } from "@/pages/onboarding/onboarding-state";
+import {
+  DEFAULT_PAYG_MODEL,
+  type ImprovedBilling,
+} from "@/pages/onboarding/onboarding-state";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 
 /* ─── Improved flow: prepare, verify, ready ─────────────────────────────────
@@ -177,6 +181,12 @@ function PrepareSetup() {
                   client: String(value),
                   connected: false,
                   received: false,
+                  // Claude Code starts on an Anthropic model; a model the
+                  // user already picked is kept.
+                  ...(value === CATALOG_CLIENT &&
+                  improved.model === DEFAULT_PAYG_MODEL
+                    ? { model: CATALOG_DEFAULT_MODEL }
+                    : {}),
                 })
               }
               value={client.id}
