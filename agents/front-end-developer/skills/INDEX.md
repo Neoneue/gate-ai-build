@@ -151,43 +151,43 @@ recorded.
 - **Three easing tokens**: `--ease-out` (`cubic-bezier(0.23, 1, 0.32, 1)`)
   is the default for color, shadow and scale; `--ease-in-out` for symmetric
   moves; `--ease-drawer` for slide-in surfaces (Sheet, sidebar)
-  (design.md:1280-1282). Declared in `@theme` at `src/index.css:192-194`
-  (design.md:1291).
+  (design.md Motion). Declared in `@theme` at `src/index.css:192-194`
+  (design.md Motion).
 - **Durations**: 100ms overlay fade and MenuItem highlight; 150ms default
   control transition; 200ms Dialog enter, sliding indicator and toast;
-  120ms Dialog close; 300ms Sheet slide-in (design.md:1283-1287).
+  120ms Dialog close; 300ms Sheet slide-in (design.md Motion).
 - **Transition properties**: only color, background, border, shadow,
   opacity, scale and transform; never `transition-all`. Reduced motion
   always wins (`motion-reduce:transition-none`, `motion-reduce:animate-none`)
-  (design.md:1276).
+  (design.md Motion, The Real Properties Rule).
 - **Press**: `active:scale-[0.98]` on Button and Card `interactive`, always
   0.98 (0.96 rejected), paired with `motion-reduce:active:scale-100`
-  (design.md:1288). The same press is on `IconActionButton` and
-  `TabsTrigger`; popup triggers do not scale (design.md:1293).
+  (design.md Motion). The same press is on `IconActionButton` and
+  `TabsTrigger`; popup triggers do not scale (design.md Motion).
 - **Stagger**: one, a 100ms stagger on the Models Featured cards; route-level
   entrances where order carries meaning only, never on rows or
-  high-frequency state (design.md:1289).
+  high-frequency state (design.md Motion).
 - **Dialog**: 200ms fade plus `zoom-in-95` on enter, 120ms close; Base UI
   exits need `data-closed:fill-mode-forwards` on popup and overlay
-  (design.md:1286, :1291). Overlay `bg-neutral-900/40 backdrop-blur-xs`, the
-  only blur in the system (design.md:1701).
+  (design.md Motion, The Reduced Motion Rule). Overlay `bg-neutral-900/40 backdrop-blur-xs`, the
+  only blur in the system (design.md Components, Dialogs and sheets).
 - **Toast**: sonner's default, 200ms enter, 4s hold, 200ms exit
-  (design.md:1293); radius 0.5rem, `--shadow-popup` (design.md:1807);
+  (design.md Motion); radius 0.5rem (`src/components/ui/sonner.tsx`);
   `position="bottom-right"` (`src/App.tsx:505`).
 - **Radius** tiers: 4px sub-element, 6px button and menu, 8px card, 10px
-  base, 16px modal (locked), full for pills (design.md:1303-1308). A nested
+  base, 16px modal (locked), full for pills (design.md Shapes). A nested
   card steps down one tier; full ladder 24 / 16 / 8 / 4
-  (design.md:1310).
+  (design.md Shapes, The Step Down Rule).
 - **Icons**: `lucide-react`, stroke 1.75, one value for the whole set;
-  sizes `size-3` to `size-5` (design.md:1312). Passed at every call site as
+  sizes `size-3` to `size-5` (design.md Shapes, Icons). Passed at every call site as
   `strokeWidth={1.75}`: there is no global provider, and lucide's own
   default is 2.
 - **Touch targets**: buttons 36px (`h-9`), 32px (`sm`), 24px (`xs`);
   icon-only buttons 36 / 32 / 24 with a 16px icon (14px at `icon-xs`);
-  checkbox and radio 16px plus hit-target padding (design.md:1963-1968).
-- **Type**: Geist and Geist Mono (design.md:879-880). Five voices
-  (design.md:1014-1030): Label is `font-medium`, Body is `font-normal`
-  (design.md:1026-1027). Sentence case everywhere (design.md:1845, :1862).
+  checkbox and radio 16px plus hit-target padding (design.md Layout, Touch targets).
+- **Type**: Geist and Geist Mono (design.md Typography). Five voices
+  (design.md Typography, Voices): Label is `font-medium`, Body is `font-normal`
+  (design.md Typography, Voices). Sentence case everywhere (design.md Voice & Content).
   Literals live only in `src/index.css`.
 
 ## impeccable in this repo
@@ -306,8 +306,8 @@ recorded.
   curves are the easing tokens anyway); Tailwind's `transition` lists 23
   properties, not `all`; exits are `ease-out`, never ease-in.
 - **`better-ui`**: a check for detail polish, never the build skill. Its
-  0.96 press is overruled (0.98, design.md:1288) and so is its 1.5 / 2 /
-  2.5 stroke table (one 1.75 stroke, design.md:1312). Settled
+  0.96 press is overruled (0.98, design.md Motion) and so is its 1.5 / 2 /
+  2.5 stroke table (one 1.75 stroke, design.md Shapes, Icons). Settled
   better-ui-vs-design.md decisions are in `.claude/skills/ui-audit/SKILL.md`.
 - **`oklch-skill`**: color math and palettes only. Every color is a token
   in `src/index.css` and is documented in `design.md` (see

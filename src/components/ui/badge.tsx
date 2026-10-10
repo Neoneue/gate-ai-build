@@ -23,6 +23,11 @@ const badgeVariants = cva(
   //   5. **Variants encode tone.** `success` / `warning` / `destructive` /
   //      `info` / `neutral` / `outline` / `ghost` / `secondary` / `link` /
   //      `default`.
+  //   6. **AA contrast, measured.** `success` text is the 800 step (6.44:1;
+  //      the 700 step measured 4.47:1). `destructive` is solid
+  //      `bg-danger-100 text-danger-800` (6.91:1; the old translucent
+  //      `bg-destructive/10 text-destructive` measured 3.97:1). `enterprise`
+  //      measured 5.99:1 light and 8.63:1 dark (2026-06-04, 2026-09-16).
   "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-xs border border-transparent px-2 font-medium font-mono text-xs uppercase tabular-nums transition-[color,background-color,border-color,box-shadow] duration-150 ease-out focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive aria-invalid:ring-destructive/20 motion-reduce:transition-none dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-3 [&_svg]:shrink-0",
   {
     variants: {
