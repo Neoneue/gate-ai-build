@@ -9,6 +9,15 @@ Prior day: [`changelog-10-8.md`](./changelog-10-8.md)
 
 ## Sections
 
+### Onboarding setup: Claude Code starts on an Anthropic model `4d02614`
+
+`/overview-onboarding` setup step (`improved-setup.tsx`, `improved-data.ts`).
+Before: choosing Claude Code kept the default pay-as-you-go model, and the
+catalog picker listed models in plain catalog order. After: choosing Claude
+Code sets the model to Claude Sonnet 5 (`CATALOG_DEFAULT_MODEL`) unless the
+user already picked one, and the picker lists Anthropic's models first,
+then the rest, each part in catalog order.
+
 ### Onboarding setup: route motion and model picker `83e06ae`
 
 `/overview-onboarding` setup step (`src/pages/onboarding/improved-setup.tsx`,
