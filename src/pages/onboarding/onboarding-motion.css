@@ -34,7 +34,7 @@
 @keyframes improved-signal {
   0% {
     opacity: 0;
-    transform: rotate(calc(var(--i) * 72deg - 90deg)) translate(64px);
+    transform: rotate(calc(var(--i) * 72deg - 90deg)) translate(72px);
   }
   20% {
     opacity: 1;
@@ -335,12 +335,20 @@
   --pace: 1.4;
 }
 
+/* The peak repeats Tailwind's five box-shadow layers in their order, so each
+ * layer tweens into its partner: the tile's own inset (dark's top highlight)
+ * holds, the ring layer fades in blue, and the tile's resting shadow-md
+ * lifts to shadow-lg (owner, 2026-10-10). A shorter list put an inset layer
+ * against a plain one and the whole shadow jumped instead of fading. */
 @keyframes art-tap {
   30%,
   60% {
     box-shadow:
+      var(--tw-inset-shadow),
+      var(--tw-inset-ring-shadow),
+      var(--tw-ring-offset-shadow),
       0 0 0 1px var(--info),
-      var(--shadow-sm);
+      var(--shadow-lg);
     transform: scale(1.11);
   }
 }
@@ -366,15 +374,15 @@
 
 /* A blue run of the orbit's dashes laps the orbit app to app and back to
  * the top (owner, 2026-10-08). The mask circle draws one 36px arc, short enough to hide
- * fully behind a 40px app card (stroke-dasharray), over the 502.65px
+ * fully behind a 40px app card (stroke-dasharray), over the 552.92px
  * orbit, so it only shows while it travels; stroke-dashoffset =
- * 18 - n x 100.53 centers it on app n (apps sit 72deg apart from 12
+ * 18 - n x 110.58 centers it on app n (apps sit 72deg apart from 12
  * o'clock; n = 5 is the top again, one full lap). It fades in behind the
  * top app, reaches each app as that app's ring peaks (n x 280 + 180ms),
  * dwells 80ms, hops to the next in 200ms, and after the last app it hops
  * home and fades out behind the top app. */
 [data-motion="orbit-arc"] {
-  stroke-dasharray: 36 466.65;
+  stroke-dasharray: 36 516.92;
   stroke-dashoffset: 18;
 }
 
@@ -392,34 +400,34 @@
   27.06%,
   31.76% {
     opacity: 1;
-    stroke-dashoffset: -82.53;
+    stroke-dashoffset: -92.58;
     animation-timing-function: var(--ease-in-out);
   }
   43.53%,
   48.24% {
     opacity: 1;
-    stroke-dashoffset: -183.06;
+    stroke-dashoffset: -203.17;
     animation-timing-function: var(--ease-in-out);
   }
   60%,
   64.71% {
     opacity: 1;
-    stroke-dashoffset: -283.59;
+    stroke-dashoffset: -313.75;
     animation-timing-function: var(--ease-in-out);
   }
   76.47%,
   81.18% {
     opacity: 1;
-    stroke-dashoffset: -384.12;
+    stroke-dashoffset: -424.34;
     animation-timing-function: var(--ease-in-out);
   }
   92.94% {
     opacity: 1;
-    stroke-dashoffset: -484.65;
+    stroke-dashoffset: -534.92;
   }
   100% {
     opacity: 0;
-    stroke-dashoffset: -484.65;
+    stroke-dashoffset: -534.92;
   }
 }
 
@@ -448,13 +456,14 @@
  * story in a line: the same tap, packet and hub keyframes, curves and pace
  * (beats at pace 1, x --pace 1.4). Only the node holding the packet is lit:
  *   0ms      the app lights its blue ring and swells (art-tap, 600ms)
- *   200ms    a packet leaves at the ring's peak and crosses wire 1 (700ms)
- *            with a blue run of the dashes trailing it
- *   900ms    it lands: Gate swells (improved-hub, 500ms) and its border
+ *   200ms    a packet leaves at the ring's peak and crosses wire 1 (600ms,
+ *            sped up from 700ms, owner 2026-10-10) with a blue run of the
+ *            dashes trailing it
+ *   800ms    it lands: Gate swells (improved-hub, 500ms) and its border
  *            turns blue (200ms)
- *   1100ms   at Gate's peak a packet crosses wire 2 (700ms)
- *   1800ms   it lands: the target taps (600ms) while Gate's border settles
- *            back to the gray rest border (200ms). Settles at 2.4s (3.4s).
+ *   1000ms   at Gate's peak a packet crosses wire 2 (600ms)
+ *   1600ms   it lands: the target taps (600ms) while Gate's border settles
+ *            back to the gray rest border (200ms). Settles at 2.2s (3.1s).
  * improved-setup.tsx keys the figure on app, billing and model, so a change
  * remounts it and the run restarts from frame one. Labels never move. */
 
@@ -462,29 +471,29 @@
   --pace: 1.4;
 }
 
-/* Starts 8px back, hidden under the sending tile, and slides out from it.
-   Full strength across the wire; it fades only as it reaches the next tile
-   (owner, 2026-10-09: it faded too fast). The trail below shares these
-   opacity beats. */
+/* Starts 8px back, hidden under the sending tile, slides out from it, and
+   ends fully under the next tile (owner, 2026-10-09: it faded too fast;
+   2026-10-10: still too early). Full strength across the whole wire: the
+   receiving tile covers it, so the last 5% fade happens out of sight. */
 @keyframes art-route-fly {
   0% {
     opacity: 0;
     transform: translateX(-8px);
   }
   20%,
-  85% {
+  95% {
     opacity: 1;
   }
   to {
     opacity: 0;
-    transform: translateX(calc(100% - 8px));
+    transform: translateX(100%);
   }
 }
 
 /* Gray -> blue (200ms) -> held while the packet crosses wire 2 -> gray. */
 @keyframes art-route-lit {
-  18.18%,
-  81.82% {
+  20%,
+  80% {
     border-color: var(--info);
   }
 }
@@ -492,35 +501,37 @@
 /* The blue run of the wire's dashes trails the packet, as the orbit run
  * does in the Connect art (owner, 2026-10-09): a full-width blue copy of the
  * dashes shown through a 36px window (the orbit run's length) that ends at
- * the dot's center. The dot starts 8px back, under the app tile, so its
- * center sits at p x 100% - 4px: the clip's left inset goes -40px .. 100% -
- * 40px and its right inset 100% + 4px .. 4px. Same opacity beats, curve and timing as the packet, so the two move
- * as one. */
+ * the dot's center. The dot travels from 8px back under the app tile to
+ * fully under the next tile, so its center sits at p x (100% + 8px) - 4px:
+ * the clip's left inset goes -40px .. 100% - 32px and its right inset
+ * 100% + 4px .. -4px. Same curve and timing as the packet, so the two move
+ * as one; the trail stays on the open wire, so it holds to 92% and fades in
+ * the last stretch as it reaches the tile (owner, 2026-10-10). */
 @keyframes art-route-run {
   0% {
     opacity: 0;
     clip-path: inset(0 calc(100% + 4px) 0 -40px);
   }
   20%,
-  85% {
+  92% {
     opacity: 1;
   }
   to {
     opacity: 0;
-    clip-path: inset(0 4px 0 calc(100% - 40px));
+    clip-path: inset(0 -4px 0 calc(100% - 32px));
   }
 }
 
 [data-motion-root="route-stage"]
   [data-motion-root="route"][data-motion-play]
   [data-motion="route-run"] {
-  animation: art-route-run calc(700ms * var(--pace)) calc(200ms * var(--pace))
+  animation: art-route-run calc(600ms * var(--pace)) calc(200ms * var(--pace))
     ease-in;
 }
 [data-motion-root="route-stage"]
   [data-motion-root="route"][data-motion-play]
   [data-motion="route-run"][data-motion-index="1"] {
-  animation-delay: calc(1100ms * var(--pace));
+  animation-delay: calc(1000ms * var(--pace));
 }
 
 [data-motion-root="route-stage"]
@@ -532,28 +543,28 @@
 [data-motion-root="route-stage"]
   [data-motion-root="route"][data-motion-play]
   [data-motion="route-packet"] {
-  animation: art-route-fly calc(700ms * var(--pace)) calc(200ms * var(--pace))
+  animation: art-route-fly calc(600ms * var(--pace)) calc(200ms * var(--pace))
     ease-in;
 }
 [data-motion-root="route-stage"]
   [data-motion-root="route"][data-motion-play]
   [data-motion="route-packet"][data-motion-index="1"] {
-  animation-delay: calc(1100ms * var(--pace));
+  animation-delay: calc(1000ms * var(--pace));
 }
 
 [data-motion-root="route-stage"]
   [data-motion-root="route"][data-motion-play]
   [data-motion="route-gate"] {
   animation:
-    improved-hub calc(500ms * var(--pace)) calc(900ms * var(--pace)),
-    art-route-lit calc(1100ms * var(--pace)) calc(900ms * var(--pace))
+    improved-hub calc(500ms * var(--pace)) calc(800ms * var(--pace)),
+    art-route-lit calc(1000ms * var(--pace)) calc(800ms * var(--pace))
     var(--ease-out);
 }
 
 [data-motion-root="route-stage"]
   [data-motion-root="route"][data-motion-play]
   [data-motion="route-target"] {
-  animation: art-tap calc(600ms * var(--pace)) calc(1800ms * var(--pace))
+  animation: art-tap calc(600ms * var(--pace)) calc(1600ms * var(--pace))
     ease-in-out backwards;
 }
 

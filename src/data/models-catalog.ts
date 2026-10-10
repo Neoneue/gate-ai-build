@@ -11,6 +11,10 @@
  *   name         digit-dot repair ("Gemini 2 5" -> "Gemini 2.5") and "80B".
  *   description  verbatim from the feed when present, else empty.
  *   releasedAt   from `released` when present, else null.
+ * Added 2026-10-10 (owner): anthropic/claude-opus-5-5, -sonnet-5-5 and
+ * -haiku-5-5, mapped by this script's own rules from that day's feed and
+ * placed in feed order; a full regeneration would also drop rows the feed
+ * has since retired.
  */
 import type { Model } from "./models";
 
@@ -590,6 +594,41 @@ export const CATALOG_ROWS: Model[] = [
     ]
   },
   {
+    "id": "anthropic/claude-haiku-5-5",
+    "vendor": "anthropic",
+    "name": "Claude Haiku 5.5",
+    "description": "Fast Claude model for responsive assistance, classification, and lightweight agents",
+    "modality": "text",
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "pricing": {
+      "inputPer1M": 0.1,
+      "outputPer1M": 0.5,
+      "cachedInputReadPer1M": 0.01,
+      "cachedInputWritePer1M": 0.125
+    },
+    "pricingMarkup": 1,
+    "capabilities": [
+      "tools",
+      "reasoning",
+      "vision",
+      "pdfInput",
+      "promptCaching",
+      "responseSchema"
+    ],
+    "releasedAt": null,
+    "providers": [
+      {
+        "id": "openrouter",
+        "nativeModelId": "anthropic/claude-haiku-5-5",
+        "paygMarkup": 1,
+        "latencyP50Ms": null,
+        "throughputTps": null,
+        "sampleCount": 0
+      }
+    ]
+  },
+  {
     "id": "anthropic/claude-haiku-latest",
     "vendor": "anthropic",
     "name": "Claude Haiku Latest",
@@ -692,6 +731,41 @@ export const CATALOG_ROWS: Model[] = [
     ]
   },
   {
+    "id": "anthropic/claude-opus-5-5",
+    "vendor": "anthropic",
+    "name": "Claude Opus 5.5",
+    "description": "Claude model for long-running agentic coding and knowledge work",
+    "modality": "text",
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "pricing": {
+      "inputPer1M": 4,
+      "outputPer1M": 20,
+      "cachedInputReadPer1M": 0.2,
+      "cachedInputWritePer1M": 5
+    },
+    "pricingMarkup": 1,
+    "capabilities": [
+      "tools",
+      "reasoning",
+      "vision",
+      "pdfInput",
+      "promptCaching",
+      "responseSchema"
+    ],
+    "releasedAt": null,
+    "providers": [
+      {
+        "id": "openrouter",
+        "nativeModelId": "anthropic/claude-opus-5-5",
+        "paygMarkup": 1,
+        "latencyP50Ms": null,
+        "throughputTps": null,
+        "sampleCount": 0
+      }
+    ]
+  },
+  {
     "id": "anthropic/claude-opus-latest",
     "vendor": "anthropic",
     "name": "Claude Opus Latest",
@@ -753,6 +827,41 @@ export const CATALOG_ROWS: Model[] = [
       {
         "id": "openrouter",
         "nativeModelId": "anthropic/claude-sonnet-4",
+        "paygMarkup": 1,
+        "latencyP50Ms": null,
+        "throughputTps": null,
+        "sampleCount": 0
+      }
+    ]
+  },
+  {
+    "id": "anthropic/claude-sonnet-5-5",
+    "vendor": "anthropic",
+    "name": "Claude Sonnet 5.5",
+    "description": "Fast Claude model for everyday coding, agents, and knowledge work",
+    "modality": "text",
+    "contextWindow": 1000000,
+    "maxOutputTokens": 128000,
+    "pricing": {
+      "inputPer1M": 2,
+      "outputPer1M": 10,
+      "cachedInputReadPer1M": 0.1,
+      "cachedInputWritePer1M": 2.5
+    },
+    "pricingMarkup": 1,
+    "capabilities": [
+      "tools",
+      "reasoning",
+      "vision",
+      "pdfInput",
+      "promptCaching",
+      "responseSchema"
+    ],
+    "releasedAt": null,
+    "providers": [
+      {
+        "id": "openrouter",
+        "nativeModelId": "anthropic/claude-sonnet-5-5",
         "paygMarkup": 1,
         "latencyP50Ms": null,
         "throughputTps": null,

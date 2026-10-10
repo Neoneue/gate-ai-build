@@ -99,20 +99,38 @@ export const IMPROVED_MODELS = [
  *  Every other app keeps IMPROVED_MODELS for now. */
 export const CATALOG_CLIENT = "claude-code";
 
-/** The model Claude Code starts on: an Anthropic model, so the picker opens
- *  in the Anthropic block that leads the list (owner 2026-10-09). */
-export const CATALOG_DEFAULT_MODEL = "anthropic/claude-sonnet-5";
+/** Newer versions that catalog order puts apart from their family: the 5.5
+ *  models added on 2026-10-10 land among the generated rows, and Fable 5.1
+ *  closes the curated block. In the picker each sits right after the
+ *  version it follows (owner 2026-10-10). */
+const FOLLOWS: Record<string, string> = {
+  "anthropic/claude-fable-5-1": "anthropic/claude-fable-5",
+  "anthropic/claude-haiku-5-5": "anthropic/claude-haiku-4-5",
+  "anthropic/claude-opus-5-5": "anthropic/claude-opus-5",
+  "anthropic/claude-sonnet-5-5": "anthropic/claude-sonnet-5",
+};
 
 /** The catalog as picker rows. Anthropic's models lead, since the app is
- *  Claude Code (owner 2026-10-09); each part keeps catalog order. */
+ *  Claude Code (owner 2026-10-09); each part keeps catalog order, apart
+ *  from the FOLLOWS rows. */
 export const CATALOG_MODELS: readonly ImprovedModel[] = [
-  ...MODEL_OPTIONS.filter((model) => model.vendor === "anthropic"),
+  ...MODEL_OPTIONS.filter(
+    (model) => model.vendor === "anthropic" && !(model.handle in FOLLOWS)
+  ).flatMap((model) => [
+    model,
+    ...MODEL_OPTIONS.filter((next) => FOLLOWS[next.handle] === model.handle),
+  ]),
   ...MODEL_OPTIONS.filter((model) => model.vendor !== "anthropic"),
 ].map((model) => ({
   id: model.handle,
   label: model.label,
   vendor: model.vendor,
 }));
+
+/** The model Claude Code starts on: the list's first row, so the picker
+ *  opens at the top with the choice in view rather than scrolled to a row
+ *  further down (owner 2026-10-10; was Claude Sonnet 5). */
+export const CATALOG_DEFAULT_MODEL = CATALOG_MODELS[0].id;
 
 export type ImprovedModel = {
   id: string;

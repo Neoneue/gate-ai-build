@@ -83,7 +83,7 @@ export function ChatArt({
       ref={ref}
     >
       <span
-        className="flex h-10 w-1/2 items-center self-end rounded-md border border-border bg-chat-bubble-user px-4 shadow-xs"
+        className="flex h-10 w-1/2 items-center self-end rounded-md border border-border bg-chat-bubble-user px-4 shadow-md dark:inset-shadow-2xs dark:inset-shadow-border"
         data-motion="bubble-user"
       >
         <span
@@ -92,7 +92,7 @@ export function ChatArt({
         />
       </span>
       <span
-        className="flex flex-col gap-3 rounded-md border border-border bg-chat-bubble-agent p-4 shadow-xs"
+        className="flex flex-col gap-3 rounded-md border border-border bg-linear-to-b from-card to-card-muted p-4 shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="bubble-reply"
       >
         <span className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export function ChatArt({
         </span>
       </span>
       <span
-        className="mt-3 flex h-12 items-center justify-between rounded-sm border border-primary bg-card pr-2 pl-4 text-foreground"
+        className="mt-3 flex h-12 items-center justify-between rounded-sm border border-primary bg-card pr-2 pl-4 text-foreground shadow-md dark:inset-shadow-2xs dark:inset-shadow-border"
         data-motion="composer"
       >
         <span
@@ -145,10 +145,12 @@ export function ChatArt({
   );
 }
 
-/** Orbit geometry: a 200px field, a 64px hub at the centre, five 40px
- *  satellites on an 80px radius starting at 12 o'clock (72deg apart). */
-const ORBIT_RADIUS = 80;
-const ORBIT_CENTER = 100;
+/** Orbit geometry: a 216px field, a 64px hub at the centre, five 40px
+ *  satellites on an 88px radius starting at 12 o'clock (72deg apart);
+ *  widened from 80px so the shadowed tiles keep a 36px gap to the hub
+ *  (owner 2026-10-10). */
+const ORBIT_RADIUS = 88;
+const ORBIT_CENTER = 108;
 const orbitPoint = (index: number) => {
   const angle = ((index * 72 - 90) * Math.PI) / 180;
   return {
@@ -167,13 +169,13 @@ export function ConnectArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
   return (
     <span
       aria-hidden
-      className="relative block size-50"
+      className="relative block size-54"
       data-motion-root="connect-art"
       ref={ref}
     >
       <svg
         className="absolute inset-0 size-full -rotate-90 fill-none"
-        viewBox="0 0 200 200"
+        viewBox="0 0 216 216"
       >
         <mask id={orbitMask} maskUnits="userSpaceOnUse">
           <circle
@@ -204,21 +206,21 @@ export function ConnectArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
       </svg>
       {apps.map((app, index) => (
         <span
-          className="absolute top-24 left-24 size-2 rounded-full bg-info opacity-0"
+          className="absolute top-26 left-26 size-2 rounded-full bg-info opacity-0"
           data-motion="signal"
           data-motion-index={index}
           key={`signal-${app.id}`}
         />
       ))}
       <span
-        className="absolute top-17 left-17 grid size-16 place-items-center rounded-md border border-info bg-card shadow-xs"
+        className="absolute top-19 left-19 grid size-16 place-items-center rounded-md border border-info bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="hub"
       >
         <GateMark className="size-8" />
       </span>
       {apps.map((app, index) => (
         <span
-          className="absolute grid size-10 place-items-center rounded-sm border border-border bg-card shadow-xs"
+          className="absolute grid size-10 place-items-center rounded-sm border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
           data-motion="satellite"
           data-motion-index={index}
           key={app.id}
@@ -244,7 +246,7 @@ export function CodeArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
       ref={ref}
     >
       <span
-        className="flex flex-col overflow-hidden rounded-md border border-border bg-chat-bubble-agent shadow-xs"
+        className="flex flex-col overflow-hidden rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="editor"
       >
         <span className="flex items-center gap-1 border-border border-b px-3 py-2">
@@ -299,7 +301,7 @@ export function CodeArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
         </span>
       </span>
       <span
-        className="flex items-center gap-3 rounded-md border border-border bg-chat-bubble-agent p-3 shadow-xs"
+        className="flex items-center gap-3 rounded-md border border-border bg-linear-to-b from-card to-card-muted p-3 shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="response"
       >
         <GateMark />
@@ -464,7 +466,10 @@ export function HandoffArt({
  *  so each wire runs edge to edge between tiles (owner 2026-10-09); labels
  *  sit in their own row and may overhang their column up to 128px, which
  *  the figure's side padding absorbs. The Gate tile is the Connect art's
- *  hub (card fill, full-colour mark) with the neutral tile border. */
+ *  hub (full-colour mark) with the neutral tile border. Every tile is lit
+ *  from above: card to card-muted in light (muted to card in dark), a
+ *  shadow-md lift, and in dark a 1px border-colour top highlight
+ *  (owner 2026-10-10). */
 export function RouteFigure({
   app,
   appIcon,
@@ -551,14 +556,14 @@ export function RouteFigure({
     >
       {centered ? <span aria-hidden className="col-span-full" /> : null}
       <span
-        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs"
+        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="route-app"
       >
         {appIcon}
       </span>
       {wire(0)}
       <span
-        className="relative z-10 grid size-18 place-items-center rounded-md border border-border bg-card shadow-xs"
+        className="relative z-10 grid size-18 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="route-gate"
       >
         <GateMark className="size-9" />
@@ -573,7 +578,7 @@ export function RouteFigure({
       </span>
       {wire(1)}
       <span
-        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-card shadow-xs"
+        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="route-target"
       >
         {targetIcon}
