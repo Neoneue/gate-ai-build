@@ -971,13 +971,19 @@ describe("the animator: working rules and motion-ux-laws before ux-laws", () => 
     });
   const ANIMATE = () =>
     call("Read", { file_path: "/r/agents/animator/skills/animate/SKILL.md" });
-  const run = (text, agent_type) =>
+  const run = (text, agent_type, tool_input = {}) =>
     verdict(
       {
         transcript_path: "/dev/null",
         cwd: "/r",
         tool_name: "Edit",
-        tool_input: { file_path: "src/pages/onboarding/onboarding-motion.css" },
+        tool_input: {
+          file_path:
+            tool_input.old_string === undefined
+              ? "src/pages/onboarding/onboarding-motion.css"
+              : "src/pages/x.tsx",
+          ...tool_input,
+        },
         ...(agent_type ? { agent_type, agent_id: "a1" } : {}),
       },
       {
@@ -1032,7 +1038,20 @@ describe("the animator: working rules and motion-ux-laws before ux-laws", () => 
     expect(run(transcript(t, round()))).toBeNull();
   });
 
-  it("the front-end kit's session is not held to the animator steps", () => {
-    expect(run(FULL())).toBeNull();
+  it("a front-end session's motion edit is held; its plain edit is not", () => {
+    expect(run(FULL())).toMatch(/motion-ux-laws/);
+    expect(
+      run(FULL(), null, { old_string: 'htmlFor="a"', new_string: "" })
+    ).toBeNull();
+  });
+
+  it("an animator-index session's plain edit owes no motion steps", () => {
+    const t = transcript(ANIMATOR_INDEX(), UX(), GATE(), VH(), ANIMATE());
+    expect(
+      run(t, null, {
+        old_string: '<Label htmlFor="a" className="transition-colors">',
+        new_string: '<Label className="transition-colors">',
+      })
+    ).toBeNull();
   });
 });

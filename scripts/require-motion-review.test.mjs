@@ -141,25 +141,46 @@ describe("reviewState", () => {
     expect(s.missing).toContain("reduced-motion");
   });
 
-  it("a shell write to a UI file arms it", () => {
+  it("a shell write arms it only when it changes motion", () => {
+    const armed = (command) =>
+      reviewState(transcript(call("Bash", { command }))).armed;
     expect(
-      reviewState(
-        transcript(
-          call("Bash", { command: "sed -i '' 's/a/b/' src/index.css" })
-        )
-      ).armed
+      armed("sed -i '' 's/duration-150/duration-200/' src/index.css")
     ).toBe(true);
+    expect(armed("sed -i '' 's/a/b/' src/index.css")).toBe(false);
+  });
+
+  it("an edit near motion, not changing it, arms nothing", () => {
+    const near = call("Edit", {
+      file_path: "/r/src/pages/x.tsx",
+      old_string: '<Label htmlFor="a" className="transition-colors">',
+      new_string: '<Label className="transition-colors">',
+    });
+    const changed = call("Edit", {
+      file_path: "/r/src/pages/x.tsx",
+      old_string: 'className="transition-colors duration-150"',
+      new_string: 'className="transition-colors duration-200"',
+    });
+    expect(reviewState(transcript(near)).armed).toBe(false);
+    expect(reviewState(transcript(changed)).armed).toBe(true);
   });
 });
 
 describe("verdict", () => {
-  it("passes anyone who is not the animator", () => {
-    expect(stop(transcript(EDIT()))).toBeNull();
+  it("holds any session's motion edit, with no animator index read", () => {
+    expect(stop(transcript(EDIT()))).toMatch(/animator review gate/);
     expect(
-      stop(transcript(ANIMATOR_INDEX(), EDIT()), {
-        agent_type: "front-end-developer",
-      })
-    ).toBeNull();
+      stop(transcript(EDIT()), { agent_type: "front-end-developer" })
+    ).toMatch(/animator review gate/);
+  });
+
+  it("the animator editing something with no motion is not held", () => {
+    const label = call("Edit", {
+      file_path: "/r/src/pages/x.tsx",
+      old_string: '<Label htmlFor="a">',
+      new_string: "<Label>",
+    });
+    expect(stop(transcript(ANIMATOR_INDEX(), label))).toBeNull();
   });
 
   it("blocks the main session working as the animator from stopping", () => {

@@ -5,17 +5,18 @@
 // checks the steps after it, which nothing enforced before: kit order steps
 // 5 and 6 in agents/animator/skills/INDEX.md.
 //
-// - Who: the animator (animatorPersona: agent_type animator, or a writer
-//   with no kit type whose latest kit index read is the animator's, as when
-//   the main session or a room seat takes the animator's lane).
-// - When: once it has a landed write to a src/ file (Write, Edit, MultiEdit
-//   or a shell write to a UI file), it may not end its turn, or send a report
-//   through SendMessage or room_post, until, after its LAST such write and in
+// - Who: any session or agent; what it edited decides, not its role.
+// - When: once it has a landed motion edit (isMotionEdit in
+//   require-skill.mjs: a src/ Write, Edit, MultiEdit or shell write whose
+//   text holds keyframes, an animation or transition, GSAP or motion/react,
+//   or a file named for motion), it may not end its turn, or send a report
+//   through SendMessage or room_post, until, after its LAST such edit and in
 //   this order, it has: read agents/animator/skills/review-animations/
 //   SKILL.md, read transitions-polish/SKILL.md, run a reduced-motion browser
 //   check (a tool call whose input sets reducedMotion to "reduce", such as
 //   Playwright's browser_emulate_media or an emulateMedia script), and read
-//   emil-design-eng/SKILL.md. A later write resets all four.
+//   emil-design-eng/SKILL.md. A later motion edit resets all four; an edit
+//   with no motion arms nothing.
 // - Proof: after the last write, its own output (this final message or
 //   report, or an earlier one) must name the review-animations verdict
 //   (Approve or Block) and hold the emil-design-eng Before / After.
@@ -31,7 +32,7 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import {
-  animatorPersona,
+  isMotionEdit,
   shellWritesUi,
   transcriptPathOf,
 } from "./require-skill.mjs";
@@ -74,7 +75,7 @@ function eventOf(part) {
   }
   if (["Write", "Edit", "MultiEdit", "NotebookEdit"].includes(name)) {
     const file = String(input.file_path ?? input.notebook_path ?? "");
-    return isSrc(file) ? [{ kind: "write" }] : [];
+    return isSrc(file) && isMotionEdit(name, input) ? [{ kind: "write" }] : [];
   }
   if (name === "Read") {
     const skill = String(input.file_path ?? "").match(KIT_SKILL)?.[1];
@@ -84,7 +85,7 @@ function eventOf(part) {
   if (name === "Bash") {
     const command = String(input.command ?? "");
     if (shellWritesUi(command)) {
-      return [{ kind: "write" }];
+      return isMotionEdit("Bash", input) ? [{ kind: "write" }] : [];
     }
     for (const m of command.matchAll(KIT_SKILL_SHELL_READ)) {
       if (STEPS.includes(m[1])) {
@@ -195,19 +196,14 @@ export function reviewState(text, { review = false } = {}) {
 
 /**
  * Whether a subagent's transcript is the review its parent handed off: the
- * parent works as the animator, has an unreviewed write, handed the review
- * to an animator subagent after it, and this transcript started after that
- * write with the hand-off's prompt (or read the animator index, as the
- * animator's definition tells it to).
+ * subagent is an animator, the parent has an unreviewed motion edit and
+ * handed the review to an animator subagent after it, and this transcript
+ * started after that edit with the hand-off's prompt.
  */
-function isHandedReview(text, own, parentText) {
+function isHandedReview(agentType, own, parentText) {
   const parent = reviewState(parentText);
   if (
-    !(
-      parent.armed &&
-      parent.handoffs.length > 0 &&
-      animatorPersona("", parentText)
-    )
+    !(agentType === "animator" && parent.armed && parent.handoffs.length > 0)
   ) {
     return false;
   }
@@ -217,10 +213,11 @@ function isHandedReview(text, own, parentText) {
     Number.isNaN(parent.lastWriteAt) ||
     own.startedAt > parent.lastWriteAt;
   const prompt = String(own.firstPrompt ?? "").trim();
-  const matches =
-    (prompt !== "" && parent.handoffs.some((p) => p.trim() === prompt)) ||
-    animatorPersona("", text);
-  return startedAfter && matches;
+  return (
+    startedAfter &&
+    prompt !== "" &&
+    parent.handoffs.some((p) => p.trim() === prompt)
+  );
 }
 
 /** A message that says the writer is blocked and needs the owner. */
@@ -261,15 +258,18 @@ export function verdict(
   } catch {
     return null;
   }
-  if (!animatorPersona(input.agent_type, text)) {
-    return null;
-  }
   let state = reviewState(text);
   if (!state.armed && event === "SubagentStop") {
-    // A subagent with no write of its own may be the review its parent
+    // A subagent with no motion edit of its own may be the review its parent
     // handed off: then the four steps are its whole job.
     try {
-      if (isHandedReview(text, state, readTranscript(input.transcript_path))) {
+      if (
+        isHandedReview(
+          input.agent_type,
+          state,
+          readTranscript(input.transcript_path)
+        )
+      ) {
         state = reviewState(text, { review: true });
       }
     } catch {

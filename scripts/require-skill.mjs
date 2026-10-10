@@ -17,12 +17,13 @@
 //   read visual-hierarchy, then load ONE build skill picked from that index.
 //   UX before UI: a step out of order does not count. One round covers one
 //   change: after a commit, the next change does them again.
-// - The animator (agent_type animator, or a session whose latest kit index
-//   read is agents/animator/skills/INDEX.md: animatorPersona) also reads,
-//   after the index and before ux-laws, agents/animator/knowledge/
-//   working-rules.md (once per session), then motion-ux-laws (per change):
-//   its kit's order steps 0 and 1. Its review steps after the build are
-//   require-motion-review.mjs's job.
+// - A motion edit (isMotionEdit: the text it adds or removes holds
+//   keyframes, an animation or transition, GSAP or motion/react, or the file
+//   is named for motion), by any writer, also needs, after the index and
+//   before ux-laws, agents/animator/knowledge/working-rules.md (once per
+//   session), then motion-ux-laws (per change): the animator kit's order
+//   steps 0 and 1. The review steps after it are require-motion-review.mjs's
+//   job. Who edits does not matter; what the edit holds does.
 // - The gate covers every way a session writes a file: Write, Edit and
 //   MultiEdit by path; Bash by its command (shellWritesUi: in-place sed or
 //   perl, a redirect or tee into the file, cp/mv/rm/touch on it, a python,
@@ -314,10 +315,9 @@ function eventsOf(part) {
  * nothing. `lastCommitAt` is when the last landed commit's result came back.
  * With `after` (a time from another transcript, in ms), a per-change step
  * counts only when it happened after it; an event with no timestamp then
- * never counts. With `motion` (true, or "auto": when the latest kit index
- * read is the animator's), the UI steps also need, between the index and
- * ux-laws, "working-rules" (once per session) and then "motion-ux-laws"
- * (per change). `lastIndexKit` is the kit of the latest index read.
+ * never counts. With `motion` (the write being judged is motion work), the
+ * UI steps also need, between the index and ux-laws, "working-rules" (once
+ * per session) and then "motion-ux-laws" (per change).
  */
 export function skillState(
   text,
@@ -382,17 +382,14 @@ export function skillState(
     from === -1
       ? -1
       : events.findIndex((e, i) => e.kind === kind && fresh(e, i) && i > from);
-  const lastIndexKit = events.findLast((e) => e.kind === "index")?.kit ?? null;
-  const motionOn =
-    motion === true || (motion === "auto" && lastIndexKit === "animator");
-  // The animator's kit order: working rules (once per session), then
-  // motion-ux-laws, before the front-end UX steps.
+  // A motion edit adds the animator kit's first steps: working rules (once
+  // per session), then motion-ux-laws, before the front-end UX steps.
   const rulesAt =
-    !motionOn || indexAt === -1
+    !motion || indexAt === -1
       ? indexAt
       : events.findIndex((e, i) => e.kind === "rules" && i > indexAt);
   const muxAt =
-    !motionOn || rulesAt === -1
+    !motion || rulesAt === -1
       ? rulesAt
       : events.findIndex(
           (e, i) => e.skill === "motion-ux-laws" && fresh(e, i) && i > rulesAt
@@ -410,10 +407,10 @@ export function skillState(
   if (indexAt === -1) {
     missing.push("index");
   }
-  if (motionOn && rulesAt === -1) {
+  if (motion && rulesAt === -1) {
     missing.push("working-rules");
   }
-  if (motionOn && muxAt === -1) {
+  if (motion && muxAt === -1) {
     missing.push("motion-ux-laws");
   }
   if (uxAt === -1) {
@@ -445,20 +442,52 @@ export function skillState(
   ) {
     codeMissing.push("skill");
   }
-  return { anySkill, missing, codeMissing, lastCommitAt, lastIndexKit };
+  return { anySkill, missing, codeMissing, lastCommitAt };
 }
 
 /**
- * Whether the writer works as the animator: spawned as one, or (with no kit
- * agent type of its own) its latest kit index read is the animator's, as
- * when the main session or a room seat takes the animator's lane.
+ * Motion in a text, one match per declaration or class with its value, so a
+ * changed duration or curve reads as a change: keyframes, animation and
+ * transition declarations, Tailwind animate / transition / duration / ease /
+ * delay / motion-reduce classes, data-motion attributes, GSAP, motion/react.
  */
-export function animatorPersona(agentType, text) {
-  const kit = kitOf(agentType);
-  if (kit !== null) {
-    return kit === "animator";
+const MOTION_TOKENS =
+  /@keyframes[^{\n]*|\banimation(?:-[a-z]+)?\s*:[^;"}\n]*|\btransition(?:-[a-z]+)?(?:\s*:[^;"}\n]*)?|\banimate-[\w-]+|\bmotion-(?:reduce|safe)[\w:[\].-]*|\bdata-motion[\w-]*(?:=["{][^"}]*["}])?|\bduration-[\w[\].]+|\bease-[\w[\](),.-]+|\bdelay-[\w[\].]+|\bgsap(?:\.[\w.]+)?|\buseGSAP\b|motion\/react/g;
+function motionOf(text) {
+  return [...String(text ?? "").matchAll(MOTION_TOKENS)]
+    .map((m) => m[0].trim())
+    .sort()
+    .join("\n");
+}
+/** A source file named for motion (use-onboarding-motion.ts, x-motion.css). */
+const MOTION_FILE = /(^|\/)src\/.*motion[^/]*$/i;
+
+/**
+ * Whether a write is motion work: the file is named for motion, or the edit
+ * adds, removes or changes motion. An Edit counts only when the motion in its
+ * old and new text differs, so an edit that merely sits near an existing
+ * animation class does not. A Write (its whole content) or a shell command
+ * counts when it holds any motion.
+ */
+export function isMotionEdit(tool, toolInput = {}) {
+  const file = String(toolInput.file_path ?? toolInput.path ?? "");
+  if (tool !== "Bash" && MOTION_FILE.test(file)) {
+    return true;
   }
-  return skillState(text).lastIndexKit === "animator";
+  if (tool === "Bash") {
+    const command = String(toolInput.command ?? "");
+    return (
+      motionOf(command) !== "" || /motion[^/\s]*\.(css|tsx?)/i.test(command)
+    );
+  }
+  if (toolInput.content !== undefined) {
+    return motionOf(toolInput.content) !== "";
+  }
+  const edits = [
+    { old_string: toolInput.old_string, new_string: toolInput.new_string },
+    ...(toolInput.edits ?? []),
+  ];
+  return edits.some((e) => motionOf(e?.old_string) !== motionOf(e?.new_string));
 }
 
 /**
@@ -488,7 +517,6 @@ export function subagentCovers(input, after, { readTranscript, listDir }) {
       return (
         skillState(readTranscript(path.join(dir, f)), {
           after,
-          motion: "auto",
         }).missing.length === 0
       );
     } catch {
@@ -621,9 +649,9 @@ export function verdict(
     state = skillState(readTranscript(transcript), {
       kit,
       allows,
-      // A kit agent is the animator by its type; anyone else by the latest
-      // kit index it read.
-      motion: kit === null ? "auto" : kit === "animator",
+      // Motion work owes the animator kit's first steps, whoever writes it.
+      // A commit is judged on its UI steps alone.
+      motion: !commitUi && isMotionEdit(tool, toolInput),
     });
   } catch {
     return null;
@@ -679,7 +707,7 @@ function uiMessage(file, missing, commit = false, kit = null) {
     .join(" ");
   return (
     `Blocked (UI gate): this changes UI (${file}). Still missing: ${steps} ` +
-    "Then retry. Order matters: index, (the animator: working rules, then motion-ux-laws), ux-laws, the written gate, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry. The index and the working rules are read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
+    "Then retry. Order matters: index, (a motion edit: working rules, then motion-ux-laws), ux-laws, the written gate, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry. The index and the working rules are read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
     (commit
       ? "A commit also passes when one of this session's subagents loaded all four since the last commit. "
       : "") +

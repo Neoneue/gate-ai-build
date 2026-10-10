@@ -73,22 +73,25 @@ reference the motion follows and the existing motion in the repo it
 matches), then
 `agents/front-end-developer/skills/visual-hierarchy/SKILL.md`, then one
 build skill. For motion work the build skill is usually `animate` or
-`gsap`. It resets after each commit. For the animator (spawned as one, or
-any session whose latest kit index read is `agents/animator/skills/INDEX.md`)
-it also requires, after the index and before ux-laws, this file (once per
-session) and then `motion-ux-laws` (per change).
+`gsap`. It resets after each commit. For a motion edit (one that adds,
+removes or changes keyframes, an animation or transition, a duration, curve
+or delay, GSAP or `motion/react`, or any edit to a file named for motion),
+whoever makes it, it also requires, after the index and before ux-laws,
+this file (once per session) and then `motion-ux-laws` (per change). The
+edit decides, not the role: an edit that only sits near existing motion
+owes nothing extra.
 
 ## The review gate
 
-`scripts/require-motion-review.mjs` runs when you end a turn, when a
-subagent animator stops, and before a `SendMessage` or room post. Once you
-have edited a `src/` file, it blocks until, after your LAST edit and in this
+`scripts/require-motion-review.mjs` runs when a session ends a turn, when a
+subagent stops, and before a `SendMessage` or room post. Once you have made
+a motion edit, it blocks until, after your LAST motion edit and in this
 order, you have read `review-animations`, read `transitions-polish`, checked
 the motion with reduced motion on (a tool call setting `reducedMotion` to
 `"reduce"`), and read `emil-design-eng`. Your report must name the
 review-animations verdict (Approve or Block) and hold the emil-design-eng
-Before / After. Any later edit, a small follow-up fix included, resets all
-of it. There is no skip.
+Before / After. Any later motion edit, a small follow-up fix included,
+resets all of it. There is no skip.
 
 Two ways to stop before the passes are done, neither of which skips them:
 
