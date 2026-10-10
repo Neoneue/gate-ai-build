@@ -318,3 +318,39 @@ test("stop is held until the duplicate check and the reviewer ran", () => {
     null
   );
 });
+
+test("the main session is gated only when the project opts in", () => {
+  const main = { ...ui(), agent_type: undefined };
+  const on = { UX_DESIGNER_GATE_MAIN: "1" };
+  assert.equal(preToolUse(main, emptyState(), {}), null);
+  assert.match(preToolUse(main, emptyState(), on), /write a valid spec/);
+  assert.equal(
+    preToolUse(
+      { ...main, agent_id: "a1", agent_type: "animator" },
+      emptyState(),
+      on
+    ),
+    null
+  );
+  assert.equal(preToolUse({ ...main, agent_id: "a1" }, emptyState(), on), null);
+});
+
+test("an MCP fetch or scrape counts as a looked-up precedent", () => {
+  const s = emptyState();
+  postToolUse(
+    {
+      tool_name: "mcp__plugin_context-mode_context-mode__ctx_fetch_and_index",
+      tool_input: { requests: [{ url: URL }] },
+    },
+    s
+  );
+  postToolUse(
+    {
+      tool_name: "mcp__firecrawl__firecrawl_scrape",
+      tool_input: { url: "https://vercel.com/docs" },
+    },
+    s
+  );
+  assert.deepEqual(s.fetched, [URL, "https://vercel.com/docs"]);
+  assert.equal(validateSpec(GOOD, s.fetched).valid, true);
+});

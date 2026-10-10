@@ -179,6 +179,27 @@ describe("skillState", () => {
     ]);
   });
 
+  it("a ux-designer design spec counts as the written gate", () => {
+    const spec = call("Write", {
+      file_path: "/tmp/scratch/design-spec.md",
+      content:
+        "## Decision\nChosen: A\nRejected: B, noisier\nPrecedent: https://x.dev",
+    });
+    expect(
+      skillState(transcript(INDEX(), UX(), spec, VH(), SHADCN())).missing
+    ).toEqual([]);
+  });
+
+  it("a design spec without its Decision lines is not the gate", () => {
+    const spec = call("Write", {
+      file_path: "/tmp/scratch/design-spec.md",
+      content: "## Decision\nChosen: A",
+    });
+    expect(
+      skillState(transcript(INDEX(), UX(), spec, VH(), SHADCN())).missing
+    ).toEqual(["gate"]);
+  });
+
   it("any other skill alone is not ux-laws", () => {
     const t = transcript(call("Skill", { skill: "rams" }));
     expect(skillState(t).missing).toEqual([

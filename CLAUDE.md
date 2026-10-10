@@ -49,6 +49,15 @@ Shared project instructions, kept minimal; per-area detail lives in
   subagents did them all since the last commit. Inside a subagent it checks
   the subagent's own transcript. It fails open: if it never blocks, check
   that the hook is registered.
+- **Design before build (ux-designer plugin, owner 2026-10-10).** The
+  project-scope plugin `plugins/ux-designer/` (marketplace
+  `.claude-plugin/marketplace.json`, enabled in `.claude/settings.json`)
+  locks UI files in the main session (`UX_DESIGNER_GATE_MAIN=1`) and in
+  `designer` agents until a valid `design-spec.md` exists (skill
+  `ux-designer:design-spec`, Precedent URL looked up this session) AND the
+  owner replied "go" after it. Before finishing, run its dup-check and spawn
+  `ux-designer:reviewer`. That spec also counts as the UI gate's written
+  ux-laws gate. Plugin edits apply at the next session or `/reload-plugins`.
 - **Every agent picks a skill before any write.** The same hook gates every
   Write or Edit inside the project (outside it, such as the scratchpad, is
   free): the writer reads its OWN kit's INDEX.md (by `agent_type`; another

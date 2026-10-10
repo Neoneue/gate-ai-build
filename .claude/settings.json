@@ -2,17 +2,17 @@
   "hooks": {
     "PostToolUse": [
       {
+        "matcher": "Write|Edit",
         "hooks": [
           {
-            "command": "f=$(jq -r '.tool_input.file_path // empty'); if [ -n \"$f\" ] && [ -f \"$f\" ]; then npx biome check --write --skip=correctness/noUnusedImports \"$f\"; fi",
-            "type": "command"
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); if [ -n \"$f\" ] && [ -f \"$f\" ]; then npx biome check --write --skip=correctness/noUnusedImports \"$f\"; fi"
           },
           {
-            "command": "out=$(node scripts/check-design-tokens.mjs 2>&1) || { printf '%s\\n' \"$out\" >&2; echo '^ DESIGN-TOKEN VIOLATION (design.md is the authority): tokenize the value(s) above per design.md. No hardcoded colors, no text-[Npx]. Fix before continuing.' >&2; exit 2; }",
-            "type": "command"
+            "type": "command",
+            "command": "out=$(node scripts/check-design-tokens.mjs 2>&1) || { printf '%s\\n' \"$out\" >&2; echo '^ DESIGN-TOKEN VIOLATION (design.md is the authority): tokenize the value(s) above per design.md. No hardcoded colors, no text-[Npx]. Fix before continuing.' >&2; exit 2; }"
           }
-        ],
-        "matcher": "Write|Edit"
+        ]
       }
     ],
     "PreToolUse": [
@@ -55,5 +55,19 @@
         ]
       }
     ]
+  },
+  "extraKnownMarketplaces": {
+    "gate-ai-build": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/cponticas/Documents/GitHub/gate-ai-build"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ux-designer@gate-ai-build": true
+  },
+  "env": {
+    "UX_DESIGNER_GATE_MAIN": "1"
   }
 }

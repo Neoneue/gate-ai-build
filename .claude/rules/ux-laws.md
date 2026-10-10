@@ -22,7 +22,9 @@ only what must never depend on a skill being loaded.
 - **Decide, don't default:** before UI, write the ux-laws gate (the tested
   pattern it follows and the repo component it maps to, then objects, then
   actions on them, then laws, then at least one rejected alternative). A
-  design with no rejected alternative was defaulted, not decided.
+  design with no rejected alternative was defaulted, not decided. With the
+  ux-designer plugin on, that gate is the `design-spec.md` the owner
+  approves before any build (owner 2026-10-10).
 - **No invented UI:** every layout follows a tested pattern (Stripe, Vercel,
   OpenAI / Anthropic consoles) built from our components. A new component
   only when nothing existing fits, and the gate says why (owner 2026-10-08).

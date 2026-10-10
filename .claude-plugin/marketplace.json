@@ -1,0 +1,11 @@
+{
+  "name": "gate-ai-build",
+  "owner": { "name": "gate-ai-build" },
+  "plugins": [
+    {
+      "name": "ux-designer",
+      "source": "./plugins/ux-designer",
+      "description": "Design before build: a whole-surface spec the owner approves, then the build, a duplicate check and a fresh-context reviewer."
+    }
+  ]
+}

@@ -249,6 +249,23 @@ function writesGate(text) {
   return GATE_LINES.every((re) => re.test(text));
 }
 
+/**
+ * The ux-designer plugin's design spec stands in for the written gate (owner
+ * 2026-10-10): a design-spec*.md written with its Decision lines, or any
+ * later edit to one. The plugin's own hook validates the rest of the spec.
+ */
+const SPEC_FILE = /(^|\/)design-spec[\w.-]*\.md$/i;
+function writesSpec(name, input) {
+  if (!SPEC_FILE.test(String(input.file_path ?? ""))) {
+    return false;
+  }
+  if (name === "Edit") {
+    return true;
+  }
+  const text = String(input.content ?? "");
+  return /^\s*Precedent:\s*\S/m.test(text) && /^\s*Rejected:\s*\S/m.test(text);
+}
+
 /** The events that load a skill: the UX skills and any other. */
 const SKILL_KINDS = ["ux", "vh", "build"];
 
@@ -265,7 +282,9 @@ function eventsOf(part) {
   // a tool call is on disk at once, so this is the reliable route.
   if (
     (part.name === "Write" && writesGate(String(input.content ?? ""))) ||
-    (part.name === "Edit" && writesGate(String(input.new_string ?? "")))
+    (part.name === "Edit" && writesGate(String(input.new_string ?? ""))) ||
+    ((part.name === "Write" || part.name === "Edit") &&
+      writesSpec(part.name, input))
   ) {
     return [{ kind: "gate" }];
   }
@@ -692,7 +711,7 @@ const STEP = {
     "after the working rules, read motion-ux-laws, the animator kit's order step 1 (Read agents/animator/skills/motion-ux-laws/SKILL.md), and decide whether it should move at all",
   "ux-laws":
     "after the index, read the ux-laws skill by path (Read agents/front-end-developer/skills/ux-laws/SKILL.md)",
-  gate: "after reading ux-laws, write its gate (ux-laws section 4) with the Write tool to a file, for example <your scratchpad>/ux-gate.md (a gate only in your reply text may not reach the transcript until your turn ends, so the hook cannot see it), as nine labelled lines: `Job:` what the user came to do; `Path:` entry, steps, exit, errors; `Expectation:` which app they think this works like; `Precedent:` the tested pattern this follows (a competitor such as Stripe, Vercel or the OpenAI / Anthropic consoles, with its URL or name) and the existing repo component or precedent it maps to (file:line), or `new component:` and why nothing existing fits; `Objects:` the things the user acts on and which container shows each; `Actions:` each action added or moved as action -> object it changes -> container it sits in, where the object must be the container's own (or `none`); `Laws:` each law touched and how it passes; `Patterns:` the corrected patterns that apply and that they hold; `Rejected:` at least one alternative and why it lost. If any answer is no or unknown, fix the design before writing UI",
+  gate: "after reading ux-laws, write its gate (ux-laws section 4) with the Write tool to a file, for example <your scratchpad>/ux-gate.md (a gate only in your reply text may not reach the transcript until your turn ends, so the hook cannot see it), as nine labelled lines: `Job:` what the user came to do; `Path:` entry, steps, exit, errors; `Expectation:` which app they think this works like; `Precedent:` the tested pattern this follows (a competitor such as Stripe, Vercel or the OpenAI / Anthropic consoles, with its URL or name) and the existing repo component or precedent it maps to (file:line), or `new component:` and why nothing existing fits; `Objects:` the things the user acts on and which container shows each; `Actions:` each action added or moved as action -> object it changes -> container it sits in, where the object must be the container's own (or `none`); `Laws:` each law touched and how it passes; `Patterns:` the corrected patterns that apply and that they hold; `Rejected:` at least one alternative and why it lost. If any answer is no or unknown, fix the design before writing UI. A ux-designer design-spec.md (design-spec skill) written with its Precedent: and Rejected: lines counts as this gate",
   "visual-hierarchy":
     "after ux-laws, load visual-hierarchy, the second UX skill (Read agents/front-end-developer/skills/visual-hierarchy/SKILL.md), and give every element its tier",
   pick: "after visual-hierarchy, load the ONE build skill from the index that fits this job (for example shadcn for a component or a button, ask-sonner for a toast): Read agents/front-end-developer/skills/<name>/SKILL.md. One build skill, not several",

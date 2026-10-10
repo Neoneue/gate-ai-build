@@ -53,6 +53,33 @@ export function isDesigner(agentType) {
   return /^(ux-designer:)?designer$/.test(String(agentType ?? ""));
 }
 
+/**
+ * Whether this hook call is held to design-before-build: a designer agent,
+ * or the main session itself (no agent_type, no agent_id) when the project
+ * opts in with UX_DESIGNER_GATE_MAIN=1 in its settings env.
+ */
+export function isGated(input, env = process.env) {
+  if (isDesigner(input.agent_type)) {
+    return true;
+  }
+  return (
+    env.UX_DESIGNER_GATE_MAIN === "1" && !input.agent_type && !input.agent_id
+  );
+}
+
+/**
+ * URLs a fetch tool looked up: WebFetch's url, or an MCP fetch or scrape
+ * tool's url / requests[].url (hosts can redirect WebFetch to one).
+ */
+export function fetchedUrls(name, toolInput) {
+  const ti = toolInput ?? {};
+  if (name === "WebFetch" || /^mcp__.*(fetch|scrape)/i.test(name)) {
+    const urls = [ti.url, ...(ti.requests ?? []).map((r) => r?.url)];
+    return urls.filter((u) => typeof u === "string" && u);
+  }
+  return [];
+}
+
 /** An owner reply that approves a spec: a literal "go" or "approved". */
 export function isApproval(prompt) {
   const p = String(prompt ?? "").trim();
@@ -317,7 +344,7 @@ function targetsOf(input) {
 
 /** PreToolUse: returns null to allow, or a reason string to block. */
 export function preToolUse(input, state, env = process.env, now = Date.now()) {
-  if (!isDesigner(input.agent_type)) {
+  if (!isGated(input, env)) {
     return null;
   }
   const ui = targetsOf(input).filter((f) => isUiPath(f) && !isSpecPath(f));
@@ -356,11 +383,7 @@ export function preToolUse(input, state, env = process.env, now = Date.now()) {
 
 /** Stop / SubagentStop: returns null to allow, or a reason to keep going. */
 export function stopCheck(input, state, env = process.env) {
-  if (
-    !isDesigner(input.agent_type) ||
-    input.stop_hook_active ||
-    state.stopBlocks >= 2
-  ) {
+  if (!isGated(input, env) || input.stop_hook_active || state.stopBlocks >= 2) {
     return null;
   }
   if (
@@ -387,12 +410,10 @@ export function stopCheck(input, state, env = process.env) {
 }
 
 /** PostToolUse: updates state; returns { context?, block? }. */
-export function postToolUse(input, state, now = Date.now()) {
+export function postToolUse(input, state, now = Date.now(), env = process.env) {
   const ti = input.tool_input ?? {};
   const name = input.tool_name;
-  if (name === "WebFetch" && ti.url) {
-    state.fetched.push(ti.url);
-  }
+  state.fetched.push(...fetchedUrls(name, ti));
   if (name === "WebSearch") {
     state.fetched.push(...urlsIn(JSON.stringify(input.tool_response ?? "")));
   }
@@ -444,7 +465,7 @@ export function postToolUse(input, state, now = Date.now()) {
           : "Spec valid. Present it to the owner (Requirements with cuts and moves first, Values, the chosen wireframe, the Decision) and end your turn. Their reply unlocks UI files.",
       };
     }
-    if (isUiPath(file) && isDesigner(input.agent_type)) {
+    if (isUiPath(file) && isGated(input, env)) {
       state.uiEdits.push(file);
       if (state.spec?.tiny && !state.spec.tinyFile) {
         state.spec.tinyFile = file;
@@ -484,14 +505,14 @@ function main() {
   };
 
   if (ev === "SessionStart" || ev === "SubagentStart") {
-    if (isPluginAgent(input.agent_type)) {
+    if (isPluginAgent(input.agent_type) || isGated(input)) {
       const mode = process.env.UX_DESIGNER_MODE
         ? ` Mode: ${process.env.UX_DESIGNER_MODE}.`
         : "";
       out({
         hookSpecificOutput: {
           hookEventName: ev,
-          additionalContext: `ux-designer plugin root: ${process.env.CLAUDE_PLUGIN_ROOT ?? "(unknown)"}. Write specs to design-spec.md in your scratchpad directory${input.scratchpad_dir ? ` (${input.scratchpad_dir})` : ""}.${mode}`,
+          additionalContext: `ux-designer plugin root: ${process.env.CLAUDE_PLUGIN_ROOT ?? "(unknown)"}. Write specs to design-spec.md in your scratchpad directory${input.scratchpad_dir ? ` (${input.scratchpad_dir})` : ""}. UI files stay locked until the owner approves a spec: load the ux-designer:design-spec skill before any UI change.${mode}`,
         },
       });
     }
