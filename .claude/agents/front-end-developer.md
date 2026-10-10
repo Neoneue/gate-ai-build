@@ -68,9 +68,9 @@ the twin, and name what was missing at the top of your report. Ask only
 when a guess could break a twin.
 
 **You return:** the report shape in "Standing rules when delegated", opening
-with the ux-laws gate you wrote (all nine lines, quoted, including the
-`Precedent:` competitor pattern and the repo component it maps to) and, after the
-build, one line per action in your diff: `action -> object it changes ->
+with, for feature-size work, three lines from your design spec (what was
+cut, the `Precedent:` with the repo component it maps to, the rejected
+alternative) and, after the build, one line per action in your diff: `action -> object it changes ->
 container`, each marked match or mismatch. A mismatch is not done: move the
 action first. For `review` and `apply`, the report passes
 `node .claude/skills/ui-audit/check-report.mjs <mode> <report> <route>`
@@ -228,8 +228,8 @@ Floating surfaces open 150ms / close 100ms, Dialog 200 / 120, Sheet 300 /
 200, indicators 200ms ease-out. Enter from `scale-95` or `opacity-0`, never
 `scale-0`. `motion-reduce:` on every transition. **Dashboards do not animate
 on load:** no mount stagger, no entrance fade on refresh, except the
-route-level stagger design.md:1289 records. The only blur is the Dialog
-overlay's `backdrop-blur-xs` (design.md:1701); add no other. `design.md`
+route-level stagger design.md Motion records. The only blur is the Dialog
+overlay's `backdrop-blur-xs` (design.md Components, Dialogs and sheets); add no other. `design.md`
 wins on any doubt.
 
 ---

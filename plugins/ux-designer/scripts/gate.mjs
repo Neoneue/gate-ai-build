@@ -19,7 +19,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 export const MOMENTS = [
   "always",
@@ -55,11 +55,19 @@ export function isDesigner(agentType) {
 
 /**
  * Whether this hook call is held to design-before-build: a designer agent,
- * or the main session itself (no agent_type, no agent_id) when the project
- * opts in with UX_DESIGNER_GATE_MAIN=1 in its settings env.
+ * an agent type the project lists in UX_DESIGNER_GATE_AGENTS (comma
+ * separated), or the main session itself (no agent_type, no agent_id) when
+ * the project sets UX_DESIGNER_GATE_MAIN=1.
  */
 export function isGated(input, env = process.env) {
   if (isDesigner(input.agent_type)) {
+    return true;
+  }
+  const listed = String(env.UX_DESIGNER_GATE_AGENTS ?? "")
+    .split(",")
+    .map((a) => a.trim())
+    .filter(Boolean);
+  if (input.agent_type && listed.includes(input.agent_type)) {
     return true;
   }
   return (
@@ -144,11 +152,30 @@ function table(sectionText) {
 
 const col = (header, re) => header.findIndex((h) => re.test(h));
 
+const PATTERNS_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "skills",
+  "patterns"
+);
+
+/** The patterns library entries: skills/patterns/*.md, not its SKILL.md. */
+export function patternEntries(dir = PATTERNS_DIR) {
+  try {
+    return fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith(".md") && f !== "SKILL.md");
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Validates a spec. Returns { valid, tiny, errors }. `fetched` is the list
- * of URLs fetched or seen in search results this session.
+ * of URLs fetched or seen in search results this session; `entries` the
+ * patterns library files the Precedent line must cite one of.
  */
-export function validateSpec(text, fetched = []) {
+export function validateSpec(text, fetched = [], entries = patternEntries()) {
   const body = String(text ?? "").trim();
   if (/^Tiny:\s*\S.{8,}$/.test(body) && !body.includes("\n")) {
     return { valid: true, tiny: true, errors: [] };
@@ -254,6 +281,16 @@ export function validateSpec(text, fetched = []) {
         "Decision: the Precedent URL was not fetched or returned by a search this session. Look it up with WebFetch or WebSearch first; a precedent from memory does not count."
       );
     }
+    // The library holds the owner's corrections; a spec that skips it can
+    // repeat one (owner 2026-10-10).
+    const cited =
+      entries.some((e) => precedent[1].includes(e)) ||
+      /none fits:\s*\S/i.test(precedent[1]);
+    if (entries.length > 0 && !cited) {
+      errors.push(
+        `Decision: the Precedent line must name the patterns entry it follows (one of: ${entries.join(", ")}), or say "none fits:" and why.`
+      );
+    }
   } else {
     errors.push('Decision: add a "Precedent:" line.');
   }
@@ -281,7 +318,9 @@ export function emptyState() {
     fetched: [],
     uiEdits: [],
     verify: { dupCheck: false, reviewer: false },
-    stopBlocks: 0,
+    stopBlocksBy: {},
+    // Set by the first feature-size UI write; cleared by a commit.
+    feature: false,
   };
 }
 
@@ -342,6 +381,64 @@ function targetsOf(input) {
   return [ti.file_path ?? ti.path].filter(Boolean);
 }
 
+/** One edit larger than this many changed lines is feature-size. */
+export const FEATURE_LINES = 40;
+
+const lineCount = (t) => (t ? String(t).split("\n").length : 0);
+
+/** Lines added plus lines removed between two texts, as git counts them. */
+export function lineDiff(before, after) {
+  const left = new Map();
+  for (const l of String(before ?? "").split("\n")) {
+    left.set(l, (left.get(l) ?? 0) + 1);
+  }
+  let added = 0;
+  for (const l of String(after ?? "").split("\n")) {
+    const n = left.get(l) ?? 0;
+    if (n > 0) {
+      left.set(l, n - 1);
+    } else {
+      added += 1;
+    }
+  }
+  let removed = 0;
+  for (const n of left.values()) {
+    removed += n;
+  }
+  return added + removed;
+}
+
+/**
+ * Whether a UI write is feature-size: it creates a UI file, or this one
+ * edit changes more than FEATURE_LINES lines. Small edits need no spec, and
+ * a run of them never adds up to one (owner 2026-10-10).
+ */
+export function isFeatureEdit(input, ui, env = process.env) {
+  const limit = Number(env.UX_DESIGNER_FEATURE_LINES) || FEATURE_LINES;
+  const cwd = input.cwd ?? process.cwd();
+  if (ui.some((f) => !fs.existsSync(path.resolve(cwd, f)))) {
+    return true;
+  }
+  const ti = input.tool_input ?? {};
+  let lines = 0;
+  if (input.tool_name === "Write") {
+    let before = "";
+    try {
+      before = fs.readFileSync(path.resolve(cwd, ti.file_path), "utf8");
+    } catch {
+      before = "";
+    }
+    lines = lineDiff(before, ti.content);
+  } else if (input.tool_name === "Edit") {
+    lines = lineCount(ti.old_string) + lineCount(ti.new_string);
+  } else if (input.tool_name === "MultiEdit") {
+    for (const e of ti.edits ?? []) {
+      lines += lineCount(e?.old_string) + lineCount(e?.new_string);
+    }
+  }
+  return lines > limit;
+}
+
 /** PreToolUse: returns null to allow, or a reason string to block. */
 export function preToolUse(input, state, env = process.env, now = Date.now()) {
   if (!isGated(input, env)) {
@@ -355,10 +452,16 @@ export function preToolUse(input, state, env = process.env, now = Date.now()) {
   if (mode === "spec-only") {
     return "Spec-only run: UI files stay locked. Write the spec (design-spec skill), present it, and stop.";
   }
+  if (!state.feature) {
+    if (!isFeatureEdit(input, ui, env)) {
+      return null;
+    }
+    state.feature = true;
+  }
   const spec = state.spec;
   if (!spec?.valid) {
     const why = spec?.errors?.length ? ` Fix: ${spec.errors.join(" ")}` : "";
-    return `Design before build: write a valid spec first (design-spec skill: Requirements, Surface, Values, Candidates, Decision) to design-spec.md in your scratchpad.${why}`;
+    return `Design before build: this is feature-size UI work (a new UI file, or one edit over ${Number(env.UX_DESIGNER_FEATURE_LINES) || FEATURE_LINES} lines). Load the ux-designer:design-spec skill and write a valid spec first (Requirements, Surface, Values, Candidates, Decision) to design-spec.md in your scratchpad.${why}`;
   }
   const replies = state.prompts.filter((p) => p.t > spec.at);
   // A Tiny spec records a change the owner fully specified: their instruction
@@ -381,23 +484,41 @@ export function preToolUse(input, state, env = process.env, now = Date.now()) {
   return null;
 }
 
-/** Stop / SubagentStop: returns null to allow, or a reason to keep going. */
+/** Who is stopping: a subagent by its id, or the main session. */
+const stopper = (input) => input.agent_id || "main";
+
+/**
+ * Stop / SubagentStop: returns null to allow, or a reason to keep going.
+ * A subagent cannot start another agent, so it owes only the duplicate check
+ * and hands the review to the main session, which owns the reviewer for all
+ * feature work in its session (the state is shared by session id). Each
+ * stopper has its own two-block budget, so a subagent cannot spend the main
+ * session's.
+ */
 export function stopCheck(input, state, env = process.env) {
-  if (!isGated(input, env) || input.stop_hook_active || state.stopBlocks >= 2) {
+  const blocks = state.stopBlocksBy?.[stopper(input)] ?? 0;
+  if (input.stop_hook_active || blocks >= 2) {
     return null;
   }
   if (
     (env.UX_DESIGNER_MODE || "") === "spec-only" ||
+    !state.feature ||
     state.uiEdits.length === 0 ||
     state.spec?.tiny
   ) {
     return null;
   }
+  const dupCheck =
+    "run the duplicate checker on each changed surface (design-spec skill, Verify step 2)";
+  if (input.agent_id) {
+    if (!isGated(input, env) || state.verify.dupCheck) {
+      return null;
+    }
+    return `Not done yet: ${dupCheck}. Then report spec line by line, and say that the ux-designer reviewer is still owed: the main session starts it.`;
+  }
   const missing = [];
   if (!state.verify.dupCheck) {
-    missing.push(
-      "run the duplicate checker on each changed surface (design-spec skill, Verify step 2)"
-    );
+    missing.push(dupCheck);
   }
   if (!state.verify.reviewer) {
     missing.push(
@@ -421,6 +542,16 @@ export function postToolUse(input, state, now = Date.now(), env = process.env) {
     const cmd = String(ti.command ?? "");
     if (/dup-check\.mjs/.test(cmd)) {
       state.verify.dupCheck = true;
+    }
+    // A commit closes the piece of work: the next feature needs its own spec.
+    if (/\bgit\b[^;&|]*\bcommit\b/.test(cmd)) {
+      Object.assign(state, {
+        spec: null,
+        feature: false,
+        uiEdits: [],
+        verify: { dupCheck: false, reviewer: false },
+        stopBlocksBy: {},
+      });
     }
     const changed = input.tool_response?.bashEditDiff;
     if (Array.isArray(changed)) {
@@ -455,9 +586,15 @@ export function postToolUse(input, state, now = Date.now(), env = process.env) {
       };
       state.verify = { dupCheck: false, reviewer: false };
       state.uiEdits = [];
-      state.stopBlocks = 0;
+      state.stopBlocksBy = {};
       if (!v.valid) {
         return { block: `Spec not valid yet:\n- ${v.errors.join("\n- ")}` };
+      }
+      if ((env.UX_DESIGNER_MODE || "") === "auto-approve") {
+        return {
+          context:
+            "Spec valid. Build it now, exactly as specified. In your report, after the build, add three lines: what was cut, the precedent, the rejected alternative.",
+        };
       }
       return {
         context: v.tiny
@@ -512,7 +649,7 @@ function main() {
       out({
         hookSpecificOutput: {
           hookEventName: ev,
-          additionalContext: `ux-designer plugin root: ${process.env.CLAUDE_PLUGIN_ROOT ?? "(unknown)"}. Write specs to design-spec.md in your scratchpad directory${input.scratchpad_dir ? ` (${input.scratchpad_dir})` : ""}. UI files stay locked until the owner approves a spec: load the ux-designer:design-spec skill before any UI change.${mode}`,
+          additionalContext: `ux-designer plugin root: ${process.env.CLAUDE_PLUGIN_ROOT ?? "(unknown)"}. Write specs to design-spec.md in your scratchpad directory${input.scratchpad_dir ? ` (${input.scratchpad_dir})` : ""}. Small UI edits need no spec. Feature-size work (a new UI file, or one edit over ${FEATURE_LINES} changed lines) starts with the ux-designer:design-spec skill: think through the whole surface, write the spec, then build.${mode}`,
         },
       });
     }
@@ -524,7 +661,11 @@ function main() {
     return;
   }
   if (ev === "PreToolUse") {
+    const wasFeature = state.feature;
     const reason = preToolUse(input, state);
+    if (state.feature !== wasFeature) {
+      save();
+    }
     if (reason) {
       process.stderr.write(`Blocked (ux-designer): ${reason}`);
       process.exit(2);
@@ -549,7 +690,11 @@ function main() {
   if (ev === "Stop" || ev === "SubagentStop") {
     const reason = stopCheck(input, state);
     if (reason) {
-      state.stopBlocks += 1;
+      const who = stopper(input);
+      state.stopBlocksBy = {
+        ...state.stopBlocksBy,
+        [who]: (state.stopBlocksBy?.[who] ?? 0) + 1,
+      };
       save();
       out({ decision: "block", reason });
     }

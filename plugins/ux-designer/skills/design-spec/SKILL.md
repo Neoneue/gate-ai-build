@@ -41,7 +41,7 @@ is valid AND the owner has replied after it.
 ## Decision
 Chosen: A, because ...
 Rejected: B, because ...
-Precedent: <URL you fetched or searched this session> -> <the project component it maps to>
+Precedent: <URL you fetched or searched this session> -> <the project component it maps to>, per <patterns entry>.md (or "none fits:" and why)
 ```
 
 Rules the hook checks:
@@ -54,7 +54,9 @@ Rules the hook checks:
 4. No value appears twice in the Values table.
 5. At least two `###` candidates.
 6. `Chosen:`, `Rejected:` and `Precedent:` lines; the Precedent URL was
-   fetched or searched in this session (WebFetch or WebSearch).
+   fetched or searched in this session, and the line names the patterns
+   entry it follows (`key-value-details.md`), or says `none fits:` and why.
+   Read the matching entries before the Candidates, not after.
 
 Rules the hook cannot check, and the reviewer will:
 
@@ -94,5 +96,7 @@ ask "should I proceed"; the hook waits for their reply.
    defect unless the spec's Values table explains it.
 3. Spawn `ux-designer:reviewer` with: the spec path, the screenshot paths,
    the changed files. Fix what it confirms; answer each finding in the
-   report.
+   report. A subagent cannot start another agent: it stops after step 2 and
+   says in its report that the review is owed, and the main session spawns
+   the reviewer (the hook holds the main session until it does).
 4. Report each spec line as match or mismatch.

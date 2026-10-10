@@ -24,3 +24,12 @@ was fetched; a rule marked "rule of this library" has no external source.
 | Change one setting | `settings-field-row.md` | Label and helper left, control right; one-sentence helper; error below the helper without repeating it; one save model. |
 | Check the headline numbers at a glance | `stat-summary.md` | Three to five tiles that change what the user does, from the same data and range as the table or chart below. |
 | Fix what I entered wrong | `form-errors.md` | At the field, say what is wrong and how to fix it, keep the input, validate on leave, remove when fixed. |
+| Act on the right object | `action-placement.md` | An action sits in the container whose object it changes; one primary; destructive quiet; same place everywhere; verb plus object labels. |
+| Scan and compare rows in a table | `table-rows.md` | Human name first, numbers right-aligned, no wrapping or truncated essentials, rows that open look selectable. |
+| Know whether data is empty, loading or zero | `empty-and-loading.md` | Skeleton the value and keep the chrome; empty only after loading; say the next action; never fake zeros. |
+| Trust the numbers | `numbers-you-can-trust.md` | One source per value, real data only, one format per measure, bars and lines rather than angles. |
+| Read the page in the right order | `reading-order.md` | One element leads, muted supporting text, one alignment edge per list, proximity shows grouping, a tested layout. |
+| Type a value into a field | `enter-a-value.md` | A visible label, never a placeholder label; field width fits the value; a safe default preselected. |
+| Finish a short task in a dialog | `dialogs.md` | Detail is a page, not a modal; one task per dialog; 24px above the footer buttons. |
+| Read copy that earns its place | `ux-copy.md` | Say only what the surface does not show; what the user gets, not how it works; cause and fix in errors. |
+| Use it without color or a mouse | `accessible-states.md` | Color plus a word; nothing interactive in a tooltip; nothing clipped by its container. |

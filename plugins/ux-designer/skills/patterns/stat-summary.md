@@ -31,6 +31,8 @@ tell them how things stand before reading any detail.
   it; when the range changes, tiles and table change together.
 - A tile that opens detail is a selectable surface with a hover state; a static
   tile is not.
+- The range selector sits on the summary's own section bar, flush right, so it
+  visibly governs the tiles and the chart beneath them; not by the page title.
 
 ## Anti-patterns
 

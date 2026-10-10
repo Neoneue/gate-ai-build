@@ -38,26 +38,28 @@ Shared project instructions, kept minimal; per-area detail lives in
 - **The UI gate enforces it.** `scripts/require-skill.mjs` (PreToolUse in
   `.claude/settings.json`) blocks UI writes (Write, Edit, shell writes,
   commits of UI files) until, in order: the kit INDEX.md is read (once per
-  session), then per change ux-laws, the ux-laws gate written to a file
-  with the Write tool, e.g. `<scratchpad>/ux-gate.md` (nine
-  labelled lines, ux-laws section 4, including `Precedent:`, the tested
-  competitor pattern and the repo component it maps to), visual-hierarchy
-  and one build skill;
+  session), then per change ux-laws, visual-hierarchy and one build skill
+  (no write-up);
   a step out of order does not count, and it resets after each commit. It
   gates every session, the main one included, so a direct-edited class move
   needs the same steps. A UI commit also passes when one of the session's
   subagents did them all since the last commit. Inside a subagent it checks
   the subagent's own transcript. It fails open: if it never blocks, check
   that the hook is registered.
-- **Design before build (ux-designer plugin, owner 2026-10-10).** The
-  project-scope plugin `plugins/ux-designer/` (marketplace
-  `.claude-plugin/marketplace.json`, enabled in `.claude/settings.json`)
-  locks UI files in the main session (`UX_DESIGNER_GATE_MAIN=1`) and in
-  `designer` agents until a valid `design-spec.md` exists (skill
-  `ux-designer:design-spec`, Precedent URL looked up this session) AND the
-  owner replied "go" after it. Before finishing, run its dup-check and spawn
-  `ux-designer:reviewer`. That spec also counts as the UI gate's written
-  ux-laws gate. Plugin edits apply at the next session or `/reload-plugins`.
+- **Design before build, for features only (ux-designer plugin, owner
+  2026-10-10).** The project-scope plugin `plugins/ux-designer/` (marketplace
+  `.claude-plugin/marketplace.json`, enabled in `.claude/settings.json`).
+  Small UI edits pass with no spec. Feature-size work (a new UI file, or one
+  edit over 40 changed lines) in the main session or `front-end-developer`
+  needs a valid `design-spec.md` first (skill `ux-designer:design-spec`:
+  the whole surface, hierarchy, one home per value, a looked-up precedent, a
+  rejected alternative). No owner reply is needed (`auto-approve`): build
+  it, run the dup-check, spawn `ux-designer:reviewer` (a subagent reports the
+  review as owed and the main session spawns it), and report the build
+  plus three lines (what was cut, the precedent, the rejected alternative).
+  Starting a feature, write the spec first; do not wait for the block. A
+  commit closes the work. Plugin edits apply at the next session or
+  `/reload-plugins`.
 - **Every agent picks a skill before any write.** The same hook gates every
   Write or Edit inside the project (outside it, such as the scratchpad, is
   free): the writer reads its OWN kit's INDEX.md (by `agent_type`; another

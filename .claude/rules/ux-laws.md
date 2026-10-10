@@ -19,12 +19,12 @@ only what must never depend on a skill being loaded.
   (a plan or page action never sits in another card's footer; a read-only,
   plan-locked card's upgrade is its own action, in its own footer, owner
   2026-10-08).
-- **Decide, don't default:** before UI, write the ux-laws gate (the tested
-  pattern it follows and the repo component it maps to, then objects, then
-  actions on them, then laws, then at least one rejected alternative). A
-  design with no rejected alternative was defaulted, not decided. With the
-  ux-designer plugin on, that gate is the `design-spec.md` the owner
-  approves before any build (owner 2026-10-10).
+- **Decide, don't default:** before UI, think through the ux-laws gate (the
+  tested pattern it follows and the repo component it maps to, then objects,
+  then actions on them, then laws, then at least one rejected alternative). A
+  design with no rejected alternative was defaulted, not decided. A small
+  edit needs no write-up; feature-size work (a new UI file, or one edit over
+  40 lines) writes it as the ux-designer `design-spec.md` (owner 2026-10-10).
 - **No invented UI:** every layout follows a tested pattern (Stripe, Vercel,
   OpenAI / Anthropic consoles) built from our components. A new component
   only when nothing existing fits, and the gate says why (owner 2026-10-08).

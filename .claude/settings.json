@@ -68,6 +68,8 @@
     "ux-designer@gate-ai-build": true
   },
   "env": {
-    "UX_DESIGNER_GATE_MAIN": "1"
+    "UX_DESIGNER_GATE_MAIN": "1",
+    "UX_DESIGNER_GATE_AGENTS": "front-end-developer",
+    "UX_DESIGNER_MODE": "auto-approve"
   }
 }

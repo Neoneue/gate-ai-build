@@ -4,6 +4,7 @@ import { test } from "node:test";
 import {
   emptyState,
   isApproval,
+  lineDiff,
   postToolUse,
   preToolUse,
   stopCheck,
@@ -40,7 +41,7 @@ const GOOD = `# Spec: Settings > Limits card
 ## Decision
 Chosen: A, because the field leads.
 Rejected: B, because inline edit hides the action.
-Precedent: ${URL} -> DetailList
+Precedent: ${URL} -> DetailList, per key-value-details.md
 `;
 
 const designer = (tool_name, tool_input, extra = {}) => ({
@@ -49,7 +50,9 @@ const designer = (tool_name, tool_input, extra = {}) => ({
   tool_input,
   ...extra,
 });
-const ui = (f = "src/pages/Limits.tsx") => designer("Edit", { file_path: f });
+// A path that does not exist, so the write is a new UI file: feature-size.
+const ui = (f = "src/pages/ZzNewSurface.tsx") =>
+  designer("Edit", { file_path: f });
 
 test("a complete spec with a fetched precedent is valid", () => {
   assert.deepEqual(validateSpec(GOOD, [URL]).errors, []);
@@ -219,7 +222,13 @@ test("shell writes to UI files are gated too", () => {
   const cmd = designer("Bash", {
     command: "sed -i '' 's/gap-2/gap-3/' src/components/ui/callout.tsx",
   });
-  assert.match(preToolUse(cmd, emptyState(), {}), /write a valid spec/);
+  // A one-line sed on an existing file is a small edit: no spec.
+  assert.equal(preToolUse(cmd, emptyState(), {}), null);
+  // Once the work is feature-size, shell writes are gated like any other.
+  assert.match(
+    preToolUse(cmd, { ...emptyState(), feature: true }, {}),
+    /write a valid spec/
+  );
   assert.equal(
     preToolUse(
       designer("Bash", { command: "cat src/components/ui/callout.tsx" }),
@@ -286,7 +295,11 @@ test("shell: real writes to UI files are caught", () => {
   ];
   for (const c of writes) {
     assert.match(
-      preToolUse(designer("Bash", { command: c }), emptyState(), {}) ?? "",
+      preToolUse(
+        designer("Bash", { command: c }),
+        { ...emptyState(), feature: true },
+        {}
+      ) ?? "",
       /valid spec/,
       c
     );
@@ -295,6 +308,7 @@ test("shell: real writes to UI files are caught", () => {
 
 test("stop is held until the duplicate check and the reviewer ran", () => {
   const s = withSpec();
+  s.feature = true;
   s.prompts.push({ t: 2000, approve: true });
   postToolUse(ui(), s, 2500);
   assert.match(
@@ -353,4 +367,122 @@ test("an MCP fetch or scrape counts as a looked-up precedent", () => {
   );
   assert.deepEqual(s.fetched, [URL, "https://vercel.com/docs"]);
   assert.equal(validateSpec(GOOD, s.fetched).valid, true);
+});
+
+// An existing UI file in this repo, so its edits are sized, not "new file".
+const EXISTING = "src/components/ui/callout.tsx";
+const edit = (lines) =>
+  designer("Edit", {
+    file_path: EXISTING,
+    old_string: "a",
+    new_string: Array.from({ length: lines }, (_, i) => `l${i}`).join("\n"),
+  });
+
+test("small edits pass with no spec, and a run of them never adds up", () => {
+  const s = emptyState();
+  for (let i = 0; i < 10; i += 1) {
+    assert.equal(preToolUse(edit(20), s, {}), null);
+  }
+  assert.equal(s.feature, false);
+});
+
+test("one edit over 40 changed lines is feature-size and needs a spec", () => {
+  const s = emptyState();
+  assert.match(preToolUse(edit(45), s, {}), /feature-size/);
+  assert.equal(s.feature, true);
+  // From then on, small edits to the same work need the spec too.
+  assert.match(preToolUse(edit(1), s, {}), /valid spec/);
+});
+
+test("auto-approve: a valid spec unlocks the build with no reply", () => {
+  const s = withSpec();
+  s.feature = true;
+  assert.equal(preToolUse(ui(), s, { UX_DESIGNER_MODE: "auto-approve" }), null);
+});
+
+test("a commit closes the work: the next feature needs its own spec", () => {
+  const s = withSpec();
+  s.feature = true;
+  postToolUse(designer("Bash", { command: "git commit -m x" }), s);
+  assert.equal(s.spec, null);
+  assert.equal(s.feature, false);
+  assert.equal(preToolUse(edit(2), s, {}), null);
+});
+
+test("agent types listed in UX_DESIGNER_GATE_AGENTS are gated", () => {
+  const fe = { ...ui(), agent_type: "front-end-developer", agent_id: "a1" };
+  const env = { UX_DESIGNER_GATE_AGENTS: "front-end-developer, designer" };
+  assert.match(preToolUse(fe, emptyState(), env), /valid spec/);
+  assert.equal(preToolUse(fe, emptyState(), {}), null);
+});
+
+test("lineDiff counts added plus removed lines", () => {
+  assert.equal(lineDiff("a\nb\nc", "a\nB\nc"), 2);
+  assert.equal(lineDiff("a", "a"), 0);
+});
+
+test("the Precedent line must cite a patterns entry, or say none fits", () => {
+  const entries = ["key-value-details.md", "locked-setting.md"];
+  const bare = GOOD.replace(", per key-value-details.md", "");
+  assert.match(
+    validateSpec(bare, [URL], entries).errors.join(" "),
+    /must name the patterns entry/
+  );
+  assert.deepEqual(validateSpec(GOOD, [URL], entries).errors, []);
+  const none = bare.replace(
+    "-> DetailList",
+    "-> DetailList; none fits: a new kind of chart"
+  );
+  assert.deepEqual(validateSpec(none, [URL], entries).errors, []);
+});
+
+test("a subagent owes the dup-check only; the main session owes the reviewer", () => {
+  const gateVars = { UX_DESIGNER_GATE_AGENTS: "front-end-developer" };
+  const fe = { agent_type: "front-end-developer", agent_id: "a1" };
+  const s = withSpec();
+  s.feature = true;
+  postToolUse(
+    { ...fe, tool_name: "Edit", tool_input: { file_path: EXISTING } },
+    s,
+    3000,
+    gateVars
+  );
+  // The subagent cannot start a reviewer, so it is held for the dup-check only.
+  assert.match(
+    stopCheck(fe, s, gateVars),
+    /duplicate checker.*reviewer is still owed/s
+  );
+  postToolUse(
+    {
+      ...fe,
+      tool_name: "Bash",
+      tool_input: { command: "node /p/scripts/dup-check.mjs" },
+    },
+    s,
+    3100,
+    gateVars
+  );
+  assert.equal(stopCheck(fe, s, gateVars), null);
+  // The main session then owes the reviewer, gated or not.
+  assert.match(stopCheck({}, s, {}), /spawn ux-designer:reviewer/);
+  postToolUse(
+    {
+      tool_name: "Agent",
+      tool_input: { subagent_type: "ux-designer:reviewer" },
+    },
+    s
+  );
+  assert.equal(stopCheck({}, s, {}), null);
+});
+
+test("each stopper has its own two-block budget", () => {
+  const s = withSpec();
+  s.feature = true;
+  postToolUse(ui(), s, 2500);
+  s.stopBlocksBy = { a1: 2 };
+  assert.equal(
+    stopCheck({ agent_type: "designer", agent_id: "a1" }, s, {}),
+    null
+  );
+  assert.match(stopCheck({}, s, {}), /reviewer/);
 });

@@ -39,6 +39,8 @@ the one thing most users came for.
 - Advanced options nested three levels deep.
 - A "Show more" link whose content is a surprise.
 - Revealed content that appears above the control that revealed it.
+- Data the user must compare split across tabs, so they flip back and forth
+  holding values in memory.
 
 ## Evidence
 

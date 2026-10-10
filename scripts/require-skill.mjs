@@ -6,15 +6,12 @@
 // parent's under <session_id>/subagents/).
 //
 // - UI files (isUiPath: src/components/, src/pages/, any src/ .tsx or .css
-//   that is not a test, the root design.md) need five steps, IN ORDER, since
+//   that is not a test, the root design.md) need four steps, IN ORDER, since
 //   this session's last landed git commit (skillState): read the skills
-//   INDEX.md (once per session), read the ux-laws skill, WRITE its gate
-//   (labelled Job:, Path:, Expectation:, Precedent:, Objects:, Actions:,
-//   Laws:, Patterns:, Rejected:; ux-laws SKILL.md section 4) with the Write tool
-//   to a file, or as reply text from an earlier turn (reply text reaches the
-//   transcript only when its turn ends, so a gate written this turn is
-//   invisible until then),
-//   read visual-hierarchy, then load ONE build skill picked from that index.
+//   INDEX.md (once per session), read the ux-laws skill, read
+//   visual-hierarchy, then load ONE build skill picked from that index. No
+//   write-up: feature-size work gets its spec from the ux-designer plugin
+//   (owner 2026-10-10).
 //   UX before UI: a step out of order does not count. One round covers one
 //   change: after a commit, the next change does them again.
 // - A motion edit (isMotionEdit: the text it adds or removes holds
@@ -220,52 +217,6 @@ const RULES_FILE = /agents\/animator\/knowledge\/working-rules\.md\b/;
 const RULES_SHELL_READ =
   /\b(?:cat|sed|head|tail|less|bat)\b[^|;&]*agents\/animator\/knowledge\/working-rules\.md/;
 
-/**
- * The ux-laws gate (ux-laws SKILL.md section 4) written in the agent's own
- * visible text: one labelled line each, bullets and bold allowed.
- */
-const GATE_LABELS = [
-  "Job",
-  "Path",
-  "Expectation",
-  // The tested pattern the design follows and the repo component it maps
-  // to, or why a new component is needed (owner 2026-10-08: "no more
-  // invented ui that doesn't fit our work").
-  "Precedent",
-  "Objects",
-  "Actions",
-  "Laws",
-  "Patterns",
-  "Rejected",
-];
-const GATE_LINES = GATE_LABELS.map(
-  (label) =>
-    new RegExp(
-      String.raw`^[\s>*_-]*(?:\d+[.)]\s*)?(?:\*\*)?${label}(?:\*\*)?\s*:`,
-      "im"
-    )
-);
-function writesGate(text) {
-  return GATE_LINES.every((re) => re.test(text));
-}
-
-/**
- * The ux-designer plugin's design spec stands in for the written gate (owner
- * 2026-10-10): a design-spec*.md written with its Decision lines, or any
- * later edit to one. The plugin's own hook validates the rest of the spec.
- */
-const SPEC_FILE = /(^|\/)design-spec[\w.-]*\.md$/i;
-function writesSpec(name, input) {
-  if (!SPEC_FILE.test(String(input.file_path ?? ""))) {
-    return false;
-  }
-  if (name === "Edit") {
-    return true;
-  }
-  const text = String(input.content ?? "");
-  return /^\s*Precedent:\s*\S/m.test(text) && /^\s*Rejected:\s*\S/m.test(text);
-}
-
 /** The events that load a skill: the UX skills and any other. */
 const SKILL_KINDS = ["ux", "vh", "build"];
 
@@ -280,14 +231,6 @@ function eventsOf(part) {
   // The gate written to a file (Write, or an Edit whose new text holds it).
   // Reply text after a tool result can stay off disk until the turn ends;
   // a tool call is on disk at once, so this is the reliable route.
-  if (
-    (part.name === "Write" && writesGate(String(input.content ?? ""))) ||
-    (part.name === "Edit" && writesGate(String(input.new_string ?? ""))) ||
-    ((part.name === "Write" || part.name === "Edit") &&
-      writesSpec(part.name, input))
-  ) {
-    return [{ kind: "gate" }];
-  }
   if (part.name === "Skill") {
     return [skillEvent(input.skill)];
   }
@@ -363,9 +306,6 @@ export function skillState(
         if (entry.type === "user" && UX_COMMAND.test(said)) {
           events.push({ kind: "ux", skill: "ux-laws", ts });
         }
-        if (entry.type === "assistant" && writesGate(said)) {
-          events.push({ kind: "gate", ts });
-        }
       } else if (part?.type === "tool_result") {
         if (!part.is_error) {
           landedAt.set(part.tool_use_id, ts);
@@ -389,7 +329,7 @@ export function skillState(
   const fresh = (e, i) => i >= from && (after === null || e.ts > after);
   // The index is read once per session (a full re-read before every small
   // fix costs too much); the rest is per change and must come in order:
-  // UX first (ux-laws, then its gate written out, then visual-hierarchy),
+  // UX first (ux-laws, then visual-hierarchy),
   // UI after (one build skill). A step out of order does not count.
   // A kit agent's index is its own kit's; another kit's does not count.
   const indexAt = events.findIndex(
@@ -414,7 +354,6 @@ export function skillState(
           (e, i) => e.skill === "motion-ux-laws" && fresh(e, i) && i > rulesAt
         );
   const uxAt = nextAfter("ux", muxAt);
-  const gateAt = nextAfter("gate", uxAt);
   const vhAt = nextAfter("vh", uxAt);
   const pickAt =
     vhAt === -1
@@ -434,9 +373,6 @@ export function skillState(
   }
   if (uxAt === -1) {
     missing.push("ux-laws");
-  }
-  if (gateAt === -1) {
-    missing.push("gate");
   }
   if (vhAt === -1) {
     missing.push("visual-hierarchy");
@@ -711,7 +647,6 @@ const STEP = {
     "after the working rules, read motion-ux-laws, the animator kit's order step 1 (Read agents/animator/skills/motion-ux-laws/SKILL.md), and decide whether it should move at all",
   "ux-laws":
     "after the index, read the ux-laws skill by path (Read agents/front-end-developer/skills/ux-laws/SKILL.md)",
-  gate: "after reading ux-laws, write its gate (ux-laws section 4) with the Write tool to a file, for example <your scratchpad>/ux-gate.md (a gate only in your reply text may not reach the transcript until your turn ends, so the hook cannot see it), as nine labelled lines: `Job:` what the user came to do; `Path:` entry, steps, exit, errors; `Expectation:` which app they think this works like; `Precedent:` the tested pattern this follows (a competitor such as Stripe, Vercel or the OpenAI / Anthropic consoles, with its URL or name) and the existing repo component or precedent it maps to (file:line), or `new component:` and why nothing existing fits; `Objects:` the things the user acts on and which container shows each; `Actions:` each action added or moved as action -> object it changes -> container it sits in, where the object must be the container's own (or `none`); `Laws:` each law touched and how it passes; `Patterns:` the corrected patterns that apply and that they hold; `Rejected:` at least one alternative and why it lost. If any answer is no or unknown, fix the design before writing UI. A ux-designer design-spec.md (design-spec skill) written with its Precedent: and Rejected: lines counts as this gate",
   "visual-hierarchy":
     "after ux-laws, load visual-hierarchy, the second UX skill (Read agents/front-end-developer/skills/visual-hierarchy/SKILL.md), and give every element its tier",
   pick: "after visual-hierarchy, load the ONE build skill from the index that fits this job (for example shadcn for a component or a button, ask-sonner for a toast): Read agents/front-end-developer/skills/<name>/SKILL.md. One build skill, not several",
@@ -726,7 +661,7 @@ function uiMessage(file, missing, commit = false, kit = null) {
     .join(" ");
   return (
     `Blocked (UI gate): this changes UI (${file}). Still missing: ${steps} ` +
-    "Then retry. Order matters: index, (a motion edit: working rules, then motion-ux-laws), ux-laws, the written gate, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry. The index and the working rules are read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
+    "Then retry. Order matters: index, (a motion edit: working rules, then motion-ux-laws), ux-laws, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry. The index and the working rules are read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
     (commit
       ? "A commit also passes when one of this session's subagents loaded all four since the last commit. "
       : "") +

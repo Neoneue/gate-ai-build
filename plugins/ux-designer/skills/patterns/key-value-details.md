@@ -26,6 +26,12 @@ read its properties quickly and find the one they came for.
 - Default to label-value rows (a description list): label in muted text, value
   in foreground, one fact per row, rows in one column or a two-column grid on
   wide surfaces.
+- Label on the left, value on the right of the same row: people read left to
+  right, so the label tells them what the value is before they reach it. On a
+  wide list, values sit flush right in tabular figures (Stripe's horizontal
+  PropertyList); on a narrow list the value stacks under its label. A row of
+  grouped stats or tiles makes them hunt for the label (owner 2026-10-08 to
+  10, the Data retention card, `DataRetentionCard.tsx` on `DetailList`).
 - Do not turn each fact into its own tile or card. A tile per fact costs a box,
   padding and a border for one value and breaks scanning down one edge.
 - Use a card per object only when several objects of the same type sit on one

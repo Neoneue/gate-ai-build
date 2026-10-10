@@ -33,6 +33,8 @@ are easy to skip and each extra one makes the rest easier to ignore.
 - Each notice holds one message and at most one action. No heading for a
   one-line notice.
 - Prefer inline help next to the thing when the message is about the thing.
+- A toast is for a passing confirmation only. Errors and validation stay inline
+  at their source until resolved.
 
 ## Anti-patterns
 
@@ -41,6 +43,7 @@ are easy to skip and each extra one makes the rest easier to ignore.
 - Error styling on an informational message.
 - A permanent banner the user cannot act on or dismiss.
 - A notice that repeats the section's own helper text.
+- "Save failed" in a toast that disappears after four seconds.
 
 ## Evidence
 

@@ -21,6 +21,8 @@ and misses what is new.
 - A confirm dialog must restate the action being confirmed (see
   `destructive-confirmation`); it states it once there, not on top of the
   trigger's label and a body sentence that repeats both.
+- A helper that explains a locked control's fixed value ("Fixed to 30 days on
+  the Free plan" under a field showing 30). It explains the lock, so it stays.
 
 ## Rule
 
@@ -32,6 +34,9 @@ and misses what is new.
 - A title and its body do not say the same thing in different words.
 - A number shown in a summary tile is not repeated in a sentence beneath it.
 - If two places need the same fact, one shows it and the other links to it.
+- The rule covers ideas, not only values: a sentence in the page subtitle is not
+  said again in a card description or a footer. Before shipping, list every
+  sentence and value on the surface and strike the repeats.
 
 ## Anti-patterns
 
@@ -42,6 +47,9 @@ and misses what is new.
 - A stat tile reading "42 requests" with a caption "You made 42 requests".
 - A tooltip that repeats the visible label.
 - A banner restating a field's own helper text.
+- "Plan changes go through support" in the page subtitle, the plan description
+  and the card footer.
+- A dialog banner restating the detail rows beneath it.
 
 ## Evidence
 
@@ -55,9 +63,14 @@ and misses what is new.
 - <https://developers.google.com/style/headings> (HTTP 200). Quote: "Avoid
   repeating the exact page title in a heading on the page." Supports: one home
   for a name within a surface.
+- Owner correction (2026-09-16): "why did you bother to write the same thing 3
+  times?? that's illogical and LAZY." Owner exception (2026-10-07): a helper
+  naming a locked value stays ("they need to see 30 days or wont know to look
+  at the input").
 
 ## Check
 
+- Listing every sentence on the surface, does any idea appear twice?
 - Does any value or sentence appear twice on this surface?
 - Does the error add something the helper does not say?
 - Does the dialog body add information beyond its title?

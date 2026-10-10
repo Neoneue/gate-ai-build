@@ -66,11 +66,9 @@ and a Python file name the product never shows.
 
 `scripts/require-skill.mjs` blocks any edit to a UI file until this session
 has read, in order: a skills `INDEX.md` (yours counts), then
-`agents/front-end-developer/skills/ux-laws/SKILL.md`, then the written gate
-(labelled lines Job, Path, Expectation, Precedent, Objects, Actions, Laws,
-Patterns, Rejected, in visible text; for motion, Precedent names the
-reference the motion follows and the existing motion in the repo it
-matches), then
+`agents/front-end-developer/skills/ux-laws/SKILL.md` (think its gate
+through, no write-up; for motion, the precedent is the reference the motion
+follows and the existing motion in the repo it matches), then
 `agents/front-end-developer/skills/visual-hierarchy/SKILL.md`, then one
 build skill. For motion work the build skill is usually `animate` or
 `gsap`. It resets after each commit. For a motion edit (one that adds,
