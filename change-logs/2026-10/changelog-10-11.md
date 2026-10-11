@@ -48,3 +48,22 @@ unchanged.
 - `onboarding-chat-composer.tsx`: the model is fixed text (20px logo,
   `type-label-16`); no picker, no add-a-second-model, no attachments.
 - `onboarding-chat-store.ts`: the in-memory onboarding chat store.
+
+### Onboarding Gate Chat: top bar with site menu `fe9bc04`
+
+`/chat-onboarding` gets its top bar back. The main Gate Chat is unchanged.
+
+- `onboarding-chat-top-bar.tsx` (new, onboarding copy of the shared
+  `ChatTopBar`): brand, theme toggle and Docs (lg and up only) as in the
+  shared bar. No workspace switcher (nothing to switch to before setup);
+  notifications and Ask AI are hidden for now.
+- Site menu: an outline Menu key is the last item of the right group
+  (`lg:hidden`) and opens a right-docked Sheet with the shared `SidebarPanel`
+  (Onboarding workspace nav `ONBOARDING_SIDEBAR_SECTIONS`, Gate Chat active,
+  no switcher, no upgrade card). Recipe copied from DashboardChrome's
+  MobileNav.
+- `OnboardingChatLayout.tsx`: before, no top bar (7dd4a24); after, it renders
+  the onboarding top bar. The Ask AI surface stays mounted.
+- `OnboardingChat.tsx`: the conversation bar is sticky at `max-lg:top-16`
+  again, under the top bar.
+- `App.tsx`: route comment updated.
