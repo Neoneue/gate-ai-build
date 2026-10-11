@@ -589,8 +589,8 @@ export function AppRoutes() {
          * on its first step. The layout owns the flow state in memory, so a
          * refresh (or a cold load of any later step) starts over at
          * /overview-onboarding. The Improved flow's chat path is the workspace's
-         * own Gate Chat copy (OnboardingChat) under its own layout, which has no
-         * top bar (OnboardingChatLayout). */}
+         * own Gate Chat copy (OnboardingChat) under its own layout, whose top bar
+         * has no workspace switcher (OnboardingChatLayout). */}
         <Route element={<OnboardingLayout />}>
           <Route element={<OnboardingChatLayout />}>
             <Route element={<OnboardingChat />} path="/chat-onboarding" />

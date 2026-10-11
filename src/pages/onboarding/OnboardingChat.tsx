@@ -358,7 +358,7 @@ export function OnboardingChat() {
       />
       <div className="flex min-w-0 flex-1 flex-col bg-card-muted">
         <OnboardingChatHeader
-          className="max-lg:sticky max-lg:top-0 max-lg:z-20"
+          className="max-lg:sticky max-lg:top-16 max-lg:z-20"
           conversation={conversation}
           credits={credits}
           onMemoryToolsOverride={(value) => {
