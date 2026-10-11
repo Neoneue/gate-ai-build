@@ -274,6 +274,18 @@ const OnboardingLayout = lazy(() =>
     default: m.OnboardingLayout,
   }))
 );
+/* The onboarding workspace's own Gate Chat, a copy of Chat we change for
+ * onboarding only; every other workspace keeps the current Chat. */
+const OnboardingChat = lazy(() =>
+  import("@/pages/onboarding/OnboardingChat").then((m) => ({
+    default: m.OnboardingChat,
+  }))
+);
+const OnboardingChatLayout = lazy(() =>
+  import("@/pages/onboarding/OnboardingChatLayout").then((m) => ({
+    default: m.OnboardingChatLayout,
+  }))
+);
 const OnboardingOverview = lazy(() =>
   import("@/pages/onboarding/OnboardingOverview").then((m) => ({
     default: m.OnboardingOverview,
@@ -392,6 +404,10 @@ export function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route element={<SignIn />} path="/sign-in" />
         <Route element={<SignUp />} path="/sign-up" />
+        {/* Onboarding demo: the same screens, whose signup opens the
+            onboarding workspace (SignUp.tsx). */}
+        <Route element={<SignIn />} path="/sign-in-onboarding" />
+        <Route element={<SignUp />} path="/sign-up-onboarding" />
       </Route>
       {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
           A chart of the shell cannot be read from inside the shell, so it
@@ -572,12 +588,16 @@ export function AppRoutes() {
         {/* Onboarding workspace — reached via the workspace switcher, always
          * on its first step. The layout owns the flow state in memory, so a
          * refresh (or a cold load of any later step) starts over at
-         * /overview-onboarding. The Improved flow's chat path reuses the Gate
-         * Chat page under its own ChatLayout. */}
+         * /overview-onboarding. The Improved flow's chat path is the workspace's
+         * own Gate Chat copy (OnboardingChat) under its own layout, which has no
+         * top bar (OnboardingChatLayout). */}
         <Route element={<OnboardingLayout />}>
-          <Route element={<ChatLayout />}>
-            <Route element={<Chat />} path="/chat-onboarding" />
-            <Route element={<Chat />} path="/chat-onboarding/:conversationId" />
+          <Route element={<OnboardingChatLayout />}>
+            <Route element={<OnboardingChat />} path="/chat-onboarding" />
+            <Route
+              element={<OnboardingChat />}
+              path="/chat-onboarding/:conversationId"
+            />
           </Route>
           <Route element={<OnboardingOverview />} path="/overview-onboarding" />
           <Route

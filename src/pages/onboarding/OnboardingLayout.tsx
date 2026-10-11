@@ -11,6 +11,7 @@ import "@/pages/onboarding/onboarding-motion.css";
 import { OnboardingProvider } from "@/pages/onboarding/OnboardingProvider";
 import {
   flowOfRoute,
+  isOnboardingSignup,
   ONBOARDING_ROUTES,
 } from "@/pages/onboarding/onboarding-routes";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
@@ -20,7 +21,8 @@ import { useOnboardingMotion } from "@/pages/onboarding/use-onboarding-motion";
  * Layout route for every `-onboarding` path. It owns the in-memory flow
  * state (OnboardingProvider) and enforces the demo contract:
  *   • A cold load (refresh, typed URL) of any step but the first redirects
- *     to `/overview-onboarding`. The guard keys on THIS layout's first
+ *     to `/overview-onboarding`. A demo signup (`/sign-up-onboarding`)
+ *     also starts the flow, on the page it lands on. The guard keys on THIS layout's first
  *     mount, so in-app navigation inside the workspace is never redirected.
  *   • A route from the other flow version (only reachable by URL) also
  *     returns to the first page.
@@ -41,10 +43,11 @@ export function OnboardingLayout() {
 
 function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   useOnboardingMotion();
-  const { pathname } = useLocation();
+  const { pathname, state: locationState } = useLocation();
   const { flow, improved, updateImproved } = useOnboarding();
   const [started, setStarted] = useState(
-    () => pathname === ONBOARDING_ROUTES.start
+    () =>
+      pathname === ONBOARDING_ROUTES.start || isOnboardingSignup(locationState)
   );
   if (!started && pathname === ONBOARDING_ROUTES.start) {
     setStarted(true);

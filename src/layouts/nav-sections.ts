@@ -182,17 +182,24 @@ export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] =
 
 /** Sidebar for the first-run Onboarding workspace. A brand-new workspace is a
  *  Default workspace that has not been set up yet, so it carries the Default
- *  nav; only Overview stays inside the workspace and opens the setup flow's
- *  first step. Every other row lands on its `-default` twin, which ends the
- *  onboarding walk-through the way finishing setup would. */
+ *  nav. Two rows stay inside the workspace: Overview opens the setup flow's
+ *  first step, and Gate Chat opens the workspace's own Gate Chat version
+ *  (`/chat-onboarding`, owner 2026-10-11: Onboarding and the main version
+ *  are separate), in the same tab because the flow state lives in memory and
+ *  a new tab would start over. Every other row lands on its `-default` twin,
+ *  which ends the onboarding walk-through the way finishing setup would. */
 export const ONBOARDING_SIDEBAR_SECTIONS: SidebarSection[] =
   DEFAULT_SIDEBAR_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.map((item) =>
-      item.id === "overview"
-        ? { ...item, pageId: "/overview-onboarding" }
-        : item
-    ),
+    items: section.items.map((item) => {
+      if (item.id === "overview") {
+        return { ...item, pageId: "/overview-onboarding" };
+      }
+      if (item.id === "chat") {
+        return { ...item, pageId: "/chat-onboarding", newTab: false };
+      }
+      return item;
+    }),
   }));
 
 /** Sidebar for the Enterprise workspace — every item points at its

@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { GoogleG } from "@/components/icons/google-g";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +19,25 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { TextLink } from "@/components/ui/text-link";
+import { isOnboardingSurface, withTierOf } from "@/lib/plan";
+import {
+  ONBOARDING_ROUTES,
+  ONBOARDING_SIGNUP_STATE,
+} from "@/pages/onboarding/onboarding-routes";
 
 export function SignUp() {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [invite, setInvite] = useState("");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // Onboarding demo (`/sign-up-onboarding`): signing up opens the
+    // workspace's Gate Chat, the PRD's phone landing. `/sign-up` stays inert.
+    if (isOnboardingSurface(pathname)) {
+      navigate(ONBOARDING_ROUTES.chat, { state: ONBOARDING_SIGNUP_STATE });
+    }
   }
 
   return (
@@ -99,7 +112,10 @@ export function SignUp() {
       <CardFooter className="justify-center p-6 pt-2">
         <p className="type-copy-12 text-muted-foreground">
           Already have an account?{" "}
-          <TextLink className="type-copy-12" to="/sign-in">
+          <TextLink
+            className="type-copy-12"
+            to={withTierOf(pathname, "/sign-in")}
+          >
             Sign in
           </TextLink>
         </p>

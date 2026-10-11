@@ -21,9 +21,22 @@ export const ONBOARDING_ROUTES = {
   improvedConnect: "/improved-connect-onboarding",
   verify: "/improved-verify-onboarding",
   improvedComplete: "/improved-complete-onboarding",
-  /* Gate Chat, the Improved flow's chat path (the existing Gate Chat page). */
+  /* Gate Chat, the Onboarding version (OnboardingChat), phone and desktop.
+   * Free, Default, Pro and Enterprise keep the main version (pages/Chat). */
   chat: "/chat-onboarding",
 } as const;
+
+/** The demo's sign-in screen: where it starts and where Sign out returns. */
+export const ONBOARDING_SIGN_IN = "/sign-in-onboarding";
+
+/** Router state a demo signup (`/sign-up-onboarding`) passes on its way in,
+ *  so OnboardingLayout lets the flow start on the page signup lands on. */
+export const ONBOARDING_SIGNUP_STATE = { onboardingSignup: true } as const;
+
+export const isOnboardingSignup = (state: unknown): boolean =>
+  typeof state === "object" &&
+  state !== null &&
+  (state as { onboardingSignup?: unknown }).onboardingSignup === true;
 
 /** Where the Current flow's "from" query sends Back from the listening and
  *  attack steps. */
