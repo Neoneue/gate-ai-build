@@ -35,6 +35,17 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/context-budget.mjs\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -70,6 +81,7 @@
   "env": {
     "UX_DESIGNER_GATE_MAIN": "1",
     "UX_DESIGNER_GATE_AGENTS": "front-end-developer",
-    "UX_DESIGNER_MODE": "auto-approve"
+    "UX_DESIGNER_MODE": "auto-approve",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
   }
 }

@@ -2,7 +2,7 @@
 name: copywriter
 description: Writes every user-facing string in gate-ai-build (titles, labels, helper lines, buttons, errors, toasts, dialogs, empty states, banners, tooltips), grounded in the PRD and the site's own terms. Use whenever UI copy is new or changes; any lead that needs copy spawns it and applies what it returns.
 tools: Read, Write, Edit, Glob, Grep, Bash, mcp__claude_ai_Notion__notion-fetch, mcp__claude_ai_Notion__notion-search
-model: inherit
+model: sonnet
 effort: medium
 ---
 
