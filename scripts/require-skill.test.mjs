@@ -536,6 +536,24 @@ describe("verdict: a commit of UI a subagent built", () => {
     expect(judge(edit, texts)).toMatch(/UI gate/);
   });
 
+  it("a commit agent passes when the main session loaded the full set after its last commit", () => {
+    const COMMITTER = `${DIR}/agent-c1.jsonl`;
+    const fromAgent = { ...commitInput, agent_id: "c1" };
+    const built = transcript(
+      at(T1, COMMIT()),
+      at(T2, INDEX(), UX(), VH(), SHADCN())
+    );
+    expect(judge(fromAgent, { [MAIN]: built, [COMMITTER]: "" })).toBeNull();
+    // Main-session reads from before its last commit do not count.
+    const stale = transcript(
+      at(T0, INDEX(), UX(), VH(), SHADCN()),
+      at(T1, COMMIT())
+    );
+    expect(judge(fromAgent, { [MAIN]: stale, [COMMITTER]: "" })).toMatch(
+      /UI gate/
+    );
+  });
+
   it("subagentCovers has nothing to read without a session id", () => {
     expect(
       subagentCovers({ transcript_path: MAIN }, null, {

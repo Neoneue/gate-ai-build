@@ -620,9 +620,14 @@ export function verdict(
       let after = state.lastCommitAt;
       if (transcript !== input.transcript_path) {
         try {
-          after = skillState(
-            readTranscript(input.transcript_path)
-          ).lastCommitAt;
+          const main = skillState(readTranscript(input.transcript_path));
+          // A commit agent committing UI the main session built: the main
+          // session's own full set since its last commit covers it
+          // (commits run on a Sonnet agent, owner 2026-10-10).
+          if (main.missing.length === 0) {
+            return null;
+          }
+          after = main.lastCommitAt;
         } catch {
           return uiMessage(ui, state.missing, true, kit);
         }
