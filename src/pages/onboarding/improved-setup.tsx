@@ -1,4 +1,4 @@
-import { ArrowRight, CirclePlus, Search } from "lucide-react";
+import { ArrowRight, CirclePlus, Loader2, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
@@ -914,6 +914,13 @@ function VerifyConnection() {
                       onClick={() => void check()}
                       size="default"
                     >
+                      {checking ? (
+                        <Loader2
+                          aria-hidden
+                          className="animate-spin motion-reduce:animate-none"
+                          data-icon="inline-start"
+                        />
+                      ) : null}
                       {checking
                         ? "Checking connection…"
                         : connectionFailed
@@ -984,6 +991,13 @@ function VerifyConnection() {
                       onClick={runDemo}
                       size="default"
                     >
+                      {running ? (
+                        <Loader2
+                          aria-hidden
+                          className="animate-spin motion-reduce:animate-none"
+                          data-icon="inline-start"
+                        />
+                      ) : null}
                       {running
                         ? "Checking message…"
                         : demoFailed

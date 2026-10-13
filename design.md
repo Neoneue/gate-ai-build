@@ -875,10 +875,11 @@ status; the primitive sets the case.
 - **Status banners** (`BudgetBreachBanner` and peers): warnings and errors keep their own status component; Callout has no tone prop.
 - **Toast** (`sonner.tsx`; bottom right, follows the theme): a short report of an event. Errors stay until dismissed.
 - **EmptyState** (`empty-state.tsx`): a page-level empty state. Inside a table card use `TableEmptyState`.
+- **Button pending** (owner 2026-10-13): a button whose action loads or sends something always shows a spinner while it runs: `Loader2` with `data-icon="inline-start"` and `animate-spin motion-reduce:animate-none`, before its pending label; the button is disabled and drops any trailing icon until the action ends. Precedents: `OnboardingSignUp.tsx` (Creating account), `improved-setup.tsx` (Check connection, Send the message).
 
 ### Skeleton
 
-- **Skeleton** (`skeleton.tsx`; `animate-pulse`, `bg-muted`): the only loading motion. `SkeletonText` holds a value's line box so nothing shifts; KPI primitives take a `loading` prop.
+- **Skeleton** (`skeleton.tsx`; `animate-pulse`, `bg-muted`): the only loading motion for page data (a pending button takes the spinner above). `SkeletonText` holds a value's line box so nothing shifts; KPI primitives take a `loading` prop.
 
 **The Skeleton the Value Rule.** Titles, column heads, toolbars, tabs, units and
 empty-state copy render as themselves while loading; only what the request
@@ -886,7 +887,7 @@ answers (numbers, names, times, fills, charts) becomes a skeleton of the same
 box. Render one skeleton row per row that is coming, so nothing jumps when the
 data lands. A chart or meter keeps its box and drops `role="meter"` while
 loading. An empty state waits for loading to finish. Announce loading once per
-page with one `sr-only` status; never a spinner, never visible "Loading" text.
+page with one `sr-only` status; never a spinner, never visible "Loading" text (page data only; a pending button keeps its spinner).
 
 ### Numbers, KPIs and charts
 
