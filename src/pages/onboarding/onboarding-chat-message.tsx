@@ -1,12 +1,13 @@
 import { CircleCheck, CircleSlash, Copy, RotateCcw } from "lucide-react";
 import { useId } from "react";
 import { Button } from "@/components/ui/button";
+import { Dotm3x3_11 } from "@/components/ui/dotm-3x3-11";
 import { useCopyFeedback } from "@/hooks/use-copy-feedback";
 import { cn } from "@/lib/utils";
 import { CHAT_BUBBLE_MAX, CHAT_TOUCH_TARGET } from "@/pages/chat/chat-layout";
 import { ChatModelLogo } from "@/pages/chat/chat-model-logo";
 import { ChatProse } from "@/pages/chat/chat-prose";
-import { CHAT_COPY, preparingReplyForLabel } from "@/pages/chat/copy";
+import { CHAT_COPY } from "@/pages/chat/copy";
 import type { ChatLane, ChatTurn } from "@/pages/chat/types";
 import { OnboardingChatUsageRow } from "@/pages/onboarding/onboarding-chat-usage-row";
 
@@ -132,22 +133,24 @@ function LaneCard({ lane, onRetry, onStop }: LaneCardProps) {
               <ChatProse>{lane.body}</ChatProse>
             ) : (
               <div className="flex items-center justify-between gap-2">
+                {/* The wait reads as Ask AI's (owner 2026-10-13: "same as AI
+                    chat"): AskAiThinkingRow's 16px Dotm3x3_11 loader and
+                    "Thinking" with the CSS ellipsis; the loader carries its
+                    own reduced-motion guard. */}
                 <div
-                  aria-label={preparingReplyForLabel(lane.model.label)}
+                  aria-label={`${lane.model.label} is thinking`}
                   className="flex items-center gap-2 py-2 text-muted-foreground"
                   role="status"
                 >
-                  <span aria-hidden className="flex items-center gap-1">
-                    {[0, 1, 2].map((dot) => (
-                      <span
-                        className="size-1 animate-pulse rounded-full bg-current motion-reduce:animate-none"
-                        key={dot}
-                        style={{ animationDelay: `${dot * 160}ms` }}
-                      />
-                    ))}
+                  {/* A flex box, so it is exactly the loader's 16px with no
+                      inline line-box gap below it, and items-center sets its
+                      middle on the label's middle. */}
+                  <span aria-hidden className="flex shrink-0">
+                    <Dotm3x3_11 cellPadding={2} dotSize={4} />
                   </span>
-                  <span className="type-copy-12">
-                    {CHAT_COPY.preparingReply}
+                  <span className="type-copy-14">
+                    Thinking
+                    <span aria-hidden className="animate-ellipsis" />
                   </span>
                 </div>
                 {canStop ? (

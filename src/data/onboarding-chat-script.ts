@@ -208,8 +208,9 @@ export const ONBOARDING_TIMING = {
    *  and settle run this long (onboarding-chat-landing.tsx, animator
    *  2026-10-12; 150ms, design.md Motion's default control transition). */
   quickActionExit: 150,
-  /** How long the reply card shows "preparing a reply" before text. */
-  thinking: 1500,
+  /** How long the reply card shows "Thinking" before text (owner
+   *  2026-10-13: 2 seconds; 1.5s read too fast). */
+  thinking: 2000,
   wordsPerSecond: 20,
   wordsPerChunk: 3,
   jitter: 0.45,
