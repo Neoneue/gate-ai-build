@@ -60,25 +60,27 @@ import { useOnboarding } from "@/pages/onboarding/use-onboarding";
  * leads to the handoff screen and, on the desktop, to the setup-link screen.
  * ───────────────────────────────────────────────────────────────────────── */
 
+/** Picker order (owner 2026-10-13): the two tool setups first, Gate Connect
+ *  leading (PRD desktop step 1), Gate Chat third. */
 const METHODS: {
   id: ImprovedConnection;
   title: string;
   description: string;
 }[] = [
   {
-    id: "gate-chat",
-    title: "Gate Chat",
-    description: "Start chatting with a model of your choice",
-  },
-  {
     id: "gate-connect",
-    title: "Gate Connect",
+    title: "Gate Connect setup",
     description: "For desktop AI apps, no key to paste",
   },
   {
     id: "manual",
     title: "Manual setup",
     description: "Base URL and key for any SDK or CLI",
+  },
+  {
+    id: "gate-chat",
+    title: "Try Gate Chat",
+    description: "Start chatting with a model of your choice",
   },
 ];
 

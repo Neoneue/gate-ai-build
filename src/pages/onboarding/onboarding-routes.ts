@@ -24,6 +24,8 @@ export const ONBOARDING_ROUTES = {
   improvedConnect: "/improved-connect-onboarding",
   verify: "/improved-verify-onboarding",
   improvedComplete: "/improved-complete-onboarding",
+  /* The mock hosted checkout "Add credits" hands off to (owner 2026-10-13). */
+  checkout: "/checkout-onboarding",
   /* The Overview after setup: the Pro Overview fed by step 3's two
    * messages (owner 2026-10-13). */
   setupOverview: "/overview-setup-onboarding",

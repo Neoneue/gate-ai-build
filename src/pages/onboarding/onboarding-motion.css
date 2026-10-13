@@ -9,12 +9,6 @@
  * Mockup `--improved-brand` (blue-600) maps to `--info`.
  * ───────────────────────────────────────────────────────────────────────── */
 
-@keyframes improved-pulse {
-  to {
-    left: 100%;
-  }
-}
-
 @keyframes improved-fly {
   0% {
     left: 0;
@@ -465,7 +459,11 @@
  *   1600ms   it lands: the target taps (600ms) while Gate's border settles
  *            back to the gray rest border (200ms). Settles at 2.2s (3.1s).
  * improved-setup.tsx keys the figure on app, billing and model, so a change
- * remounts it and the run restarts from frame one. Labels never move. */
+ * remounts it and the run restarts from frame one. Labels never move.
+ * Step 3 plays this run on arrival, then gates it on "Check connection"
+ * and the protection demo (owner 2026-10-13, below): the same packet, run,
+ * tap, swell and lit, on a 5s schedule. The wires stay gray dashes in
+ * every state. */
 
 [data-motion-root="route-stage"] {
   --pace: 1.4;
@@ -566,6 +564,173 @@
   [data-motion="route-target"] {
   animation: art-tap calc(600ms * var(--pace)) calc(1600ms * var(--pace))
     ease-in-out backwards;
+}
+
+/* Two-node route (Manual setup step 2: Gate to provider or model, no app
+ * tile, owner 2026-10-13): the sequence starts at Gate instead of waiting
+ * out the missing app hop. Gate lights at 0, its hop runs at 200ms, the
+ * target taps at 800ms; same curves and durations as the three-node run. */
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-gate"] {
+  animation-delay: 0ms, 0ms;
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-run"][data-motion-index="1"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-packet"][data-motion-index="1"] {
+  animation-delay: calc(200ms * var(--pace));
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-target"] {
+  animation-delay: calc(800ms * var(--pace));
+}
+
+/* Step 3's check and protection demo (owner 2026-10-13). Times from the
+ * click; the offsets inside each beat are at pace 1, x --pace, as above.
+ * Each beat is the run's first hop and stops at Gate:
+ *   0ms      the app taps (600ms) and settles back to its gray border
+ *   200ms    a blue packet and run cross wire 1 (600ms)
+ *   800ms    it lands: Gate swells (500ms) and its border flashes blue
+ *            (1000ms)
+ *   3000ms   the same beat again; Gate is still blue at 5000ms
+ *   5000ms   the result, offsets from here. Pass (the figure remounts):
+ *            Gate swells (500ms), its border turns from blue to green and
+ *            the shield badge fades in (200ms); at 200ms a green packet
+ *            and run cross wire 2 (600ms); at 800ms the target taps and
+ *            its border turns green (200ms). Demo caught (remounts): Gate
+ *            as on a pass, and at 200ms a gray circle-slash fades in on
+ *            wire 2 (200ms) in place of the packet; the target stays gray.
+ *            Fail (no remount, so no run replays): Gate's border turns from
+ *            blue to red and the circle-slash badge fades in (200ms);
+ *            nothing passes on. */
+
+@keyframes art-route-result {
+  from {
+    border-color: var(--info);
+  }
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-app"] {
+  animation:
+    art-tap calc(600ms * var(--pace)) ease-in-out backwards,
+    art-tap calc(600ms * var(--pace)) 3000ms ease-in-out;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-packet"][data-motion-index="0"] {
+  animation:
+    art-route-fly calc(600ms * var(--pace)) calc(200ms * var(--pace)) ease-in,
+    art-route-fly calc(600ms * var(--pace)) calc(3000ms + 200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-run"][data-motion-index="0"] {
+  animation:
+    art-route-run calc(600ms * var(--pace)) calc(200ms * var(--pace)) ease-in,
+    art-route-run calc(600ms * var(--pace)) calc(3000ms + 200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-gate"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)) calc(800ms * var(--pace)),
+    art-route-lit calc(1000ms * var(--pace)) calc(800ms * var(--pace))
+    var(--ease-out),
+    improved-hub calc(500ms * var(--pace)) calc(3000ms + 800ms * var(--pace)),
+    art-route-lit calc(1000ms * var(--pace)) calc(3000ms + 800ms * var(--pace))
+    var(--ease-out);
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-packet"][data-motion-index="1"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-run"][data-motion-index="1"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-target"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]:is(
+    [data-state="done"],
+    [data-state="blocked"],
+    [data-state="error"]
+  )
+  [data-motion] {
+  animation: none;
+}
+
+/* A fail keeps the figure mounted, so Gate's live animations are still on
+   it: a reused name (improved-hub) would match the finished one and not
+   run again. The fail beat is the colour and badge alone. */
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="error"]
+  [data-motion="route-gate"] {
+  animation: art-route-result calc(200ms * var(--pace)) var(--ease-out)
+    backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]:is(
+    [data-state="done"],
+    [data-state="blocked"]
+  )
+  [data-motion="route-gate"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)),
+    art-route-result calc(200ms * var(--pace)) var(--ease-out) backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]:is(
+    [data-state="done"],
+    [data-state="blocked"],
+    [data-state="error"]
+  )
+  [data-motion="route-check"] {
+  animation: art-fade calc(200ms * var(--pace)) var(--ease-out) backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="blocked"]
+  [data-motion="route-blocked"] {
+  animation: art-fade calc(200ms * var(--pace)) calc(200ms * var(--pace))
+    var(--ease-out) backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="done"]
+  [data-motion="route-packet"][data-motion-index="1"] {
+  animation: art-route-fly calc(600ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="done"]
+  [data-motion="route-run"][data-motion-index="1"] {
+  animation: art-route-run calc(600ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="done"]
+  [data-motion="route-target"] {
+  animation:
+    art-hub-lit calc(200ms * var(--pace)) calc(800ms * var(--pace))
+    var(--ease-out) backwards,
+    art-tap calc(600ms * var(--pace)) calc(800ms * var(--pace)) ease-in-out
+    backwards;
 }
 
 /* ─── Code art ─────────────────────────────────────────────────────────────
@@ -674,23 +839,9 @@
     translate: none;
     animation: improved-fly 0.9s ease-in-out infinite;
   }
-
-  /* The pulse rides the wires while Gate listens for the first message. */
-  [data-motion-root="route"][data-state="live"] [data-motion="route-pulse"] {
-    left: -24px;
-    opacity: 1;
-    animation: improved-pulse 0.9s linear infinite;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Mockup end state: the pulse fills the wire, no movement. */
-  [data-motion-root="route"][data-state="live"] [data-motion="route-pulse"] {
-    left: 0;
-    width: 100%;
-    opacity: 1;
-  }
-
   [data-motion-play] *,
   [data-motion-play] {
     animation: none !important;

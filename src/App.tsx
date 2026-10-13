@@ -284,6 +284,11 @@ const SetupModels = lazy(() =>
 /* Onboarding workspace (`-onboarding` suffix): the first-run setup flow in
  * two versions (Current / Improved), rebuilt from the onboarding mockup.
  * Its layout owns the in-memory flow state. */
+const OnboardingCheckout = lazy(() =>
+  import("@/pages/onboarding/OnboardingCheckout").then((m) => ({
+    default: m.OnboardingCheckout,
+  }))
+);
 const OnboardingLayout = lazy(() =>
   import("@/pages/onboarding/OnboardingLayout").then((m) => ({
     default: m.OnboardingLayout,
@@ -666,6 +671,9 @@ export function AppRoutes() {
             />
           </Route>
           <Route element={<OnboardingOverview />} path="/overview-onboarding" />
+          {/* Mock hosted checkout for Add credits (owner 2026-10-13); inside
+              the layout so the setup state survives the round trip. */}
+          <Route element={<OnboardingCheckout />} path="/checkout-onboarding" />
           <Route
             element={<OnboardingCurrentConnect />}
             path="/setup-connect-onboarding"

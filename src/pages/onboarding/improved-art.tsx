@@ -1,4 +1,4 @@
-import { Check, Mail, Send } from "lucide-react";
+import { Check, CircleSlash, Mail, Send, ShieldCheck } from "lucide-react";
 import { type ReactNode, type Ref, useId } from "react";
 import { cn } from "@/lib/utils";
 import { IMPROVED_CLIENTS } from "@/pages/onboarding/improved-data";
@@ -460,9 +460,15 @@ export function HandoffArt({
 
 /* ─── Route figure ─────────────────────────────────────────────────────── */
 
-/** App -> Gate -> target. `state`: idle (dashed wires), live (checking: the
- *  pulse rides the wires, `data-state="live"`), done (solid success wires
- *  and the check on the Gate tile). The tile columns are exactly tile-wide,
+/** App -> Gate -> target. `state` (step 3's check, owner 2026-10-13): idle
+ *  (the setup run), live (checking: the app taps and sends its packets to
+ *  Gate, twice), done (Gate's border turns green with the
+ *  shield badge, a green packet runs on and the target's border turns
+ *  green), error (Gate's border turns red with the circle-slash badge;
+ *  nothing passes on), blocked (the protection demo: Gate green with the
+ *  shield badge and a gray circle-slash on wire 2; nothing passes on). The
+ *  wires stay gray dashes in every state; colour only travels with a
+ *  packet. The tile columns are exactly tile-wide,
  *  so each wire runs edge to edge between tiles (owner 2026-10-09); labels
  *  sit in their own row and may overhang their column up to 128px, which
  *  the figure's side padding absorbs. The Gate tile is the Connect art's
@@ -480,11 +486,13 @@ export function RouteFigure({
   centered = false,
   ref,
 }: {
-  app: string;
-  appIcon: ReactNode;
+  /** Omit for a two-node figure (Gate to target): Manual setup before its
+   *  app is chosen (owner 2026-10-13). */
+  app?: string;
+  appIcon?: ReactNode;
   target: string;
   targetIcon: ReactNode;
-  state?: "idle" | "live" | "done";
+  state?: "idle" | "live" | "done" | "error" | "blocked";
   caption?: ReactNode;
   /** For a stage that centers the figure (owner 2026-10-09): the tile
    *  row sits 16px above the stage's centre line (an empty `1fr` row
@@ -499,39 +507,49 @@ export function RouteFigure({
   // its sender. Each wire carries the setup stage's packet (an 8px dot, as ConnectArt's
   // signal) outside the line's clip, so the dot can overhang the 2px line,
   // and a blue copy of the dashes (same box, so the dashes line up) that
-  // the animator shows through a short travelling window. The verify step's
-  // pulse has its own 2px clip: inside the dashed line, whose 2px is all
-  // border, its 0px padding box clipped the pulse away.
-  const wire = (hop: number) => (
-    <span aria-hidden className="relative h-0.5">
-      <span
-        className={cn(
-          "absolute inset-0",
-          state === "done"
-            ? "bg-success-600 dark:bg-success-400"
-            : "border-input border-t-2 border-dashed"
-        )}
-      />
-      <span className="absolute inset-0 overflow-hidden">
+  // the animator shows through a short travelling window. After a passed
+  // check, Gate's onward packet and run are green: checked traffic. A
+  // blocked demo message stops at Gate: a gray circle-slash sits on wire 2's
+  // midpoint, on a stage-coloured disc that cuts the dashes.
+  const guarded = state === "done" || state === "blocked";
+  const wire = (hop: number) => {
+    const passed = state === "done" && hop === 1;
+    return (
+      <span aria-hidden className="relative h-0.5">
+        <span className="absolute inset-0 border-input border-t-2 border-dashed" />
         <span
-          className="absolute top-0 left-0 h-0.5 w-6 bg-info opacity-0"
-          data-motion="route-pulse"
+          className={cn(
+            "absolute inset-0 border-t-2 border-dashed opacity-0",
+            passed
+              ? "border-success-600 dark:border-success-400"
+              : "border-info"
+          )}
+          data-motion="route-run"
+          data-motion-index={hop}
         />
+        <span
+          className="absolute inset-0 opacity-0"
+          data-motion="route-packet"
+          data-motion-index={hop}
+        >
+          <span
+            className={cn(
+              "absolute top-1/2 left-0 size-2 -translate-y-1/2 rounded-full",
+              passed ? "bg-success-600 dark:bg-success-400" : "bg-info"
+            )}
+          />
+        </span>
+        {state === "blocked" && hop === 1 ? (
+          <span
+            className="absolute top-1/2 left-1/2 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-muted text-input"
+            data-motion="route-blocked"
+          >
+            <CircleSlash className="size-5" strokeWidth={1.75} />
+          </span>
+        ) : null}
       </span>
-      <span
-        className="absolute inset-0 border-info border-t-2 border-dashed opacity-0"
-        data-motion="route-run"
-        data-motion-index={hop}
-      />
-      <span
-        className="absolute inset-0 opacity-0"
-        data-motion="route-packet"
-        data-motion-index={hop}
-      >
-        <span className="absolute top-1/2 left-0 size-2 -translate-y-1/2 rounded-full bg-info" />
-      </span>
-    </span>
-  );
+    );
+  };
   const label = (text: string, column: string) => (
     <span
       className={cn(
@@ -545,48 +563,79 @@ export function RouteFigure({
   );
   return (
     <figure
-      aria-label={`${app} through Gate to ${target}`}
+      aria-label={
+        app ? `${app} through Gate to ${target}` : `Gate to ${target}`
+      }
       className={cn(
-        "m-0 grid w-full grid-cols-[--spacing(14)_minmax(--spacing(4),1fr)_--spacing(18)_minmax(--spacing(4),1fr)_--spacing(14)] items-center gap-y-2 px-9",
+        "m-0 grid w-full items-center gap-y-2 px-9",
+        app
+          ? "grid-cols-[--spacing(14)_minmax(--spacing(4),1fr)_--spacing(18)_minmax(--spacing(4),1fr)_--spacing(14)]"
+          : "mx-auto max-w-80 grid-cols-[--spacing(18)_minmax(--spacing(4),1fr)_--spacing(14)]",
         centered && "mb-8 grid-rows-[1fr_auto_1fr]"
       )}
       data-motion-root="route"
+      data-route-nodes={app ? 3 : 2}
       data-state={state}
       ref={ref}
     >
       {centered ? <span aria-hidden className="col-span-full" /> : null}
+      {app ? (
+        <>
+          <span
+            className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
+            data-motion="route-app"
+          >
+            {appIcon}
+          </span>
+          {wire(0)}
+        </>
+      ) : null}
       <span
-        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
-        data-motion="route-app"
-      >
-        {appIcon}
-      </span>
-      {wire(0)}
-      <span
-        className="relative z-10 grid size-18 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
+        className={cn(
+          "relative z-10 grid size-18 place-items-center rounded-md border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card",
+          guarded
+            ? "border-success-600 dark:border-success-400"
+            : state === "error"
+              ? "border-destructive"
+              : "border-border"
+        )}
         data-motion="route-gate"
       >
         <GateMark className="size-9" />
-        {state === "done" ? (
+        {guarded || state === "error" ? (
           <span
-            className="absolute -right-2 -bottom-2 grid size-6 place-items-center rounded-full border-2 border-background bg-success-600 text-primary-foreground dark:bg-success-400"
+            className={cn(
+              "absolute -right-2 -bottom-2 grid size-6 place-items-center rounded-full bg-card",
+              guarded
+                ? "text-success-600 dark:text-success-400"
+                : "text-destructive"
+            )}
             data-motion="route-check"
           >
-            <Check className="size-3" strokeWidth={1.75} />
+            {guarded ? (
+              <ShieldCheck className="size-5" strokeWidth={1.75} />
+            ) : (
+              <CircleSlash className="size-5" strokeWidth={1.75} />
+            )}
           </span>
         ) : null}
       </span>
       {wire(1)}
       <span
-        className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
+        className={cn(
+          "relative z-10 grid size-14 place-items-center rounded-md border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card",
+          state === "done"
+            ? "border-success-600 dark:border-success-400"
+            : "border-border"
+        )}
         data-motion="route-target"
       >
         {targetIcon}
       </span>
       <span className="col-span-full grid grid-cols-subgrid items-start gap-y-6 self-start">
-        {label(app, "col-start-1")}
-        {label("Gate", "col-start-3")}
-        {label(target, "col-start-5")}
+        {app ? label(app, "col-start-1") : null}
+        {label("Gate", app ? "col-start-3" : "col-start-1")}
+        {label(target, app ? "col-start-5" : "col-start-3")}
         {caption ? (
           <figcaption
             className={cn(

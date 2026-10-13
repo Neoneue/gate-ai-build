@@ -112,6 +112,12 @@ export const wait = (ms: number) =>
 
 /** The paid models offered with Gate credits (the mockup's list, verbatim). */
 export const IMPROVED_MODELS = [
+  // First, so Select a model opens on it (owner 2026-10-13).
+  {
+    id: "anthropic/claude-fable-5",
+    label: "Claude Fable 5",
+    vendor: "anthropic",
+  },
   {
     id: "deepseek/deepseek-v4-flash",
     label: "DeepSeek V4 Flash",
@@ -178,8 +184,11 @@ export const modelOf = (state: ImprovedState): ImprovedModel => {
   if (listed) {
     return listed;
   }
+  // Manual lists the whole catalog for every app (owner 2026-10-13).
   const catalog =
-    state.client === CATALOG_CLIENT ? modelById(state.model) : undefined;
+    state.client === CATALOG_CLIENT || state.connection === "manual"
+      ? modelById(state.model)
+      : undefined;
   return catalog
     ? { id: catalog.id, label: catalog.name, vendor: catalog.vendor }
     : IMPROVED_MODELS[0];

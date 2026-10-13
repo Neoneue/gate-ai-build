@@ -41,7 +41,6 @@ import {
   ATTACK_MESSAGE,
   appNameOf,
   CATALOG_CLIENT,
-  CATALOG_DEFAULT_MODEL,
   CATALOG_MODELS,
   CLIENT_GROUPS,
   clientOf,
@@ -51,7 +50,6 @@ import {
   IMPROVED_MODELS,
   type ImprovedModel,
   modelOf,
-  SIMULATED_MS,
   TEST_MESSAGE,
   TEST_TOKENS_IN,
   TEST_TOKENS_OUT,
@@ -64,20 +62,18 @@ import {
   ImprovedRouteFigure,
   SetupGroup,
   StatusRow,
+  TryGateChatLink,
 } from "@/pages/onboarding/improved-parts";
+import type { CheckoutState } from "@/pages/onboarding/OnboardingCheckout";
 import { OnboardingChrome } from "@/pages/onboarding/onboarding-chrome";
 import { ConnectTabs } from "@/pages/onboarding/onboarding-connect-tabs";
-import { addOnboardingCredits } from "@/pages/onboarding/onboarding-credits";
 import {
   NEW_TAB_CUE,
   ONBOARDING_ROUTES,
   openInNewTab,
   simulateFlag,
 } from "@/pages/onboarding/onboarding-routes";
-import {
-  DEFAULT_PAYG_MODEL,
-  type ImprovedBilling,
-} from "@/pages/onboarding/onboarding-state";
+import type { ImprovedBilling } from "@/pages/onboarding/onboarding-state";
 import { useIsMobileSetup } from "@/pages/onboarding/use-is-mobile-setup";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 import { GUARDRAIL_BADGE } from "@/pages/requests/data";
@@ -90,7 +86,11 @@ import { GUARDRAIL_BADGE } from "@/pages/requests/data";
  * Chat page (`/chat-onboarding`) and lands on the ready page from there.
  * ───────────────────────────────────────────────────────────────────────── */
 
-const DEMO_CHECK_MS = 850;
+/** Step 3's "Check connection" and protection demo each run 5s (owner
+ *  2026-10-13): two packets reach Gate, at 0s and 3s, before the result
+ *  (onboarding-motion.css, Setup route). The start page keeps
+ *  SIMULATED_MS. */
+const ROUTE_CHECK_MS = 5000;
 
 const BILLING_OPTIONS: {
   value: ImprovedBilling;
@@ -105,13 +105,12 @@ const BILLING_OPTIONS: {
   { value: "payg", title: "Gate credits", detail: "Pay as you go, any model" },
 ];
 
-/** Step 2's billing choice on Gate Connect, shown below "Select an app"
- *  (owner 2026-10-13). The PRD allows it: the tool is picked first (release
- *  outcome 3), and Gate Connect needs it to route ("or when the tool needs
- *  it", desktop step 4); without it Gate credits cannot be chosen. Set to
- *  false to hide it (Gate Connect then runs on Existing subscriptions).
- *  Manual setup has no billing choice. */
-const SHOW_BILLING_ON_GATE_CONNECT = true;
+/** Step 2's billing choice, on Gate Connect and Manual setup (owner
+ *  2026-10-13). The PRD allows it: the tool is picked first (release outcome
+ *  3), and billing comes "when the tool needs it" (desktop step 4); the
+ *  official repo has a pay-as-you-go Manual path (SetupManual.tsx PaygSetup).
+ *  Set to false to hide it (both then run on Existing subscriptions). */
+const SHOW_BILLING_CHOICE = true;
 
 /** The official Manual setup block's app tabs (onboarding-connect-tabs.tsx,
  *  ported from the official repo), in its order. */
@@ -150,7 +149,13 @@ export function ImprovedConnect() {
 function PrepareSetup() {
   const navigate = useNavigate();
   const { improved, updateImproved } = useOnboarding();
-  const [creditsOpen, setCreditsOpen] = useState(false);
+  const location = useLocation();
+  // Back from the mock checkout reopens the dialog to cancel or re-pick.
+  const [creditsOpen, setCreditsOpen] = useState(
+    () =>
+      (location.state as { reopenCredits?: boolean } | null)?.reopenCredits ===
+      true
+  );
   const [createOpen, setCreateOpen] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [pendingName, setPendingName] = useState("");
@@ -176,6 +181,148 @@ function PrepareSetup() {
     }
   }, [connect, client.id, manualTab, updateImproved]);
 
+  // Billing, then on Gate credits the model and credits: after the app on
+  // Gate Connect, after the key on Manual setup (owner 2026-10-13).
+  const billingSections = (
+    <>
+      {SHOW_BILLING_CHOICE ? (
+        <SetupGroup
+          description="Choose how model usage is paid for."
+          title="Select your billing type"
+        >
+          <RadioGroup
+            aria-label="Select your billing type"
+            className="@xl:grid-cols-2"
+            onValueChange={(value) => {
+              if (value !== improved.billing) {
+                updateImproved({
+                  billing: value as ImprovedBilling,
+                  connected: false,
+                  ...RESET_CHECKS,
+                });
+              }
+            }}
+            value={improved.billing}
+          >
+            {BILLING_OPTIONS.map((option) => {
+              const checked = improved.billing === option.value;
+              const detailId = `setup-billing-${option.value}`;
+              return (
+                <label
+                  className={cn(
+                    "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 rounded-md border bg-card p-4 text-left transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:bg-accent-muted motion-reduce:transition-none",
+                    checked
+                      ? "border-foreground shadow-sm"
+                      : "border-border shadow-xs hover:border-input"
+                  )}
+                  key={option.value}
+                >
+                  <RadioGroupItem
+                    aria-describedby={detailId}
+                    value={option.value}
+                  />
+                  <span className="type-label-14 text-foreground">
+                    {option.title}
+                  </span>
+                  <span
+                    className="type-copy-12 col-start-2 text-muted-foreground"
+                    id={detailId}
+                  >
+                    {option.detail}
+                  </span>
+                </label>
+              );
+            })}
+          </RadioGroup>
+        </SetupGroup>
+      ) : null}
+
+      {/* Gate credits (either method): pick a model, then fund it. */}
+      {payg ? (
+        <SetupGroup
+          description="Choose which Gate model your tokens will use. It only sets up your first config, and you can change it anytime."
+          title="Select a model"
+        >
+          {/* Manual: the full catalog whatever the tab, as the official PAYG
+                Manual step does (owner 2026-10-13); Gate Connect keeps the
+                per-app list. */}
+          {!connect || client.id === CATALOG_CLIENT ? (
+            <CatalogModelPicker
+              onChange={(next) =>
+                updateImproved({ model: next, ...RESET_CHECKS })
+              }
+              value={model.id}
+            />
+          ) : (
+            <Select
+              onValueChange={(next) =>
+                updateImproved({ model: String(next), ...RESET_CHECKS })
+              }
+              value={model.id}
+            >
+              <SelectTrigger
+                aria-label="Select a model"
+                className="w-full"
+                id="setup-model"
+                size="lg"
+              >
+                <SelectValue>
+                  <span className="flex items-center gap-2">
+                    <VendorAvatar decorative vendor={model.vendor} />
+                    {model.label}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {IMPROVED_MODELS.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    <span className="flex items-center gap-2">
+                      <VendorAvatar decorative vendor={option.vendor} />
+                      {option.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </SetupGroup>
+      ) : null}
+
+      {payg ? (
+        <SetupGroup
+          description="Credits pay for your model usage. Gate draws them down as your tokens are used."
+          title="Add credits"
+        >
+          <Card>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                {/* The balance's one home on this page (owner
+                          2026-10-09); `CreditStatRow`'s label and mono
+                          value voices, label over value so the action
+                          can sit on the right. */}
+                <dl className="m-0 flex flex-col gap-1">
+                  <dt className="type-label-14 text-muted-foreground">
+                    Credit balance
+                  </dt>
+                  <dd className="type-copy-14 m-0 font-mono text-foreground tabular-nums">
+                    {formatCurrency(improved.balanceUsd)}
+                  </dd>
+                </dl>
+                <Button
+                  onClick={() => setCreditsOpen(true)}
+                  size="default"
+                  variant={funded ? "outline" : "default"}
+                >
+                  {funded ? "Add more credits" : "Add credits"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </SetupGroup>
+      ) : null}
+    </>
+  );
+
   const acknowledge = () => {
     updateImproved({ connected: true, pathChosen: true });
     navigate(ONBOARDING_ROUTES.verify);
@@ -185,6 +332,7 @@ function PrepareSetup() {
     <ImprovedColumn>
       <BackLink href={ONBOARDING_ROUTES.start} label="Setup method" />
       <ImprovedHeader
+        action={<TryGateChatLink />}
         title={connect ? "Set up Gate Connect" : "Set up Manual setup"}
       />
       <div className="grid @4xl:grid-cols-[5fr_6fr] items-start gap-10">
@@ -201,6 +349,7 @@ function PrepareSetup() {
             centered
             improved={improved}
             key={`${client.id}:${improved.billing}:${model.id}`}
+            showApp={connect}
           />
         </aside>
         <div className="flex min-w-0 flex-col gap-6">
@@ -219,12 +368,8 @@ function PrepareSetup() {
                     client: String(value),
                     connected: false,
                     ...RESET_CHECKS,
-                    // Claude Code starts on an Anthropic model; a model the
-                    // user already picked is kept.
-                    ...(value === CATALOG_CLIENT &&
-                    improved.model === DEFAULT_PAYG_MODEL
-                      ? { model: CATALOG_DEFAULT_MODEL }
-                      : {}),
+                    // The default (Claude Fable 5) is already an Anthropic
+                    // model, so Claude Code keeps it; no per-app swap.
                   })
                 }
                 value={client.id}
@@ -266,211 +411,85 @@ function PrepareSetup() {
             </SetupGroup>
           ) : null}
 
-          {connect && SHOW_BILLING_ON_GATE_CONNECT ? (
-            <SetupGroup
-              description="Choose how model usage is paid for."
-              title="Select your billing type"
+          {/* Gate Connect: billing right after the app (owner 2026-10-13). */}
+          {connect ? billingSections : null}
+
+          {/* Dimmed and inert until there are credits (owner 2026-10-13:
+              hide branches, dim sequences). */}
+          {connect ? (
+            <div
+              aria-disabled={!funded || undefined}
+              className={cn(!funded && "opacity-50")}
+              inert={!funded}
             >
-              <RadioGroup
-                aria-label="Select your billing type"
-                className="@xl:grid-cols-2"
-                onValueChange={(value) => {
-                  if (value !== improved.billing) {
-                    updateImproved({
-                      billing: value as ImprovedBilling,
-                      connected: false,
-                      ...RESET_CHECKS,
-                    });
-                  }
-                }}
-                value={improved.billing}
+              <SetupGroup
+                description={
+                  improved.downloaded
+                    ? "Start routing your messages through Gate."
+                    : "Available for macOS, Windows, and Linux."
+                }
+                title={
+                  improved.downloaded
+                    ? "Sign in and connect"
+                    : "Download Gate Connect"
+                }
               >
-                {BILLING_OPTIONS.map((option) => {
-                  const checked = improved.billing === option.value;
-                  const detailId = `setup-billing-${option.value}`;
-                  return (
-                    <label
-                      className={cn(
-                        "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 rounded-md border bg-card p-4 text-left transition-[background-color,border-color,box-shadow] duration-150 ease-out hover:bg-accent-muted motion-reduce:transition-none",
-                        checked
-                          ? "border-foreground shadow-sm"
-                          : "border-border shadow-xs hover:border-input"
-                      )}
-                      key={option.value}
-                    >
-                      <RadioGroupItem
-                        aria-describedby={detailId}
-                        value={option.value}
-                      />
-                      <span className="type-label-14 text-foreground">
-                        {option.title}
-                      </span>
-                      <span
-                        className="type-copy-12 col-start-2 text-muted-foreground"
-                        id={detailId}
-                      >
-                        {option.detail}
-                      </span>
-                    </label>
-                  );
-                })}
-              </RadioGroup>
-            </SetupGroup>
-          ) : null}
-
-          {/* Gate credits only exist on Gate Connect, behind
-              SHOW_BILLING_ON_GATE_CONNECT; Manual setup has no billing or
-              model step (owner 2026-10-13). */}
-          {payg && connect ? (
-            <SetupGroup
-              description="Choose which Gate model your tokens will use. It only sets up your first config, and you can change it anytime."
-              title="Select a model"
-            >
-              {client.id === CATALOG_CLIENT ? (
-                <CatalogModelPicker
-                  onChange={(next) =>
-                    updateImproved({ model: next, ...RESET_CHECKS })
-                  }
-                  value={model.id}
-                />
-              ) : (
-                <Select
-                  onValueChange={(next) =>
-                    updateImproved({ model: String(next), ...RESET_CHECKS })
-                  }
-                  value={model.id}
-                >
-                  <SelectTrigger
-                    aria-label="Select a model"
-                    className="w-full"
-                    id="setup-model"
-                    size="lg"
-                  >
-                    <SelectValue>
-                      <span className="flex items-center gap-2">
-                        <VendorAvatar decorative vendor={model.vendor} />
-                        {model.label}
-                      </span>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {IMPROVED_MODELS.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        <span className="flex items-center gap-2">
-                          <VendorAvatar decorative vendor={option.vendor} />
-                          {option.label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </SetupGroup>
-          ) : null}
-
-          {payg && connect ? (
-            <SetupGroup
-              description="Top up your balance. Gate draws down as your tokens are used."
-              title="Add credits"
-            >
-              <Card>
-                <CardContent className="flex flex-col gap-4">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    {/* The balance's one home on this page (owner
-                        2026-10-09); `CreditStatRow`'s label and mono
-                        value voices, label over value so the action
-                        can sit on the right. */}
-                    <dl className="m-0 flex flex-col gap-1">
-                      <dt className="type-label-14 text-muted-foreground">
-                        Credit balance
-                      </dt>
-                      <dd className="type-copy-14 m-0 font-mono text-foreground tabular-nums">
-                        {formatCurrency(improved.balanceUsd)}
-                      </dd>
-                    </dl>
-                    <Button
-                      onClick={() => setCreditsOpen(true)}
-                      size="default"
-                      variant={funded ? "outline" : "default"}
-                    >
-                      {funded ? "Add more credits" : "Add credits"}
-                    </Button>
-                  </div>
-                  {funded ? null : (
-                    <p className="type-copy-14 m-0 text-muted-foreground">
-                      Add credits to continue.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </SetupGroup>
-          ) : null}
-
-          {funded && connect ? (
-            <SetupGroup
-              description={
-                improved.downloaded
-                  ? "Start routing your messages through Gate."
-                  : "Available for macOS, Windows, and Linux."
-              }
-              title={
-                improved.downloaded
-                  ? "Sign in and connect"
-                  : "Download Gate Connect"
-              }
-            >
-              <Card>
-                <CardContent className="flex flex-col gap-4">
-                  {improved.downloaded ? (
-                    <ol className="m-0 flex list-none flex-col gap-3 p-0">
-                      {[
-                        "Sign in to Gate Connect.",
-                        `Toggle Proxy On for ${app}.`,
-                        ...(client.restart ? [`Quit and reopen ${app}.`] : []),
-                      ].map((text, index) => (
-                        <li className="flex items-center gap-3" key={text}>
-                          <StepIndicator n={index + 1} state="upcoming" />
-                          <span className="type-copy-14 text-foreground">
-                            {text}
-                          </span>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : null}
-                  <div className="flex flex-wrap items-center gap-4">
+                <Card>
+                  <CardContent className="flex flex-col gap-4">
                     {improved.downloaded ? (
-                      <>
-                        <Button onClick={acknowledge} size="default">
-                          I've connected {app}
-                          <ArrowRight aria-hidden data-icon="inline-end" />
-                        </Button>
-                        <DownloadGateConnectDialog
-                          trigger="link"
-                          triggerLabel="Re-download Gate Connect"
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <DownloadGateConnectDialog
-                          onDownload={() =>
-                            updateImproved({ downloaded: true })
-                          }
-                        />
-                        <TextLink
-                          className="type-label-14"
-                          onClick={() => updateImproved({ downloaded: true })}
-                        >
-                          I already have Gate Connect
-                        </TextLink>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </SetupGroup>
+                      <ol className="m-0 flex list-none flex-col gap-3 p-0">
+                        {[
+                          "Sign in to Gate Connect.",
+                          `Toggle Proxy On for ${app}.`,
+                          ...(client.restart
+                            ? [`Quit and reopen ${app}.`]
+                            : []),
+                        ].map((text, index) => (
+                          <li className="flex items-center gap-3" key={text}>
+                            <StepIndicator n={index + 1} state="upcoming" />
+                            <span className="type-copy-14 text-foreground">
+                              {text}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-4">
+                      {improved.downloaded ? (
+                        <>
+                          <Button onClick={acknowledge} size="default">
+                            I've connected {app}
+                            <ArrowRight aria-hidden data-icon="inline-end" />
+                          </Button>
+                          <DownloadGateConnectDialog
+                            trigger="link"
+                            triggerLabel="Re-download Gate Connect"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <DownloadGateConnectDialog
+                            onDownload={() =>
+                              updateImproved({ downloaded: true })
+                            }
+                          />
+                          <TextLink
+                            className="type-label-14"
+                            onClick={() => updateImproved({ downloaded: true })}
+                          >
+                            I already have Gate Connect
+                          </TextLink>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </SetupGroup>
+            </div>
           ) : null}
 
-          {/* Manual setup: no billing step, so nothing to fund first. */}
+          {/* Manual setup: the key first, then billing as its step 2
+              (owner 2026-10-13). */}
           {connect ? null : (
             <SetupGroup
               description="One key the app uses to sign in."
@@ -528,10 +547,37 @@ function PrepareSetup() {
             </SetupGroup>
           )}
 
+          {/* Manual setup step 2: the billing choice, then on Gate credits
+              the model and credits, dimmed until a key is chosen (owner
+              2026-10-13). */}
           {connect ? null : (
+            <div
+              aria-disabled={!keySelected || undefined}
+              className={cn(
+                "flex flex-col gap-6",
+                !keySelected && "opacity-50"
+              )}
+              inert={!keySelected}
+            >
+              {billingSections}
+            </div>
+          )}
+
+          {/* Hidden until a key is made or picked (owner 2026-10-13); then
+              live at once on Existing subscriptions, dimmed until a balance
+              on Gate credits. */}
+          {connect || !keySelected ? null : (
             <SetupGroup
-              description="These two settings work for any OpenAI or Anthropic-compatible client."
-              title="Set your base URL and key"
+              // The official pair per billing (SetupManual.tsx: BYOK step 2,
+              // PaygSetup step 4), since Gate credits snippets add the model.
+              description={
+                payg
+                  ? "Set these in your client. Use the model you picked above."
+                  : "These two settings work for any OpenAI or Anthropic-compatible client."
+              }
+              title={
+                payg ? "Point your app to Gate" : "Set your base URL and key"
+              }
             >
               {/* The official Manual setup's block (gate repo,
                   pages/setup/SetupManual.tsx): ConnectTabs with its app tabs, which are the
@@ -539,13 +585,13 @@ function PrepareSetup() {
                   key is chosen (owner 2026-10-13); the tabs live inside the
                   inert wrapper, so a key comes first. */}
               <div
-                aria-disabled={!keySelected || undefined}
-                className={cn(!keySelected && "opacity-50")}
-                inert={!keySelected}
+                aria-disabled={!(keySelected && funded) || undefined}
+                className={cn(!(keySelected && funded) && "opacity-50")}
+                inert={!(keySelected && funded)}
               >
                 <Card className="flex flex-1 flex-col" density="flush">
                   <ConnectTabs
-                    byokOnly
+                    byokOnly={!payg}
                     codeMaxHeight="max-h-[216px]"
                     defaultTab={manualTab}
                     floatingCopy
@@ -557,36 +603,57 @@ function PrepareSetup() {
                         ...RESET_CHECKS,
                       })
                     }
+                    paygModel={model.id}
+                    paygOnly={payg}
                     showGateConnect={false}
                   />
                 </Card>
               </div>
-              <p className="type-copy-14 m-0 text-muted-foreground">
-                Paste your saved key secret
-                {client.restart ? `, then quit and reopen ${app}.` : "."}
-              </p>
-              <Button
-                className="self-start"
-                disabled={!keySelected}
-                onClick={acknowledge}
-                size="default"
-              >
-                I've saved my settings
-                <ArrowRight aria-hidden data-icon="inline-end" />
-              </Button>
+              {/* The finishing steps as a numbered card, the same pattern as
+                  Gate Connect's "Sign in and connect" (owner 2026-10-13). */}
+              <Card>
+                <CardContent className="flex flex-col gap-4">
+                  <ol className="m-0 flex list-none flex-col gap-3 p-0">
+                    {[
+                      `Paste the code into ${app}'s config.`,
+                      "Add your saved key secret.",
+                      ...(client.restart ? [`Quit and reopen ${app}.`] : []),
+                    ].map((text, index) => (
+                      <li className="flex items-center gap-3" key={text}>
+                        <StepIndicator n={index + 1} state="upcoming" />
+                        <span className="type-copy-14 text-foreground">
+                          {text}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                  <Button
+                    className="self-start"
+                    disabled={!(keySelected && funded)}
+                    onClick={acknowledge}
+                    size="default"
+                  >
+                    I've saved my settings
+                    <ArrowRight aria-hidden data-icon="inline-end" />
+                  </Button>
+                </CardContent>
+              </Card>
             </SetupGroup>
           )}
         </div>
       </div>
 
       <AddCreditsDialog
-        onCheckout={(amount) => {
-          updateImproved((state) => ({
-            balanceUsd: state.balanceUsd + amount,
-          }));
-          // The Gate Chat tab reads the same balance (onboarding-credits.ts).
-          addOnboardingCredits(amount);
-        }}
+        onCheckout={(amount) =>
+          // Hands off to the mock hosted checkout; Pay there adds the
+          // credits and returns here, Back reopens this dialog.
+          navigate(ONBOARDING_ROUTES.checkout, {
+            state: {
+              amount,
+              returnTo: ONBOARDING_ROUTES.improvedConnect,
+            } satisfies CheckoutState,
+          })
+        }
         onOpenChange={setCreditsOpen}
         open={creditsOpen}
       />
@@ -717,8 +784,28 @@ function VerifyConnection() {
   const client = clientOf(improved);
   const model = modelOf(improved);
   const testModel = testModelOf(improved);
-  const payg = improved.billing === "payg";
-  const route = improved.received ? "done" : checking ? "live" : "idle";
+  // The demo runs the check's sequence again from a reset figure; a demo
+  // that gets no result shows the check's error state.
+  const route = running
+    ? "live"
+    : demoFailed
+      ? "error"
+      : improved.caught
+        ? "blocked"
+        : improved.received
+          ? "done"
+          : checking
+            ? "live"
+            : connectionFailed
+              ? "error"
+              : "idle";
+  const routeRun = improved.caught
+    ? "caught"
+    : attempts.demo > 0
+      ? `demo-${attempts.demo}`
+      : improved.received
+        ? "received"
+        : `check-${attempts.connection}`;
 
   // "Check connection" is simulated by the page itself: a short check, then
   // the first message lands (the mockup's received state), or, previewing
@@ -728,7 +815,7 @@ function VerifyConnection() {
     setAttempts((count) => ({ ...count, connection: count.connection + 1 }));
     setConnectionFailed(false);
     setChecking(true);
-    await wait(SIMULATED_MS);
+    await wait(ROUTE_CHECK_MS);
     setChecking(false);
     if (fail) {
       setConnectionFailed(true);
@@ -753,7 +840,7 @@ function VerifyConnection() {
         return;
       }
       updateImproved({ caught: true, caughtAt: Date.now() });
-    }, DEMO_CHECK_MS);
+    }, ROUTE_CHECK_MS);
   };
 
   return (
@@ -762,7 +849,7 @@ function VerifyConnection() {
         href={ONBOARDING_ROUTES.improvedConnect}
         label="Connection settings"
       />
-      <ImprovedHeader title="Check connection" />
+      <ImprovedHeader action={<TryGateChatLink />} title="Check connection" />
       {/* Step 2's layout (owner 2026-10-13): the route stage on the left,
           the labelled groups on the right, the primary action at the foot
           of the right column. */}
@@ -773,16 +860,15 @@ function VerifyConnection() {
           data-motion-root="route-stage"
         >
           {/* Step 2's left-to-right route run, reused (owner 2026-10-13):
-              the figure is keyed on the check attempt, so it plays on
-              arrival and again each time a check starts; live adds the wire
-              pulse, done settles the solid wires and the check, and a failed
-              check returns to idle, all without a remount
-              (onboarding-motion.css, Setup route). */}
+              the figure is keyed on the check or demo attempt, so it plays
+              on arrival and runs the check each time one starts; a fail
+              turns it to error without a remount, and a pass or a caught
+              demo remounts it to play the result (onboarding-motion.css,
+              Setup route). */}
           <ImprovedRouteFigure
-            caption={payg ? "Uses Gate credits" : "Billed by your provider"}
             centered
             improved={improved}
-            key={`${client.id}:${improved.billing}:${model.id}:${improved.received ? "received" : attempts.connection}`}
+            key={`${client.id}:${improved.billing}:${model.id}:${routeRun}`}
             state={route}
           />
         </aside>
@@ -843,9 +929,15 @@ function VerifyConnection() {
             </Card>
           </SetupGroup>
 
-          {/* The demo opens only once the connection passed (owner
+          {/* The demo follows the connection check (owner
               2026-10-13): moved here from the ready page, now required. */}
-          {improved.received ? (
+          {/* Dimmed and inert until the connection passed (owner 2026-10-13:
+              hide branches, dim sequences): the whole route stays in view. */}
+          <div
+            aria-disabled={!improved.received || undefined}
+            className={cn(!improved.received && "opacity-50")}
+            inert={!improved.received}
+          >
             <SetupGroup title="Run the protection demo">
               <Card>
                 <CardContent className="flex flex-col gap-4">
@@ -905,7 +997,7 @@ function VerifyConnection() {
                 </CardContent>
               </Card>
             </SetupGroup>
-          ) : null}
+          </div>
 
           {/* Shown only once the demo passed (owner 2026-10-13). */}
           {improved.received && improved.caught ? (

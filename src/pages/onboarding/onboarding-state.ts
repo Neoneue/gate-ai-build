@@ -101,7 +101,9 @@ export type ImprovedState = {
   } | null;
 };
 
-export const DEFAULT_PAYG_MODEL = "deepseek/deepseek-v4-flash";
+/** Gate credits' starting model: Claude Fable 5 (owner 2026-10-13, was
+ *  DeepSeek V4 Flash). */
+export const DEFAULT_PAYG_MODEL = "anthropic/claude-fable-5";
 
 export const initialCurrentState = (): CurrentState => ({
   path: false,
@@ -117,11 +119,15 @@ export const initialCurrentState = (): CurrentState => ({
 });
 
 export const initialImprovedState = (): ImprovedState => ({
-  connection: "gate-chat",
+  // The desktop picker opens on Gate Connect (owner 2026-10-13; PRD desktop
+  // step 1, Gate Connect first). Phone paths set Gate Chat themselves.
+  connection: "gate-connect",
   // Existing subscriptions on both desktop methods (owner 2026-10-13, PRD
   // "Tool before billing"); Gate Chat reads its own credits.
   billing: "existing",
-  client: "codex",
+  // Claude Code first: the Manual tab and the Gate Connect app both start
+  // on it (owner 2026-10-13).
+  client: "claude-code",
   model: DEFAULT_PAYG_MODEL,
   balanceUsd: 0,
   keys: [],
