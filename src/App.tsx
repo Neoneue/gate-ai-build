@@ -14,6 +14,16 @@ import { AskAiThreadProvider } from "@/hooks/ask-ai-thread-provider";
 const AuthLayout = lazy(() =>
   import("@/layouts/AuthLayout").then((m) => ({ default: m.AuthLayout }))
 );
+const OnboardingAuthLayout = lazy(() =>
+  import("@/pages/onboarding/OnboardingAuthLayout").then((m) => ({
+    default: m.OnboardingAuthLayout,
+  }))
+);
+const OnboardingSignUp = lazy(() =>
+  import("@/pages/onboarding/OnboardingSignUp").then((m) => ({
+    default: m.OnboardingSignUp,
+  }))
+);
 const Activity = lazy(() =>
   import("@/pages/Activity").then((m) => ({ default: m.Activity }))
 );
@@ -286,6 +296,26 @@ const OnboardingChatLayout = lazy(() =>
     default: m.OnboardingChatLayout,
   }))
 );
+const OnboardingMobileOverview = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileOverview").then((m) => ({
+    default: m.OnboardingMobileOverview,
+  }))
+);
+const OnboardingMobileMessages = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileMessages").then((m) => ({
+    default: m.OnboardingMobileMessages,
+  }))
+);
+const OnboardingMobileActivity = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileActivity").then((m) => ({
+    default: m.OnboardingMobileActivity,
+  }))
+);
+const OnboardingMobileConversations = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileConversations").then((m) => ({
+    default: m.OnboardingMobileConversations,
+  }))
+);
 const OnboardingOverview = lazy(() =>
   import("@/pages/onboarding/OnboardingOverview").then((m) => ({
     default: m.OnboardingOverview,
@@ -404,10 +434,14 @@ export function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route element={<SignIn />} path="/sign-in" />
         <Route element={<SignUp />} path="/sign-up" />
-        {/* Onboarding demo: the same screens, whose signup opens the
-            onboarding workspace (SignUp.tsx). */}
+      </Route>
+      {/* Onboarding demo (owner 2026-10-12): its own copy of the auth shell,
+          whose phone background stays fixed under the keyboard, and its own
+          "Create your account" card, whose signup opens the onboarding
+          workspace. /sign-in and /sign-up above are untouched. */}
+      <Route element={<OnboardingAuthLayout />}>
         <Route element={<SignIn />} path="/sign-in-onboarding" />
-        <Route element={<SignUp />} path="/sign-up-onboarding" />
+        <Route element={<OnboardingSignUp />} path="/sign-up-onboarding" />
       </Route>
       {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
           A chart of the shell cannot be read from inside the shell, so it
@@ -597,6 +631,25 @@ export function AppRoutes() {
             <Route
               element={<OnboardingChat />}
               path="/chat-onboarding/:conversationId"
+            />
+            {/* Mobile A demo's Overview, under the chat's top bar. */}
+            <Route
+              element={<OnboardingMobileOverview />}
+              path="/overview-mobile-onboarding"
+            />
+            {/* Mobile A demo copies of Messages and Activity. */}
+            <Route
+              element={<OnboardingMobileMessages />}
+              path="/messages-mobile-onboarding"
+            />
+            <Route
+              element={<OnboardingMobileActivity />}
+              path="/activity-mobile-onboarding"
+            />
+            {/* The phone demo's Conversations copy (owner 2026-10-12). */}
+            <Route
+              element={<OnboardingMobileConversations />}
+              path="/conversations-mobile-onboarding"
             />
           </Route>
           <Route element={<OnboardingOverview />} path="/overview-onboarding" />

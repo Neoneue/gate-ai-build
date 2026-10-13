@@ -91,6 +91,9 @@ export interface OnboardingChatSidebarProps {
   onSearch: (query: string) => void;
   onSelectConversation: (conversationId: string) => void;
   searchQuery: string;
+  /** "Sign out" at the foot of the expanded rail. The phone drawer passes
+   *  false (owner 2026-10-11); the desktop rail keeps it. */
+  showSignOut?: boolean;
   /** Whether this workspace is still eligible for the upgrade path. */
   showUpgrade?: boolean;
   /** Rendered above New chat in the expanded rail. The mobile Sheet carries
@@ -121,6 +124,7 @@ export function OnboardingChatSidebar({
   historyLoading = false,
   historyError = null,
   credits,
+  showSignOut = true,
   showUpgrade = true,
   touchFriendly = false,
   topSlot,
@@ -400,28 +404,33 @@ export function OnboardingChatSidebar({
                   ) : null}
                 </div>
                 {/* Separates credits from Sign out (user,
-                  2026-10-06); shown wherever the credits block is. */}
-                <Separator className="xl:hidden" />
+                  2026-10-06); shown wherever both are. */}
+                {showSignOut ? <Separator className="xl:hidden" /> : null}
               </>
             ) : null}
             {/* 12px above and below in the phone drawer, 16px in the rail. */}
-            <div className={cn("shrink-0 p-4", touchFriendly && "py-3")}>
-              <Button
-                className={cn("w-full justify-start", touchFriendly && "h-11")}
-                nativeButton={false}
-                render={<Link to={ONBOARDING_SIGN_IN} />}
-                size="default"
-                variant="ghost"
-              >
-                <LogoutIcon
-                  aria-hidden
-                  data-icon="inline-start"
-                  size={16}
-                  strokeWidth={1.75}
-                />
-                <span className="truncate">Sign out</span>
-              </Button>
-            </div>
+            {showSignOut ? (
+              <div className={cn("shrink-0 p-4", touchFriendly && "py-3")}>
+                <Button
+                  className={cn(
+                    "w-full justify-start",
+                    touchFriendly && "h-11"
+                  )}
+                  nativeButton={false}
+                  render={<Link to={ONBOARDING_SIGN_IN} />}
+                  size="default"
+                  variant="ghost"
+                >
+                  <LogoutIcon
+                    aria-hidden
+                    data-icon="inline-start"
+                    size={16}
+                    strokeWidth={1.75}
+                  />
+                  <span className="truncate">Sign out</span>
+                </Button>
+              </div>
+            ) : null}
           </>
         )}
       </aside>

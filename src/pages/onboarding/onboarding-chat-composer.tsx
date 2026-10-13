@@ -1,10 +1,11 @@
-import { Send } from "lucide-react";
+import { ChevronDown, Send } from "lucide-react";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CHAT_TOUCH_TARGET } from "@/pages/chat/chat-layout";
+import { ChatModelLogo } from "@/pages/chat/chat-model-logo";
 import { CHAT_MAX_INPUT_CHARS } from "@/pages/chat/contract";
 import {
   CHAT_COMPOSER_PLACEHOLDER,
@@ -12,6 +13,7 @@ import {
   composerCountLabel,
 } from "@/pages/chat/copy";
 import type { ChatModel, ChatNotice, ChatNoticeTone } from "@/pages/chat/types";
+import { OnboardingModelSelector } from "@/pages/onboarding/onboarding-model-selector";
 
 /** Far enough from the ceiling to warn in time, late enough that a normal prompt never sees it. */
 const COMPOSER_COUNT_VISIBLE_CHARS = 20_000;
@@ -27,12 +29,17 @@ const NOTICE_TONE: Record<ChatNoticeTone, string> = {
 };
 
 /**
- * The Onboarding workspace's copy of `pages/chat/chat-composer.tsx`. The
- * only difference: the model is fixed. It shows as its logo and name, with
- * no picker, no "add a second model" and no attachments (owner 2026-10-11). Change it here,
- * never in the shared composer.
+ * The Onboarding workspace's copy of `pages/chat/chat-composer.tsx`, with no
+ * "add a second model" and no attachments (owner 2026-10-11). On the desktop
+ * flow the model is fixed: its logo and name, no picker. Mobile A passes
+ * `onSelectModel` and gets the main chat's picker back (owner 2026-10-12):
+ * the same trigger and the onboarding copy of its picker
+ * (`onboarding-model-selector.tsx`, with a Free tab), one lane. Change it
+ * here, never in the shared composer.
  */
 export interface OnboardingChatComposerProps {
+  /** The picker's list; used only with `onSelectModel`. */
+  catalog?: readonly ChatModel[];
   className?: string;
   /** True while a lane is streaming: sending pauses, but the next prompt can be drafted. */
   disabled?: boolean;
@@ -41,11 +48,24 @@ export interface OnboardingChatComposerProps {
   /** Model routing belongs with the prompt it will affect. */
   models?: ChatModel[];
   notice?: ChatNotice;
+  /** Set (Mobile A): the model shows as the picker's trigger. Unset: fixed. */
+  onSelectModel?: (modelId: string) => void | Promise<void>;
   /**
    * Returns whether the send succeeded. The draft is cleared only on `true`;
    * a failed send must leave the user's prompt on screen rather than discard it.
    */
   onSend: (text: string) => boolean | Promise<boolean>;
+  onToggleFavorite?: (
+    modelId: string,
+    favorite: boolean
+  ) => void | Promise<void>;
+  /**
+   * Mobile A refused send (owner 2026-10-12): set while a paid model is
+   * picked on the free plan. This line takes the placeholder and send is
+   * disabled (Enter too). Typing stays on so a draft is never trapped, and
+   * the picker stays live: a free model makes the draft sendable again.
+   */
+  refusedPlaceholder?: string;
 }
 
 export function OnboardingChatComposer({
@@ -54,8 +74,13 @@ export function OnboardingChatComposer({
   onSend,
   draftRequest,
   models = [],
+  catalog = [],
+  onSelectModel,
+  onToggleFavorite,
+  refusedPlaceholder,
   className,
 }: OnboardingChatComposerProps) {
+  const refused = Boolean(refusedPlaceholder);
   const fieldId = useId();
   const fieldRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
@@ -79,7 +104,7 @@ export function OnboardingChatComposer({
 
   const submit = () => {
     const text = draft.trim();
-    if (!text || disabled) {
+    if (!text || disabled || refused) {
       return;
     }
     Promise.resolve(onSend(text)).then((sent) => {
@@ -152,7 +177,7 @@ export function OnboardingChatComposer({
         id={fieldId}
         onChange={(event) => handleChange(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={CHAT_COMPOSER_PLACEHOLDER}
+        placeholder={refusedPlaceholder ?? CHAT_COMPOSER_PLACEHOLDER}
         ref={fieldRef}
         rows={1}
         value={draft}
@@ -176,13 +201,53 @@ export function OnboardingChatComposer({
         </div>
       ) : null}
 
-      {/* One toolbar row: the fixed model (flex-1, its label truncating
-          first) and send at the far edge. */}
+      {/* One toolbar row: the model (flex-1, its label truncating first) and
+          send at the far edge. */}
       <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-1 gap-y-2 sm:gap-x-3">
-        {/* Fixed (owner 2026-10-11): name and logo as text, leading the row
-            on the prompt's text edge, one step up from the picker's (16px
-            label, 20px logo). */}
-        {models.length > 0 ? (
+        {/* Mobile A: the main composer's one-lane picker trigger
+            (chat-composer.tsx), leading the row. With no attach key before
+            it, pulling back the Button's own 10px icon padding (the
+            sanctioned px-2.5) lands its logo on the prompt's text edge. */}
+        {models.length > 0 && onSelectModel ? (
+          <div
+            aria-label="Models"
+            className="flex min-w-0 flex-1 items-center gap-1"
+            role="group"
+          >
+            <OnboardingModelSelector
+              models={catalog}
+              onSelect={onSelectModel}
+              onToggleFavorite={onToggleFavorite}
+              selectedId={models[0].id}
+              trigger={
+                <Button
+                  className={cn(
+                    CHAT_TOUCH_TARGET,
+                    "-ml-2.5 min-w-0 shrink sm:max-w-44 sm:flex-1 sm:basis-0",
+                    "pointer-coarse:text-sm pointer-coarse:[&_img]:size-5 pointer-coarse:[&_svg]:size-5"
+                  )}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                />
+              }
+            >
+              <span className="sr-only">{CHAT_COPY.model}: </span>
+              <ChatModelLogo model={models[0]} />
+              <span className="min-w-0 truncate">{models[0].label}</span>
+              <ChevronDown
+                aria-hidden
+                className="size-4 shrink-0 text-muted-foreground"
+                data-icon="inline-end"
+                strokeWidth={1.75}
+              />
+            </OnboardingModelSelector>
+          </div>
+        ) : null}
+        {/* Desktop flow, fixed (owner 2026-10-11): name and logo as text,
+            leading the row on the prompt's text edge, one step up from the
+            picker's (16px label, 20px logo). */}
+        {models.length > 0 && !onSelectModel ? (
           <p className="type-label-16 flex min-w-0 flex-1 items-center gap-2 text-foreground">
             <span className="sr-only">{CHAT_COPY.model}: </span>
             <VendorAvatar decorative size="md" vendor={models[0].provider} />
@@ -192,7 +257,7 @@ export function OnboardingChatComposer({
         <Button
           aria-label={CHAT_COPY.sendPrompt}
           className={cn(CHAT_TOUCH_TARGET, "ml-auto shrink-0 sm:ml-0")}
-          disabled={disabled || draft.trim().length === 0}
+          disabled={disabled || refused || draft.trim().length === 0}
           onClick={submit}
           shape="circle"
           size="icon-sm"

@@ -1,15 +1,15 @@
-import { XIcon } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { BrandLockup } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { FREE_MODELS } from "@/data/free-models";
+import {
+  isSetupLinkRequest,
+  ONBOARDING_STARTER_PROMPTS,
+  PAID_MODEL_HELPER,
+  PAID_MODEL_REFUSAL,
+  selectOnboardingReply,
+} from "@/data/onboarding-chat-script";
 import { WORKSPACE_NAME } from "@/data/team-members";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { cn } from "@/lib/utils";
@@ -25,24 +25,65 @@ import {
   toChatConversation,
 } from "@/pages/chat/chat-data";
 import { ChatLanding, ChatStarterChips } from "@/pages/chat/chat-landing";
-import { CHAT_MEASURE, CHAT_TOUCH_TARGET } from "@/pages/chat/chat-layout";
+import { CHAT_MEASURE } from "@/pages/chat/chat-layout";
 import {
   chatBillingUrl,
   chatConversationPath,
   chatHomePath,
 } from "@/pages/chat/chat-links";
+import { ChatMessage } from "@/pages/chat/chat-message";
 import { ChatThread } from "@/pages/chat/chat-thread";
 import type { ChatExportFormat } from "@/pages/chat/contract";
 import { CHAT_COPY } from "@/pages/chat/copy";
-import type { ChatConversation, ChatNotice } from "@/pages/chat/types";
+import type {
+  ChatConversation,
+  ChatNotice,
+  ChatTurn,
+} from "@/pages/chat/types";
 import { OnboardingChatComposer } from "@/pages/onboarding/onboarding-chat-composer";
 import { OnboardingChatHeader } from "@/pages/onboarding/onboarding-chat-header";
+import {
+  OnboardingChatLanding,
+  OnboardingStarterChips,
+} from "@/pages/onboarding/onboarding-chat-landing";
 import { OnboardingChatSidebar } from "@/pages/onboarding/onboarding-chat-sidebar";
 import {
   onboardingChatStore,
   onboardingConversations,
+  onboardingModelLastUsed,
   useOnboardingChatStore,
 } from "@/pages/onboarding/onboarding-chat-store";
+import { OnboardingChatThread } from "@/pages/onboarding/onboarding-chat-thread";
+import {
+  OnboardingComputerPrompt,
+  OnboardingSetupLinkReply,
+} from "@/pages/onboarding/onboarding-computer-prompt";
+import {
+  isPhoneDemoChat,
+  rememberChatPath,
+} from "@/pages/onboarding/onboarding-routes";
+import { useOnboarding } from "@/pages/onboarding/use-onboarding";
+
+/** The phone demo's quick actions under a thread (owner 2026-10-12): chips
+ *  1 and 2 whose question this conversation already asked, with the reply
+ *  finished. "Asked" is any turn the matcher routes to that chip's reply,
+ *  tapped or typed. Chip 3, the setup link, never counts: it always stays. */
+function answeredStarterPrompts(
+  turns: readonly ChatTurn[]
+): ReadonlySet<string> {
+  const replies = new Set(
+    turns
+      .filter((turn) => turn.lanes.every((lane) => lane.state !== "streaming"))
+      .map((turn) => selectOnboardingReply(turn.prompt))
+  );
+  return new Set(
+    ONBOARDING_STARTER_PROMPTS.filter(
+      (prompt) =>
+        !isSetupLinkRequest(prompt) &&
+        replies.has(selectOnboardingReply(prompt))
+    )
+  );
+}
 
 /** The free default for a new onboarding chat (owner 2026-10-11). */
 const ONBOARDING_FREE_DEFAULT_ID = "constellation/qwen3-8-flash-free";
@@ -116,6 +157,14 @@ export function OnboardingChat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [draftModelIds, setDraftModelIds] = useState<string[] | null>(null);
   const [lowBalanceDismissed, setLowBalanceDismissed] = useState(false);
+  // Mobile A (signup -> Gate Chat, owner 2026-10-11): onboarding landing,
+  // onboarding quick actions and scripted replies. The desktop flow's chat
+  // keeps the shared landing and the seeded demo thread.
+  // Option B's phone chat (the phone two-card start) runs the same chat
+  // (owner 2026-10-12): one gate, `isPhoneDemoChat`.
+  const [mobileA] = useState(isPhoneDemoChat);
+  // B's phone start can send the setup link first (chip 3's sent state).
+  const { improved } = useOnboarding();
 
   // UI only, no model behind it: a send or a starter from a new chat opens
   // the seeded demo conversation, so the mockup goes from the clean landing
@@ -133,6 +182,11 @@ export function OnboardingChat() {
   // landing, so the mockup can be replayed. The router keeps its state in
   // history.state, which survives a reload; a conversation opened any other
   // way (rail, link, typed URL) carries none and stays put on refresh.
+  // The site menu's Gate Chat row comes back to this page.
+  useEffect(() => {
+    rememberChatPath(pathname);
+  }, [pathname]);
+
   useEffect(() => {
     if (reloadChecked) {
       return;
@@ -187,6 +241,20 @@ export function OnboardingChat() {
     }
     return base;
   }, [store.favorites]);
+  const catalogList = useMemo(() => [...catalog.values()], [catalog]);
+  // Mobile A picker only (owner 2026-10-12): Recent lists the models this
+  // session sent with. `catalog` itself keeps no last-used model, so model
+  // resolution, history and the desktop flow are unchanged.
+  const pickerCatalog = useMemo(() => {
+    if (!mobileA) {
+      return catalogList;
+    }
+    const lastUsed = onboardingModelLastUsed(store.scripted);
+    return catalogList.map((model) => {
+      const lastUsedAt = lastUsed.get(model.id);
+      return lastUsedAt === undefined ? model : { ...model, lastUsedAt };
+    });
+  }, [catalogList, mobileA, store.scripted]);
   const conversations = useMemo(() => onboardingConversations(store), [store]);
   const history = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -207,9 +275,26 @@ export function OnboardingChat() {
   const activeInput = conversationId
     ? (conversations.find((input) => input.seed.id === conversationId) ?? null)
     : null;
-  const loadedConversation = activeInput
+  const settledConversation = activeInput
     ? toChatConversation(activeInput, catalog)
     : null;
+  // The scripted reply being written: its card shows "preparing a reply",
+  // then the text as it streams (the lane's own `streaming` state).
+  const live = store.live;
+  const loadedConversation =
+    settledConversation && live && live.conversationId === conversationId
+      ? {
+          ...settledConversation,
+          turns: settledConversation.turns.map((turn) => ({
+            ...turn,
+            lanes: turn.lanes.map((lane) =>
+              lane.id === live.laneId
+                ? { ...lane, body: live.body, state: "streaming" as const }
+                : lane
+            ),
+          })),
+        }
+      : settledConversation;
   const conversation: ChatConversation = conversationId
     ? (loadedConversation ?? {
         ...NEW_CONVERSATION,
@@ -218,6 +303,45 @@ export function OnboardingChat() {
       })
     : NEW_CONVERSATION;
   const conversationMissing = Boolean(conversationId && !activeInput);
+  // PRD phone step 4: the follow-up cards after the first scripted reply, in
+  // the conversation and under the turn they followed.
+  const followUp = store.computerPrompt;
+  const followUpTurnId =
+    mobileA && followUp !== null && followUp.conversationId === conversationId
+      ? followUp.afterTurnId
+      : null;
+
+  // Mobile A draws each turn itself (owner 2026-10-12). An "Email setup
+  // link" turn streams like any reply, then settles into the offer card with
+  // its email button. The first reply's follow-ups sit right after their
+  // turn; when that turn already was the offer, only the logged note follows.
+  const renderMobileATurn = (turn: ChatTurn) => {
+    const lane = turn.lanes[0];
+    const setupLinkTurn = store.setupLinkTurnIds.has(turn.id);
+    const offerSettled =
+      setupLinkTurn && lane !== undefined && lane.state !== "streaming";
+    return (
+      <>
+        {offerSettled ? (
+          // The bubble alone (no lanes), then the offer card as its reply.
+          // ChatMessage's own 16px gap above its empty lane row spaces them.
+          <div className="flex flex-col">
+            <ChatMessage turn={{ ...turn, lanes: [] }} />
+            <OnboardingSetupLinkReply lane={lane} />
+          </div>
+        ) : (
+          <ChatMessage turn={turn} />
+        )}
+        {turn.id === followUpTurnId && lane ? (
+          <OnboardingComputerPrompt
+            lane={lane}
+            prompt={turn.prompt}
+            showOffer={!setupLinkTurn}
+          />
+        ) : null}
+      </>
+    );
+  };
   const totals = activeInput ? chatConversationTotals(activeInput.seed) : null;
 
   // PRD phone step 2: a new chat opens with a free featured model already
@@ -234,12 +358,46 @@ export function OnboardingChat() {
       ])
     : (activeInput?.modelIds ?? []).map((id) => resolveChatModel(catalog, id));
 
-  // The model is fixed in this copy (owner 2026-10-11): no lane changes, no
-  // comparison, so the lane setters of the shared page are left out.
+  // Desktop flow: the model is fixed (owner 2026-10-11). Mobile A picks one
+  // lane (owner 2026-10-12), the shared page's setLaneModels for one model:
+  // an open conversation keeps it in the store, a new chat holds it until
+  // the first send opens the conversation on it. No comparison.
+  const selectModel = (modelId: string) => {
+    if (activeInput) {
+      onboardingChatStore.setConversationModels(activeInput.seed.id, [modelId]);
+      return;
+    }
+    setDraftModelIds([modelId]);
+  };
+  // Mobile A refused send (owner 2026-10-12): a paid model on the free plan.
+  // Typing stays on; send and the quick actions wait for a free model.
+  const paidModelPicked = mobileA && models.length > 0 && !models[0].isFree;
 
   // Returning true clears the draft (the composer's contract for a send that
   // went out); false keeps it on screen.
-  const handleSend = () => {
+  // Mobile A: every send and quick action is answered from the script, in
+  // the open scripted conversation or a new one. False keeps the draft while
+  // a reply is still writing.
+  const sendScripted = (prompt: string) => {
+    if (paidModelPicked) {
+      return false;
+    }
+    const target =
+      conversationId && store.scripted[conversationId] ? conversationId : null;
+    const id = onboardingChatStore.sendScripted(target, prompt, models[0]?.id);
+    if (id === null) {
+      return false;
+    }
+    if (id !== conversationId) {
+      navigate(chatConversationPath(pathname, id));
+    }
+    return true;
+  };
+
+  const handleSend = (text: string) => {
+    if (mobileA) {
+      return sendScripted(text);
+    }
     if (conversationId) {
       return false;
     }
@@ -321,28 +479,8 @@ export function OnboardingChat() {
               setMobileRailOpen(false);
               navigate(chatConversationPath(pathname, id));
             }}
-            topSlot={
-              // The menu's own top row (owner 2026-10-11): the full logo,
-              // unlinked (no dashboard yet), and Close flush right, mirroring
-              // the conversation bar's menu button (-ml-2). Its own row, so it
-              // never lands on New chat.
-              <div className="flex shrink-0 items-center justify-between gap-3 border-border border-b p-4">
-                <BrandLockup />
-                <SheetClose
-                  render={
-                    <Button
-                      aria-label="Close"
-                      className={cn(CHAT_TOUCH_TARGET, "-mr-2")}
-                      size="icon"
-                      type="button"
-                      variant="ghost"
-                    />
-                  }
-                >
-                  <XIcon aria-hidden className="size-4" strokeWidth={1.75} />
-                </SheetClose>
-              </div>
-            }
+            // Phone drawer: no logo row and no Sign out (owner 2026-10-11).
+            showSignOut={false}
             touchFriendly
           />
         </SheetContent>
@@ -427,7 +565,22 @@ export function OnboardingChat() {
               </div>
             </div>
           ) : conversation.turns.length > 0 ? (
-            <ChatThread turns={conversation.turns} />
+            mobileA ? (
+              <OnboardingChatThread
+                renderTurn={renderMobileATurn}
+                turns={conversation.turns}
+              />
+            ) : (
+              <ChatThread turns={conversation.turns} />
+            )
+          ) : mobileA ? (
+            <div className="relative flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:min-h-0 lg:overflow-y-auto">
+              <OnboardingChatLanding
+                disabled={paidModelPicked}
+                onPromptSelect={sendScripted}
+                organizationName={WORKSPACE_NAME}
+              />
+            </div>
           ) : (
             <div
               className={cn(
@@ -452,23 +605,55 @@ export function OnboardingChat() {
             ref={composerRef}
           >
             <div className={cn(CHAT_MEASURE, "flex flex-col gap-3")}>
-              {conversationMissing || conversation.turns.length > 0 ? null : (
+              {/* Phone demo (owner 2026-10-12, "press the first button,
+                  press the 2nd button, and then press the 3rd"): the quick
+                  actions stay under the thread, in place, so each one adds
+                  its turn to this chat; one answered here checks, holds and
+                  leaves (chip 3, the setup link, stays, checked once sent).
+                  Disabled while a reply is still writing, when a send would
+                  be refused. */}
+              {conversationMissing ? null : mobileA ? (
+                <OnboardingStarterChips
+                  answered={answeredStarterPrompts(conversation.turns)}
+                  className="sm:hidden"
+                  disabled={paidModelPicked || live !== null}
+                  // Per conversation: a new chat starts the row over.
+                  key={`chips-${conversationId ?? "new"}`}
+                  onPromptSelect={sendScripted}
+                  setupLinkSent={store.setupLinkSent || improved.handoffSent}
+                />
+              ) : conversation.turns.length > 0 ? null : (
                 <ChatStarterChips
                   className="sm:hidden"
                   onPromptSelect={openDemoConversation}
                 />
               )}
               <OnboardingChatComposer
+                catalog={pickerCatalog}
                 disabled={conversationMissing}
                 key={conversationId ?? "new"}
                 models={models}
                 notice={composerNotice}
+                onSelectModel={mobileA ? selectModel : undefined}
                 onSend={handleSend}
+                onToggleFavorite={(modelId, favorite) =>
+                  onboardingChatStore.setFavorite(modelId, favorite)
+                }
+                refusedPlaceholder={
+                  paidModelPicked ? PAID_MODEL_REFUSAL : undefined
+                }
               />
               {/* PRD phone step 2: a short line under the composer says the
-                  model is free and that Gate scans every message. */}
-              <p className="type-copy-12 text-center text-muted-foreground">
-                This model is free. Gate scans every message.
+                  model is free and that Gate scans every message. Mobile A
+                  swaps it for the paid line while a paid model is picked;
+                  polite, so the reason is read out when the model changes. */}
+              <p
+                aria-live={mobileA ? "polite" : undefined}
+                className="type-copy-12 text-center text-muted-foreground"
+              >
+                {paidModelPicked
+                  ? PAID_MODEL_HELPER
+                  : "This model is free. Gate scans every message."}
               </p>
             </div>
           </div>

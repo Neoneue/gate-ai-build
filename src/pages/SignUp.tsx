@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { TextLink } from "@/components/ui/text-link";
 import { isOnboardingSurface, withTierOf } from "@/lib/plan";
 import {
+  markMobileATab,
   ONBOARDING_ROUTES,
   ONBOARDING_SIGNUP_STATE,
 } from "@/pages/onboarding/onboarding-routes";
@@ -36,6 +37,7 @@ export function SignUp() {
     // Onboarding demo (`/sign-up-onboarding`): signing up opens the
     // workspace's Gate Chat, the PRD's phone landing. `/sign-up` stays inert.
     if (isOnboardingSurface(pathname)) {
+      markMobileATab();
       navigate(ONBOARDING_ROUTES.chat, { state: ONBOARDING_SIGNUP_STATE });
     }
   }

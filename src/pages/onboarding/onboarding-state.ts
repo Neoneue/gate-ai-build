@@ -3,8 +3,10 @@
  * in one of two flows (Current or Improved, rebuilt from the onboarding
  * mockup in docs/onboarding-mockup/). Everything the flows remember lives
  * HERE, in React state owned by `OnboardingLayout`: never localStorage or
- * sessionStorage. A browser refresh therefore starts over at step 1, and so
- * does leaving the workspace (the layout unmounts). That is the demo
+ * sessionStorage (the one exception is the Mobile A tab mark in
+ * onboarding-routes.ts, a flag, not flow state). A browser refresh therefore
+ * starts over at step 1, and so does leaving the workspace (the layout
+ * unmounts). That is the demo
  * contract: the workspace is always presented end to end, from the start.
  * ───────────────────────────────────────────────────────────────────────── */
 

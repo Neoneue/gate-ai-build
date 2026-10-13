@@ -8,9 +8,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import type { SidebarSection } from "@/components/ui/sidebar";
 import { TabsCount } from "@/components/ui/tabs-count";
-import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
+import { OnboardingDashboardChrome } from "@/pages/onboarding/OnboardingDashboardChrome";
 import {
   ONBOARDING_EXITS,
   ONBOARDING_ROUTES,
@@ -21,24 +22,38 @@ import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 /* ─── OnboardingChrome ──────────────────────────────────────────────────────
  * Every Onboarding step renders inside the normal dashboard chrome (sidebar,
  * top bar, workspace switcher) plus the mockup's top-bar "Get started"
- * progress control, passed through DashboardChrome's `topBarAction` slot.
+ * progress control, passed through the chrome's `topBarAction` slot. The
+ * chrome is the onboarding copy (OnboardingDashboardChrome), never the
+ * shared DashboardChrome.
  * (The demo controls strip was removed, owner direction 2026-10-08: each
  * step now drives its own simulated states.)
  * ───────────────────────────────────────────────────────────────────────── */
 
-export function OnboardingChrome({ children }: { children: ReactNode }) {
+export function OnboardingChrome({
+  children,
+  mobileSections,
+  onMobileNavigate,
+}: {
+  children: ReactNode;
+  /** The phone menu's nav, below `lg` only (OnboardingDashboardChrome). */
+  mobileSections?: SidebarSection[];
+  /** A phone menu link's href as it is tapped, below `lg` only. */
+  onMobileNavigate?: (href: string) => void;
+}) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<LayoutContext>();
   return (
-    <DashboardChrome
+    <OnboardingDashboardChrome
       activeNavId="overview"
+      mobileSections={mobileSections}
+      onMobileNavigate={onMobileNavigate}
       onNavigate={(path: string) => navigate(path)}
       onToggleSidebar={toggleSidebar}
       sidebarExpanded={sidebarExpanded}
       topBarAction={<GetStartedButton />}
     >
       {children}
-    </DashboardChrome>
+    </OnboardingDashboardChrome>
   );
 }
 

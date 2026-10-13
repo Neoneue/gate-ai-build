@@ -32,10 +32,15 @@ import {
   ImprovedColumn,
   ImprovedHeader,
 } from "@/pages/onboarding/improved-parts";
+import { useOnboardingChatStore } from "@/pages/onboarding/onboarding-chat-store";
 import { OnboardingChrome } from "@/pages/onboarding/onboarding-chrome";
 import {
+  clearOptionBPhoneChat,
   improvedStepPath,
+  lastOnboardingChatPath,
+  markOptionBPhoneChat,
   ONBOARDING_ROUTES,
+  phoneSiteSections,
 } from "@/pages/onboarding/onboarding-routes";
 import {
   DEFAULT_PAYG_MODEL,
@@ -75,8 +80,27 @@ const METHODS: {
  *  desktop, as in the mockup). */
 export function ImprovedStart() {
   const mobile = useIsMobileSetup();
+  const preparePhoneChat = usePreparePhoneChat();
+  // Phone: the site menu is the phone demo's (Option B, owner 2026-10-12):
+  // Overview returns here; Activity, Messages, Conversations and Gate Chat
+  // open the phone demo's pages and its chat. Its Gate Chat row starts the
+  // phone chat the way the cards do, so every way into the chat from here
+  // is the phone chat.
   return (
-    <OnboardingChrome>
+    <OnboardingChrome
+      mobileSections={
+        mobile ? phoneSiteSections(ONBOARDING_ROUTES.start) : undefined
+      }
+      onMobileNavigate={
+        mobile
+          ? (href) => {
+              if (href.startsWith(ONBOARDING_ROUTES.chat)) {
+                preparePhoneChat();
+              }
+            }
+          : undefined
+      }
+    >
       {mobile ? <MobileStart /> : <DesktopPicker />}
     </OnboardingChrome>
   );
@@ -86,6 +110,11 @@ function DesktopPicker() {
   const navigate = useNavigate();
   const { improved, updateImproved } = useOnboarding();
   const chat = improved.connection === "gate-chat";
+  // The desktop start ends any Option B phone chat, so its "Open Gate Chat"
+  // and the rail's Gate Chat keep the desktop chat.
+  useEffect(() => {
+    clearOptionBPhoneChat();
+  }, []);
 
   const choose = (connection: ImprovedConnection) => {
     if (connection === improved.connection) {
@@ -199,8 +228,11 @@ const SENT_HOLD_MS = 2000;
  *  button reports it in place: "Sending link…", then "Email sent!", then
  *  "Re-send email". The phone never leaves the page
  *  (owner 2026-10-09: sending must not lead into setup on the phone).
- *  Shared by the mobile start and the handoff screen. */
-function useSendSetupLink() {
+ *  Shared by the mobile start and the handoff screen. `sentInChat`: the
+ *  link was already sent from the chat's computer offer, so the button
+ *  offers a re-send (owner 2026-10-12); it never sets `handoffSent`, which
+ *  drives the handoff screen's simulated desktop open. */
+function useSendSetupLink({ sentInChat = false } = {}) {
   const { improved, updateImproved, readImproved } = useOnboarding();
   const [phase, setPhase] = useState<"idle" | "sending" | "sent">("idle");
 
@@ -227,7 +259,7 @@ function useSendSetupLink() {
       ? "Sending link…"
       : phase === "sent"
         ? "Email sent!"
-        : improved.handoffSent
+        : improved.handoffSent || sentInChat
           ? "Re-send email"
           : "Email me a setup link";
 
@@ -240,11 +272,26 @@ function useSendSetupLink() {
   };
 }
 
-/** Phone: choose Gate Chat here, or continue on the desktop. */
-function useOpenChatOnPhone() {
+/** Phone: choose Gate Chat here, or continue on the desktop. The chat opens
+ *  as the phone demo chat, the same one Mobile A runs (owner 2026-10-12).
+ *  `resume` returns to the chat page the demo was last on, so the
+ *  conversation is where it was left. */
+function useOpenChatOnPhone({ resume = false } = {}) {
   const navigate = useNavigate();
+  const preparePhoneChat = usePreparePhoneChat();
+  return () => {
+    preparePhoneChat();
+    navigate(resume ? lastOnboardingChatPath() : ONBOARDING_ROUTES.chat);
+  };
+}
+
+/** Marks Option B's phone chat and picks Gate Chat as the path, without
+ *  navigating: the phone start's cards (`useOpenChatOnPhone`) and its menu's
+ *  Gate Chat row, whose link navigates on its own. */
+function usePreparePhoneChat() {
   const { updateImproved } = useOnboarding();
   return () => {
+    markOptionBPhoneChat();
     updateImproved((state) =>
       state.connection === "gate-chat"
         ? { pathChosen: true, connected: true }
@@ -257,15 +304,15 @@ function useOpenChatOnPhone() {
             pathChosen: true,
           }
     );
-    navigate(ONBOARDING_ROUTES.chat);
   };
 }
 
 function MobileStart() {
   const { improved } = useOnboarding();
-  const link = useSendSetupLink();
-  const openChat = useOpenChatOnPhone();
+  const { setupLinkSent } = useOnboardingChatStore();
+  const link = useSendSetupLink({ sentInChat: setupLinkSent });
   const resume = improved.connection === "gate-chat" && improved.received;
+  const openChat = useOpenChatOnPhone({ resume });
   return (
     <div className="mx-auto flex w-full max-w-190 flex-col gap-6">
       <PageTitle>How would you like to start?</PageTitle>

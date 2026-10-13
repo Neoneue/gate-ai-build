@@ -12,11 +12,15 @@ import { BrandLockup, SidebarPanel } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LogoMarkLink } from "@/components/ui/top-bar-brand";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
-import { ONBOARDING_SIDEBAR_SECTIONS } from "@/layouts/nav-sections";
 import { cn } from "@/lib/utils";
 import { CHAT_BRAND_EXPANDED } from "@/pages/chat/chat-layout";
 import { chatOverviewUrl } from "@/pages/chat/chat-links";
 import { CHAT_COPY } from "@/pages/chat/copy";
+import {
+  PHONE_DEMO_PAGES,
+  phoneOverviewPath,
+  phoneSiteSections,
+} from "@/pages/onboarding/onboarding-routes";
 
 /**
  * The Onboarding workspace's copy of `pages/chat/chat-top-bar.tsx`. The only
@@ -43,7 +47,9 @@ export function OnboardingChatTopBar({ className }: { className?: string }) {
             CHAT_BRAND_EXPANDED
           )}
         >
-          <LogoMarkLink className="lg:hidden" to={chatOverviewUrl(pathname)} />
+          {/* Phone logo opens Mobile A's Overview, or B's phone start; the
+              lg+ lockup keeps the desktop path. */}
+          <LogoMarkLink className="lg:hidden" to={phoneOverviewPath()} />
           <div className="hidden lg:flex">
             <BrandLockup overviewPath={chatOverviewUrl(pathname)} />
           </div>
@@ -82,6 +88,12 @@ export function OnboardingChatTopBar({ className }: { className?: string }) {
  */
 function OnboardingSiteMenu() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const activeId =
+    Object.entries(PHONE_DEMO_PAGES).find(
+      ([, path]) => path === pathname
+    )?.[0] ?? "chat";
+  const overviewPath = phoneOverviewPath();
   const isDesktop = useIsDesktop();
   const [open, setOpen] = useState(false);
   // At lg+ the key hides, so an open drawer must not survive the resize.
@@ -105,14 +117,14 @@ function OnboardingSiteMenu() {
       <SheetContent className="w-75 gap-0 p-0" side="right">
         <SheetTitle className="sr-only">Navigation</SheetTitle>
         <SidebarPanel
-          activeId="chat"
+          activeId={activeId}
           onNavItemClick={() => setOpen(false)}
           onNavigate={(pageId) => {
             navigate(pageId);
             setOpen(false);
           }}
-          overviewPath="/overview-onboarding"
-          sections={ONBOARDING_SIDEBAR_SECTIONS}
+          overviewPath={overviewPath}
+          sections={phoneSiteSections(overviewPath)}
         />
       </SheetContent>
     </Sheet>
