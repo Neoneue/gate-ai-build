@@ -39,6 +39,12 @@ export interface EmptyStateProps {
   /** Optional decorative element rendered above the heading (typically an
    *  icon chip wrapped in `aria-hidden`). */
   icon?: React.ReactNode;
+  /** Title size: `page` (default) is the block heading, 20, foreground;
+   *  `card` steps down one rung to the card-title heading, 16, in
+   *  muted-foreground like the Default cards' other empty labels, so an
+   *  empty state inside a card never outranks the card's own title (owner
+   *  2026-10-13, TableEmptyState). */
+  size?: "page" | "card";
   title: string;
 }
 
@@ -49,6 +55,7 @@ export function EmptyState({
   footnote,
   action,
   className,
+  size = "page",
 }: EmptyStateProps) {
   return (
     <div
@@ -59,7 +66,16 @@ export function EmptyState({
     >
       {icon}
       <div className="flex flex-col gap-3">
-        <h3 className="type-heading-20 m-0 text-foreground">{title}</h3>
+        <h3
+          className={cn(
+            "m-0",
+            size === "card"
+              ? "type-heading-16 text-muted-foreground"
+              : "type-heading-20 text-foreground"
+          )}
+        >
+          {title}
+        </h3>
         {/* body + footnote share one 4px stack so the pointer hugs the
             sentence it qualifies, while the 12px gap-3 still separates the
             pair from the heading. A single child makes the wrapper a no-op,

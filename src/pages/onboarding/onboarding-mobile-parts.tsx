@@ -54,7 +54,7 @@ export function MobilePageHeader({
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>{title}</PageTitle>
-      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         {description}
       </p>
     </div>

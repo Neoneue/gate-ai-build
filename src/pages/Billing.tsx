@@ -110,7 +110,7 @@ function PageHeader() {
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="type-copy-18 m-0 text-pretty text-muted-foreground">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
         Everything you pay for Gate, in one place.
       </p>
     </div>

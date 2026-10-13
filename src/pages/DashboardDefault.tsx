@@ -994,7 +994,7 @@ export function DashboardDefault() {
       <div className="flex w-full @5xl:max-w-5xl flex-col gap-6">
         <div className="flex flex-col gap-2">
           <PageTitle>Choose how to use Gate</PageTitle>
-          <p className="type-copy-18 m-0 text-pretty text-muted-foreground">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
             However you connect, every request flows through Gate with
             prompt-injection defense, a tamper-evident audit trail, and lighter
             token bills from built-in compression.
