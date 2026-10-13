@@ -4,6 +4,7 @@
  * recognise it. Both flows start on ONE first page, `/overview-onboarding`;
  * the flow version picked in the demo controls decides what it renders. */
 
+import { ListChecks } from "lucide-react";
 import type { SidebarSection } from "@/components/ui/sidebar";
 import { ONBOARDING_SIDEBAR_SECTIONS } from "@/layouts/nav-sections";
 import { ONBOARDING_FIRST_STEP } from "@/lib/plan";
@@ -23,6 +24,9 @@ export const ONBOARDING_ROUTES = {
   improvedConnect: "/improved-connect-onboarding",
   verify: "/improved-verify-onboarding",
   improvedComplete: "/improved-complete-onboarding",
+  /* The Overview after setup: the Pro Overview fed by step 3's two
+   * messages (owner 2026-10-13). */
+  setupOverview: "/overview-setup-onboarding",
   /* Gate Chat, the Onboarding version (OnboardingChat), phone and desktop.
    * Free, Default, Pro and Enterprise keep the main version (pages/Chat). */
   chat: "/chat-onboarding",
@@ -39,8 +43,47 @@ export const ONBOARDING_ROUTES = {
   mobileConversations: "/conversations-mobile-onboarding",
 } as const;
 
+/** Opens a page in a new tab with no opener (the DashboardDefault docs
+ *  button's `window.open`): the explore task rows, so the onboarding tab
+ *  stays on its page and keeps its state (owner 2026-10-13). */
+export const openInNewTab = (to: string) => {
+  window.open(to, "_blank", "noopener,noreferrer");
+};
+
+/** The screen-reader cue on every control that opens a new tab, read after
+ *  its label in a visually hidden span (copywriter, owner 2026-10-13). */
+export const NEW_TAB_CUE = "(opens in a new tab)";
+
 /** The demo's sign-in screen: where it starts and where Sign out returns. */
 export const ONBOARDING_SIGN_IN = "/sign-in-onboarding";
+
+/** The mockup's preview of step 3's failure states (owner 2026-10-13):
+ *  `?simulate=fail-connection` (the first test message check fails),
+ *  `fail-demo` (the first protection demo run fails) or `fail-both`. Read
+ *  once, from the URL the app loaded with, because a reload restarts the
+ *  flow at its first page (so the flag goes on that page's URL); step 3
+ *  also reads it from its own URL. The product's real states are the same
+ *  screens, reached when a message does not go through. */
+export type SimulateFlag = "fail-connection" | "fail-demo" | "fail-both";
+
+const readSimulateFlag = (search: string): SimulateFlag | null => {
+  const value = new URLSearchParams(search).get("simulate");
+  return value === "fail-connection" ||
+    value === "fail-demo" ||
+    value === "fail-both"
+    ? value
+    : null;
+};
+
+const SIMULATE_ON_LOAD =
+  typeof window === "undefined"
+    ? null
+    : readSimulateFlag(window.location.search);
+
+/** The failure preview for this page load: the current URL's flag, else
+ *  the one the app loaded with. */
+export const simulateFlag = (search: string): SimulateFlag | null =>
+  readSimulateFlag(search) ?? SIMULATE_ON_LOAD;
 
 /** Router state a demo signup (`/sign-up-onboarding`) passes on its way in,
  *  so OnboardingLayout lets the flow start on the page signup lands on. */
@@ -51,8 +94,10 @@ export const ONBOARDING_SIGNUP_STATE = { onboardingSignup: true } as const;
  * and screen width would catch a narrowed desktop window. The Mobile A
  * signup marks the tab instead; a refresh in a marked tab returns to the
  * demo's sign-in, never to the desktop setup start. Per tab
- * (sessionStorage), cleared when the desktop start page loads. It is the
- * only thing this workspace stores: the flow state itself stays in memory. */
+ * (sessionStorage), cleared when the desktop start page loads. One of two
+ * things this workspace stores, with the credit balance the Gate Chat tab
+ * reads (onboarding-credits.ts, owner 2026-10-13): the flow state itself
+ * stays in memory. */
 const MOBILE_A_TAB_KEY = "gate-onboarding-mobile-a";
 
 export const markMobileATab = (): void => {
@@ -150,10 +195,58 @@ export function phoneSiteSections(overviewPath: string): SidebarSection[] {
     ...section,
     items: section.items.map((item) => {
       const pageId = pages[item.id];
-      return pageId ? { ...item, pageId } : item;
+      // The phone chat stays in this tab (the desktop sidebar opens a new
+      // one), so Resume finds the conversation.
+      return pageId ? { ...item, pageId, newTab: false } : item;
     }),
   }));
 }
+
+/** The desktop rail during the Improved flow (owner 2026-10-13): a "Get
+ *  started" row above Overview, active on every onboarding step. Overview
+ *  only appears from the final page on, opening the Overview after setup;
+ *  Get started leaves once every explore task is done. `getStartedTo` is
+ *  forward only: the step due next, or the final page after Finish setup.
+ *  Every other row is ONBOARDING_SIDEBAR_SECTIONS unchanged; the phone
+ *  menus (`phoneSiteSections`) keep that list as it is. */
+export function setupSidebarSections({
+  getStartedTo,
+  showGetStarted,
+  showOverview,
+}: {
+  getStartedTo: string;
+  showGetStarted: boolean;
+  showOverview: boolean;
+}): SidebarSection[] {
+  return ONBOARDING_SIDEBAR_SECTIONS.map((section) => {
+    const overview = section.items.find((item) => item.id === "overview");
+    if (!overview) {
+      return section;
+    }
+    return {
+      ...section,
+      items: [
+        ...(showGetStarted
+          ? [
+              {
+                id: SETUP_NAV_ID,
+                icon: ListChecks,
+                label: "Get started",
+                pageId: getStartedTo,
+              },
+            ]
+          : []),
+        ...(showOverview
+          ? [{ ...overview, pageId: ONBOARDING_ROUTES.setupOverview }]
+          : []),
+        ...section.items.filter((item) => item.id !== "overview"),
+      ],
+    };
+  });
+}
+
+/** The rail id of the "Get started" row. */
+export const SETUP_NAV_ID = "get-started";
 
 /** The "Full name" typed on the onboarding Create account form, so the
  *  Mobile A Activity page can rank the new user in Top users (owner

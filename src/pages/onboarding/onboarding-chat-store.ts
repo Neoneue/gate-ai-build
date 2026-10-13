@@ -13,6 +13,7 @@ import {
 } from "@/data/onboarding-chat-script";
 import type { ChatConversationInput } from "@/pages/chat/chat-data";
 import type { ChatMemory } from "@/pages/chat/contract";
+import { isPhoneDemoChat } from "@/pages/onboarding/onboarding-routes";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * The Onboarding workspace's own Gate Chat state: a copy of
@@ -28,12 +29,17 @@ import type { ChatMemory } from "@/pages/chat/contract";
  * identity.
  * ───────────────────────────────────────────────────────────────────────── */
 
-/** The scripted reply being written right now (Mobile A). */
+/** The scripted reply being written right now. Every lane of the turn
+ *  (one per picked model; two when the desktop chat compares) streams the
+ *  same scripted text in step, so one `body` serves them all. */
 export interface OnboardingLiveReply {
   /** The text streamed so far; empty while the card is preparing. */
   body: string;
   conversationId: string;
+  /** The first lane: the one the demo traffic logs (`lanes[0]`). */
   laneId: string;
+  /** Every lane being written, `laneId` first. */
+  laneIds: readonly string[];
 }
 
 export interface OnboardingChatState {
@@ -49,8 +55,9 @@ export interface OnboardingChatState {
   memoryOverrides: Readonly<Record<string, boolean | null>>;
   memoryToolsEnabled: boolean;
   modelIds: Readonly<Record<string, readonly string[]>>;
-  /** Conversations the Mobile A user started, answered from the script
-   *  (`onboarding-chat-script.ts`). Same shape as a seed. */
+  /** Conversations the user started (phone demo, and the desktop chat from
+   *  2026-10-13), answered from the script (`onboarding-chat-script.ts`).
+   *  Same shape as a seed. */
   scripted: Readonly<Record<string, ChatSeedConversation>>;
   /** The computer offer's setup link was emailed at least once, so every
    *  card's button reads "Re-send email setup link" (owner 2026-10-12). */
@@ -193,37 +200,52 @@ export const onboardingChatStore = {
     set({ memories: state.memories.filter((memory) => memory.id !== id) });
   },
   /**
-   * Mobile A: send `prompt` and answer it from the script. Appends the turn
-   * at once (the user's bubble, then the reply card preparing), streams the
+   * Send `prompt` and answer it from the script. Appends the turn at once
+   * (the user's bubble, then a reply card preparing per lane), streams the
    * reply into `live`, then settles it into the conversation. A new chat
    * (`conversationId` null) starts a conversation titled by the prompt.
    * Returns the conversation id, or null while a reply is still writing.
    * Module-scoped so leaving the page does not cut the reply off.
-   * `modelId` is the model picked in the composer (owner 2026-10-12); the
-   * reply card is drawn as that model. A new chat opens on it.
+   * `modelIds` are the lanes picked in the composer (phone: one, owner
+   * 2026-10-12; desktop: one or two, owner 2026-10-13); each lane's card is
+   * drawn as its model. A new chat opens on them.
    */
   sendScripted(
     conversationId: string | null,
     prompt: string,
-    modelId: string = SCRIPTED_MODEL_ID
+    modelIds: string | readonly string[] = SCRIPTED_MODEL_ID
   ): string | null {
     if (state.live) {
       return null;
     }
+    const laneModelIds =
+      typeof modelIds === "string" ? [modelIds] : [...modelIds];
+    if (laneModelIds.length === 0) {
+      laneModelIds.push(SCRIPTED_MODEL_ID);
+    }
     scriptedSeq += 1;
     const id = conversationId ?? `chat_onboarding_${scriptedSeq}`;
     const turnId = `turn_onboarding_${scriptedSeq}`;
-    const laneId = `msg_onboarding_${scriptedSeq}`;
+    // The first lane keeps the one-lane id, so the phone's ids are as before.
+    const laneIds = laneModelIds.map((_, index) =>
+      index === 0
+        ? `msg_onboarding_${scriptedSeq}`
+        : `msg_onboarding_${scriptedSeq}_${index + 1}`
+    );
+    const laneId = laneIds[0];
     const now = new Date();
     const existing = state.scripted[id];
     const conversation: ChatSeedConversation = existing ?? {
       id,
       title: prompt,
-      modelIds: [modelId],
+      modelIds: laneModelIds,
       memoryToolsEnabled: null,
       turns: [],
     };
-    const reply = selectOnboardingReply(prompt);
+    // The desktop chat has its own starter answers and fallback.
+    const reply = selectOnboardingReply(prompt, {
+      desktop: !isPhoneDemoChat(),
+    });
     // The setup-link reply is the offer line plus its button, counted the way
     // the follow-up offer card counts it.
     const setupLink = isSetupLinkRequest(prompt);
@@ -238,31 +260,29 @@ export const onboardingChatStore = {
             prompt,
             sentAt: now,
             attachments: [],
-            lanes: [
-              {
-                id: laneId,
-                answeredAt: now,
-                body: "",
-                // MOCK usage (owner 2026-10-12): estimated tokens, the free
-                // model's $0.00 cost, no compression. No Gate record yet, so
-                // no "View message" link; that comes with the first-message
-                // data (next slice).
-                completionTokens: estimateTokens(output),
-                compressionSavedTokens: null,
-                gateRequestId: null,
-                modelId,
-                promptTokens: estimateTokens(prompt),
-                settlement: "settled",
-                state: "complete",
-              },
-            ],
+            lanes: laneModelIds.map((modelId, index) => ({
+              id: laneIds[index],
+              answeredAt: now,
+              body: "",
+              // MOCK usage (owner 2026-10-12): estimated tokens, the model's
+              // cost for them (a free model's $0.00), no compression. No Gate
+              // record yet, so no "View message" link; that comes with the
+              // first-message data (next slice).
+              completionTokens: estimateTokens(output),
+              compressionSavedTokens: null,
+              gateRequestId: null,
+              modelId,
+              promptTokens: estimateTokens(prompt),
+              settlement: "settled" as const,
+              state: "complete" as const,
+            })),
           },
         ],
       }),
       conversationIds: existing
         ? state.conversationIds
         : [...state.conversationIds, id],
-      live: { conversationId: id, laneId, body: "" },
+      live: { conversationId: id, laneId, laneIds, body: "" },
       setupLinkTurnIds: setupLink
         ? new Set([...state.setupLinkTurnIds, turnId])
         : state.setupLinkTurnIds,
@@ -273,7 +293,7 @@ export const onboardingChatStore = {
         immediate: prefersReducedMotion(),
       })) {
         body += chunk;
-        set({ live: { conversationId: id, laneId, body } });
+        set({ live: { conversationId: id, laneId, laneIds, body } });
       }
       const current = state.scripted[id];
       if (!current) {
@@ -289,7 +309,7 @@ export const onboardingChatStore = {
               ? {
                   ...turn,
                   lanes: turn.lanes.map((lane) =>
-                    lane.id === laneId
+                    laneIds.includes(lane.id)
                       ? { ...lane, body: reply, answeredAt: new Date() }
                       : lane
                   ),

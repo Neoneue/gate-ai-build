@@ -6,7 +6,6 @@ import type { LayoutContext } from "@/App";
 import { AskAiSurface } from "@/components/ui/ask-ai-surface";
 import { Button } from "@/components/ui/button";
 import { FeedbackFab } from "@/components/ui/feedback-fab";
-import { NotificationsMenu } from "@/components/ui/notifications-menu";
 import {
   Sheet,
   SheetContent,
@@ -58,6 +57,16 @@ import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
  *   • `onMobileNavigate`: called with a phone menu link's href as it is
  *     tapped, before the router navigates (B's start marks its phone chat
  *     on the Gate Chat row).
+ *   • `sections`: the Improved flow's desktop rail with its "Get started"
+ *     row (owner 2026-10-13).
+ * Two more, at every width (owner 2026-10-13):
+ *   • No notifications bell: a brand-new workspace has nothing to notify
+ *     about, so the shared chrome's NotificationsMenu is left out. The bell
+ *     appears once the user leaves onboarding for the real Overview.
+ *   • No Ask AI: no top-bar trigger (either width) and no panel, except
+ *     with `showAskAi` (the Overview after setup, owner 2026-10-13: Ask AI
+ *     shows once the demo is done), which restores the shared chrome's
+ *     trigger and panel on App's Layout panel state.
  * Everything else is the shared chrome verbatim; a fix made there must be
  * copied here (drift risk, data-model.md "Onboarding workspace").
  * ───────────────────────────────────────────────────────────────────────── */
@@ -77,6 +86,12 @@ export interface OnboardingDashboardChromeProps {
   onMobileNavigate?: (href: string) => void;
   onNavigate?: (pageId: string) => void;
   onToggleSidebar: () => void;
+  /** The rail's nav in place of the workspace's list: the Improved flow's
+   *  desktop rail with its "Get started" row (`setupSidebarSections`). */
+  sections?: SidebarSection[];
+  /** The shared chrome's Ask AI trigger and panel, off everywhere in
+   *  onboarding except the Overview after setup (see the header). */
+  showAskAi?: boolean;
   sidebarExpanded: boolean;
   /** Optional workspace-level control rendered in the top bar's right group,
    *  before Ask AI, from `lg` up. The Onboarding workspace passes its "Get
@@ -94,6 +109,8 @@ export function OnboardingDashboardChrome({
   mobileSections,
   onMobileNavigate,
   topBarAction,
+  showAskAi = false,
+  sections: sectionsOverride,
   children,
 }: OnboardingDashboardChromeProps) {
   // Section set is chosen per workspace tier so nav links stay within their
@@ -120,23 +137,25 @@ export function OnboardingDashboardChrome({
       teamsStore.setViewRole("admin");
     }
   }, [hasTeamRoles, viewRole]);
-  const sections = isDefault
-    ? DEFAULT_SIDEBAR_SECTIONS
-    : isOnboarding
-      ? ONBOARDING_SIDEBAR_SECTIONS
-      : isFree
-        ? FREE_SIDEBAR_SECTIONS
-        : isEnterprise
-          ? viewRole === "admin"
-            ? ENTERPRISE_SIDEBAR_SECTIONS
-            : viewRole === "manager"
-              ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
-              : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
-          : viewRole === "admin"
-            ? SIDEBAR_SECTIONS
-            : viewRole === "manager"
-              ? PRO_TEAM_ROLE_SIDEBAR_SECTIONS
-              : PRO_MEMBER_SIDEBAR_SECTIONS;
+  const sections =
+    sectionsOverride ??
+    (isDefault
+      ? DEFAULT_SIDEBAR_SECTIONS
+      : isOnboarding
+        ? ONBOARDING_SIDEBAR_SECTIONS
+        : isFree
+          ? FREE_SIDEBAR_SECTIONS
+          : isEnterprise
+            ? viewRole === "admin"
+              ? ENTERPRISE_SIDEBAR_SECTIONS
+              : viewRole === "manager"
+                ? ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS
+                : ENTERPRISE_MEMBER_SIDEBAR_SECTIONS
+            : viewRole === "admin"
+              ? SIDEBAR_SECTIONS
+              : viewRole === "manager"
+                ? PRO_TEAM_ROLE_SIDEBAR_SECTIONS
+                : PRO_MEMBER_SIDEBAR_SECTIONS);
   const overviewPath = isDefault
     ? "/overview-default"
     : isOnboarding
@@ -159,13 +178,12 @@ export function OnboardingDashboardChrome({
       : isFree
         ? "/billing-free/plans"
         : undefined;
-  // Ask AI panel state is hoisted to App.tsx's Layout (localStorage-backed)
-  // and read via the outlet context, so it survives navigation (each page
-  // remounts its own DashboardChrome) and refresh. Default closed.
-  const { askAiOpen, setAskAiOpen } = useOutletContext<LayoutContext>();
-  // The push-panel is a docked flex sibling on lg+ (condenses the top bar +
-  // content in sync). Below lg there's no rail and no horizontal room, so the
-  // same shell opens in a right-docked Sheet instead (AskAiSurface).
+  // No Ask AI during onboarding (owner 2026-10-13, see the header): without
+  // `showAskAi` the panel never renders, so everything that reacts to it
+  // (the tight band below, the FeedbackFab offset) reads it as closed. With
+  // it, the panel state is App's Layout's, as in the shared chrome.
+  const layout = useOutletContext<LayoutContext>();
+  const askAiOpen = showAskAi && layout.askAiOpen;
   const isDesktop = useIsDesktop();
   // Top-bar tight band. With the rail expanded AND the Ask AI panel open, the
   // main column narrows enough that the top-bar left group (toggle + workspace
@@ -246,12 +264,18 @@ export function OnboardingDashboardChrome({
           <div className="flex min-w-0 flex-1 flex-col bg-background lg:min-h-0">
             <DashTopBar
               activeNavId={activeNavId}
-              askAiOpen={askAiOpen}
+              askAi={
+                showAskAi
+                  ? {
+                      open: askAiOpen,
+                      onToggle: () => layout.setAskAiOpen((prev) => !prev),
+                    }
+                  : undefined
+              }
               hideDocsButton={hideDocsButton}
               isDesktop={isDesktop}
               onMobileNavigate={onMobileNavigate}
               onNavigate={onNavigate}
-              onToggleAskAi={() => setAskAiOpen((prev) => !prev)}
               onToggleSidebar={onToggleSidebar}
               overviewPath={overviewPath}
               sections={mobileSections ?? sections}
@@ -299,15 +323,16 @@ export function OnboardingDashboardChrome({
               {children}
             </main>
           </div>
-          {/* Right-docked "Ask AI" panel — lg+ docked column, Sheet below
-            lg. One shell, shared with Gate Chat: see AskAiSurface. It is the
-            LAST flex child of this row so the docked column condenses the top
-            bar and content together (the push effect). */}
-          <AskAiSurface
-            isDesktop={isDesktop}
-            onOpenChange={setAskAiOpen}
-            open={askAiOpen}
-          />
+          {/* The shared chrome's Ask AI panel, only with `showAskAi` (see the
+            header): lg+ docked column, Sheet below lg, the LAST flex child
+            of this row so it condenses the top bar and content together. */}
+          {showAskAi ? (
+            <AskAiSurface
+              isDesktop={isDesktop}
+              onOpenChange={layout.setAskAiOpen}
+              open={askAiOpen}
+            />
+          ) : null}
         </div>
         {/* FeedbackFab uses `fixed` positioning and anchors to the viewport,
           not to this scroll container — placing it here as a sibling keeps
@@ -331,12 +356,11 @@ function DashTopBar({
   onMobileNavigate,
   onNavigate,
   overviewPath,
-  askAiOpen,
-  onToggleAskAi,
   switcherInRail,
   upgradePath,
   showViewRole,
   topBarAction,
+  askAi,
 }: {
   sidebarExpanded: boolean;
   onToggleSidebar: () => void;
@@ -351,14 +375,14 @@ function DashTopBar({
   onMobileNavigate?: (href: string) => void;
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
-  askAiOpen: boolean;
-  onToggleAskAi: () => void;
   switcherInRail: boolean;
   upgradePath?: string;
   /** Pro and Enterprise: the "Viewing as" Admin / Manager switch. */
   showViewRole: boolean;
   /** See `OnboardingDashboardChromeProps.topBarAction`. */
   topBarAction?: ReactNode;
+  /** Set with `showAskAi`: the shared chrome's Ask AI trigger. */
+  askAi?: { open: boolean; onToggle: () => void };
 }) {
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
@@ -382,45 +406,51 @@ function DashTopBar({
           </div>
         )}
       </div>
-      {/* Below `lg` the top bar carries four items only — logomark, bell,
-          Ask AI, hamburger. The theme toggle and Docs leave the bar and
-          reappear as rows in the inline account block at the foot of the nav
-          Sheet (`SidebarAccountRows` in sidebar.tsx); at `lg`+ everything
-          here renders exactly as before.
-
-          Ask AI is TWO buttons rather than one with a responsive size,
-          because a `size` override in a call-site className is hand-rolling
-          the primitive (`.claude/rules/no-handrolling.md`); responsive
-          visibility is not. Below `lg` the bell and Ask AI are BORDERLESS —
-          the bell on the responsive `ghost-to-outline` variant, the
-          mobile-only Ask AI on plain `ghost` — so the hamburger is the one
-          bordered control in the compact bar. */}
+      {/* Below `lg` the top bar carries two items only — logomark and
+          hamburger (the shared chrome's bell and Ask AI are not in the
+          onboarding copy, see the header). The theme toggle and Docs leave
+          the bar and reappear as rows in the inline account block at the foot
+          of the nav Sheet (`SidebarAccountRows` in sidebar.tsx); at `lg`+
+          everything here renders as in the shared chrome, minus the bell and
+          Ask AI. */}
       <div className="flex items-center gap-2">
-        <NotificationsMenu />
         <ThemeToggle className="hidden lg:inline-flex" />
+        {/* `lg:empty:hidden`: the "Get started" control renders nothing on
+            the picker, and an empty flex item would still take a gap,
+            leaving 16px between theme and Docs instead of the bar's 8px. */}
         {topBarAction ? (
-          <div className="hidden lg:flex">{topBarAction}</div>
+          <div className="hidden lg:flex lg:empty:hidden">{topBarAction}</div>
         ) : null}
-        <Button
-          aria-expanded={askAiOpen}
-          aria-label="Ask AI"
-          className="lg:hidden"
-          onClick={onToggleAskAi}
-          size="icon"
-          variant="ghost"
-        >
-          <BotMessageSquare aria-hidden className="size-5" size={20} />
-        </Button>
-        <Button
-          aria-expanded={askAiOpen}
-          className="hidden lg:inline-flex"
-          onClick={onToggleAskAi}
-          size="default"
-          variant="outline"
-        >
-          <BotMessageSquare aria-hidden data-icon="inline-start" size={16} />
-          Ask AI
-        </Button>
+        {/* The shared chrome's Ask AI trigger, verbatim (two buttons, not a
+            responsive size, per no-handrolling), only with `showAskAi`. */}
+        {askAi ? (
+          <>
+            <Button
+              aria-expanded={askAi.open}
+              aria-label="Ask AI"
+              className="lg:hidden"
+              onClick={askAi.onToggle}
+              size="icon"
+              variant="ghost"
+            >
+              <BotMessageSquare aria-hidden className="size-5" size={20} />
+            </Button>
+            <Button
+              aria-expanded={askAi.open}
+              className="hidden lg:inline-flex"
+              onClick={askAi.onToggle}
+              size="default"
+              variant="outline"
+            >
+              <BotMessageSquare
+                aria-hidden
+                data-icon="inline-start"
+                size={16}
+              />
+              Ask AI
+            </Button>
+          </>
+        ) : null}
         {hideDocsButton ? null : (
           <Button
             className="hidden lg:inline-flex"

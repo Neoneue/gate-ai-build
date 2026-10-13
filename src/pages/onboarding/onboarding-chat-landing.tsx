@@ -18,10 +18,13 @@ import { cn } from "@/lib/utils";
 import { CHAT_MEASURE, CHAT_TOUCH_TARGET } from "@/pages/chat/chat-layout";
 import { CHAT_COPY } from "@/pages/chat/copy";
 
-/* The Onboarding workspace copy of `pages/chat/chat-landing.tsx` for the
- * Mobile A demo: the same landing and phone chip row, with onboarding copy
+/* The Onboarding workspace copy of `pages/chat/chat-landing.tsx`: the same
+ * landing and phone chip row. The Mobile A demo uses its onboarding copy
  * (owner 2026-10-11: onboarding should be onboarding focused; copywriter
- * strings from the PRD "Onboarding by device"). Change it here, never in the
+ * strings from the PRD "Onboarding by device"). The desktop onboarding chat
+ * passes the shared landing's title, description and prompts (owner
+ * 2026-10-13), and gets the refused send the shared landing cannot draw: the
+ * prompts disabled while a paid model is picked. Change it here, never in the
  * shared landing. */
 const ONBOARDING_LANDING_TITLE = "Welcome to Gate";
 const ONBOARDING_LANDING_DESCRIPTION =
@@ -68,16 +71,25 @@ const STEP_ASIDE_DELAY = [
 
 export interface OnboardingChatLandingProps {
   className?: string;
-  /** Mobile A refused send: the prompts stay listed but cannot be sent. */
+  /** The line under the title. Default: the Mobile A line. */
+  description?: string;
+  /** Refused send: the prompts stay listed but cannot be sent. */
   disabled?: boolean;
   onPromptSelect?: (prompt: string) => void;
   organizationName?: string | null;
+  /** The starter prompts. Default: the Mobile A quick actions. */
+  prompts?: readonly string[];
+  /** Default: the Mobile A title. */
+  title?: string;
 }
 
 export function OnboardingChatLanding({
   organizationName,
   onPromptSelect,
   disabled = false,
+  prompts = ONBOARDING_STARTER_PROMPTS,
+  title = ONBOARDING_LANDING_TITLE,
+  description = ONBOARDING_LANDING_DESCRIPTION,
   className,
 }: OnboardingChatLandingProps) {
   const titleId = useId();
@@ -106,7 +118,7 @@ export function OnboardingChatLanding({
           id={titleId}
           style={{ animationDelay: "0ms" }}
         >
-          {ONBOARDING_LANDING_TITLE}
+          {title}
         </h2>
         <p
           className={cn(
@@ -117,7 +129,7 @@ export function OnboardingChatLanding({
           )}
           style={{ animationDelay: "50ms" }}
         >
-          {ONBOARDING_LANDING_DESCRIPTION}
+          {description}
         </p>
       </div>
 
@@ -131,7 +143,7 @@ export function OnboardingChatLanding({
           aria-label="Starter prompts"
           className="hidden w-full max-w-135 flex-col gap-2 sm:flex"
         >
-          {ONBOARDING_STARTER_PROMPTS.map((prompt, index) => (
+          {prompts.map((prompt, index) => (
             // The Ask AI suggestion-row recipe (outline + pill + default).
             // `h-auto min-h-10 whitespace-normal` lets a long prompt wrap
             // instead of overflowing the row. The pill inset is 16px, not
@@ -204,9 +216,12 @@ export interface OnboardingStarterChipsProps {
    *  conversation so a new chat starts over. */
   answered?: ReadonlySet<string>;
   className?: string;
-  /** Mobile A refused send: the row still scrolls, every chip is disabled. */
+  /** Refused send: the row still scrolls, every chip is disabled. */
   disabled?: boolean;
   onPromptSelect: (prompt: string) => void;
+  /** The chips. Default: the Mobile A quick actions; the desktop chat passes
+   *  the shared starter prompts. */
+  prompts?: readonly string[];
   /** The setup link was emailed (the chat's offer card or B's phone start):
    *  chip 3 keeps a check and offers the re-send. */
   setupLinkSent?: boolean;
@@ -287,6 +302,7 @@ export function OnboardingStarterChips({
   answered = NO_PROMPTS,
   onPromptSelect,
   disabled = false,
+  prompts = ONBOARDING_STARTER_PROMPTS,
   className,
   setupLinkSent = false,
 }: OnboardingStarterChipsProps) {
@@ -355,8 +371,9 @@ export function OnboardingStarterChips({
       )}
       role="group"
     >
-      {ONBOARDING_STARTER_PROMPTS.filter((prompt) => !gone.has(prompt)).map(
-        (prompt) => {
+      {prompts
+        .filter((prompt) => !gone.has(prompt))
+        .map((prompt) => {
           const setupLink = isSetupLinkRequest(prompt);
           const state: QuickActionState = setupLink
             ? setupLinkSent
@@ -380,8 +397,7 @@ export function OnboardingStarterChips({
               state={state}
             />
           );
-        }
-      )}
+        })}
     </div>
   );
 }

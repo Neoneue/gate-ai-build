@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { FREE_MODELS } from "@/data/free-models";
 import {
+  FREE_COMPARE_HELPER,
   isSetupLinkRequest,
   ONBOARDING_STARTER_PROMPTS,
+  PAID_COMPARE_HELPER,
+  PAID_CREDITS_COMPARE_HELPER,
+  PAID_CREDITS_HELPER,
   PAID_MODEL_HELPER,
   PAID_MODEL_REFUSAL,
   selectOnboardingReply,
@@ -24,7 +28,6 @@ import {
   resolveChatModel,
   toChatConversation,
 } from "@/pages/chat/chat-data";
-import { ChatLanding, ChatStarterChips } from "@/pages/chat/chat-landing";
 import { CHAT_MEASURE } from "@/pages/chat/chat-layout";
 import {
   chatBillingUrl,
@@ -34,7 +37,7 @@ import {
 import { ChatMessage } from "@/pages/chat/chat-message";
 import { ChatThread } from "@/pages/chat/chat-thread";
 import type { ChatExportFormat } from "@/pages/chat/contract";
-import { CHAT_COPY } from "@/pages/chat/copy";
+import { CHAT_COPY, CHAT_STARTER_PROMPTS } from "@/pages/chat/copy";
 import type {
   ChatConversation,
   ChatNotice,
@@ -60,6 +63,7 @@ import {
   OnboardingComputerPrompt,
   OnboardingSetupLinkReply,
 } from "@/pages/onboarding/onboarding-computer-prompt";
+import { useOnboardingBalance } from "@/pages/onboarding/onboarding-credits";
 import {
   isPhoneDemoChat,
   rememberChatPath,
@@ -104,31 +108,30 @@ const NEW_CONVERSATION: ChatConversation = {
  * without touching the current Gate Chat on Free, Default, Pro and
  * Enterprise. Change it here, never in the shared page.
  *
- * It differs in one way so far: it starts as a brand-new user. History,
- * memories and favourites come from the empty `onboarding-chat-store.ts`,
- * and the catalog carries no last-used model. The parts that read the shared
- * store directly (the header and its memory panel) and the rail (Sign out in place of
- * Back to dashboard) are copied next to it;
- * every other part is imported from `pages/chat/` unchanged.
+ * On desktop it is the real Gate Chat (owner 2026-10-13: "It's the real
+ * Gate chat, even on onboarding. The only difference is mobile because we
+ * need to have that be guided."): the same composer toolbar (attach, model
+ * picker, add a model to compare) and thread. It differs in that it starts
+ * as a brand-new user: history, memories and favourites come from the empty
+ * `onboarding-chat-store.ts`, the catalog carries no last-used model, and a
+ * new chat opens on the free default. A send starts the user's own
+ * conversation, answered from the script in every lane (owner 2026-10-13,
+ * "Do what the PRD suggests"), in place of the shared page's seeded demo
+ * thread. Credits are the onboarding balance (`onboarding-credits.ts`):
+ * with none, a send on a paid model is refused (PRD "Onboarding by device").
+ * The parts that read the shared store directly (the header and its memory
+ * panel), the composer (the onboarding picker with its Free tab, and the
+ * refused send), the landing (its prompts disabled while refused) and the
+ * rail (Sign out in place of Back to dashboard) are copied next to it; every
+ * other part is imported from `pages/chat/` unchanged. The phone demo
+ * (`isPhoneDemoChat`) is the guided flow: onboarding landing, quick
+ * actions, one lane.
  */
-/** The seeded conversation a new chat's send or starter opens. */
-const DEMO_CONVERSATION_ID = "chat_8f2c41d7";
-
-/** Router state on that navigation, so a refresh can tell it apart. */
-const DEMO_STATE = { chatDemo: true } as const;
-
-/** The refresh check runs once per page load, on the first Chat mount. */
-let reloadChecked = false;
-
-const isDemoState = (state: unknown): boolean =>
-  typeof state === "object" &&
-  state !== null &&
-  (state as { chatDemo?: unknown }).chatDemo === true;
 
 export function OnboardingChat() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
-  const { pathname, state: locationState } = useLocation();
+  const { pathname } = useLocation();
   const isDesktop = useIsDesktop();
   const mainRef = useRef<HTMLElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
@@ -160,47 +163,20 @@ export function OnboardingChat() {
   const [draftModelIds, setDraftModelIds] = useState<string[] | null>(null);
   const [lowBalanceDismissed, setLowBalanceDismissed] = useState(false);
   // Mobile A (signup -> Gate Chat, owner 2026-10-11): onboarding landing,
-  // onboarding quick actions and scripted replies. The desktop flow's chat
-  // keeps the shared landing and the seeded demo thread.
+  // onboarding quick actions and the turns it draws itself. The desktop
+  // chat keeps the shared landing's copy and the shared thread.
   // Option B's phone chat (the phone two-card start) runs the same chat
   // (owner 2026-10-12): one gate, `isPhoneDemoChat`.
   const [mobileA] = useState(isPhoneDemoChat);
   // B's phone start can send the setup link first (chip 3's sent state).
   const { improved } = useOnboarding();
 
-  // UI only, no model behind it: a send or a starter from a new chat opens
-  // the seeded demo conversation, so the mockup goes from the clean landing
-  // to a full thread. It joins the empty history then, as the user's first
-  // conversation. A push, so Back returns to the clean state. Inside a
-  // conversation a send stays inert (the composer keeps its draft).
-  const openDemoConversation = () => {
-    onboardingChatStore.openConversation(DEMO_CONVERSATION_ID);
-    navigate(chatConversationPath(pathname, DEMO_CONVERSATION_ID), {
-      state: DEMO_STATE,
-    });
-  };
-
-  // A browser refresh on that demo thread goes back a step to the clean
-  // landing, so the mockup can be replayed. The router keeps its state in
-  // history.state, which survives a reload; a conversation opened any other
-  // way (rail, link, typed URL) carries none and stays put on refresh.
-  // The site menu's Gate Chat row comes back to this page.
+  // The site menu's Gate Chat row comes back to this page. A refresh needs
+  // no handling here: the store is in memory, so OnboardingLayout sends a
+  // cold conversation URL back to the landing.
   useEffect(() => {
     rememberChatPath(pathname);
   }, [pathname]);
-
-  useEffect(() => {
-    if (reloadChecked) {
-      return;
-    }
-    reloadChecked = true;
-    const [entry] = performance.getEntriesByType?.("navigation") ?? [];
-    const reloaded =
-      (entry as { type?: string } | undefined)?.type === "reload";
-    if (reloaded && isDemoState(locationState)) {
-      navigate(chatHomePath(pathname), { replace: true });
-    }
-  }, [locationState, navigate, pathname]);
 
   // The lane selection and the seeded draft are per conversation: navigating
   // away must not carry one conversation's onto the next. Adjusted during
@@ -219,6 +195,7 @@ export function OnboardingChat() {
   }
 
   const store = useOnboardingChatStore();
+  const balanceUsd = useOnboardingBalance();
   // A brand-new user has used no model yet: no Recent entries. The free
   // twins (free-models.ts) join the catalog under their Constellation ID,
   // priced Free, so a new chat can open on one.
@@ -244,19 +221,16 @@ export function OnboardingChat() {
     return base;
   }, [store.favorites]);
   const catalogList = useMemo(() => [...catalog.values()], [catalog]);
-  // Mobile A picker only (owner 2026-10-12): Recent lists the models this
-  // session sent with. `catalog` itself keeps no last-used model, so model
-  // resolution, history and the desktop flow are unchanged.
+  // The picker's Recent (owner 2026-10-12, desktop 2026-10-13) lists the
+  // models this session sent with in the onboarding store. `catalog` itself
+  // keeps no last-used model, so model resolution and history are unchanged.
   const pickerCatalog = useMemo(() => {
-    if (!mobileA) {
-      return catalogList;
-    }
     const lastUsed = onboardingModelLastUsed(store.scripted);
     return catalogList.map((model) => {
       const lastUsedAt = lastUsed.get(model.id);
       return lastUsedAt === undefined ? model : { ...model, lastUsedAt };
     });
-  }, [catalogList, mobileA, store.scripted]);
+  }, [catalogList, store.scripted]);
   const conversations = useMemo(() => onboardingConversations(store), [store]);
   const history = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -268,10 +242,14 @@ export function OnboardingChat() {
     return groupConversationsByRecency(matches, catalog);
   }, [conversations, catalog, searchQuery]);
 
-  // A brand-new workspace that is not set up yet: no balance, and nothing to
-  // buy or switch to until it is (owner 2026-10-11). Upgrade and the
-  // workspace switcher are left out of this copy.
-  const credits = { ...chatCredits(pathname), balance: formatExactUsd(0) };
+  // A brand-new workspace that is not set up yet: nothing to buy or switch
+  // to until it is (owner 2026-10-11). The balance is what this onboarding
+  // run added (owner 2026-10-13), live across tabs; $0.00 until then.
+  // Upgrade and the workspace switcher are left out of this copy.
+  const credits = {
+    ...chatCredits(pathname),
+    balance: formatExactUsd(balanceUsd),
+  };
   const showUpgrade = false;
 
   const activeInput = conversationId
@@ -290,7 +268,7 @@ export function OnboardingChat() {
           turns: settledConversation.turns.map((turn) => ({
             ...turn,
             lanes: turn.lanes.map((lane) =>
-              lane.id === live.laneId
+              lane.id !== null && live.laneIds.includes(lane.id)
                 ? { ...lane, body: live.body, state: "streaming" as const }
                 : lane
             ),
@@ -366,50 +344,80 @@ export function OnboardingChat() {
       ])
     : (activeInput?.modelIds ?? []).map((id) => resolveChatModel(catalog, id));
 
-  // Desktop flow: the model is fixed (owner 2026-10-11). Mobile A picks one
-  // lane (owner 2026-10-12), the shared page's setLaneModels for one model:
-  // an open conversation keeps it in the store, a new chat holds it until
-  // the first send opens the conversation on it. No comparison.
-  const selectModel = (modelId: string) => {
+  // The shared page's lane selection (Chat.tsx): an open conversation keeps
+  // its lanes in the store, a new chat holds them until the first send.
+  // Desktop picks per lane and compares two (owner 2026-10-13, reversing the
+  // fixed desktop model of 2026-10-11); the phone demo picks one lane, no
+  // comparison (owner 2026-10-12).
+  const setLaneModels = (modelIds: string[]) => {
     if (activeInput) {
-      onboardingChatStore.setConversationModels(activeInput.seed.id, [modelId]);
+      onboardingChatStore.setConversationModels(activeInput.seed.id, modelIds);
       return;
     }
-    setDraftModelIds([modelId]);
+    setDraftModelIds(modelIds);
   };
-  // Mobile A refused send (owner 2026-10-12): a paid model on the free plan.
-  // Typing stays on; send and the quick actions wait for a free model.
-  const paidModelPicked = mobileA && models.length > 0 && !models[0].isFree;
+  const selectModel = (modelId: string) => setLaneModels([modelId]);
+  const selectLaneModel = (laneIndex: number, modelId: string) => {
+    const nextIds = models.map((model, index) =>
+      index === laneIndex ? modelId : model.id
+    );
+    // Lane index N appends, which is what the add-comparison key does.
+    if (laneIndex >= models.length) {
+      nextIds.push(modelId);
+    }
+    setLaneModels(nextIds);
+  };
+  const removeComparisonModel = () => {
+    if (models.length < 2) {
+      return;
+    }
+    setLaneModels([models[0].id]);
+  };
+  const comparing = models.length > 1;
+  const anyPaidLane = models.some((model) => !model.isFree);
+  // Refused send (PRD "Onboarding by device"; phone owner 2026-10-12,
+  // desktop 2026-10-13): with no balance, a send where any lane is a paid
+  // model waits for free models. Typing stays on; send, the landing prompts
+  // and the phone's quick actions wait. Credits added in this run lift it
+  // (owner 2026-10-13: "they can then use paid models").
+  const paidModelPicked = anyPaidLane && balanceUsd <= 0;
+  // The line under the composer (PRD phone step 2; desktop compare lines
+  // and the paid-with-credits lines, owner 2026-10-13).
+  const helperLine = paidModelPicked
+    ? comparing
+      ? PAID_COMPARE_HELPER
+      : PAID_MODEL_HELPER
+    : anyPaidLane
+      ? comparing
+        ? PAID_CREDITS_COMPARE_HELPER
+        : PAID_CREDITS_HELPER
+      : comparing
+        ? FREE_COMPARE_HELPER
+        : "This model is free. Gate scans every message.";
 
   // Returning true clears the draft (the composer's contract for a send that
   // went out); false keeps it on screen.
-  // Mobile A: every send and quick action is answered from the script, in
-  // the open scripted conversation or a new one. False keeps the draft while
-  // a reply is still writing.
+  // Every send, starter and quick action is answered from the script, in the
+  // open conversation or a new one titled by the prompt, one reply per lane
+  // (desktop compares two). False keeps the draft while a reply is still
+  // writing.
   const sendScripted = (prompt: string) => {
     if (paidModelPicked) {
       return false;
     }
     const target =
       conversationId && store.scripted[conversationId] ? conversationId : null;
-    const id = onboardingChatStore.sendScripted(target, prompt, models[0]?.id);
+    const id = onboardingChatStore.sendScripted(
+      target,
+      prompt,
+      models.map((model) => model.id)
+    );
     if (id === null) {
       return false;
     }
     if (id !== conversationId) {
       navigate(chatConversationPath(pathname, id));
     }
-    return true;
-  };
-
-  const handleSend = (text: string) => {
-    if (mobileA) {
-      return sendScripted(text);
-    }
-    if (conversationId) {
-      return false;
-    }
-    openDemoConversation();
     return true;
   };
 
@@ -595,9 +603,15 @@ export function OnboardingChat() {
                 "relative flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:min-h-0 lg:overflow-y-auto"
               )}
             >
-              <ChatLanding
-                onPromptSelect={openDemoConversation}
+              {/* The shared landing's copy and prompts, on the onboarding
+                  copy so the prompts can be refused like a send. */}
+              <OnboardingChatLanding
+                description={CHAT_COPY.landingDescription}
+                disabled={paidModelPicked}
+                onPromptSelect={sendScripted}
                 organizationName={WORKSPACE_NAME}
+                prompts={CHAT_STARTER_PROMPTS}
+                title={CHAT_COPY.landingTitle}
               />
             </div>
           )}
@@ -631,9 +645,11 @@ export function OnboardingChat() {
                   setupLinkSent={store.setupLinkSent || improved.handoffSent}
                 />
               ) : conversation.turns.length > 0 ? null : (
-                <ChatStarterChips
+                <OnboardingStarterChips
                   className="sm:hidden"
-                  onPromptSelect={openDemoConversation}
+                  disabled={paidModelPicked}
+                  onPromptSelect={sendScripted}
+                  prompts={CHAT_STARTER_PROMPTS}
                 />
               )}
               <OnboardingChatComposer
@@ -642,8 +658,17 @@ export function OnboardingChat() {
                 key={conversationId ?? "new"}
                 models={models}
                 notice={composerNotice}
+                onAddComparisonModel={
+                  mobileA
+                    ? undefined
+                    : (modelId) => selectLaneModel(models.length, modelId)
+                }
+                onRemoveComparisonModel={
+                  mobileA ? undefined : removeComparisonModel
+                }
+                onSelectLaneModel={mobileA ? undefined : selectLaneModel}
                 onSelectModel={mobileA ? selectModel : undefined}
-                onSend={handleSend}
+                onSend={sendScripted}
                 onToggleFavorite={(modelId, favorite) =>
                   onboardingChatStore.setFavorite(modelId, favorite)
                 }
@@ -652,19 +677,18 @@ export function OnboardingChat() {
                 }
               />
               {/* PRD phone step 2: a short line under the composer says the
-                  model is free and that Gate scans every message. Mobile A
-                  swaps it for the paid line while a paid model is picked;
-                  polite, so the reason is read out when the model changes.
+                  model is free and that Gate scans every message (`helperLine`
+                  above). It swaps to the paid line while a send is refused;
+                  polite and always mounted, so the reason is read out when
+                  the model changes.
                   `leading-normal!` holds the voice's 12/18 line box as a
                   ratio (1.5, 18px at 100%), so it grows with the text and
                   wrapped lines never overlap at 200%. */}
               <p
-                aria-live={mobileA ? "polite" : undefined}
+                aria-live="polite"
                 className="type-copy-12 text-center text-muted-foreground leading-normal!"
               >
-                {paidModelPicked
-                  ? PAID_MODEL_HELPER
-                  : "This model is free. Gate scans every message."}
+                {helperLine}
               </p>
             </div>
           </div>

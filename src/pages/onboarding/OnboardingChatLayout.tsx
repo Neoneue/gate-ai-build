@@ -1,20 +1,18 @@
-import { Outlet, useOutletContext } from "react-router-dom";
-import type { LayoutContext } from "@/App";
-import { AskAiSurface } from "@/components/ui/ask-ai-surface";
-import { useIsDesktop } from "@/hooks/use-is-desktop";
+import { Outlet } from "react-router-dom";
 import { useVisualViewportVars } from "@/hooks/use-visual-viewport-vars";
 import { OnboardingChatTopBar } from "@/pages/onboarding/onboarding-chat-top-bar";
 
 /**
  * The Onboarding workspace's copy of `layouts/ChatLayout.tsx` for its Gate
- * Chat. The only difference: its top bar is the onboarding copy, which has
- * no workspace switcher, notifications or Ask AI trigger (owner 2026-10-11).
- * The Ask AI surface stays mounted for when its trigger returns. Change it here, never in the
- * shared layout.
+ * Chat and the phone demo pages. The differences: its top bar is the
+ * onboarding copy, which has no workspace switcher, notifications or Ask AI
+ * trigger (owner 2026-10-11), and there is no Ask AI panel either (owner
+ * 2026-10-13: Ask AI appears once the user leaves onboarding for the real
+ * Overview). The shared panel state in App's Layout is not read here, so a
+ * panel left open on another page does not follow the user into
+ * onboarding. Change it here, never in the shared layout.
  */
 export function OnboardingChatLayout() {
-  const { askAiOpen, setAskAiOpen } = useOutletContext<LayoutContext>();
-  const isDesktop = useIsDesktop();
   useVisualViewportVars();
 
   return (
@@ -29,11 +27,6 @@ export function OnboardingChatLayout() {
         <div className="flex min-w-0 flex-1 flex-col">
           <Outlet />
         </div>
-        <AskAiSurface
-          isDesktop={isDesktop}
-          onOpenChange={setAskAiOpen}
-          open={askAiOpen}
-        />
       </div>
     </div>
   );

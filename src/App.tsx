@@ -381,6 +381,13 @@ const OnboardingImprovedComplete = lazy(() =>
     default: m.ImprovedComplete,
   }))
 );
+/* The Overview after desktop setup: the Pro Overview fed by the setup's two
+ * messages (owner 2026-10-13). */
+const OnboardingSetupOverview = lazy(() =>
+  import("@/pages/onboarding/OnboardingSetupOverview").then((m) => ({
+    default: m.OnboardingSetupOverview,
+  }))
+);
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -702,6 +709,10 @@ export function AppRoutes() {
           <Route
             element={<OnboardingImprovedComplete />}
             path="/improved-complete-onboarding"
+          />
+          <Route
+            element={<OnboardingSetupOverview />}
+            path="/overview-setup-onboarding"
           />
         </Route>
         {/* Unknown routes fall back to Requests. */}

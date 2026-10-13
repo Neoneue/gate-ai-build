@@ -149,3 +149,29 @@ describe("Email setup link quick action", () => {
     expect(state.current.computerPrompt?.afterTurnId).toBe(turn.id);
   });
 });
+
+describe("sendScripted with two lanes (desktop compare, owner 2026-10-13)", () => {
+  it("answers every lane with the scripted reply, streaming in step", async () => {
+    const state = snapshot();
+    let id: string | null = null;
+    act(() => {
+      id = onboardingChatStore.sendScripted(null, "What is Gate AI?", [
+        FREE_QWEN,
+        FREE_GLM,
+      ]);
+    });
+    const live = state.current.live;
+    expect(live?.laneIds).toHaveLength(2);
+    expect(live?.laneId).toBe(live?.laneIds[0]);
+    await act(() => vi.runAllTimersAsync());
+    const conversation = state.current.scripted[id as unknown as string];
+    expect(conversation.modelIds).toEqual([FREE_QWEN, FREE_GLM]);
+    expect(conversation.title).toBe("What is Gate AI?");
+    const lanes = conversation.turns[0].lanes;
+    expect(lanes.map((lane) => lane.modelId)).toEqual([FREE_QWEN, FREE_GLM]);
+    const reply = selectOnboardingReply("What is Gate AI?");
+    expect(lanes.map((lane) => lane.body)).toEqual([reply, reply]);
+    expect(state.current.live).toBeNull();
+    expect(state.current.conversationIds).toContain(id);
+  });
+});

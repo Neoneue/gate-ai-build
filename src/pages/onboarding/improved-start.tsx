@@ -39,7 +39,9 @@ import {
   improvedStepPath,
   lastOnboardingChatPath,
   markOptionBPhoneChat,
+  NEW_TAB_CUE,
   ONBOARDING_ROUTES,
+  openInNewTab,
   phoneSiteSections,
 } from "@/pages/onboarding/onboarding-routes";
 import {
@@ -71,9 +73,13 @@ const METHODS: {
   {
     id: "gate-connect",
     title: "Gate Connect",
-    description: "Your desktop AI apps",
+    description: "For desktop AI apps, no key to paste",
   },
-  { id: "manual", title: "Manual setup", description: "SDK or any client" },
+  {
+    id: "manual",
+    title: "Manual setup",
+    description: "Base URL and key for any SDK or CLI",
+  },
 ];
 
 /** `/overview-onboarding` in the Improved flow (and the handoff route on a
@@ -122,14 +128,17 @@ function DesktopPicker() {
     }
     updateImproved((state) => ({
       connection,
-      billing:
-        connection === "gate-chat"
-          ? "payg"
-          : state.connection === "gate-chat"
-            ? "existing"
-            : state.billing,
+      // Manual setup and Gate Connect run on Existing subscriptions: step 2
+      // has no billing choice (owner 2026-10-13, PRD "Tool before
+      // billing"; Gate Connect's is hidden behind
+      // SHOW_BILLING_ON_GATE_CONNECT in improved-setup.tsx).
+      billing: connection === "gate-chat" ? "payg" : "existing",
+      // A new method starts its setup over: the menu's checks clear with it
+      // (owner 2026-10-13).
       connected: false,
       received: false,
+      caught: false,
+      finished: false,
       pathChosen: false,
       client:
         state.client === "openai-sdk" && connection === "gate-connect"
@@ -159,13 +168,18 @@ function DesktopPicker() {
         <Button
           onClick={() => {
             updateImproved({ pathChosen: true, connected: chat });
-            navigate(
-              chat ? ONBOARDING_ROUTES.chat : ONBOARDING_ROUTES.improvedConnect
-            );
+            // Desktop Gate Chat opens in a new tab (owner 2026-10-13); this
+            // tab stays on Get started.
+            if (chat) {
+              openInNewTab(ONBOARDING_ROUTES.chat);
+            } else {
+              navigate(ONBOARDING_ROUTES.improvedConnect);
+            }
           }}
           size="default"
         >
           {chat ? "Open Gate Chat" : "Continue"}
+          {chat ? <span className="sr-only"> {NEW_TAB_CUE}</span> : null}
           <ArrowRight aria-hidden data-icon="inline-end" />
         </Button>
       </div>

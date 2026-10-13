@@ -185,8 +185,10 @@ export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] =
  *  nav. Two rows stay inside the workspace: Overview opens the setup flow's
  *  first step, and Gate Chat opens the workspace's own Gate Chat version
  *  (`/chat-onboarding`, owner 2026-10-11: Onboarding and the main version
- *  are separate), in the same tab because the flow state lives in memory and
- *  a new tab would start over. Every other row lands on its `-default` twin,
+ *  are separate), in a new tab on desktop (owner 2026-10-13): the setup tab
+ *  stays where it is, and the chat tab starts as a new user, its normal
+ *  first state (OnboardingLayout allows that cold load). The phone menu
+ *  keeps it in the same tab (`phoneSiteSections`). Every other row lands on its `-default` twin,
  *  which ends the onboarding walk-through the way finishing setup would. */
 export const ONBOARDING_SIDEBAR_SECTIONS: SidebarSection[] =
   DEFAULT_SIDEBAR_SECTIONS.map((section) => ({
@@ -196,7 +198,7 @@ export const ONBOARDING_SIDEBAR_SECTIONS: SidebarSection[] =
         return { ...item, pageId: "/overview-onboarding" };
       }
       if (item.id === "chat") {
-        return { ...item, pageId: "/chat-onboarding", newTab: false };
+        return { ...item, pageId: "/chat-onboarding", newTab: true };
       }
       return item;
     }),

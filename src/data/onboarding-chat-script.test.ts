@@ -120,3 +120,38 @@ describe("selectOnboardingReply", () => {
     }
   });
 });
+
+/* The desktop chat (owner 2026-10-13): its own answers to the shared
+ * starter prompts it shows, and its own fallback; the phone is unchanged. */
+describe("selectOnboardingReply on desktop", () => {
+  const desktop = { desktop: true };
+
+  it("answers the compare and summarize starters", () => {
+    expect(
+      selectOnboardingReply(
+        "Compare two models on a technical decision",
+        desktop
+      )
+    ).toBe(
+      "Add a second model from the model picker, then send your question to see how each one answers."
+    );
+    expect(
+      selectOnboardingReply(
+        "Summarize a document and list the key risks",
+        desktop
+      )
+    ).toBe(
+      "No document has been shared yet, so there is nothing to summarize. In Gate Chat you can attach a document or paste its text and ask for the key risks."
+    );
+  });
+
+  it("uses the desktop fallback, and the phone keeps its own", () => {
+    expect(selectOnboardingReply("Write me a haiku", desktop)).toBe(
+      "This is a short demo with scripted answers, and that question isn't covered. Start a new chat to try the suggestions."
+    );
+    expect(selectOnboardingReply("Write me a haiku")).toBe(FALLBACK);
+    expect(
+      selectOnboardingReply("Compare two models on a technical decision")
+    ).toBe(FALLBACK);
+  });
+});

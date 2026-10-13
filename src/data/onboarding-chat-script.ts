@@ -28,6 +28,22 @@ export const PAID_MODEL_REFUSAL = "Pick a free model to send a message";
 /** The helper line under the composer in that state, in place of the free line. */
 export const PAID_MODEL_HELPER = "Paid models need credits to use.";
 
+/** The desktop chat's compare lines under the composer (owner 2026-10-13,
+ *  "Do what the PRD suggests"; copywriter, from the PRD "Onboarding by
+ *  device" example "Comparing with a paid model needs a balance. Top up, or
+ *  compare free models.", in site terms). Both lanes free: */
+export const FREE_COMPARE_HELPER =
+  "Both models are free. Gate scans every message.";
+/** Comparing with any paid model and no balance (the refused send): */
+export const PAID_COMPARE_HELPER =
+  "Comparing a paid model needs credits. Add credits, or compare free models.";
+/** A paid model with credits to pay for it (owner-approved 2026-10-13): */
+export const PAID_CREDITS_HELPER =
+  "This model uses your credits. Gate scans every message.";
+/** Comparing with a paid model and credits: */
+export const PAID_CREDITS_COMPARE_HELPER =
+  "At least one model uses your credits. Gate scans every message.";
+
 const WHAT_IS_GATE_REPLY =
   "Gate runs your AI messages through security scanning, keeps an audit trail, and tracks what they cost. You can also route the AI apps you already use, like Claude Code, through Gate.";
 
@@ -40,6 +56,16 @@ const CLAUDE_CODE_REPLY =
 /** SCRIPTED. Anything the script does not cover; no product claims. */
 const FALLBACK_REPLY =
   "This is a short demo with scripted answers. Tap one of the suggestions to see how Gate works.";
+
+/** SCRIPTED. The desktop chat's answers to two of its starter prompts (the
+ *  shared CHAT_STARTER_PROMPTS) and its fallback, owner-approved
+ *  2026-10-13. The phone keeps FALLBACK_REPLY. */
+const COMPARE_REPLY =
+  "Add a second model from the model picker, then send your question to see how each one answers.";
+const SUMMARIZE_REPLY =
+  "No document has been shared yet, so there is nothing to summarize. In Gate Chat you can attach a document or paste its text and ask for the key risks.";
+const DESKTOP_FALLBACK_REPLY =
+  "This is a short demo with scripted answers, and that question isn't covered. Start a new chat to try the suggestions.";
 
 /** SCRIPTED. The bubble right after the first reply: where the message is
  *  logged (PRD phone step 3). Owner direction 2026-10-12. */
@@ -128,7 +154,10 @@ const WHAT_IS_WORDS = ["what", "whats", "about", "explain"] as const;
  *  close to it, gets the chip's reply (owner 2026-10-12). Checked most
  *  specific first, since every prompt names Gate: setup link, Claude Code,
  *  protect, then what Gate is; anything else gets the fallback. */
-export function selectOnboardingReply(input: string): string {
+export function selectOnboardingReply(
+  input: string,
+  { desktop = false }: { desktop?: boolean } = {}
+): string {
   if (isSetupLinkRequest(input)) {
     return COMPUTER_PROMPT.line;
   }
@@ -139,6 +168,17 @@ export function selectOnboardingReply(input: string): string {
   if (hasAny(words, PROTECT_WORDS)) {
     return PROTECT_REPLY;
   }
+  // The desktop starters "Compare two models on a technical decision" and
+  // "Summarize a document and list the key risks", loosely.
+  if (desktop && hasAny(words, ["compare", "comparing", "comparison"])) {
+    return COMPARE_REPLY;
+  }
+  if (
+    desktop &&
+    hasAny(words, ["summarize", "summarise", "summary", "document"])
+  ) {
+    return SUMMARIZE_REPLY;
+  }
   if (
     words.has("gate") &&
     (hasAny(words, WHAT_IS_WORDS) ||
@@ -147,7 +187,7 @@ export function selectOnboardingReply(input: string): string {
   ) {
     return WHAT_IS_GATE_REPLY;
   }
-  return FALLBACK_REPLY;
+  return desktop ? DESKTOP_FALLBACK_REPLY : FALLBACK_REPLY;
 }
 
 /** MOCK token count for the reply's usage row: about four characters per

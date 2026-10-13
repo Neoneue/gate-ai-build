@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 const MOBILE_QUERY =
   "(max-width: 767px), (pointer: coarse) and (max-height: 599px)";
 
+/** The same test, read once outside React (OnboardingLayout's cold-load
+ *  guard). */
+export const isMobileSetupNow = (): boolean =>
+  typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches;
+
 export function useIsMobileSetup(): boolean {
   const [mobile, setMobile] = useState(
     () =>
