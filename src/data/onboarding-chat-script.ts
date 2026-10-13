@@ -150,6 +150,9 @@ const PROTECT_WORDS = [
  *  Gate", "tell me about Gate", "how does Gate work"). */
 const WHAT_IS_WORDS = ["what", "whats", "about", "explain"] as const;
 
+/** The reply to a plain "hello" (owner 2026-10-13, verbatim). */
+const HELLO_REPLY = "Hello. How can I help you today?";
+
 /** Loose intent match, not a string compare: what the chip says, or anything
  *  close to it, gets the chip's reply (owner 2026-10-12). Checked most
  *  specific first, since every prompt names Gate: setup link, Claude Code,
@@ -160,6 +163,10 @@ export function selectOnboardingReply(
 ): string {
   if (isSetupLinkRequest(input)) {
     return COMPUTER_PROMPT.line;
+  }
+  // "hello", any case or punctuation ("Hello!", "hello.").
+  if (normalise(input) === "hello") {
+    return HELLO_REPLY;
   }
   const words = wordsOf(input);
   if (words.has("claude")) {
