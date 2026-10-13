@@ -9,6 +9,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-13](./2026-10/changelog-10-13.md)
+
+- Onboarding desktop: setup steps, real Gate Chat, setup Overview
+
 ### [2026-10-12](./2026-10/changelog-10-12.md)
 
 - Onboarding phone demo: chat, signup and mobile pages with demo traffic
