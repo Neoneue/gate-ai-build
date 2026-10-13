@@ -15,10 +15,12 @@ route or shared primitive the desktop version uses. Copy the part into
 link change goes only on the `lg:hidden` element. A desktop browser narrowed
 to phone width is a separate, later problem, never a reason to touch desktop.
 The routes are listed in `data-model.md` ("Onboarding workspace").
-Which page to copy (owner 2026-10-12): with no data yet, the Default twin's
-layout; once the demo has data, the full Pro page (every section, control
-and card), with a section that has nothing to show in its own empty state.
-Never fill the Default layout with data. Compare the result against the
+Which page to copy (owner 2026-10-12, corrected 2026-10-13): with no data
+yet, the Default twin's layout; once the demo has data, the full Free page
+(every section, control and card), never Pro: a new workspace is Free until
+it upgrades. A section that has nothing to show keeps its own empty state.
+Never fill the Default layout with data. This holds for the desktop
+onboarding workspace too. Compare the result against the
 live product's phone page before reporting.
 
 **A green build is not proof the feature works.** Vite renders the app despite
