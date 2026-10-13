@@ -109,7 +109,8 @@ describe("selectOnboardingReply", () => {
 
   it("keeps Claude Code and the fallback", () => {
     expect(selectOnboardingReply("Can I use Claude with Gate?")).toBe(CLAUDE);
-    for (const input of ["Write me a haiku", "hello", "email", "", "  "]) {
+    // "hello" has its own reply now (owner 2026-10-13, test below).
+    for (const input of ["Write me a haiku", "email", "", "  "]) {
       expect(selectOnboardingReply(input), input).toBe(FALLBACK);
     }
   });
@@ -153,5 +154,24 @@ describe("selectOnboardingReply on desktop", () => {
     expect(
       selectOnboardingReply("Compare two models on a technical decision")
     ).toBe(FALLBACK);
+  });
+});
+
+describe("selectOnboardingReply greeting (owner 2026-10-13)", () => {
+  it('answers a plain "hello" in any case or punctuation, phone and desktop', () => {
+    for (const input of ["hello", "Hello", "hello!", " Hello. "]) {
+      expect(selectOnboardingReply(input)).toBe(
+        "Hello. How can I help you today?"
+      );
+      expect(selectOnboardingReply(input, { desktop: true })).toBe(
+        "Hello. How can I help you today?"
+      );
+    }
+  });
+
+  it("leaves a longer greeting to the other matchers", () => {
+    expect(selectOnboardingReply("hello, what is Gate?")).not.toBe(
+      "Hello. How can I help you today?"
+    );
   });
 });

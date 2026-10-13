@@ -250,3 +250,38 @@ Prior day: [`changelog-10-12.md`](./changelog-10-12.md)
   coverage test fails when a ui file is neither shown nor skipped.
 - Where: `component-canvas.html`, `src/pages/component-canvas/` (`main.tsx`,
   `use-canvas-camera.ts`, `sample-data.ts`, `groups-*.tsx`).
+
+### Chart tooltips close on scroll or a press outside the chart `df1986b`
+
+- Before: on a touch screen a chart tooltip stayed on screen after a scroll
+  and never closed. The portalled box is `position: fixed` from where it
+  opened and Recharts keeps it active after the finger lifts (Pro `/activity`
+  at 390px: the chart moved 330 to 30 while the tooltip stayed at top 326).
+- After: `ChartTooltipContent` uses a new `useDismissOnScroll`. While the box
+  is open, a scroll anywhere (capture) or a pointer press outside its own
+  chart closes it. A press on the chart, or a mouse move over it, shows it
+  again. Shared primitive, so every chart on every page and tier; desktop
+  mouse hover is unchanged.
+- Where: `src/components/ui/chart.tsx`.
+
+### Phone Activity: Top users shows the account owner `4aedc5e`
+
+- Before: Top users on the phone Activity page (Mobile A and B share
+  `/activity-mobile-onboarding`) showed the sign-up name, or "You" on the
+  Google path.
+- After: it shows the workspace owner member from `MEMBER_ROWS` (name and
+  avatar tone), the same as the sidebar account row and the desktop
+  onboarding Activity page (blue avatar, "C" initial, total 50 on a 390px
+  run).
+- Where: `src/pages/onboarding/OnboardingMobileActivity.tsx` (`DemoTopRow`).
+
+### Onboarding chat: "hello" gets a greeting `beff97b`
+
+- Before: a plain "hello" fell through to the fallback reply on the phone
+  demo and the desktop onboarding Gate Chat.
+- After: `selectOnboardingReply` answers a plain "hello" (any case or
+  punctuation) with "Hello. How can I help you today?" on both. A longer
+  message keeps its usual reply. The old fallback test no longer lists
+  "hello", and a new test covers the greeting.
+- Where: `src/data/onboarding-chat-script.ts`,
+  `src/data/onboarding-chat-script.test.ts`.
