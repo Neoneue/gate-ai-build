@@ -83,3 +83,18 @@ Prior day: [`changelog-10-12.md`](./changelog-10-12.md)
 - Wires are always gray dashes at rest. Reduced motion switches every state
   straight to its end state. Step 3 no longer shows the "Billed by your
   provider" / "Uses Gate credits" badge; step 2 keeps it.
+
+### Onboarding desktop: Manual setup title, no upgrade promo, shorter model subtitle `4b67654`
+
+- Before: step 2 title and its Improved progress row read "Set up Manual
+  setup"; the sidebar "Upgrade to Pro plan" promo showed on onboarding
+  surfaces; the "Select a model" subtitle read "Choose which Gate model your
+  tokens will use. It only sets up your first config, and you can change it
+  anytime."
+- After: the title and progress row read "Manual setup" (Gate Connect keeps
+  "Set up Gate Connect"); `upgradePath` is `undefined` when `isOnboarding`, so
+  the promo is hidden there (Default and Free keep it); the subtitle reads
+  "Choose which Gate model your tokens will use." and fits one line.
+- Where: `improved-setup.tsx` (ImprovedHeader title, Select a model
+  description), `onboarding-chrome.tsx` (`IMPROVED_PATH_STEPS` manual row),
+  `OnboardingDashboardChrome.tsx` (`upgradePath`).
