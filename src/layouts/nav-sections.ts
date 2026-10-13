@@ -188,8 +188,8 @@ export const DEFAULT_SIDEBAR_SECTIONS: SidebarSection[] =
  *  are separate), in a new tab on desktop (owner 2026-10-13): the setup tab
  *  stays where it is, and the chat tab starts as a new user, its normal
  *  first state (OnboardingLayout allows that cold load). The phone menu
- *  keeps it in the same tab (`phoneSiteSections`). Every other row lands on its `-default` twin,
- *  which ends the onboarding walk-through the way finishing setup would. */
+ *  keeps it in the same tab (`phoneSiteSections`). Every other row lands on its `-onboarding`
+ *  twin (owner 2026-10-13), so the demo never leaves the workspace. */
 export const ONBOARDING_SIDEBAR_SECTIONS: SidebarSection[] =
   DEFAULT_SIDEBAR_SECTIONS.map((section) => ({
     ...section,
@@ -200,7 +200,12 @@ export const ONBOARDING_SIDEBAR_SECTIONS: SidebarSection[] =
       if (item.id === "chat") {
         return { ...item, pageId: "/chat-onboarding", newTab: true };
       }
-      return item;
+      // Every other row stays in the workspace (owner 2026-10-13: leaving
+      // for the Default workspace breaks the demo): its -onboarding twin.
+      return {
+        ...item,
+        pageId: item.pageId.replace(/-default$/, "-onboarding"),
+      };
     }),
   }));
 

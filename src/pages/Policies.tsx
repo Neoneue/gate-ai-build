@@ -1,6 +1,6 @@
 import { Check, ChevronDown, Info } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { SparklesIcon } from "@/components/ui/sparkles";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Switch } from "@/components/ui/switch";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { keepInOnboarding } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { FreePlanNoticeBanner } from "@/pages/free-plan-notice-banner";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
@@ -355,6 +356,7 @@ function PolicyCard({
 
 function ProBenefitsCard() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [compareOpen, setCompareOpen] = useState(false);
 
   return (
@@ -407,7 +409,7 @@ function ProBenefitsCard() {
       </Card>
       <PlanComparisonDialog
         onOpenChange={setCompareOpen}
-        onUpgrade={() => navigate("/billing")}
+        onUpgrade={() => navigate(keepInOnboarding(pathname, "/billing"))}
         open={compareOpen}
       />
     </>

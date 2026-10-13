@@ -1,4 +1,3 @@
-import { BarChart2, MessageSquare } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -49,7 +48,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TableEmptyState } from "@/components/ui/table-empty-state";
 import {
   formatCompactCount,
   formatCurrency,
@@ -58,19 +56,17 @@ import {
 } from "@/lib/formatters";
 import { type ChartSeries, seriesColor } from "@/pages/activity-data";
 import { OnboardingChrome } from "@/pages/onboarding/onboarding-chrome";
-import {
-  EmptyKpiTile,
-  IconChip,
-  PreviewCard,
-} from "@/pages/onboarding/onboarding-mobile-parts";
+import { PreviewCard } from "@/pages/onboarding/onboarding-mobile-parts";
 import { ONBOARDING_ROUTES } from "@/pages/onboarding/onboarding-routes";
 import {
   type SetupTraffic,
+  setupCompression,
   setupTraffic,
   setupWeek,
   tokensOf,
 } from "@/pages/onboarding/onboarding-setup-traffic";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
+import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
 import { GUARDRAIL_BADGE } from "@/pages/requests/data";
 import { ACTION_BADGE, TYPE_META } from "@/pages/security-data";
 
@@ -80,14 +76,16 @@ import { ACTION_BADGE, TYPE_META } from "@/pages/security-data";
  * tab, so it reads this tab's setup state. A copy of the Pro Overview
  * (`Dashboard.tsx`, unchanged) per no-thrash's rule for a demo with data:
  * every section and control, fed by exactly the two step 3 messages
- * (`setupTraffic`, the one source, so the tiles, chart and tables
- * reconcile). Sections with nothing to show keep their own empty states:
- * Tokens saved (nothing was compressed) and Latest conversations (two single
- * requests are not a multi-turn conversation). Rows open nothing and the
- * preview cards carry no "View all": no list or detail page holds these
- * messages (the phone Overview's precedent). Ask AI shows here (owner: once
- * the demo is done); the notifications bell stays hidden. Empty strings are
- * reused from the Default pages.
+ * (`useSetupTraffic`: this tab's setup state, else the localStorage mirror a
+ * new tab reads; the one source, so the tiles, chart and tables reconcile).
+ * Every section shows data (owner 2026-10-13): Tokens saved is Gate's
+ * compression over the two messages (`setupCompression`: 2 of 2,366 input
+ * tokens, "0.1%", its spark the tokens saved per day), and Latest
+ * conversations lists the one conversation of 2 turns both messages came
+ * from (`traffic.conversation`). Rows open nothing and the preview cards
+ * carry no "View all": no list or detail page holds these messages (the
+ * phone Overview's precedent). Ask AI shows here (owner: once the demo is
+ * done); the notifications bell stays hidden.
  * ───────────────────────────────────────────────────────────────────────── */
 
 type Dimension = "model" | "provider" | "apiKey";
@@ -123,10 +121,13 @@ const timeLabel = (date: Date) =>
 
 export function OnboardingSetupOverview() {
   const { improved } = useOnboarding();
-  const traffic = setupTraffic(improved);
+  const traffic = useSetupTraffic();
   // Only after setup: before both step 3 messages passed, the final page's
-  // guard sends the user to the step still due.
-  if (!(traffic && improved.finished)) {
+  // guard sends the user to the step still due. This tab's own run also
+  // needs the final page reached; a new tab (no flow state) has the mirror
+  // only once step 3 passed.
+  const inThisTab = setupTraffic(improved) !== null;
+  if (!traffic || (inThisTab && !improved.finished)) {
     return <Navigate replace to={ONBOARDING_ROUTES.improvedComplete} />;
   }
   return (
@@ -139,6 +140,7 @@ export function OnboardingSetupOverview() {
 function SetupOverview({ traffic }: { traffic: SetupTraffic }) {
   const week = useMemo(() => setupWeek(traffic), [traffic]);
   const threats = traffic.messages.filter((m) => m.guardrail === "block");
+  const compression = setupCompression(traffic);
   return (
     <>
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
@@ -167,7 +169,24 @@ function SetupOverview({ traffic }: { traffic: SetupTraffic }) {
             title="Messages"
             value={formatCompactCount(traffic.messages.length)}
           />
-          <EmptyKpiTile icon={BarChart2} label="No savings yet" />
+          <CompactKpi
+            flat
+            spark={
+              <CompactSpark
+                colorVar="var(--color-success-500)"
+                data={week.days.map((day) =>
+                  day.reduce((sum, m) => sum + m.savedTokens, 0)
+                )}
+                labels={week.labels}
+                tooltip
+                valueFormatter={(v) =>
+                  formatNumber(v, { maximumFractionDigits: 0 })
+                }
+              />
+            }
+            title="Tokens saved"
+            value={compression.percent}
+          />
           <CompactKpi
             flat
             spark={
@@ -194,11 +213,7 @@ function SetupOverview({ traffic }: { traffic: SetupTraffic }) {
           <LatestMessagesTable traffic={traffic} />
         </PreviewCard>
         <PreviewCard title="Latest conversations">
-          <TableEmptyState
-            body="Multi-turn conversations grouped by key and model will appear here as your workspace routes traffic."
-            icon={<IconChip icon={MessageSquare} />}
-            title="No conversations"
-          />
+          <LatestConversationsTable traffic={traffic} />
         </PreviewCard>
         <PreviewCard title="Latest security events">
           <SecurityEventsTable traffic={traffic} />
@@ -475,6 +490,43 @@ function LatestMessagesTable({ traffic }: { traffic: SetupTraffic }) {
         );
       })}
     </PreviewTable>
+  );
+}
+
+/** The one setup conversation: Dashboard's RecentConversationsTable columns.
+ *  One request per turn, so Reqs equals Turns (the phone Conversations
+ *  copy's precedent). The title truncates with its full text on hover. */
+function LatestConversationsTable({ traffic }: { traffic: SetupTraffic }) {
+  const { conversation } = traffic;
+  return (
+    <Table aria-label="Latest conversations">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Conversation</TableHead>
+          <TableHead>Updated</TableHead>
+          <TableHead className="text-right">Turns</TableHead>
+          <TableHead className="text-right">Reqs</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        <TableRow className="h-12">
+          <TableCell className="w-full max-w-0">
+            <span className="block w-full truncate" title={conversation.title}>
+              {conversation.title}
+            </span>
+          </TableCell>
+          <TableCell className="type-mono-14 whitespace-nowrap">
+            {formatTimestamp(conversation.updatedAt)}
+          </TableCell>
+          <TableCell className="type-mono-14 whitespace-nowrap text-right">
+            {conversation.turns}
+          </TableCell>
+          <TableCell className="type-mono-14 whitespace-nowrap text-right">
+            {conversation.turns}
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
   );
 }
 

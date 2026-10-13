@@ -96,18 +96,6 @@ export function WorkspaceSwitcher({
           ) : null}
         </MenuItem>
         <MenuItem
-          active={isDefault}
-          onClick={() => navigate(toDefaultPath(pathname))}
-        >
-          <span className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate">{WORKSPACE_NAME}</span>
-            <Badge variant="neutral">Default</Badge>
-          </span>
-          {isDefault ? (
-            <Check aria-hidden className="text-primary" strokeWidth={1.75} />
-          ) : null}
-        </MenuItem>
-        <MenuItem
           active={isFree}
           onClick={() => navigate(toFreePath(pathname))}
         >
@@ -116,6 +104,18 @@ export function WorkspaceSwitcher({
             <Badge variant="neutral">Free</Badge>
           </span>
           {isFree ? (
+            <Check aria-hidden className="text-primary" strokeWidth={1.75} />
+          ) : null}
+        </MenuItem>
+        <MenuItem
+          active={isDefault}
+          onClick={() => navigate(toDefaultPath(pathname))}
+        >
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="truncate">{WORKSPACE_NAME}</span>
+            <Badge variant="neutral">Default</Badge>
+          </span>
+          {isDefault ? (
             <Check aria-hidden className="text-primary" strokeWidth={1.75} />
           ) : null}
         </MenuItem>

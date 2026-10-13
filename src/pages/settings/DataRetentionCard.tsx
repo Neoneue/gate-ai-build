@@ -43,7 +43,7 @@ import {
 import { type ContactKind, contactFlowTitle } from "@/data/plans";
 import { signedInMember } from "@/data/team-members";
 import { formatDate, formatNumber } from "@/lib/formatters";
-import { withTierOf } from "@/lib/plan";
+import { keepInOnboarding, withTierOf } from "@/lib/plan";
 import {
   clampDate,
   formatDays,
@@ -487,7 +487,7 @@ export function DataRetentionCard({
       {editable ? null : (
         <PlanComparisonDialog
           onOpenChange={setCompareOpen}
-          onUpgrade={() => navigate("/billing")}
+          onUpgrade={() => navigate(keepInOnboarding(pathname, "/billing"))}
           open={compareOpen}
         />
       )}

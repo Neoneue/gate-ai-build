@@ -179,6 +179,17 @@ export const withTierOf = (
   return `${head}${suffix}${rest}`;
 };
 
+/** Keeps an in-app link inside the onboarding workspace (owner 2026-10-13:
+ *  "nothing links out to other workspaces"): on an onboarding path, the
+ *  target's `-onboarding` twin; on every other path, the target unchanged. */
+export const keepInOnboarding = (
+  currentPathname: string,
+  target: string
+): string =>
+  isOnboardingSurface(currentPathname)
+    ? withTierOf(currentPathname, target)
+    : target;
+
 /** PRO path → its Free twin. Falls back to Free home if no twin exists.
  *  Idempotent on Free paths; converts -default and -enterprise to -free. */
 export const toFreePath = (pathname: string): string => {

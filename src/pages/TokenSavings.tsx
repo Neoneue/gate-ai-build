@@ -1,6 +1,7 @@
 import { Check, Info } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import {
+  useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -35,6 +36,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { keepInOnboarding } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 import { SummaryCard } from "@/pages/token-savings/SummaryCard";
@@ -483,6 +485,7 @@ function CompressionCard({
   onEnabledChange: (next: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const isPro = plan === "pro";
   const [compareOpen, setCompareOpen] = useState(false);
 
@@ -621,7 +624,7 @@ function CompressionCard({
       {isPro ? null : (
         <PlanComparisonDialog
           onOpenChange={setCompareOpen}
-          onUpgrade={() => navigate("/billing")}
+          onUpgrade={() => navigate(keepInOnboarding(pathname, "/billing"))}
           open={compareOpen}
         />
       )}

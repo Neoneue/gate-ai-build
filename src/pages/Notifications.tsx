@@ -3,6 +3,7 @@ import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import {
   Link,
+  useLocation,
   useNavigate,
   useOutletContext,
   useSearchParams,
@@ -61,6 +62,7 @@ import {
   useNotificationsReadState,
 } from "@/data/notifications-store";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
+import { keepInOnboarding } from "@/lib/plan";
 import { REDUCE_MOTION } from "@/lib/reduce-motion";
 import { cn } from "@/lib/utils";
 import { POLICIES } from "@/pages/policies/config";
@@ -585,6 +587,7 @@ function ChannelsCard({
   onSetFrequency: (id: EmailFrequency, on: boolean) => void;
 }) {
   const onlyOne = prefs.emailFrequency.length === 1;
+  const { pathname } = useLocation();
 
   return (
     <Card density="flush">
@@ -622,7 +625,7 @@ function ChannelsCard({
             <Button
               aria-label="Change email in Settings"
               nativeButton={false}
-              render={<Link to="/settings" />}
+              render={<Link to={keepInOnboarding(pathname, "/settings")} />}
               size="icon-xs"
               variant="ghost"
             >

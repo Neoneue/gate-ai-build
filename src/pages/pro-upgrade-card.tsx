@@ -1,8 +1,9 @@
 import type { LucideIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SparklesIcon } from "@/components/ui/sparkles";
+import { keepInOnboarding } from "@/lib/plan";
 
 // Shared Pro-upsell card for the `-free` feature pages. The icon and body copy
 // vary per feature; everything else (Pro tier chrome, button) is baked in so
@@ -16,13 +17,14 @@ export function ProUpgradeCard({
   body: string;
   title?: string;
 }) {
+  const { pathname } = useLocation();
   return (
     <EmptyState
       action={
         <div className="pt-4">
           <Button
             nativeButton={false}
-            render={<Link to="/billing" />}
+            render={<Link to={keepInOnboarding(pathname, "/billing")} />}
             size="default"
             variant="promo"
           >

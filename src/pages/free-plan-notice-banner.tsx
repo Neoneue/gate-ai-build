@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SparklesIcon } from "@/components/ui/sparkles";
+import { keepInOnboarding } from "@/lib/plan";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ export function FreePlanNoticeBanner({
   children: ReactNode;
 }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [compareOpen, setCompareOpen] = useState(false);
 
   return (
@@ -64,7 +66,7 @@ export function FreePlanNoticeBanner({
       </Card>
       <PlanComparisonDialog
         onOpenChange={setCompareOpen}
-        onUpgrade={() => navigate("/billing")}
+        onUpgrade={() => navigate(keepInOnboarding(pathname, "/billing"))}
         open={compareOpen}
       />
     </>

@@ -18,7 +18,12 @@ import {
   isPhoneDemoChat,
   ONBOARDING_ROUTES,
   ONBOARDING_SIGN_IN,
+  ONBOARDING_WORKSPACE_PAGES,
 } from "@/pages/onboarding/onboarding-routes";
+import {
+  saveSetupTraffic,
+  setupTraffic,
+} from "@/pages/onboarding/onboarding-setup-traffic";
 import { isMobileSetupNow } from "@/pages/onboarding/use-is-mobile-setup";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 import { useOnboardingMotion } from "@/pages/onboarding/use-onboarding-motion";
@@ -71,11 +76,15 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   if (coldThread && pathname === ONBOARDING_ROUTES.chat) {
     setColdThread(false);
   }
+  // A workspace page (a sidebar row or an explore row's new tab) renders
+  // on a cold load too (owner 2026-10-13); its data comes from the setup
+  // traffic's mirror (onboarding-setup-traffic.ts).
   const [started, setStarted] = useState(
     () =>
       pathname === ONBOARDING_ROUTES.start ||
       isOnboardingSignup(locationState) ||
-      coldChat
+      coldChat ||
+      ONBOARDING_WORKSPACE_PAGES.has(pathname)
   );
   if (!started && pathname === ONBOARDING_ROUTES.start) {
     setStarted(true);
@@ -91,8 +100,16 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   useEffect(() => {
     if (freshRun) {
       resetOnboardingBalance();
+      saveSetupTraffic(null);
     }
   }, [freshRun]);
+  // Step 3's two messages, mirrored for the workspace pages a new tab opens.
+  useEffect(() => {
+    const traffic = setupTraffic(improved);
+    if (traffic) {
+      saveSetupTraffic(traffic);
+    }
+  }, [improved]);
   // The start page ends any Mobile A run in this tab. Option B's phone chat
   // mark stays: B's site menu Overview returns to its phone start mid-run
   // (owner 2026-10-12); the desktop start clears it (`DesktopPicker`).

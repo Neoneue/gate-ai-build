@@ -144,8 +144,11 @@ export function DashboardChrome({
   // It lands on the nested Manage subscription page rather than Billing
   // itself, so one click reaches the plan ladder instead of dropping the
   // user on the page to hunt for the button.
-  const upgradePath =
-    isDefault || isOnboarding
+  // Hidden on the onboarding workspace's pages (owner 2026-10-13), as in
+  // OnboardingDashboardChrome.
+  const upgradePath = isOnboarding
+    ? undefined
+    : isDefault
       ? "/billing-default/plans"
       : isFree
         ? "/billing-free/plans"

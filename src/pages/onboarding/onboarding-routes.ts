@@ -337,6 +337,30 @@ export function flowOfRoute(pathname: string): "current" | "improved" | null {
   return "improved";
 }
 
+/** The workspace's own pages (owner 2026-10-13: the demo never leaves the
+ *  onboarding workspace): every sidebar row and the final page's explore
+ *  rows land on one. A cold load renders in place (OnboardingLayout), since
+ *  the explore rows open a new tab; the data pages then read the setup
+ *  traffic's localStorage mirror. */
+export const ONBOARDING_WORKSPACE_PAGES: ReadonlySet<string> = new Set([
+  "/messages-onboarding",
+  "/conversations-onboarding",
+  "/security-onboarding",
+  "/audit-trail-onboarding",
+  "/policies-onboarding",
+  "/token-savings-onboarding",
+  "/models-onboarding",
+  "/activity-onboarding",
+  "/limits-onboarding",
+  "/members-onboarding",
+  "/teams-onboarding",
+  "/billing-onboarding",
+  "/billing-onboarding/plans",
+  "/api-keys-onboarding",
+  "/notifications-onboarding",
+  "/settings-onboarding",
+]);
+
 /** Exits: finishing or skipping setup lands on the user's real workspace,
  *  the Default twin of each page. The four "Explore your Gateway" pages stay
  *  in the onboarding workspace (owner 2026-10-13), on routes that mount

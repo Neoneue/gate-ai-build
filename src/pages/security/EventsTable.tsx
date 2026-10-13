@@ -62,7 +62,7 @@ import { API_KEY_SEED_ROWS } from "@/data/api-keys";
 import { getEventFindingCopy } from "@/data/requests";
 import { memberById } from "@/data/teams";
 import { sortRows, useTableSort } from "@/hooks/use-table-sort";
-import { withTierOf } from "@/lib/plan";
+import { keepInOnboarding, withTierOf } from "@/lib/plan";
 import type { CustomRange } from "@/lib/range";
 import {
   DETECTION_CHECKS,
@@ -737,7 +737,9 @@ function ThreatEventDetailBody({
   const requestId = row.requestId;
   const conversationId = row.conversationId;
   const openConversation = () =>
-    navigate(`/conversations?open=${conversationId}`);
+    navigate(
+      keepInOnboarding(pathname, `/conversations?open=${conversationId}`)
+    );
   const openRequest = () =>
     navigate(withTierOf(pathname, `/messages-findings/${requestId}`));
   const flaggedSet = new Set(detail.flagged);

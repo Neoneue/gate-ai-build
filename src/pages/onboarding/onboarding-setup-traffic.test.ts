@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { describe, expect, test } from "vitest";
 import {
   DEMO_TOKENS_IN,
@@ -6,8 +7,11 @@ import {
   TEST_TOKENS_OUT,
 } from "@/pages/onboarding/improved-data";
 import {
+  saveSetupTraffic,
+  setupCompression,
   setupTraffic,
   setupWeek,
+  storedSetupTraffic,
   tokensOf,
 } from "@/pages/onboarding/onboarding-setup-traffic";
 import { initialImprovedState } from "@/pages/onboarding/onboarding-state";
@@ -95,5 +99,34 @@ describe("setupWeek", () => {
     expect(total).toBe(
       TEST_TOKENS_IN + TEST_TOKENS_OUT + DEMO_TOKENS_IN + DEMO_TOKENS_OUT
     );
+  });
+});
+
+describe("setup traffic after step 3 (owner 2026-10-13)", () => {
+  test("compresses 2 of 2,366 input tokens: 0.1%", () => {
+    const traffic = setupTraffic(finished());
+    expect(traffic && setupCompression(traffic)).toEqual({
+      savedTokens: 2,
+      inTokens: 2366,
+      percent: "0.1%",
+    });
+  });
+
+  test("logs one conversation with 2 turns", () => {
+    const conversation = setupTraffic(finished())?.conversation;
+    expect(conversation?.turns).toBe(2);
+    expect(conversation?.inTokens).toBe(TEST_TOKENS_IN + DEMO_TOKENS_IN);
+    expect(conversation?.startedAt.getTime()).toBe(RECEIVED);
+    expect(conversation?.updatedAt.getTime()).toBe(CAUGHT);
+  });
+
+  test("round-trips through the new-tab mirror, dates revived", () => {
+    const traffic = setupTraffic(finished());
+    saveSetupTraffic(traffic);
+    const stored = storedSetupTraffic();
+    expect(stored?.messages[0]?.sentAt.getTime()).toBe(CAUGHT);
+    expect(stored?.conversation.updatedAt.getTime()).toBe(CAUGHT);
+    saveSetupTraffic(null);
+    expect(storedSetupTraffic()).toBeNull();
   });
 });

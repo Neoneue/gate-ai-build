@@ -6,6 +6,8 @@ import {
   DEMO_TOKENS_OUT,
   type ImprovedModel,
   OWNER_EMAIL,
+  SETUP_TOKENS_SAVED,
+  TEST_MESSAGE,
   TEST_TOKENS_IN,
   TEST_TOKENS_OUT,
   testModelOf,
@@ -31,8 +33,24 @@ export type SetupMessage = {
   model: ImprovedModel;
   inTokens: number;
   outTokens: number;
+  /** Input tokens Gate's compression removed (`SETUP_TOKENS_SAVED`). */
+  savedTokens: number;
   costUsd: number;
   guardrail: "allow" | "block";
+};
+
+/** The two messages as one conversation with 2 turns (owner 2026-10-13):
+ *  both came from the same app session during setup. */
+export type SetupConversation = {
+  id: string;
+  /** The first turn's prompt, as Conversations titles a session. */
+  title: string;
+  startedAt: Date;
+  updatedAt: Date;
+  turns: number;
+  inTokens: number;
+  outTokens: number;
+  costUsd: number;
 };
 
 export type SetupTraffic = {
@@ -45,6 +63,11 @@ export type SetupTraffic = {
   keyLabel: string;
   /** The app the messages came from. */
   app: string;
+  /** Who bills the two messages: Gate on Gate credits ("payg"), the
+   *  user's provider on Existing subscriptions, as the Messages cost cell
+   *  shows it. */
+  billing: ImprovedState["billing"];
+  conversation: SetupConversation;
 };
 
 /** List price of a step 2 model. IMPROVED_MODELS writes a version with a
@@ -80,6 +103,7 @@ export function setupTraffic(state: ImprovedState): SetupTraffic | null {
     model,
     inTokens,
     outTokens,
+    savedTokens: SETUP_TOKENS_SAVED,
     costUsd: payg ? listCost(model.id, inTokens, outTokens) : 0,
     guardrail,
   });
@@ -87,20 +111,95 @@ export function setupTraffic(state: ImprovedState): SetupTraffic | null {
     state.connection === "manual"
       ? state.keys.find((k) => k.id === state.selectedKeyId)?.name
       : undefined;
+  const test = message(
+    "test",
+    state.receivedAt,
+    TEST_TOKENS_IN,
+    TEST_TOKENS_OUT,
+    "allow"
+  );
+  const demo = message(
+    "demo",
+    state.caughtAt,
+    DEMO_TOKENS_IN,
+    DEMO_TOKENS_OUT,
+    "block"
+  );
   return {
-    messages: [
-      message("demo", state.caughtAt, DEMO_TOKENS_IN, DEMO_TOKENS_OUT, "block"),
-      message(
-        "test",
-        state.receivedAt,
-        TEST_TOKENS_IN,
-        TEST_TOKENS_OUT,
-        "allow"
-      ),
-    ],
+    messages: [demo, test],
     keyLabel: key ?? `gate-connect (${OWNER_EMAIL.slice(0, 12)}...)`,
     app: appNameOf(state),
+    billing: state.billing,
+    conversation: {
+      id: SETUP_CONVERSATION_ID,
+      title: TEST_MESSAGE,
+      startedAt: test.sentAt,
+      updatedAt: demo.sentAt,
+      turns: 2,
+      inTokens: test.inTokens + demo.inTokens,
+      outTokens: test.outTokens + demo.outTokens,
+      costUsd: test.costUsd + demo.costUsd,
+    },
   };
+}
+
+/** The setup conversation's id: mock, no Gate record exists. */
+export const SETUP_CONVERSATION_ID = "cnv_setup";
+
+/* ─── The mirror a new tab reads (owner 2026-10-13) ─────────────────────────
+ * The final page's explore rows open the workspace pages in a NEW tab, which
+ * has no flow state, so the two messages are mirrored to localStorage when
+ * step 3 passes (the credit balance's precedent, onboarding-credits.ts) and
+ * cleared when a fresh run starts. In-tab pages read the live state first. */
+const SETUP_TRAFFIC_KEY = "gate-onboarding-setup-traffic";
+
+export function saveSetupTraffic(traffic: SetupTraffic | null): void {
+  try {
+    if (traffic) {
+      localStorage.setItem(SETUP_TRAFFIC_KEY, JSON.stringify(traffic));
+    } else {
+      localStorage.removeItem(SETUP_TRAFFIC_KEY);
+    }
+  } catch {
+    // Storage blocked: a new tab shows the empty Default layouts.
+  }
+}
+
+export function storedSetupTraffic(): SetupTraffic | null {
+  try {
+    const raw = localStorage.getItem(SETUP_TRAFFIC_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as SetupTraffic;
+    return {
+      ...parsed,
+      messages: parsed.messages.map((m) => ({
+        ...m,
+        sentAt: new Date(m.sentAt),
+      })),
+      conversation: {
+        ...parsed.conversation,
+        startedAt: new Date(parsed.conversation.startedAt),
+        updatedAt: new Date(parsed.conversation.updatedAt),
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Gate's compression over the two messages: tokens saved and the share of
+ *  input tokens, one decimal ("0.1%"). */
+export function setupCompression(traffic: SetupTraffic): {
+  savedTokens: number;
+  inTokens: number;
+  percent: string;
+} {
+  const savedTokens = traffic.messages.reduce((s, m) => s + m.savedTokens, 0);
+  const inTokens = traffic.messages.reduce((s, m) => s + m.inTokens, 0);
+  const pct = inTokens === 0 ? 0 : (savedTokens / inTokens) * 100;
+  return { savedTokens, inTokens, percent: `${pct.toFixed(1)}%` };
 }
 
 export const tokensOf = (m: SetupMessage) => m.inTokens + m.outTokens;

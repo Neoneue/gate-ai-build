@@ -5,9 +5,11 @@ import {
   Outlet,
   Route,
   Routes,
+  useLocation,
 } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AskAiThreadProvider } from "@/hooks/ask-ai-thread-provider";
+import { isOnboardingSurface } from "@/lib/plan";
 
 /* Route-level code splitting: each page loads as its own chunk on first
  * visit instead of shipping the whole dashboard in the entry bundle. */
@@ -388,6 +390,38 @@ const OnboardingImprovedComplete = lazy(() =>
 );
 /* The Overview after desktop setup: the Pro Overview fed by the setup's two
  * messages (owner 2026-10-13). */
+/* The onboarding workspace's data pages (owner 2026-10-13): the Default
+ * twin until step 3 passed, then a Free copy fed by the two messages. */
+const OnboardingMessages = lazy(() =>
+  import("@/pages/onboarding/OnboardingMessages").then((m) => ({
+    default: m.OnboardingMessages,
+  }))
+);
+
+const OnboardingActivity = lazy(() =>
+  import("@/pages/onboarding/OnboardingActivity").then((m) => ({
+    default: m.OnboardingActivity,
+  }))
+);
+
+const OnboardingConversations = lazy(() =>
+  import("@/pages/onboarding/OnboardingConversations").then((m) => ({
+    default: m.OnboardingConversations,
+  }))
+);
+
+const OnboardingSecurity = lazy(() =>
+  import("@/pages/onboarding/OnboardingSecurity").then((m) => ({
+    default: m.OnboardingSecurity,
+  }))
+);
+
+const OnboardingTokenSavings = lazy(() =>
+  import("@/pages/onboarding/OnboardingTokenSavings").then((m) => ({
+    default: m.OnboardingTokenSavings,
+  }))
+);
+
 const OnboardingSetupOverview = lazy(() =>
   import("@/pages/onboarding/OnboardingSetupOverview").then((m) => ({
     default: m.OnboardingSetupOverview,
@@ -661,20 +695,6 @@ export function AppRoutes() {
           }
           path="/settings-enterprise"
         />
-        {/* Onboarding workspace pages the final page's "Explore your Gateway"
-         * rows open in a new tab (owner 2026-10-13: the demo stays in the
-         * onboarding workspace). A set-up onboarding workspace is a Free
-         * (Default) one with only the demo's data, so each mounts its Default
-         * twin; the -onboarding path gives it the onboarding chrome. Outside
-         * OnboardingLayout, so a cold new-tab load is not sent back to the
-         * first step. */}
-        <Route element={<PoliciesDefault />} path="/policies-onboarding" />
-        <Route element={<LimitsDefault />} path="/limits-onboarding" />
-        <Route
-          element={<TokenSavingsDefault />}
-          path="/token-savings-onboarding"
-        />
-        <Route element={<ModelsDefault />} path="/models-onboarding" />
         {/* Onboarding workspace — reached via the workspace switcher, always
          * on its first step. The layout owns the flow state in memory, so a
          * refresh (or a cold load of any later step) starts over at
@@ -682,6 +702,44 @@ export function AppRoutes() {
          * own Gate Chat copy (OnboardingChat) under its own layout, whose top bar
          * has no workspace switcher (OnboardingChatLayout). */}
         <Route element={<OnboardingLayout />}>
+          {/* The workspace's own pages (owner 2026-10-13: the demo never
+              leaves the onboarding workspace). Every sidebar row and the
+              final page's explore rows land here. A set-up onboarding
+              workspace is a Free one with only the demo's data: pages
+              without demo data mount their Default twins; the data pages
+              show the two step 3 messages (src/pages/onboarding/Onboarding*.tsx). A cold load (the explore rows
+              open a new tab) renders in place (OnboardingLayout). */}
+          <Route element={<OnboardingMessages />} path="/messages-onboarding" />
+          <Route
+            element={<OnboardingConversations />}
+            path="/conversations-onboarding"
+          />
+          <Route element={<OnboardingSecurity />} path="/security-onboarding" />
+          <Route
+            element={<AuditTrailDefault />}
+            path="/audit-trail-onboarding"
+          />
+          <Route element={<PoliciesDefault />} path="/policies-onboarding" />
+          <Route
+            element={<OnboardingTokenSavings />}
+            path="/token-savings-onboarding"
+          />
+          <Route element={<ModelsDefault />} path="/models-onboarding" />
+          <Route element={<OnboardingActivity />} path="/activity-onboarding" />
+          <Route element={<LimitsDefault />} path="/limits-onboarding" />
+          <Route element={<TeamDefault />} path="/members-onboarding" />
+          <Route element={<TeamsDefault />} path="/teams-onboarding" />
+          <Route element={<BillingDefault />} path="/billing-onboarding" />
+          <Route
+            element={<ManageSubscription />}
+            path="/billing-onboarding/plans"
+          />
+          <Route element={<ApiKeysDefault />} path="/api-keys-onboarding" />
+          <Route
+            element={<NotificationsDefault />}
+            path="/notifications-onboarding"
+          />
+          <Route element={<SettingsDefault />} path="/settings-onboarding" />
           <Route element={<OnboardingChatLayout />}>
             <Route element={<OnboardingChat />} path="/chat-onboarding" />
             <Route
@@ -762,9 +820,22 @@ export function AppRoutes() {
           />
         </Route>
         {/* Unknown routes fall back to Requests. */}
-        <Route element={<Navigate replace to="/overview" />} path="*" />
+        <Route element={<UnknownRoute />} path="*" />
       </Route>
     </Routes>
+  );
+}
+
+/** Unknown routes fall back to Overview; an unknown onboarding address
+ *  (a cross-link to a page the workspace does not have) stays in the
+ *  onboarding workspace (owner 2026-10-13). */
+function UnknownRoute() {
+  const { pathname } = useLocation();
+  return (
+    <Navigate
+      replace
+      to={isOnboardingSurface(pathname) ? "/overview-onboarding" : "/overview"}
+    />
   );
 }
 
