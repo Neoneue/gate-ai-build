@@ -213,3 +213,40 @@ Prior day: [`changelog-10-12.md`](./changelog-10-12.md)
 - After: Top users and Recent key usage show the owner record from
   `MEMBER_ROWS` with its blue avatar.
 - Where: `OnboardingActivity.tsx`.
+
+### Onboarding chat: pending reply shows Ask AI's "Thinking" loader for 2 seconds `3c01811`
+
+- Before: the pending reply row (phone demo and desktop onboarding Gate
+  Chat) showed three pulsing dots and "Preparing reply" (type-copy-12) for
+  1.5 seconds, which read too fast.
+- After: the row matches Ask AI's: the 16px `Dotm3x3_11` loader
+  (`cellPadding={2} dotSize={4}`) and "Thinking" (type-copy-14, CSS
+  ellipsis). The loader wrapper is `flex`, so icon and label share one
+  center. Screen readers hear "{model} is thinking".
+  `ONBOARDING_TIMING.thinking` goes 1500 to 2000ms. Main `/chat` is
+  unchanged.
+- Where: `onboarding-chat-message.tsx`, `onboarding-chat-script.ts`.
+
+### Onboarding workspace: no notifications bell in the top bar `3e85a8d`
+
+- Before: the shared chrome showed the notifications bell with its mock
+  items on the onboarding workspace pages (phone A and B, desktop).
+- After: `DashTopBar` hides `NotificationsMenu` on `-onboarding` paths, since
+  a brand-new workspace has nothing to notify about. Other workspaces are
+  unchanged ("Notifications, 15 unread" on Default).
+- Where: `DashboardChrome.tsx`.
+
+### Component canvas: every ui primitive on one page `ef3f7cb`
+
+- Before: no single page showed the `src/components/ui` primitives; checking
+  a variant or a `design.md` change meant finding it in a route.
+- After: a dev-only Vite entry, `component-canvas.html` beside `index.html`
+  (open `http://localhost:3000/component-canvas.html` with the dev server),
+  renders all 97 component files (100 groups, every variant, size and state
+  one prop at a time) on a pan and zoom canvas: mouse, trackpad, touch,
+  keyboard, fit-all and reset, with camera-only versioned persistence. Light
+  and dark follow the app's theme. Real components with mock data, no new
+  dependency, not in the production build, component source unchanged. A
+  coverage test fails when a ui file is neither shown nor skipped.
+- Where: `component-canvas.html`, `src/pages/component-canvas/` (`main.tsx`,
+  `use-canvas-camera.ts`, `sample-data.ts`, `groups-*.tsx`).

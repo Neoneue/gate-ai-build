@@ -210,6 +210,7 @@ questions to the parent).
 | Adding or fixing a primitive; which component fits a need | `shadcn` |
 | Several live variants of one piece behind a picker (explicit invoke only) | `prototype` |
 | Stress-testing a component or screen with worst-case data (long names, emails, long lists, empty) | `break-ui` (`agents/front-end-developer/skills/break-ui/SKILL.md`); report only, no synthetic data in `src/data/` seeds (INDEX.md override) |
+| Every component and variant on one page, the owner's audit reference | `component-canvas` (`agents/front-end-developer/skills/component-canvas/SKILL.md`); one root-level `component-canvas.html` rendering the real primitives, so `design.md` changes show there (INDEX.md override) |
 | Choosing a library (explicit invoke only; answer, never install) | `pick-ui-library` |
 | WCAG + visual review on specific files | `rams` |
 
