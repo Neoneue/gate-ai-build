@@ -11,6 +11,11 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-13](./2026-10/changelog-10-13.md)
 
+- Activity: Top users and Recent key usage show the signed-in owner
+- Onboarding step 3: realistic request sizes, 0.1% compression
+- Workspace menu: Free sits under Pro
+- Onboarding workspace stays self-contained: sidebar routes, links, fallback
+- Onboarding: data pages and setup Overview show the step 3 data
 - Onboarding phone: A and B demos each start at their own signup
 - Onboarding: Explore your Gateway rows stay in the onboarding workspace
 - Onboarding step 3: spinner on pending buttons

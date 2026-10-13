@@ -141,3 +141,75 @@ Prior day: [`changelog-10-12.md`](./changelog-10-12.md)
   "Feedback and loading" gains the Button pending rule, and Skeleton is "the
   only loading motion for page data".
 - Where: `improved-setup.tsx`, `design.md`.
+
+### Onboarding: data pages and setup Overview show the step 3 data `625b6ff`
+
+- Before: the setup Overview (`/overview-setup-onboarding`) showed empty
+  states for Tokens saved and Latest conversations, and the onboarding
+  workspace had no data pages of its own.
+- After: five desktop copies of the Free pages, `/messages-onboarding`,
+  `/activity-onboarding`, `/conversations-onboarding`,
+  `/security-onboarding` and `/token-savings-onboarding`. Before step 3 each
+  renders its Default twin; after step 3 it renders the Free layout fed by the
+  two step 3 messages (test success / allow, demo blocked prompt injection),
+  1 conversation with 2 turns, and compression 0.1% (2 of 2,366 input
+  tokens). The setup Overview now reads Tokens saved 0.1% and lists the
+  2-turn conversation in Latest conversations.
+- One source: `setupTraffic` gains `savedTokens`, `billing`, `conversation`
+  and `setupCompression`, plus a localStorage mirror
+  (`gate-onboarding-setup-traffic`, written when step 3 passes, cleared on a
+  fresh run) so the final page's explore rows, which open a new tab, show the
+  data. `useSetupTraffic()` reads live state, else the mirror.
+- Messages cost cell reads "Billed by your provider (BYOK)" on Existing
+  subscriptions and "Billed by Gate (PAYG)" on Gate credits.
+- Where: `OnboardingMessages.tsx`, `OnboardingActivity.tsx`,
+  `OnboardingConversations.tsx`, `OnboardingSecurity.tsx`,
+  `OnboardingTokenSavings.tsx` (new), `use-setup-traffic.ts` (new),
+  `onboarding-setup-traffic.ts`, `OnboardingSetupOverview.tsx`, `App.tsx`,
+  `data-model.md`.
+
+### Onboarding workspace stays self-contained: sidebar routes, links, fallback `625b6ff`
+
+- Before: some sidebar rows and in-page links (upgrade, Settings, the security
+  conversation link) left the onboarding workspace for Default / Pro / Free
+  pages, and an unknown `-onboarding` address redirected to `/overview`.
+- After: every sidebar row maps to an `-onboarding` route (`nav-sections.ts`).
+  Policies, Limits, Token savings, Models, Audit trail, Members, Teams,
+  Billing (and `/plans`), API keys, Notifications and Settings mount their
+  Default twins on `-onboarding` routes inside `OnboardingLayout`, and cold
+  loads of those pages render (`ONBOARDING_WORKSPACE_PAGES`).
+  `keepInOnboarding(pathname, target)` in `lib/plan.ts` (unchanged off
+  onboarding) wraps the upgrade actions in Policies, TokenSavings,
+  `pro-upgrade-card`, `free-plan-notice-banner` and `DataRetentionCard`, the
+  security `EventsTable` conversation link, and the Settings links in
+  `user-menu`, `sidebar` and Notifications. Unknown `-onboarding` addresses
+  fall back to `/overview-onboarding` (`UnknownRoute` in `App.tsx`).
+  `DashboardChrome` hides the Upgrade to Pro promo on onboarding pages, as
+  `OnboardingDashboardChrome` already did.
+- Where: `nav-sections.ts`, `App.tsx`, `lib/plan.ts`, `onboarding-routes.ts`,
+  `OnboardingLayout.tsx`, `DashboardChrome.tsx` and the files named above.
+
+### Workspace menu: Free sits under Pro `625b6ff`
+
+- Before: the workspace switcher menu listed Enterprise, Pro, Default, Free,
+  Onboarding.
+- After: Enterprise, Pro, Free, Default, Onboarding.
+- Where: `workspace-switcher.tsx`.
+
+### Onboarding step 3: realistic request sizes, 0.1% compression `625b6ff`
+
+- Before: each step 3 request counted only the typed message's tokens, with
+  no app context and no tokens saved.
+- After: each step 3 request adds `APP_CONTEXT_TOKENS` 1,170 (a realistic
+  request size), so step 3 Tokens In read 1,180 and 1,186 (2,366 together),
+  and `SETUP_TOKENS_SAVED` is 1 per message, giving compression 0.1% (2 of
+  2,366 input tokens).
+- Where: `improved-data.ts`, `onboarding-setup-traffic.ts`,
+  `onboarding-setup-traffic.test.ts`.
+
+### Activity: Top users and Recent key usage show the signed-in owner `625b6ff`
+
+- Before: the onboarding Activity page labeled the one user "You".
+- After: Top users and Recent key usage show the owner record from
+  `MEMBER_ROWS` with its blue avatar.
+- Where: `OnboardingActivity.tsx`.
