@@ -11,6 +11,11 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-13](./2026-10/changelog-10-13.md)
 
+- Table-card empty-state titles 16px muted, page subtitles 16px
+- New-tab icon on "Open Gate Chat" and "Continue chatting"
+- Onboarding Billing: no history until credits are added
+- Onboarding step 3: messages land one at a time, setup state shared across tabs
+- Onboarding sidebar: Overview always in the rail, Get started leaves after the tasks
 - Onboarding chat: "hello" gets a greeting
 - Phone Activity: Top users shows the account owner
 - Chart tooltips close on scroll or a press outside the chart
