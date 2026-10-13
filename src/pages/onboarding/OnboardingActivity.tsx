@@ -108,13 +108,15 @@ import { TYPE_META } from "@/pages/security-data";
 /* ─── OnboardingActivity ────────────────────────────────────────────────────
  * The desktop onboarding workspace's Activity (owner 2026-10-13).
  *
- * Before setup step 3 passes (`useSetupTraffic()` null): `ActivityDefault`,
- * unchanged.
+ * Before step 3's first message (`useSetupTraffic()` null): `ActivityDefault`,
+ * unchanged. Then the messages land one at a time (the test message, then
+ * the blocked demo); with the test message alone, every count below reads
+ * it and the attack types read 0 (the phone Activity's precedent).
  *
  * After it: a COPY of the Free page (`ActivityFree` renders `Activity.tsx`:
  * control row :133, KpiRail :287, TopByAxisRow :472, UsageByKey :719; plus
  * `activity/TrendCard.tsx`), every section and control kept, fed by exactly
- * the two step 3 messages (`SetupTraffic`, the one source, so the tiles, the
+ * the step 3 messages (`SetupTraffic`, the one source, so the tiles, the
  * chart, the Top cards and the key table reconcile):
  *   - KPI rail: total spend (sum of costUsd), the message count, the token
  *     sum. No delta: there is no prior period.
@@ -233,7 +235,7 @@ function PageHeader() {
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Activity</PageTitle>
-      <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
         Cost, request volume, and token usage by model, API key, and team
         member.
       </p>

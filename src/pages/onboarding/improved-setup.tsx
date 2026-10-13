@@ -17,6 +17,7 @@ import {
   ComboboxValue,
 } from "@/components/ui/combobox";
 import { CopyButton } from "@/components/ui/copy-button";
+import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { InputGroupAddon } from "@/components/ui/input-group";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -1141,7 +1142,17 @@ export function ImprovedComplete() {
               {chat && !mobile ? (
                 <span className="sr-only"> {NEW_TAB_CUE}</span>
               ) : null}
-              <ArrowRight aria-hidden data-icon="inline-end" />
+              {/* The new-tab icon only where it opens a new tab (owner
+                  2026-10-13): desktop Gate Chat. */}
+              {chat && !mobile ? (
+                <ExternalLinkIcon
+                  aria-hidden
+                  data-icon="inline-end"
+                  size={16}
+                />
+              ) : (
+                <ArrowRight aria-hidden data-icon="inline-end" />
+              )}
             </Button>
           }
           onVisit={(task) =>

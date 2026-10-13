@@ -67,12 +67,13 @@ import {
  * `/token-savings-onboarding`: the desktop onboarding workspace's Token
  * savings (owner 2026-10-13).
  *
- * Before step 3 passed (`useSetupTraffic()` null): `TokenSavingsDefault`,
- * unchanged.
+ * Before step 3's first message (`useSetupTraffic()` null):
+ * `TokenSavingsDefault`, unchanged. Then the messages land one at a time
+ * (the test message, then the demo); the numbers below are at 2.
  *
  * After it: a copy of the FREE page (`TokenSavingsFree` -> `TokenSavings.tsx`
  * with `plan="free"`; the Pro variant is not copied, a new workspace is Free)
- * fed by exactly the two step 3 messages, so the rail never shows the
+ * fed by exactly the step 3 messages, so the rail never shows the
  * Default's blank cards once traffic exists:
  *   - Overview rail: Total saved, Caching, Compression over the selected
  *     window. Compression is `setupCompression` (2 of 2,366 input tokens,
@@ -163,7 +164,7 @@ function PageHeader() {
   return (
     <div className="flex flex-col gap-2">
       <PageTitle>Token savings</PageTitle>
-      <p className="type-copy-18 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground">
+      <p className="type-copy-16 m-0 @4xl:max-w-1/2 max-w-full text-pretty text-muted-foreground">
         Cache, compress and deduplicate to spend less per request.
       </p>
     </div>

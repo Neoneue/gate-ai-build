@@ -19,11 +19,11 @@ import {
   openInNewTab,
   SETUP_NAV_ID,
   setupSidebarSections,
+  setupTasksDone,
 } from "@/pages/onboarding/onboarding-routes";
 import type {
   ExploreTask,
   ImprovedConnection,
-  ImprovedState,
 } from "@/pages/onboarding/onboarding-state";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 
@@ -56,20 +56,16 @@ export function OnboardingChrome({
   const { pathname } = useLocation();
   const { flow, improved } = useOnboarding();
   // The Improved flow's desktop rail (owner 2026-10-13): "Get started" is
-  // the active row on every step; Overview joins from the final page on.
-  // A page that passes a phone menu keeps the plain list (phone unchanged).
-  const tasksDone = EXPLORE_TASKS.every(({ task }) => improved.tasks[task]);
+  // the active row on every step, Overview is always there (the workspace
+  // pages carry the same rail, DashboardChrome). A page that passes a phone
+  // menu keeps the plain list (phone unchanged).
   const setupNav =
     flow === "improved" && !mobileSections
       ? {
-          sections: setupSidebarSections({
-            getStartedTo: setupNavTarget(improved),
-            showGetStarted: !(improved.finished && tasksDone),
-            showOverview: improved.finished,
-          }),
+          sections: setupSidebarSections(improved),
           activeNavId:
             pathname === ONBOARDING_ROUTES.setupOverview ||
-            (improved.finished && tasksDone)
+            setupTasksDone(improved)
               ? "overview"
               : SETUP_NAV_ID,
         }
@@ -89,20 +85,6 @@ export function OnboardingChrome({
       {children}
     </OnboardingDashboardChrome>
   );
-}
-
-/** Where the rail's "Get started" row goes, forward only: the step due
- *  next, or the final page once Finish setup was pressed. */
-function setupNavTarget(improved: ImprovedState): string {
-  if (improved.finished) {
-    return ONBOARDING_ROUTES.improvedComplete;
-  }
-  if (!improved.pathChosen || improved.connection === "gate-chat") {
-    return ONBOARDING_ROUTES.start;
-  }
-  return improved.connected
-    ? ONBOARDING_ROUTES.verify
-    : ONBOARDING_ROUTES.improvedConnect;
 }
 
 /* ─── Top-bar progress ─────────────────────────────────────────────────── */

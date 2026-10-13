@@ -2,14 +2,15 @@
  * The first-run Onboarding workspace walks a brand-new user through setup,
  * in one of two flows (Current or Improved, rebuilt from the onboarding
  * mockup in docs/onboarding-mockup/). Everything the flows remember lives
- * HERE, in React state owned by `OnboardingLayout`: never localStorage or
- * sessionStorage (two exceptions: the Mobile A tab mark in
- * onboarding-routes.ts, a flag, not flow state; and the credit balance in
- * onboarding-credits.ts, mirrored there on every Add credits so the Gate
- * Chat tab can read it, owner 2026-10-13). A browser refresh therefore
- * starts over at step 1, and so does leaving the workspace (the layout
- * unmounts). That is the demo
- * contract: the workspace is always presented end to end, from the start.
+ * HERE, in React state owned by `OnboardingLayout`. The Improved flow's
+ * state is also mirrored to localStorage so the workspace's other tabs
+ * share it (onboarding-shared-setup.ts, owner 2026-10-13); other stored
+ * items: the Mobile A tab mark in onboarding-routes.ts (a flag, not flow
+ * state) and the credit balance in onboarding-credits.ts. A refresh of a
+ * setup step still starts over at step 1 (a fresh run replaces the shared
+ * state), and so does leaving the workspace (the layout unmounts). That is
+ * the demo contract: the workspace is always presented end to end, from
+ * the start.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** Owner direction 2026-10-08: only the Improved flow is presented. The
@@ -71,6 +72,10 @@ export type ImprovedState = {
   /** Catalog id of the paid model used with Gate credits. */
   model: string;
   balanceUsd: number;
+  /** Each Add credits checkout that went through (epoch ms, whole USD),
+   *  oldest first: the workspace Billing page's history and Last top-up
+   *  (OnboardingBilling, owner 2026-10-13). */
+  topUps: { at: number; amountUsd: number }[];
   keys: { id: string; name: string }[];
   selectedKeyId: string | null;
   downloaded: boolean;
@@ -130,6 +135,7 @@ export const initialImprovedState = (): ImprovedState => ({
   client: "claude-code",
   model: DEFAULT_PAYG_MODEL,
   balanceUsd: 0,
+  topUps: [],
   keys: [],
   selectedKeyId: null,
   downloaded: false,

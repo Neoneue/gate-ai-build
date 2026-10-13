@@ -1,6 +1,6 @@
 import { BookOpen, BotMessageSquare, Menu } from "lucide-react";
 import { domAnimation, LazyMotion } from "motion/react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, use, useEffect, useState } from "react";
 import { Navigate, useLocation, useOutletContext } from "react-router-dom";
 import type { LayoutContext } from "@/App";
 import { AskAiSurface } from "@/components/ui/ask-ai-surface";
@@ -34,6 +34,11 @@ import {
   isOnboardingSurface,
   isTeamRoleSurface,
 } from "@/lib/plan";
+import {
+  onboardingUpgradePath,
+  setupSidebarSections,
+} from "@/pages/onboarding/onboarding-routes";
+import { OnboardingContext } from "@/pages/onboarding/use-onboarding";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
 import {
   DEFAULT_SIDEBAR_SECTIONS,
@@ -41,7 +46,6 @@ import {
   ENTERPRISE_SIDEBAR_SECTIONS,
   ENTERPRISE_TEAM_ROLE_SIDEBAR_SECTIONS,
   FREE_SIDEBAR_SECTIONS,
-  ONBOARDING_SIDEBAR_SECTIONS,
   PRO_MEMBER_SIDEBAR_SECTIONS,
   PRO_TEAM_ROLE_SIDEBAR_SECTIONS,
   SIDEBAR_SECTIONS,
@@ -97,6 +101,10 @@ export function DashboardChrome({
   const isFree = isFreeSurface(pathname);
   const isEnterprise = isEnterpriseSurface(pathname);
   const isOnboarding = isOnboardingSurface(pathname);
+  // The setup state, when this chrome renders inside the onboarding flow
+  // (null elsewhere): the workspace pages carry the setup steps' rail, Get
+  // started and Overview included (owner 2026-10-13).
+  const onboarding = use(OnboardingContext);
   // Teams, budgets, roll-up and the team-manager role exist on BOTH Pro and
   // Enterprise (PRD §3 "Plan availability"); only the org/team forced
   // settings are Enterprise-only.
@@ -114,7 +122,7 @@ export function DashboardChrome({
   const sections = isDefault
     ? DEFAULT_SIDEBAR_SECTIONS
     : isOnboarding
-      ? ONBOARDING_SIDEBAR_SECTIONS
+      ? setupSidebarSections(onboarding?.improved)
       : isFree
         ? FREE_SIDEBAR_SECTIONS
         : isEnterprise
@@ -144,10 +152,10 @@ export function DashboardChrome({
   // It lands on the nested Manage subscription page rather than Billing
   // itself, so one click reaches the plan ladder instead of dropping the
   // user on the page to hunt for the button.
-  // Hidden on the onboarding workspace's pages (owner 2026-10-13), as in
-  // OnboardingDashboardChrome.
+  // On the onboarding workspace's pages only from the final page on (owner
+  // 2026-10-13, `onboardingUpgradePath`), as in OnboardingDashboardChrome.
   const upgradePath = isOnboarding
-    ? undefined
+    ? onboardingUpgradePath(onboarding?.improved)
     : isDefault
       ? "/billing-default/plans"
       : isFree

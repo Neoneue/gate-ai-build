@@ -8,6 +8,7 @@ import { ListChecks } from "lucide-react";
 import type { SidebarSection } from "@/components/ui/sidebar";
 import { ONBOARDING_SIDEBAR_SECTIONS } from "@/layouts/nav-sections";
 import { ONBOARDING_FIRST_STEP } from "@/lib/plan";
+import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 
 export const ONBOARDING_ROUTES = {
   start: ONBOARDING_FIRST_STEP,
@@ -26,8 +27,9 @@ export const ONBOARDING_ROUTES = {
   improvedComplete: "/improved-complete-onboarding",
   /* The mock hosted checkout "Add credits" hands off to (owner 2026-10-13). */
   checkout: "/checkout-onboarding",
-  /* The Overview after setup: the Pro Overview fed by step 3's two
-   * messages (owner 2026-10-13). */
+  /* The workspace's Overview, in the rail from step 1 (owner 2026-10-13):
+   * empty until step 3's first message, then fed by each message as it
+   * lands. */
   setupOverview: "/overview-setup-onboarding",
   /* Gate Chat, the Onboarding version (OnboardingChat), phone and desktop.
    * Free, Default, Pro and Enterprise keep the main version (pages/Chat). */
@@ -223,22 +225,19 @@ export function phoneSiteSections(overviewPath: string): SidebarSection[] {
   }));
 }
 
-/** The desktop rail during the Improved flow (owner 2026-10-13): a "Get
- *  started" row above Overview, active on every onboarding step. Overview
- *  only appears from the final page on, opening the Overview after setup;
- *  Get started leaves once every explore task is done. `getStartedTo` is
- *  forward only: the step due next, or the final page after Finish setup.
- *  Every other row is ONBOARDING_SIDEBAR_SECTIONS unchanged; the phone
- *  menus (`phoneSiteSections`) keep that list as it is. */
-export function setupSidebarSections({
-  getStartedTo,
-  showGetStarted,
-  showOverview,
-}: {
-  getStartedTo: string;
-  showGetStarted: boolean;
-  showOverview: boolean;
-}): SidebarSection[] {
+/** The desktop rail on every onboarding page (owner 2026-10-13): the setup
+ *  steps (OnboardingChrome) and the workspace pages (DashboardChrome), in
+ *  every tab, since they read the shared setup state. "Get started" above
+ *  Overview, until every explore task is checked off on the final page or
+ *  in the Tasks menu (the live Gate build's rule, get-started-menu.tsx);
+ *  Overview always, opening the workspace's Overview. `improved` is null
+ *  outside the onboarding flow (no Get started row). Every other row is
+ *  ONBOARDING_SIDEBAR_SECTIONS unchanged; the phone menus
+ *  (`phoneSiteSections`) keep that list as it is. */
+export function setupSidebarSections(
+  improved: ImprovedState | null | undefined
+): SidebarSection[] {
+  const showGetStarted = Boolean(improved) && !setupTasksDone(improved);
   return ONBOARDING_SIDEBAR_SECTIONS.map((section) => {
     const overview = section.items.find((item) => item.id === "overview");
     if (!overview) {
@@ -247,24 +246,53 @@ export function setupSidebarSections({
     return {
       ...section,
       items: [
-        ...(showGetStarted
+        ...(improved && showGetStarted
           ? [
               {
                 id: SETUP_NAV_ID,
                 icon: ListChecks,
                 label: "Get started",
-                pageId: getStartedTo,
+                pageId: setupNavTarget(improved),
               },
             ]
           : []),
-        ...(showOverview
-          ? [{ ...overview, pageId: ONBOARDING_ROUTES.setupOverview }]
-          : []),
+        { ...overview, pageId: ONBOARDING_ROUTES.setupOverview },
         ...section.items.filter((item) => item.id !== "overview"),
       ],
     };
   });
 }
+
+/** Setup is over for the rail: Finish setup was pressed and all four
+ *  explore tasks are checked off. */
+export const setupTasksDone = (
+  improved: ImprovedState | null | undefined
+): boolean =>
+  Boolean(improved?.finished) &&
+  Object.values(improved?.tasks ?? {}).every(Boolean);
+
+/** Where the rail's "Get started" row goes, forward only: the step due
+ *  next, or the final page once Finish setup was pressed. */
+export function setupNavTarget(improved: ImprovedState): string {
+  if (improved.finished) {
+    return ONBOARDING_ROUTES.improvedComplete;
+  }
+  if (!improved.pathChosen || improved.connection === "gate-chat") {
+    return ONBOARDING_ROUTES.start;
+  }
+  return improved.connected
+    ? ONBOARDING_ROUTES.verify
+    : ONBOARDING_ROUTES.improvedConnect;
+}
+
+/** The rail's Upgrade card on the onboarding workspace (owner 2026-10-13):
+ *  hidden during setup, shown from the final page on (Finish setup was
+ *  pressed), when the user can upgrade. It opens the workspace's own plans
+ *  page, so the demo never leaves the workspace. */
+export const onboardingUpgradePath = (
+  improved: ImprovedState | null | undefined
+): string | undefined =>
+  improved?.finished ? "/billing-onboarding/plans" : undefined;
 
 /** The rail id of the "Get started" row. */
 export const SETUP_NAV_ID = "get-started";
@@ -340,9 +368,10 @@ export function flowOfRoute(pathname: string): "current" | "improved" | null {
 /** The workspace's own pages (owner 2026-10-13: the demo never leaves the
  *  onboarding workspace): every sidebar row and the final page's explore
  *  rows land on one. A cold load renders in place (OnboardingLayout), since
- *  the explore rows open a new tab; the data pages then read the setup
- *  traffic's localStorage mirror. */
+ *  the explore rows open a new tab, and resumes the setup state the other
+ *  tabs share (OnboardingProvider). */
 export const ONBOARDING_WORKSPACE_PAGES: ReadonlySet<string> = new Set([
+  ONBOARDING_ROUTES.setupOverview,
   "/messages-onboarding",
   "/conversations-onboarding",
   "/security-onboarding",
