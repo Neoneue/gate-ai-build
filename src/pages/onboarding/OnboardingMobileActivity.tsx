@@ -41,6 +41,7 @@ import { Monogram } from "@/components/ui/monogram";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SegmentedPill } from "@/components/ui/segmented-pill";
 import { TableEmptyState } from "@/components/ui/table-empty-state";
+import { MEMBER_ROWS } from "@/data/team-members";
 import {
   formatChartTooltipDate,
   formatCompactCount,
@@ -83,7 +84,6 @@ import {
   MobilePageHeader,
   MobilePageMain,
 } from "@/pages/onboarding/onboarding-mobile-parts";
-import { onboardingSignupName } from "@/pages/onboarding/onboarding-routes";
 import { ATTACK_MIX } from "@/pages/security/events-data";
 import { TYPE_META } from "@/pages/security-data";
 
@@ -761,12 +761,13 @@ function DemoTopRow({
       avatar: <VendorAvatar vendor={model.vendor} />,
     }));
 
-  // The one user is the person who just signed up (owner 2026-10-12: "I
-  // would be a top user"): the Create account "Full name", or "You" on the
-  // Google path, which carries no name. They sent every demo message, so
-  // their row holds the window's whole total; Pro's Monogram, first initial,
-  // the "ink" tone for a name outside its roster.
-  const userName = onboardingSignupName() || "You";
+  // The one user is the signed-in account owner (owner 2026-10-12: "I
+  // would be a top user"; 2026-10-13: the same avatar and name as the
+  // desktop page): the workspace's owner member, as the sidebar's account
+  // row shows them. They sent every demo message, so their row holds the
+  // window's whole total; Pro's Monogram, first initial, in their tone.
+  const owner = MEMBER_ROWS.find((member) => member.role === "owner");
+  const userName = owner?.name ?? "";
   const userRows: TopRow[] = [
     {
       rowKey: "signup-user",
@@ -776,7 +777,7 @@ function DemoTopRow({
         <Monogram
           initials={(userName.split(/\s+/)[0]?.[0] ?? "?").toUpperCase()}
           size="sm"
-          tone="ink"
+          tone={owner?.avatarTone ?? "ink"}
         />
       ),
     },
