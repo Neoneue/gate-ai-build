@@ -1,0 +1,38 @@
+<!doctype html>
+<!--
+  Component canvas: a dev-server-only reference page that renders every
+  primitive in src/components/ui with mock data (owner 2026-10-13, skill
+  agents/front-end-developer/skills/component-canvas). Open it at
+  /component-canvas.html while `npm run dev` runs. It is not a route in the
+  app and not part of `vite build` (the build input is index.html only).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Component canvas</title>
+    <script>
+    "use strict";
+    // Same first-paint theme script as index.html: reads the key
+    // ThemeProvider owns, falls back to the OS preference.
+    (() => {
+      try {
+        const stored = localStorage.getItem("theme");
+        const dark =
+          stored === "dark" ||
+          (stored !== "light" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+      } catch {
+        // Theme is non-critical; ignore storage / matchMedia errors.
+      }
+    })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/pages/component-canvas/main.tsx"></script>
+  </body>
+</html>
