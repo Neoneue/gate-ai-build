@@ -24,7 +24,7 @@ front-end-developer) or words (the copywriter).
 1. **Should it move?** `motion-ux-laws` § First, then `animate` steps 1-2
    (the gate). If the answer is no, say so and stop.
 2. **UX gate:** read `agents/front-end-developer/skills/ux-laws/SKILL.md`,
-   write the nine labelled lines, then read
+   think its gate through (no write-up), then read
    `agents/front-end-developer/skills/visual-hierarchy/SKILL.md`
    (`../knowledge/working-rules.md` § The UI gate).
 3. **Pick the tool:** `../knowledge/working-rules.md` § Which tool. If the

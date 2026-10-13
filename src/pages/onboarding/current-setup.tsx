@@ -24,6 +24,7 @@ import {
   StepCard,
   StepHeading,
 } from "@/pages/onboarding/current-parts";
+import { addOnboardingCredits } from "@/pages/onboarding/onboarding-credits";
 import {
   ONBOARDING_ROUTES,
   type SetupFrom,
@@ -367,9 +368,11 @@ function PaygSetup() {
         </div>
       </div>
       <AddCreditsDialog
-        onCheckout={(amount) =>
-          updateCurrent({ balanceUsd: current.balanceUsd + amount })
-        }
+        onCheckout={(amount) => {
+          updateCurrent({ balanceUsd: current.balanceUsd + amount });
+          // The Gate Chat tab reads the same balance (onboarding-credits.ts).
+          addOnboardingCredits(amount);
+        }}
         onOpenChange={setCreditsOpen}
         open={creditsOpen}
       />

@@ -1,5 +1,6 @@
 import { ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { GoogleG } from "@/components/icons/google-g";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,8 +25,10 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { TextLink } from "@/components/ui/text-link";
+import { withTierOf } from "@/lib/plan";
 
 export function SignIn() {
+  const { pathname } = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -126,7 +129,10 @@ export function SignIn() {
       <CardFooter className="justify-center p-6 pt-2">
         <p className="type-copy-12 text-muted-foreground">
           New to Constellation Gate?{" "}
-          <TextLink className="type-copy-12" to="/sign-up">
+          <TextLink
+            className="type-copy-12"
+            to={withTierOf(pathname, "/sign-up")}
+          >
             Create an account
           </TextLink>
         </p>

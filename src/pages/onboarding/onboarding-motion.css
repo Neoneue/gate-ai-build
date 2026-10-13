@@ -9,12 +9,6 @@
  * Mockup `--improved-brand` (blue-600) maps to `--info`.
  * ───────────────────────────────────────────────────────────────────────── */
 
-@keyframes improved-pulse {
-  to {
-    left: 100%;
-  }
-}
-
 @keyframes improved-fly {
   0% {
     left: 0;
@@ -34,7 +28,7 @@
 @keyframes improved-signal {
   0% {
     opacity: 0;
-    transform: rotate(calc(var(--i) * 72deg - 90deg)) translate(64px);
+    transform: rotate(calc(var(--i) * 72deg - 90deg)) translate(72px);
   }
   20% {
     opacity: 1;
@@ -251,6 +245,47 @@
   animation: art-ready 250ms 3250ms var(--ease-out) backwards;
 }
 
+/* Loop reset (phone start card only; `data-motion-reset`, set by the hook
+ * after the 3s hold): one 200ms beat clears the conversation and returns the
+ * composer to rest, landing exactly on the sequence's first frame, so the
+ * replay starts from what is on screen with no cut. Declared after the play
+ * rules so it wins at equal specificity. */
+@keyframes art-clear {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes art-blur {
+  to {
+    border-color: var(--input);
+  }
+}
+
+@keyframes art-unready {
+  to {
+    background-color: var(--muted);
+    color: var(--muted-foreground);
+  }
+}
+
+[data-motion-root="chat-art"][data-motion-reset]
+  :is(
+    [data-motion="bubble-user"],
+    [data-motion="bubble-reply"],
+    [data-motion="composer-text"]
+  ) {
+  animation: art-clear 200ms var(--ease-out) forwards;
+}
+
+[data-motion-root="chat-art"][data-motion-reset] [data-motion="composer"] {
+  animation: art-blur 200ms var(--ease-out) forwards;
+}
+
+[data-motion-root="chat-art"][data-motion-reset] [data-motion="send"] {
+  animation: art-unready 200ms var(--ease-out) forwards;
+}
+
 /* ─── Mobile chat stage ────────────────────────────────────────────────────
  * Same family as the desktop chat art: the prompt bubble rises at 100ms,
  * the reply at 700ms, then the three itinerary rows settle in order. */
@@ -294,12 +329,20 @@
   --pace: 1.4;
 }
 
+/* The peak repeats Tailwind's five box-shadow layers in their order, so each
+ * layer tweens into its partner: the tile's own inset (dark's top highlight)
+ * holds, the ring layer fades in blue, and the tile's resting shadow-md
+ * lifts to shadow-lg (owner, 2026-10-10). A shorter list put an inset layer
+ * against a plain one and the whole shadow jumped instead of fading. */
 @keyframes art-tap {
   30%,
   60% {
     box-shadow:
+      var(--tw-inset-shadow),
+      var(--tw-inset-ring-shadow),
+      var(--tw-ring-offset-shadow),
       0 0 0 1px var(--info),
-      var(--shadow-sm);
+      var(--shadow-lg);
     transform: scale(1.11);
   }
 }
@@ -325,15 +368,15 @@
 
 /* A blue run of the orbit's dashes laps the orbit app to app and back to
  * the top (owner, 2026-10-08). The mask circle draws one 36px arc, short enough to hide
- * fully behind a 40px app card (stroke-dasharray), over the 502.65px
+ * fully behind a 40px app card (stroke-dasharray), over the 552.92px
  * orbit, so it only shows while it travels; stroke-dashoffset =
- * 18 - n x 100.53 centers it on app n (apps sit 72deg apart from 12
+ * 18 - n x 110.58 centers it on app n (apps sit 72deg apart from 12
  * o'clock; n = 5 is the top again, one full lap). It fades in behind the
  * top app, reaches each app as that app's ring peaks (n x 280 + 180ms),
  * dwells 80ms, hops to the next in 200ms, and after the last app it hops
  * home and fades out behind the top app. */
 [data-motion="orbit-arc"] {
-  stroke-dasharray: 36 466.65;
+  stroke-dasharray: 36 516.92;
   stroke-dashoffset: 18;
 }
 
@@ -351,34 +394,34 @@
   27.06%,
   31.76% {
     opacity: 1;
-    stroke-dashoffset: -82.53;
+    stroke-dashoffset: -92.58;
     animation-timing-function: var(--ease-in-out);
   }
   43.53%,
   48.24% {
     opacity: 1;
-    stroke-dashoffset: -183.06;
+    stroke-dashoffset: -203.17;
     animation-timing-function: var(--ease-in-out);
   }
   60%,
   64.71% {
     opacity: 1;
-    stroke-dashoffset: -283.59;
+    stroke-dashoffset: -313.75;
     animation-timing-function: var(--ease-in-out);
   }
   76.47%,
   81.18% {
     opacity: 1;
-    stroke-dashoffset: -384.12;
+    stroke-dashoffset: -424.34;
     animation-timing-function: var(--ease-in-out);
   }
   92.94% {
     opacity: 1;
-    stroke-dashoffset: -484.65;
+    stroke-dashoffset: -534.92;
   }
   100% {
     opacity: 0;
-    stroke-dashoffset: -484.65;
+    stroke-dashoffset: -534.92;
   }
 }
 
@@ -400,6 +443,294 @@
     improved-hub calc(500ms * var(--pace)) calc(2000ms * var(--pace)),
     art-hub-lit calc(200ms * var(--pace)) calc(2000ms * var(--pace))
     var(--ease-out) backwards;
+}
+
+/* ─── Setup route ──────────────────────────────────────────────────────────
+ * The setup step's route figure (owner, 2026-10-09) tells the Connect art's
+ * story in a line: the same tap, packet and hub keyframes, curves and pace
+ * (beats at pace 1, x --pace 1.4). Only the node holding the packet is lit:
+ *   0ms      the app lights its blue ring and swells (art-tap, 600ms)
+ *   200ms    a packet leaves at the ring's peak and crosses wire 1 (600ms,
+ *            sped up from 700ms, owner 2026-10-10) with a blue run of the
+ *            dashes trailing it
+ *   800ms    it lands: Gate swells (improved-hub, 500ms) and its border
+ *            turns blue (200ms)
+ *   1000ms   at Gate's peak a packet crosses wire 2 (600ms)
+ *   1600ms   it lands: the target taps (600ms) while Gate's border settles
+ *            back to the gray rest border (200ms). Settles at 2.2s (3.1s).
+ * improved-setup.tsx keys the figure on app, billing and model, so a change
+ * remounts it and the run restarts from frame one. Labels never move.
+ * Step 3 plays this run on arrival, then gates it on "Check connection"
+ * and the protection demo (owner 2026-10-13, below): the same packet, run,
+ * tap, swell and lit, on a 5s schedule. The wires stay gray dashes in
+ * every state. */
+
+[data-motion-root="route-stage"] {
+  --pace: 1.4;
+}
+
+/* Starts 8px back, hidden under the sending tile, slides out from it, and
+   ends fully under the next tile (owner, 2026-10-09: it faded too fast;
+   2026-10-10: still too early). Full strength across the whole wire: the
+   receiving tile covers it, so the last 5% fade happens out of sight. */
+@keyframes art-route-fly {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  20%,
+  95% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Gray -> blue (200ms) -> held while the packet crosses wire 2 -> gray. */
+@keyframes art-route-lit {
+  20%,
+  80% {
+    border-color: var(--info);
+  }
+}
+
+/* The blue run of the wire's dashes trails the packet, as the orbit run
+ * does in the Connect art (owner, 2026-10-09): a full-width blue copy of the
+ * dashes shown through a 36px window (the orbit run's length) that ends at
+ * the dot's center. The dot travels from 8px back under the app tile to
+ * fully under the next tile, so its center sits at p x (100% + 8px) - 4px:
+ * the clip's left inset goes -40px .. 100% - 32px and its right inset
+ * 100% + 4px .. -4px. Same curve and timing as the packet, so the two move
+ * as one; the trail stays on the open wire, so it holds to 92% and fades in
+ * the last stretch as it reaches the tile (owner, 2026-10-10). */
+@keyframes art-route-run {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 calc(100% + 4px) 0 -40px);
+  }
+  20%,
+  92% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    clip-path: inset(0 -4px 0 calc(100% - 32px));
+  }
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-run"] {
+  animation: art-route-run calc(600ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-run"][data-motion-index="1"] {
+  animation-delay: calc(1000ms * var(--pace));
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-app"] {
+  animation: art-tap calc(600ms * var(--pace)) ease-in-out backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-packet"] {
+  animation: art-route-fly calc(600ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-packet"][data-motion-index="1"] {
+  animation-delay: calc(1000ms * var(--pace));
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-gate"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)) calc(800ms * var(--pace)),
+    art-route-lit calc(1000ms * var(--pace)) calc(800ms * var(--pace))
+    var(--ease-out);
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]
+  [data-motion="route-target"] {
+  animation: art-tap calc(600ms * var(--pace)) calc(1600ms * var(--pace))
+    ease-in-out backwards;
+}
+
+/* Two-node route (Manual setup step 2: Gate to provider or model, no app
+ * tile, owner 2026-10-13): the sequence starts at Gate instead of waiting
+ * out the missing app hop. Gate lights at 0, its hop runs at 200ms, the
+ * target taps at 800ms; same curves and durations as the three-node run. */
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-gate"] {
+  animation-delay: 0ms, 0ms;
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-run"][data-motion-index="1"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-packet"][data-motion-index="1"] {
+  animation-delay: calc(200ms * var(--pace));
+}
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-route-nodes="2"]
+  [data-motion="route-target"] {
+  animation-delay: calc(800ms * var(--pace));
+}
+
+/* Step 3's check and protection demo (owner 2026-10-13). Times from the
+ * click; the offsets inside each beat are at pace 1, x --pace, as above.
+ * Each beat is the run's first hop and stops at Gate:
+ *   0ms      the app taps (600ms) and settles back to its gray border
+ *   200ms    a blue packet and run cross wire 1 (600ms)
+ *   800ms    it lands: Gate swells (500ms) and its border flashes blue
+ *            (1000ms)
+ *   3000ms   the same beat again; Gate is still blue at 5000ms
+ *   5000ms   the result, offsets from here. Pass (the figure remounts):
+ *            Gate swells (500ms), its border turns from blue to green and
+ *            the shield badge fades in (200ms); at 200ms a green packet
+ *            and run cross wire 2 (600ms); at 800ms the target taps and
+ *            its border turns green (200ms). Demo caught (remounts): Gate
+ *            as on a pass, and at 200ms a gray circle-slash fades in on
+ *            wire 2 (200ms) in place of the packet; the target stays gray.
+ *            Fail (no remount, so no run replays): Gate's border turns from
+ *            blue to red and the circle-slash badge fades in (200ms);
+ *            nothing passes on. */
+
+@keyframes art-route-result {
+  from {
+    border-color: var(--info);
+  }
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-app"] {
+  animation:
+    art-tap calc(600ms * var(--pace)) ease-in-out backwards,
+    art-tap calc(600ms * var(--pace)) 3000ms ease-in-out;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-packet"][data-motion-index="0"] {
+  animation:
+    art-route-fly calc(600ms * var(--pace)) calc(200ms * var(--pace)) ease-in,
+    art-route-fly calc(600ms * var(--pace)) calc(3000ms + 200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-run"][data-motion-index="0"] {
+  animation:
+    art-route-run calc(600ms * var(--pace)) calc(200ms * var(--pace)) ease-in,
+    art-route-run calc(600ms * var(--pace)) calc(3000ms + 200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-gate"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)) calc(800ms * var(--pace)),
+    art-route-lit calc(1000ms * var(--pace)) calc(800ms * var(--pace))
+    var(--ease-out),
+    improved-hub calc(500ms * var(--pace)) calc(3000ms + 800ms * var(--pace)),
+    art-route-lit calc(1000ms * var(--pace)) calc(3000ms + 800ms * var(--pace))
+    var(--ease-out);
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-packet"][data-motion-index="1"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-run"][data-motion-index="1"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="live"]
+  [data-motion="route-target"],
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]:is(
+    [data-state="done"],
+    [data-state="blocked"],
+    [data-state="error"]
+  )
+  [data-motion] {
+  animation: none;
+}
+
+/* A fail keeps the figure mounted, so Gate's live animations are still on
+   it: a reused name (improved-hub) would match the finished one and not
+   run again. The fail beat is the colour and badge alone. */
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="error"]
+  [data-motion="route-gate"] {
+  animation: art-route-result calc(200ms * var(--pace)) var(--ease-out)
+    backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]:is(
+    [data-state="done"],
+    [data-state="blocked"]
+  )
+  [data-motion="route-gate"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)),
+    art-route-result calc(200ms * var(--pace)) var(--ease-out) backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play]:is(
+    [data-state="done"],
+    [data-state="blocked"],
+    [data-state="error"]
+  )
+  [data-motion="route-check"] {
+  animation: art-fade calc(200ms * var(--pace)) var(--ease-out) backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="blocked"]
+  [data-motion="route-blocked"] {
+  animation: art-fade calc(200ms * var(--pace)) calc(200ms * var(--pace))
+    var(--ease-out) backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="done"]
+  [data-motion="route-packet"][data-motion-index="1"] {
+  animation: art-route-fly calc(600ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="done"]
+  [data-motion="route-run"][data-motion-index="1"] {
+  animation: art-route-run calc(600ms * var(--pace)) calc(200ms * var(--pace))
+    ease-in;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="done"]
+  [data-motion="route-target"] {
+  animation:
+    art-hub-lit calc(200ms * var(--pace)) calc(800ms * var(--pace))
+    var(--ease-out) backwards,
+    art-tap calc(600ms * var(--pace)) calc(800ms * var(--pace)) ease-in-out
+    backwards;
 }
 
 /* ─── Code art ─────────────────────────────────────────────────────────────
@@ -508,23 +839,9 @@
     translate: none;
     animation: improved-fly 0.9s ease-in-out infinite;
   }
-
-  /* The pulse rides the wires while Gate listens for the first message. */
-  [data-motion-root="route"][data-state="live"] [data-motion="route-pulse"] {
-    left: -24px;
-    opacity: 1;
-    animation: improved-pulse 0.9s linear infinite;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Mockup end state: the pulse fills the wire, no movement. */
-  [data-motion-root="route"][data-state="live"] [data-motion="route-pulse"] {
-    left: 0;
-    width: 100%;
-    opacity: 1;
-  }
-
   [data-motion-play] *,
   [data-motion-play] {
     animation: none !important;
@@ -534,5 +851,11 @@
      movement (the trigger never arms under reduce, so nothing else runs). */
   [data-motion-root] {
     animation: art-fade 200ms ease-out backwards;
+  }
+
+  /* The setup route remounts on every app or model change; the stage around
+     it has already faded in, so the figure itself stays still. */
+  [data-motion-root="route-stage"] [data-motion-root="route"] {
+    animation: none;
   }
 }

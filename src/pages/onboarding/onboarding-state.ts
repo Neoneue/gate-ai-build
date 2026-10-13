@@ -3,8 +3,12 @@
  * in one of two flows (Current or Improved, rebuilt from the onboarding
  * mockup in docs/onboarding-mockup/). Everything the flows remember lives
  * HERE, in React state owned by `OnboardingLayout`: never localStorage or
- * sessionStorage. A browser refresh therefore starts over at step 1, and so
- * does leaving the workspace (the layout unmounts). That is the demo
+ * sessionStorage (two exceptions: the Mobile A tab mark in
+ * onboarding-routes.ts, a flag, not flow state; and the credit balance in
+ * onboarding-credits.ts, mirrored there on every Add credits so the Gate
+ * Chat tab can read it, owner 2026-10-13). A browser refresh therefore
+ * starts over at step 1, and so does leaving the workspace (the layout
+ * unmounts). That is the demo
  * contract: the workspace is always presented end to end, from the start.
  * ───────────────────────────────────────────────────────────────────────── */
 
@@ -14,8 +18,8 @@
  *  Current route redirects to the first step (OnboardingLayout's guard). */
 export type OnboardingFlow = "current" | "improved";
 
-/** The four optional "Explore your Gateway" tasks on the Current complete
- *  page. */
+/** The four optional "Explore your Gateway" tasks on both flows' complete
+ *  pages. */
 export type ExploreTask = "policies" | "limits" | "savings" | "models";
 
 export type CurrentState = {
@@ -75,6 +79,15 @@ export type ImprovedState = {
   caught: boolean;
   /** Step 1 "Choose how to use Gate" is done. */
   pathChosen: boolean;
+  /** When the test message and the protection demo message passed (epoch
+   *  ms): the Overview after setup lists them at these times. */
+  receivedAt: number | null;
+  caughtAt: number | null;
+  /** The final page was reached: the top-bar menu reads "Tasks" from
+   *  then on (owner 2026-10-13). */
+  finished: boolean;
+  /** The final page's "Explore your Gateway" tasks that were opened. */
+  tasks: Record<ExploreTask, boolean>;
   handoffSent: boolean;
   handoffSends: number;
   handoffAttempt: "sent" | "failed" | null;
@@ -88,7 +101,9 @@ export type ImprovedState = {
   } | null;
 };
 
-export const DEFAULT_PAYG_MODEL = "deepseek/deepseek-v4-flash";
+/** Gate credits' starting model: Claude Fable 5 (owner 2026-10-13, was
+ *  DeepSeek V4 Flash). */
+export const DEFAULT_PAYG_MODEL = "anthropic/claude-fable-5";
 
 export const initialCurrentState = (): CurrentState => ({
   path: false,
@@ -104,9 +119,15 @@ export const initialCurrentState = (): CurrentState => ({
 });
 
 export const initialImprovedState = (): ImprovedState => ({
-  connection: "gate-chat",
-  billing: "payg",
-  client: "codex",
+  // The desktop picker opens on Gate Connect (owner 2026-10-13; PRD desktop
+  // step 1, Gate Connect first). Phone paths set Gate Chat themselves.
+  connection: "gate-connect",
+  // Existing subscriptions on both desktop methods (owner 2026-10-13, PRD
+  // "Tool before billing"); Gate Chat reads its own credits.
+  billing: "existing",
+  // Claude Code first: the Manual tab and the Gate Connect app both start
+  // on it (owner 2026-10-13).
+  client: "claude-code",
   model: DEFAULT_PAYG_MODEL,
   balanceUsd: 0,
   keys: [],
@@ -116,6 +137,10 @@ export const initialImprovedState = (): ImprovedState => ({
   received: false,
   caught: false,
   pathChosen: false,
+  receivedAt: null,
+  caughtAt: null,
+  finished: false,
+  tasks: { policies: false, limits: false, savings: false, models: false },
   handoffSent: false,
   handoffSends: 0,
   handoffAttempt: null,
@@ -131,7 +156,7 @@ export function snapshotDesktopSetup(state: ImprovedState): DesktopSetup {
     return {
       connection: "gate-connect",
       billing: "existing",
-      client: "codex",
+      client: "claude-code",
       model: DEFAULT_PAYG_MODEL,
       balanceUsd: state.balanceUsd,
       keys: state.keys,

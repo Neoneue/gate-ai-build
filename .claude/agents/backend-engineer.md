@@ -2,7 +2,7 @@
 name: backend-engineer
 description: Data-layer helper for gate-ai-build. Use to build and test the typed mock data in src/data/, derivations and formatters in src/lib/, and the generator scripts, to the contracts the architect records in data-model.md.
 tools: Read, Edit, Write, Glob, Grep, Bash, Skill
-model: opus
+model: sonnet
 effort: high
 ---
 

@@ -139,7 +139,7 @@ const JS_FONT_SIZE_RE =
 const VOICE_RE = /\btype-copy-(\d+)\b/;
 // Elements whose text IS a label. `a` is intentionally absent: an inline
 // body-text link legitimately carries the copy voice mid-sentence.
-// Mirrors design.md §3 "Label voice — the enumeration" (ruled 2026-07-28),
+// Mirrors design.md §3 "Label voice: the enumeration" (ruled 2026-07-28),
 // which is the single source. Everything the user can click, plus everything
 // that names something.
 //

@@ -5,14 +5,31 @@ import {
   Outlet,
   Route,
   Routes,
+  useLocation,
 } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AskAiThreadProvider } from "@/hooks/ask-ai-thread-provider";
+import { isOnboardingSurface } from "@/lib/plan";
 
 /* Route-level code splitting: each page loads as its own chunk on first
  * visit instead of shipping the whole dashboard in the entry bundle. */
 const AuthLayout = lazy(() =>
   import("@/layouts/AuthLayout").then((m) => ({ default: m.AuthLayout }))
+);
+const OnboardingAuthLayout = lazy(() =>
+  import("@/pages/onboarding/OnboardingAuthLayout").then((m) => ({
+    default: m.OnboardingAuthLayout,
+  }))
+);
+const OnboardingSignIn = lazy(() =>
+  import("@/pages/onboarding/OnboardingSignIn").then((m) => ({
+    default: m.OnboardingSignIn,
+  }))
+);
+const OnboardingSignUp = lazy(() =>
+  import("@/pages/onboarding/OnboardingSignUp").then((m) => ({
+    default: m.OnboardingSignUp,
+  }))
 );
 const Activity = lazy(() =>
   import("@/pages/Activity").then((m) => ({ default: m.Activity }))
@@ -269,9 +286,46 @@ const SetupModels = lazy(() =>
 /* Onboarding workspace (`-onboarding` suffix): the first-run setup flow in
  * two versions (Current / Improved), rebuilt from the onboarding mockup.
  * Its layout owns the in-memory flow state. */
+const OnboardingCheckout = lazy(() =>
+  import("@/pages/onboarding/OnboardingCheckout").then((m) => ({
+    default: m.OnboardingCheckout,
+  }))
+);
 const OnboardingLayout = lazy(() =>
   import("@/pages/onboarding/OnboardingLayout").then((m) => ({
     default: m.OnboardingLayout,
+  }))
+);
+/* The onboarding workspace's own Gate Chat, a copy of Chat we change for
+ * onboarding only; every other workspace keeps the current Chat. */
+const OnboardingChat = lazy(() =>
+  import("@/pages/onboarding/OnboardingChat").then((m) => ({
+    default: m.OnboardingChat,
+  }))
+);
+const OnboardingChatLayout = lazy(() =>
+  import("@/pages/onboarding/OnboardingChatLayout").then((m) => ({
+    default: m.OnboardingChatLayout,
+  }))
+);
+const OnboardingMobileOverview = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileOverview").then((m) => ({
+    default: m.OnboardingMobileOverview,
+  }))
+);
+const OnboardingMobileMessages = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileMessages").then((m) => ({
+    default: m.OnboardingMobileMessages,
+  }))
+);
+const OnboardingMobileActivity = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileActivity").then((m) => ({
+    default: m.OnboardingMobileActivity,
+  }))
+);
+const OnboardingMobileConversations = lazy(() =>
+  import("@/pages/onboarding/OnboardingMobileConversations").then((m) => ({
+    default: m.OnboardingMobileConversations,
   }))
 );
 const OnboardingOverview = lazy(() =>
@@ -334,6 +388,45 @@ const OnboardingImprovedComplete = lazy(() =>
     default: m.ImprovedComplete,
   }))
 );
+/* The Overview after desktop setup: the Pro Overview fed by the setup's two
+ * messages (owner 2026-10-13). */
+/* The onboarding workspace's data pages (owner 2026-10-13): the Default
+ * twin until step 3 passed, then a Free copy fed by the two messages. */
+const OnboardingMessages = lazy(() =>
+  import("@/pages/onboarding/OnboardingMessages").then((m) => ({
+    default: m.OnboardingMessages,
+  }))
+);
+
+const OnboardingActivity = lazy(() =>
+  import("@/pages/onboarding/OnboardingActivity").then((m) => ({
+    default: m.OnboardingActivity,
+  }))
+);
+
+const OnboardingConversations = lazy(() =>
+  import("@/pages/onboarding/OnboardingConversations").then((m) => ({
+    default: m.OnboardingConversations,
+  }))
+);
+
+const OnboardingSecurity = lazy(() =>
+  import("@/pages/onboarding/OnboardingSecurity").then((m) => ({
+    default: m.OnboardingSecurity,
+  }))
+);
+
+const OnboardingTokenSavings = lazy(() =>
+  import("@/pages/onboarding/OnboardingTokenSavings").then((m) => ({
+    default: m.OnboardingTokenSavings,
+  }))
+);
+
+const OnboardingSetupOverview = lazy(() =>
+  import("@/pages/onboarding/OnboardingSetupOverview").then((m) => ({
+    default: m.OnboardingSetupOverview,
+  }))
+);
 
 /** Outlet context shape — every page reads sidebar state from here via
  *  useOutletContext, so toggling persists across route changes without
@@ -392,6 +485,39 @@ export function AppRoutes() {
       <Route element={<AuthLayout />}>
         <Route element={<SignIn />} path="/sign-in" />
         <Route element={<SignUp />} path="/sign-up" />
+      </Route>
+      {/* Onboarding demo (owner 2026-10-12): its own copy of the auth shell,
+          whose phone background stays fixed under the keyboard, and its own
+          "Create your account" card, whose signup opens the onboarding
+          workspace, and its own copy of the sign-in card (phone touch
+          targets). /sign-in and /sign-up above are untouched. Mobile A and
+          B each start at their own sign-in (owner 2026-10-13); the bare
+          paths open A. */}
+      <Route element={<OnboardingAuthLayout />}>
+        <Route
+          element={<Navigate replace to="/sign-in-onboarding/a" />}
+          path="/sign-in-onboarding"
+        />
+        <Route
+          element={<Navigate replace to="/sign-up-onboarding/a" />}
+          path="/sign-up-onboarding"
+        />
+        <Route
+          element={<OnboardingSignIn version="a" />}
+          path="/sign-in-onboarding/a"
+        />
+        <Route
+          element={<OnboardingSignUp version="a" />}
+          path="/sign-up-onboarding/a"
+        />
+        <Route
+          element={<OnboardingSignIn version="b" />}
+          path="/sign-in-onboarding/b"
+        />
+        <Route
+          element={<OnboardingSignUp version="b" />}
+          path="/sign-up-onboarding/b"
+        />
       </Route>
       {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
           A chart of the shell cannot be read from inside the shell, so it
@@ -572,14 +698,78 @@ export function AppRoutes() {
         {/* Onboarding workspace — reached via the workspace switcher, always
          * on its first step. The layout owns the flow state in memory, so a
          * refresh (or a cold load of any later step) starts over at
-         * /overview-onboarding. The Improved flow's chat path reuses the Gate
-         * Chat page under its own ChatLayout. */}
+         * /overview-onboarding. The Improved flow's chat path is the workspace's
+         * own Gate Chat copy (OnboardingChat) under its own layout, whose top bar
+         * has no workspace switcher (OnboardingChatLayout). */}
         <Route element={<OnboardingLayout />}>
-          <Route element={<ChatLayout />}>
-            <Route element={<Chat />} path="/chat-onboarding" />
-            <Route element={<Chat />} path="/chat-onboarding/:conversationId" />
+          {/* The workspace's own pages (owner 2026-10-13: the demo never
+              leaves the onboarding workspace). Every sidebar row and the
+              final page's explore rows land here. A set-up onboarding
+              workspace is a Free one with only the demo's data: pages
+              without demo data mount their Default twins; the data pages
+              show the two step 3 messages (src/pages/onboarding/Onboarding*.tsx). A cold load (the explore rows
+              open a new tab) renders in place (OnboardingLayout). */}
+          <Route element={<OnboardingMessages />} path="/messages-onboarding" />
+          <Route
+            element={<OnboardingConversations />}
+            path="/conversations-onboarding"
+          />
+          <Route element={<OnboardingSecurity />} path="/security-onboarding" />
+          <Route
+            element={<AuditTrailDefault />}
+            path="/audit-trail-onboarding"
+          />
+          <Route element={<PoliciesDefault />} path="/policies-onboarding" />
+          <Route
+            element={<OnboardingTokenSavings />}
+            path="/token-savings-onboarding"
+          />
+          <Route element={<ModelsDefault />} path="/models-onboarding" />
+          <Route element={<OnboardingActivity />} path="/activity-onboarding" />
+          <Route element={<LimitsDefault />} path="/limits-onboarding" />
+          <Route element={<TeamDefault />} path="/members-onboarding" />
+          <Route element={<TeamsDefault />} path="/teams-onboarding" />
+          <Route element={<BillingDefault />} path="/billing-onboarding" />
+          <Route
+            element={<ManageSubscription />}
+            path="/billing-onboarding/plans"
+          />
+          <Route element={<ApiKeysDefault />} path="/api-keys-onboarding" />
+          <Route
+            element={<NotificationsDefault />}
+            path="/notifications-onboarding"
+          />
+          <Route element={<SettingsDefault />} path="/settings-onboarding" />
+          <Route element={<OnboardingChatLayout />}>
+            <Route element={<OnboardingChat />} path="/chat-onboarding" />
+            <Route
+              element={<OnboardingChat />}
+              path="/chat-onboarding/:conversationId"
+            />
+            {/* Mobile A demo's Overview, under the chat's top bar. */}
+            <Route
+              element={<OnboardingMobileOverview />}
+              path="/overview-mobile-onboarding"
+            />
+            {/* Mobile A demo copies of Messages and Activity. */}
+            <Route
+              element={<OnboardingMobileMessages />}
+              path="/messages-mobile-onboarding"
+            />
+            <Route
+              element={<OnboardingMobileActivity />}
+              path="/activity-mobile-onboarding"
+            />
+            {/* The phone demo's Conversations copy (owner 2026-10-12). */}
+            <Route
+              element={<OnboardingMobileConversations />}
+              path="/conversations-mobile-onboarding"
+            />
           </Route>
           <Route element={<OnboardingOverview />} path="/overview-onboarding" />
+          {/* Mock hosted checkout for Add credits (owner 2026-10-13); inside
+              the layout so the setup state survives the round trip. */}
+          <Route element={<OnboardingCheckout />} path="/checkout-onboarding" />
           <Route
             element={<OnboardingCurrentConnect />}
             path="/setup-connect-onboarding"
@@ -624,11 +814,28 @@ export function AppRoutes() {
             element={<OnboardingImprovedComplete />}
             path="/improved-complete-onboarding"
           />
+          <Route
+            element={<OnboardingSetupOverview />}
+            path="/overview-setup-onboarding"
+          />
         </Route>
         {/* Unknown routes fall back to Requests. */}
-        <Route element={<Navigate replace to="/overview" />} path="*" />
+        <Route element={<UnknownRoute />} path="*" />
       </Route>
     </Routes>
+  );
+}
+
+/** Unknown routes fall back to Overview; an unknown onboarding address
+ *  (a cross-link to a page the workspace does not have) stays in the
+ *  onboarding workspace (owner 2026-10-13). */
+function UnknownRoute() {
+  const { pathname } = useLocation();
+  return (
+    <Navigate
+      replace
+      to={isOnboardingSurface(pathname) ? "/overview-onboarding" : "/overview"}
+    />
   );
 }
 

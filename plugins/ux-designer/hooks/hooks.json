@@ -48,7 +48,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit|Bash|WebFetch|WebSearch|Agent",
+        "matcher": "Write|Edit|MultiEdit|Bash|WebFetch|WebSearch|Agent|mcp__.*(fetch|scrape).*",
         "hooks": [
           {
             "type": "command",

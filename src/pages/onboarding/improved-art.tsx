@@ -1,4 +1,4 @@
-import { Check, Mail, Send } from "lucide-react";
+import { Check, CircleSlash, Mail, Send, ShieldCheck } from "lucide-react";
 import { type ReactNode, type Ref, useId } from "react";
 import { cn } from "@/lib/utils";
 import { IMPROVED_CLIENTS } from "@/pages/onboarding/improved-data";
@@ -62,17 +62,28 @@ export function GateMark({ className }: { className?: string }) {
  *  prompt bubble, a reply card with its header row and two lines (and the
  *  "preparing reply" dots the animator plays before them), then the
  *  composer as it is when the next message is typed: focused border, a
- *  line of text, the send key enabled. */
-export function ChatArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
+ *  line of text, the send key enabled. The phone start card passes a
+ *  `scale-*` to fit it in its shorter stage, and `loop` so its sequence
+ *  replays after a hold (use-onboarding-motion.ts). */
+export function ChatArt({
+  ref,
+  className,
+  loop = false,
+}: {
+  ref?: Ref<HTMLSpanElement>;
+  className?: string;
+  loop?: boolean;
+}) {
   return (
     <span
       aria-hidden
-      className="flex w-4/5 max-w-80 flex-col gap-3"
+      className={cn("flex w-4/5 max-w-80 flex-col gap-3", className)}
+      data-motion-loop={loop ? "" : undefined}
       data-motion-root="chat-art"
       ref={ref}
     >
       <span
-        className="flex h-10 w-1/2 items-center self-end rounded-md border border-border bg-chat-bubble-user px-4 shadow-xs"
+        className="flex h-10 w-1/2 items-center self-end rounded-md border border-border bg-chat-bubble-user px-4 shadow-md dark:inset-shadow-2xs dark:inset-shadow-border"
         data-motion="bubble-user"
       >
         <span
@@ -81,7 +92,7 @@ export function ChatArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
         />
       </span>
       <span
-        className="flex flex-col gap-3 rounded-md border border-border bg-chat-bubble-agent p-4 shadow-xs"
+        className="flex flex-col gap-3 rounded-md border border-border bg-linear-to-b from-card to-card-muted p-4 shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="bubble-reply"
       >
         <span className="flex items-center gap-2">
@@ -115,7 +126,7 @@ export function ChatArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
         </span>
       </span>
       <span
-        className="mt-3 flex h-12 items-center justify-between rounded-sm border border-primary bg-card pr-2 pl-4 text-foreground"
+        className="mt-3 flex h-12 items-center justify-between rounded-sm border border-primary bg-card pr-2 pl-4 text-foreground shadow-md dark:inset-shadow-2xs dark:inset-shadow-border"
         data-motion="composer"
       >
         <span
@@ -134,10 +145,12 @@ export function ChatArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
   );
 }
 
-/** Orbit geometry: a 200px field, a 64px hub at the centre, five 40px
- *  satellites on an 80px radius starting at 12 o'clock (72deg apart). */
-const ORBIT_RADIUS = 80;
-const ORBIT_CENTER = 100;
+/** Orbit geometry: a 216px field, a 64px hub at the centre, five 40px
+ *  satellites on an 88px radius starting at 12 o'clock (72deg apart);
+ *  widened from 80px so the shadowed tiles keep a 36px gap to the hub
+ *  (owner 2026-10-10). */
+const ORBIT_RADIUS = 88;
+const ORBIT_CENTER = 108;
 const orbitPoint = (index: number) => {
   const angle = ((index * 72 - 90) * Math.PI) / 180;
   return {
@@ -156,13 +169,13 @@ export function ConnectArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
   return (
     <span
       aria-hidden
-      className="relative block size-50"
+      className="relative block size-54"
       data-motion-root="connect-art"
       ref={ref}
     >
       <svg
         className="absolute inset-0 size-full -rotate-90 fill-none"
-        viewBox="0 0 200 200"
+        viewBox="0 0 216 216"
       >
         <mask id={orbitMask} maskUnits="userSpaceOnUse">
           <circle
@@ -193,21 +206,21 @@ export function ConnectArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
       </svg>
       {apps.map((app, index) => (
         <span
-          className="absolute top-24 left-24 size-2 rounded-full bg-info opacity-0"
+          className="absolute top-26 left-26 size-2 rounded-full bg-info opacity-0"
           data-motion="signal"
           data-motion-index={index}
           key={`signal-${app.id}`}
         />
       ))}
       <span
-        className="absolute top-17 left-17 grid size-16 place-items-center rounded-md border border-info bg-card shadow-xs"
+        className="absolute top-19 left-19 grid size-16 place-items-center rounded-md border border-info bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="hub"
       >
         <GateMark className="size-8" />
       </span>
       {apps.map((app, index) => (
         <span
-          className="absolute grid size-10 place-items-center rounded-sm border border-border bg-card shadow-xs"
+          className="absolute grid size-10 place-items-center rounded-sm border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
           data-motion="satellite"
           data-motion-index={index}
           key={app.id}
@@ -233,7 +246,7 @@ export function CodeArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
       ref={ref}
     >
       <span
-        className="flex flex-col overflow-hidden rounded-md border border-border bg-chat-bubble-agent shadow-xs"
+        className="flex flex-col overflow-hidden rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="editor"
       >
         <span className="flex items-center gap-1 border-border border-b px-3 py-2">
@@ -288,7 +301,7 @@ export function CodeArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
         </span>
       </span>
       <span
-        className="flex items-center gap-3 rounded-md border border-border bg-chat-bubble-agent p-3 shadow-xs"
+        className="flex items-center gap-3 rounded-md border border-border bg-linear-to-b from-card to-card-muted p-3 shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
         data-motion="response"
       >
         <GateMark />
@@ -368,8 +381,8 @@ export function DesktopMini({ ref }: { ref?: Ref<HTMLSpanElement> }) {
       >
         <Mail className="size-3" strokeWidth={1.75} />
       </span>
-      <span className="flex gap-1 rounded-t-xs border-2 border-foreground bg-card p-1">
-        {IMPROVED_CLIENTS.slice(0, 3).map((app) => (
+      <span className="flex h-12 w-20 items-center justify-center gap-1 rounded-t-xs border-2 border-foreground bg-card">
+        {IMPROVED_CLIENTS.slice(0, 2).map((app) => (
           <span
             className="grid size-6 place-items-center rounded-xs bg-card"
             data-motion="app-row"
@@ -447,9 +460,22 @@ export function HandoffArt({
 
 /* ─── Route figure ─────────────────────────────────────────────────────── */
 
-/** App -> Gate -> target. `state`: idle (dashed wires), live (checking: the
- *  pulse rides the wires, `data-state="live"`), done (solid success wires
- *  and the check on the Gate tile). */
+/** App -> Gate -> target. `state` (step 3's check, owner 2026-10-13): idle
+ *  (the setup run), live (checking: the app taps and sends its packets to
+ *  Gate, twice), done (Gate's border turns green with the
+ *  shield badge, a green packet runs on and the target's border turns
+ *  green), error (Gate's border turns red with the circle-slash badge;
+ *  nothing passes on), blocked (the protection demo: Gate green with the
+ *  shield badge and a gray circle-slash on wire 2; nothing passes on). The
+ *  wires stay gray dashes in every state; colour only travels with a
+ *  packet. The tile columns are exactly tile-wide,
+ *  so each wire runs edge to edge between tiles (owner 2026-10-09); labels
+ *  sit in their own row and may overhang their column up to 128px, which
+ *  the figure's side padding absorbs. The Gate tile is the Connect art's
+ *  hub (full-colour mark) with the neutral tile border. Every tile is lit
+ *  from above: card to card-muted in light (muted to card in dark), a
+ *  shadow-md lift, and in dark a 1px border-colour top highlight
+ *  (owner 2026-10-10). */
 export function RouteFigure({
   app,
   appIcon,
@@ -457,79 +483,173 @@ export function RouteFigure({
   targetIcon,
   state = "idle",
   caption,
+  centered = false,
   ref,
 }: {
-  app: string;
-  appIcon: ReactNode;
+  /** Omit for a two-node figure (Gate to target): Manual setup before its
+   *  app is chosen (owner 2026-10-13). */
+  app?: string;
+  appIcon?: ReactNode;
   target: string;
   targetIcon: ReactNode;
-  state?: "idle" | "live" | "done";
+  state?: "idle" | "live" | "done" | "error" | "blocked";
   caption?: ReactNode;
+  /** For a stage that centers the figure (owner 2026-10-09): the tile
+   *  row sits 16px above the stage's centre line (an empty `1fr` row
+   *  above mirrors the labels below; `mb-8` lifts the pair), labels
+   *  reserve two lines so a wrapping target name never moves anything, and
+   *  the caption pins to the stage's top-left corner, 16px in. The stage
+   *  must be a positioned element. */
+  centered?: boolean;
   ref?: Ref<HTMLElement>;
 }) {
-  const wire = (
-    <span
-      aria-hidden
-      className={cn(
-        "relative mt-7 h-0.5 overflow-hidden",
-        state === "done"
-          ? "bg-success-600 dark:bg-success-400"
-          : "border-input border-t-2 border-dashed"
-      )}
-    >
-      <span
-        className="absolute top-0 left-0 h-0.5 w-6 bg-info opacity-0"
-        data-motion="route-pulse"
-      />
-    </span>
-  );
-  const node = (label: string, tile: ReactNode, gate = false) => (
-    <span className="flex min-w-0 flex-col items-center gap-2 text-center">
-      <span
-        className={cn(
-          "relative grid place-items-center rounded-md border",
-          gate
-            ? "-mt-2 size-18 border-transparent bg-primary text-primary-foreground"
-            : "size-14 border-border bg-card shadow-xs"
-        )}
-      >
-        {tile}
-        {gate && state === "done" ? (
+  // The tiles sit above the wires (z-10), so a packet slides out from under
+  // its sender. Each wire carries the setup stage's packet (an 8px dot, as ConnectArt's
+  // signal) outside the line's clip, so the dot can overhang the 2px line,
+  // and a blue copy of the dashes (same box, so the dashes line up) that
+  // the animator shows through a short travelling window. After a passed
+  // check, Gate's onward packet and run are green: checked traffic. A
+  // blocked demo message stops at Gate: a gray circle-slash sits on wire 2's
+  // midpoint, on a stage-coloured disc that cuts the dashes.
+  const guarded = state === "done" || state === "blocked";
+  const wire = (hop: number) => {
+    const passed = state === "done" && hop === 1;
+    return (
+      <span aria-hidden className="relative h-0.5">
+        <span className="absolute inset-0 border-input border-t-2 border-dashed" />
+        <span
+          className={cn(
+            "absolute inset-0 border-t-2 border-dashed opacity-0",
+            passed
+              ? "border-success-600 dark:border-success-400"
+              : "border-info"
+          )}
+          data-motion="route-run"
+          data-motion-index={hop}
+        />
+        <span
+          className="absolute inset-0 opacity-0"
+          data-motion="route-packet"
+          data-motion-index={hop}
+        >
           <span
-            className="absolute -right-2 -bottom-2 grid size-6 place-items-center rounded-full border-2 border-background bg-success-600 text-primary-foreground dark:bg-success-400"
-            data-motion="route-check"
+            className={cn(
+              "absolute top-1/2 left-0 size-2 -translate-y-1/2 rounded-full",
+              passed ? "bg-success-600 dark:bg-success-400" : "bg-info"
+            )}
+          />
+        </span>
+        {state === "blocked" && hop === 1 ? (
+          <span
+            className="absolute top-1/2 left-1/2 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-muted text-input"
+            data-motion="route-blocked"
           >
-            <Check className="size-3" strokeWidth={1.75} />
+            <CircleSlash className="size-5" strokeWidth={1.75} />
           </span>
         ) : null}
       </span>
-      <span className="type-label-14 wrap-anywhere text-foreground">
-        {label}
-      </span>
+    );
+  };
+  const label = (text: string, column: string) => (
+    <span
+      className={cn(
+        "type-label-14 wrap-anywhere w-max max-w-32 justify-self-center text-center text-foreground",
+        column,
+        centered && "min-h-10"
+      )}
+    >
+      {text}
     </span>
   );
   return (
     <figure
-      aria-label={`${app} through Gate to ${target}`}
-      className="m-0 grid w-full grid-cols-[minmax(--spacing(18),--spacing(32))_minmax(--spacing(4),1fr)_auto_minmax(--spacing(4),1fr)_minmax(--spacing(18),--spacing(32))] items-start"
+      aria-label={
+        app ? `${app} through Gate to ${target}` : `Gate to ${target}`
+      }
+      className={cn(
+        "m-0 grid w-full items-center gap-y-2 px-9",
+        app
+          ? "grid-cols-[--spacing(14)_minmax(--spacing(4),1fr)_--spacing(18)_minmax(--spacing(4),1fr)_--spacing(14)]"
+          : "mx-auto max-w-80 grid-cols-[--spacing(18)_minmax(--spacing(4),1fr)_--spacing(14)]",
+        centered && "mb-8 grid-rows-[1fr_auto_1fr]"
+      )}
       data-motion-root="route"
+      data-route-nodes={app ? 3 : 2}
       data-state={state}
       ref={ref}
     >
-      {node(app, appIcon)}
-      {wire}
-      {node(
-        "Gate",
-        <GateMark className="size-9 brightness-0 invert dark:invert-0" />,
-        true
-      )}
-      {wire}
-      {node(target, targetIcon)}
-      {caption ? (
-        <figcaption className="type-copy-12 col-span-full mt-6 justify-self-center rounded-full border border-border bg-card px-3 py-1 text-muted-foreground">
-          {caption}
-        </figcaption>
+      {centered ? <span aria-hidden className="col-span-full" /> : null}
+      {app ? (
+        <>
+          <span
+            className="relative z-10 grid size-14 place-items-center rounded-md border border-border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card"
+            data-motion="route-app"
+          >
+            {appIcon}
+          </span>
+          {wire(0)}
+        </>
       ) : null}
+      <span
+        className={cn(
+          "relative z-10 grid size-18 place-items-center rounded-md border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card",
+          guarded
+            ? "border-success-600 dark:border-success-400"
+            : state === "error"
+              ? "border-destructive"
+              : "border-border"
+        )}
+        data-motion="route-gate"
+      >
+        <GateMark className="size-9" />
+        {guarded || state === "error" ? (
+          <span
+            className={cn(
+              "absolute -right-2 -bottom-2 grid size-6 place-items-center rounded-full bg-card",
+              guarded
+                ? "text-success-600 dark:text-success-400"
+                : "text-destructive"
+            )}
+            data-motion="route-check"
+          >
+            {guarded ? (
+              <ShieldCheck className="size-5" strokeWidth={1.75} />
+            ) : (
+              <CircleSlash className="size-5" strokeWidth={1.75} />
+            )}
+          </span>
+        ) : null}
+      </span>
+      {wire(1)}
+      <span
+        className={cn(
+          "relative z-10 grid size-14 place-items-center rounded-md border bg-linear-to-b from-card to-card-muted shadow-md dark:inset-shadow-2xs dark:inset-shadow-border dark:from-muted dark:to-card",
+          state === "done"
+            ? "border-success-600 dark:border-success-400"
+            : "border-border"
+        )}
+        data-motion="route-target"
+      >
+        {targetIcon}
+      </span>
+      <span className="col-span-full grid grid-cols-subgrid items-start gap-y-6 self-start">
+        {app ? label(app, "col-start-1") : null}
+        {label("Gate", app ? "col-start-3" : "col-start-1")}
+        {label(target, app ? "col-start-5" : "col-start-3")}
+        {caption ? (
+          <figcaption
+            className={cn(
+              "type-copy-12 col-span-full justify-self-center rounded-full border border-border bg-card px-3 py-1 text-muted-foreground",
+              // `col-auto`: a grid column on an absolutely positioned box
+              // makes the stage's grid lines its frame (inside the
+              // stage padding); auto keeps the frame at the padding edge.
+              centered && "absolute top-4 left-4 col-auto w-max"
+            )}
+          >
+            {caption}
+          </figcaption>
+        ) : null}
+      </span>
     </figure>
   );
 }

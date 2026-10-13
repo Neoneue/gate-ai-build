@@ -1,0 +1,146 @@
+import { BrainCircuit, Menu } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { TextLink } from "@/components/ui/text-link";
+import { cn } from "@/lib/utils";
+import { ChatConversationStats } from "@/pages/chat/chat-conversation-stats";
+import { CHAT_TOUCH_TARGET } from "@/pages/chat/chat-layout";
+import { chatConversationRecordUrl } from "@/pages/chat/chat-links";
+import { CHAT_COPY } from "@/pages/chat/copy";
+import type {
+  ChatConversation,
+  ChatConversationTotals,
+  ChatCredits,
+} from "@/pages/chat/types";
+import { OnboardingChatMemoryPanel } from "@/pages/onboarding/onboarding-chat-memory-panel";
+
+export interface OnboardingChatHeaderProps {
+  className?: string;
+  conversation: ChatConversation;
+  credits: ChatCredits;
+  /** Writes the open conversation's memory tool override through the memory panel. */
+  onMemoryToolsOverride?: (memoryToolsEnabled: boolean | null) => void;
+  onOpenNavigation?: () => void;
+  /** Session totals for the stats popover; null for an unsaved chat. */
+  totals: ChatConversationTotals | null;
+}
+
+/**
+ * The Onboarding workspace's copy of `pages/chat/chat-header.tsx`. The only
+ * difference: its memory button opens the onboarding memory panel, which
+ * reads the onboarding chat store, and it has no Upgrade button (a workspace
+ * that is not set up yet has nothing to upgrade). Change it here, never in
+ * the shared bar.
+ *
+ * The upgrade action is entitlement-gated through `credits.pro`: a Pro or
+ * Enterprise workspace is not offered Pro.
+ */
+export function OnboardingChatHeader({
+  conversation,
+  credits,
+  totals,
+  onOpenNavigation,
+  onMemoryToolsOverride,
+  className,
+}: OnboardingChatHeaderProps) {
+  const { pathname } = useLocation();
+  // Only a saved conversation carries the override.
+  const memoryToolsConversation =
+    conversation.id && conversation.memoryToolsEnabled !== undefined
+      ? {
+          id: conversation.id,
+          memoryToolsEnabled: conversation.memoryToolsEnabled,
+        }
+      : null;
+  // Null until at least one turn reached the gateway.
+  const recordUrl = chatConversationRecordUrl(pathname, conversation);
+
+  return (
+    <header
+      className={cn(
+        "flex h-14 w-full min-w-0 shrink-0 items-center gap-3 border-border border-b bg-card px-4 sm:px-6 lg:h-16",
+        className
+      )}
+    >
+      <Button
+        aria-label={CHAT_COPY.openNavigation}
+        className={cn(CHAT_TOUCH_TARGET, "-ml-2 lg:hidden")}
+        onClick={onOpenNavigation}
+        size="icon"
+        type="button"
+        variant="ghost"
+      >
+        <Menu aria-hidden className="size-4" strokeWidth={1.75} />
+      </Button>
+
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1" data-slot="chat-title">
+          <h1 className="type-heading-14 min-w-0 truncate text-foreground">
+            {recordUrl ? (
+              <TextLink
+                className="truncate"
+                title={conversation.title}
+                to={recordUrl}
+              >
+                {conversation.title}
+              </TextLink>
+            ) : conversation.id ? (
+              <span className="truncate" title={conversation.title}>
+                {conversation.title}
+              </span>
+            ) : (
+              CHAT_COPY.newChat
+            )}
+          </h1>
+        </div>
+        {/* "Title · Yesterday": a muted bullet, 8px either side. */}
+        {conversation.updatedLabel ? (
+          <p className="type-copy-12 hidden shrink-0 items-center gap-2 text-muted-foreground sm:flex">
+            <span aria-hidden>·</span>
+            {conversation.updatedLabel}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="hidden items-center gap-2 xl:flex">
+          <span className="type-label-14 text-muted-foreground">
+            {CHAT_COPY.credits}
+          </span>
+          {credits.low ? (
+            <Badge variant="warning">{credits.balance}</Badge>
+          ) : (
+            <span className="type-mono-14 text-foreground">
+              {credits.balance}
+            </span>
+          )}
+        </div>
+        <OnboardingChatMemoryPanel
+          conversation={memoryToolsConversation}
+          onMemoryToolsOverride={onMemoryToolsOverride}
+          projectId={conversation.projectId}
+          trigger={
+            <Button
+              aria-label={CHAT_COPY.memories}
+              className={CHAT_TOUCH_TARGET}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <BrainCircuit aria-hidden className="size-4" strokeWidth={1.75} />
+            </Button>
+          }
+        />
+        {/* Far right, after Memories: both conversation actions in the
+            foreground, one 12px gap apart (user, 2026-10-06). */}
+        {conversation.id ? (
+          <ChatConversationStats
+            conversationId={conversation.id}
+            totals={totals}
+          />
+        ) : null}
+      </div>
+    </header>
+  );
+}

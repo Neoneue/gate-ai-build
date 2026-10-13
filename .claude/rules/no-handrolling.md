@@ -56,7 +56,7 @@ drops it to 400, and because the voice sits on an inner `<span>` it overrides
 the `font-medium` the parent button already set. That is invisible in review
 and is exactly how the sidebar's active nav item regressed .
 
-**`design.md` §3 "Label voice — the enumeration" is the single source** for
+**`design.md` §3 "Label voice: the enumeration" is the single source** for
 which roles take which voice. It lists every interactive and naming role, and
 the ones that are deliberately excluded. Do not maintain a second list here —
 two lists that can disagree is how the drift happened in the first place.

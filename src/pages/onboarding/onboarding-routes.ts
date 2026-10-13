@@ -4,6 +4,9 @@
  * recognise it. Both flows start on ONE first page, `/overview-onboarding`;
  * the flow version picked in the demo controls decides what it renders. */
 
+import { ListChecks } from "lucide-react";
+import type { SidebarSection } from "@/components/ui/sidebar";
+import { ONBOARDING_SIDEBAR_SECTIONS } from "@/layouts/nav-sections";
 import { ONBOARDING_FIRST_STEP } from "@/lib/plan";
 
 export const ONBOARDING_ROUTES = {
@@ -21,9 +24,268 @@ export const ONBOARDING_ROUTES = {
   improvedConnect: "/improved-connect-onboarding",
   verify: "/improved-verify-onboarding",
   improvedComplete: "/improved-complete-onboarding",
-  /* Gate Chat, the Improved flow's chat path (the existing Gate Chat page). */
+  /* The mock hosted checkout "Add credits" hands off to (owner 2026-10-13). */
+  checkout: "/checkout-onboarding",
+  /* The Overview after setup: the Pro Overview fed by step 3's two
+   * messages (owner 2026-10-13). */
+  setupOverview: "/overview-setup-onboarding",
+  /* Gate Chat, the Onboarding version (OnboardingChat), phone and desktop.
+   * Free, Default, Pro and Enterprise keep the main version (pages/Chat). */
   chat: "/chat-onboarding",
+  /* Mobile A demo (signup -> Gate Chat): its own Overview, empty until the
+   * first message (OnboardingMobileOverview). Mobile only; the desktop
+   * Overview pages are untouched (owner 2026-10-11). */
+  mobileOverview: "/overview-mobile-onboarding",
+  /* Mobile A demo copies of Messages and Activity: empty until the first
+   * message, then that message (owner 2026-10-12). */
+  mobileMessages: "/messages-mobile-onboarding",
+  mobileActivity: "/activity-mobile-onboarding",
+  /* The phone demo's Conversations copy: empty until the first message,
+   * then one row per demo chat (owner 2026-10-12). */
+  mobileConversations: "/conversations-mobile-onboarding",
 } as const;
+
+/** Opens a page in a new tab with no opener (the DashboardDefault docs
+ *  button's `window.open`): the explore task rows, so the onboarding tab
+ *  stays on its page and keeps its state (owner 2026-10-13). */
+export const openInNewTab = (to: string) => {
+  window.open(to, "_blank", "noopener,noreferrer");
+};
+
+/** The screen-reader cue on every control that opens a new tab, read after
+ *  its label in a visually hidden span (copywriter, owner 2026-10-13). */
+export const NEW_TAB_CUE = "(opens in a new tab)";
+
+/** The two phone demos' auth entries (owner 2026-10-13): both start at
+ *  sign-in, then sign-up. Mobile A's signup opens Gate Chat; Mobile B's
+ *  opens the 2-card phone start (`ONBOARDING_ROUTES.start`). The bare
+ *  `/sign-in-onboarding` and `/sign-up-onboarding` redirect to A. */
+export type PhoneDemoVersion = "a" | "b";
+export const ONBOARDING_AUTH: Record<
+  PhoneDemoVersion,
+  { signIn: string; signUp: string }
+> = {
+  a: { signIn: "/sign-in-onboarding/a", signUp: "/sign-up-onboarding/a" },
+  b: { signIn: "/sign-in-onboarding/b", signUp: "/sign-up-onboarding/b" },
+};
+
+/** The demo's sign-in screen: where Mobile A starts and where Sign out
+ *  returns. */
+export const ONBOARDING_SIGN_IN = ONBOARDING_AUTH.a.signIn;
+
+/** The mockup's preview of step 3's failure states (owner 2026-10-13):
+ *  `?simulate=fail-connection` (the first test message check fails),
+ *  `fail-demo` (the first protection demo run fails) or `fail-both`. Read
+ *  once, from the URL the app loaded with, because a reload restarts the
+ *  flow at its first page (so the flag goes on that page's URL); step 3
+ *  also reads it from its own URL. The product's real states are the same
+ *  screens, reached when a message does not go through. */
+export type SimulateFlag = "fail-connection" | "fail-demo" | "fail-both";
+
+const readSimulateFlag = (search: string): SimulateFlag | null => {
+  const value = new URLSearchParams(search).get("simulate");
+  return value === "fail-connection" ||
+    value === "fail-demo" ||
+    value === "fail-both"
+    ? value
+    : null;
+};
+
+const SIMULATE_ON_LOAD =
+  typeof window === "undefined"
+    ? null
+    : readSimulateFlag(window.location.search);
+
+/** The failure preview for this page load: the current URL's flag, else
+ *  the one the app loaded with. */
+export const simulateFlag = (search: string): SimulateFlag | null =>
+  readSimulateFlag(search) ?? SIMULATE_ON_LOAD;
+
+/** Router state a demo signup (`/sign-up-onboarding`) passes on its way in,
+ *  so OnboardingLayout lets the flow start on the page signup lands on. */
+export const ONBOARDING_SIGNUP_STATE = { onboardingSignup: true } as const;
+
+/* Mobile A tab mark (owner 2026-10-11). The phone demo and the desktop flow
+ * share `/chat-onboarding`, so a cold load cannot tell them apart by URL,
+ * and screen width would catch a narrowed desktop window. The Mobile A
+ * signup marks the tab instead; a refresh in a marked tab returns to the
+ * demo's sign-in, never to the desktop setup start. Per tab
+ * (sessionStorage), cleared when the desktop start page loads. One of two
+ * things this workspace stores, with the credit balance the Gate Chat tab
+ * reads (onboarding-credits.ts, owner 2026-10-13): the flow state itself
+ * stays in memory. */
+const MOBILE_A_TAB_KEY = "gate-onboarding-mobile-a";
+
+export const markMobileATab = (): void => {
+  // A Mobile A run ends any Option B phone chat in this tab.
+  optionBPhoneChat = false;
+  try {
+    sessionStorage.setItem(MOBILE_A_TAB_KEY, "1");
+  } catch {
+    // Storage blocked: a refresh falls back to the setup start, as before.
+  }
+};
+
+export const isMobileATab = (): boolean => {
+  try {
+    return sessionStorage.getItem(MOBILE_A_TAB_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+export const clearMobileATab = (): void => {
+  try {
+    sessionStorage.removeItem(MOBILE_A_TAB_KEY);
+  } catch {
+    // Nothing stored to clear.
+  }
+};
+
+/* Option B phone chat mark (owner 2026-10-12): the phone two-card start's
+ * Gate Chat buttons (`useOpenChatOnPhone`, improved-start.tsx) open the same
+ * chat as Mobile A. In memory: Option B has no signup yet, so a reload
+ * starts over. The phone start page keeps it, since B's site menu Overview
+ * returns there mid-run; the desktop start (`DesktopPicker`) clears it when
+ * it mounts, so its "Open Gate Chat" keeps the desktop chat, and a Mobile A
+ * signup clears it (`markMobileATab`). */
+let optionBPhoneChat = false;
+
+export const markOptionBPhoneChat = (): void => {
+  optionBPhoneChat = true;
+};
+
+export const clearOptionBPhoneChat = (): void => {
+  optionBPhoneChat = false;
+};
+
+/** The one gate for the phone demo chat (owner 2026-10-12): Mobile A's tab
+ *  mark or Option B's phone chat mark. The free-model start, the picker,
+ *  scripted replies and their follow-ups, the quick actions and no "Setup
+ *  complete" toast all read it. The refresh redirect to the demo sign-in
+ *  stays on `isMobileATab` alone. */
+export const isPhoneDemoChat = (): boolean =>
+  isMobileATab() || optionBPhoneChat;
+
+/** Where the chat's Sign out goes (owner 2026-10-13): B's sign-in from an
+ *  Option B phone chat, so a B tester stays in B; A's sign-in otherwise. */
+export const chatSignInPath = (): string =>
+  optionBPhoneChat ? ONBOARDING_AUTH.b.signIn : ONBOARDING_SIGN_IN;
+
+/** The chat page the Mobile A demo was last on (the landing or a
+ *  conversation), so the site menu's Gate Chat row returns to it after a
+ *  visit to Overview, Activity or Messages (owner 2026-10-12). In memory,
+ *  like the chat store: a refresh starts over. */
+let lastChatPath: string = ONBOARDING_ROUTES.chat;
+
+export const rememberChatPath = (path: string): void => {
+  lastChatPath = path;
+};
+
+export const lastOnboardingChatPath = (): string => lastChatPath;
+
+/** Nav rows the phone demo has its own copy of, by nav id. Overview is
+ *  Mobile A's; Option B's Overview is its phone start (`phoneOverviewPath`). */
+export const PHONE_DEMO_PAGES: Record<string, string> = {
+  overview: ONBOARDING_ROUTES.mobileOverview,
+  requests: ONBOARDING_ROUTES.mobileMessages,
+  activity: ONBOARDING_ROUTES.mobileActivity,
+  conversations: ONBOARDING_ROUTES.mobileConversations,
+};
+
+/** Where the phone demo's Overview row, logo and menu brand go (owner
+ *  2026-10-12): Mobile A's Overview with counts in a Mobile A tab, else
+ *  Option B's two-card start. */
+export const phoneOverviewPath = (): string =>
+  isMobileATab() ? ONBOARDING_ROUTES.mobileOverview : ONBOARDING_ROUTES.start;
+
+/** The site menu's nav (phone only, below `lg`): the Onboarding nav with
+ *  Overview at `overviewPath` and Messages, Activity and Conversations at
+ *  the phone demo's own copies, so the phone demo never opens a desktop page
+ *  for them. The Gate Chat row returns to the chat page the demo was last
+ *  on, so the conversation is where it was left. Every other row is
+ *  unchanged (owner 2026-10-11, 2026-10-12). Used by the chat top bar's menu
+ *  (onboarding-chat-top-bar.tsx) and B's phone start menu (`ImprovedStart`). */
+export function phoneSiteSections(overviewPath: string): SidebarSection[] {
+  const pages: Record<string, string> = {
+    ...PHONE_DEMO_PAGES,
+    overview: overviewPath,
+    chat: lastOnboardingChatPath(),
+  };
+  return ONBOARDING_SIDEBAR_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.map((item) => {
+      const pageId = pages[item.id];
+      // The phone chat stays in this tab (the desktop sidebar opens a new
+      // one), so Resume finds the conversation.
+      return pageId ? { ...item, pageId, newTab: false } : item;
+    }),
+  }));
+}
+
+/** The desktop rail during the Improved flow (owner 2026-10-13): a "Get
+ *  started" row above Overview, active on every onboarding step. Overview
+ *  only appears from the final page on, opening the Overview after setup;
+ *  Get started leaves once every explore task is done. `getStartedTo` is
+ *  forward only: the step due next, or the final page after Finish setup.
+ *  Every other row is ONBOARDING_SIDEBAR_SECTIONS unchanged; the phone
+ *  menus (`phoneSiteSections`) keep that list as it is. */
+export function setupSidebarSections({
+  getStartedTo,
+  showGetStarted,
+  showOverview,
+}: {
+  getStartedTo: string;
+  showGetStarted: boolean;
+  showOverview: boolean;
+}): SidebarSection[] {
+  return ONBOARDING_SIDEBAR_SECTIONS.map((section) => {
+    const overview = section.items.find((item) => item.id === "overview");
+    if (!overview) {
+      return section;
+    }
+    return {
+      ...section,
+      items: [
+        ...(showGetStarted
+          ? [
+              {
+                id: SETUP_NAV_ID,
+                icon: ListChecks,
+                label: "Get started",
+                pageId: getStartedTo,
+              },
+            ]
+          : []),
+        ...(showOverview
+          ? [{ ...overview, pageId: ONBOARDING_ROUTES.setupOverview }]
+          : []),
+        ...section.items.filter((item) => item.id !== "overview"),
+      ],
+    };
+  });
+}
+
+/** The rail id of the "Get started" row. */
+export const SETUP_NAV_ID = "get-started";
+
+/** The "Full name" typed on the onboarding Create account form, so the
+ *  Mobile A Activity page can rank the new user in Top users (owner
+ *  2026-10-12). Set on both signup paths: Continue with Google passes ""
+ *  (it carries no name). In memory, like `lastChatPath`: a refresh starts
+ *  over. */
+let signupName = "";
+
+export const rememberSignupName = (name: string): void => {
+  signupName = name.trim();
+};
+
+export const onboardingSignupName = (): string => signupName;
+
+export const isOnboardingSignup = (state: unknown): boolean =>
+  typeof state === "object" &&
+  state !== null &&
+  (state as { onboardingSignup?: unknown }).onboardingSignup === true;
 
 /** Where the Current flow's "from" query sends Back from the listening and
  *  attack steps. */
@@ -75,13 +337,39 @@ export function flowOfRoute(pathname: string): "current" | "improved" | null {
   return "improved";
 }
 
+/** The workspace's own pages (owner 2026-10-13: the demo never leaves the
+ *  onboarding workspace): every sidebar row and the final page's explore
+ *  rows land on one. A cold load renders in place (OnboardingLayout), since
+ *  the explore rows open a new tab; the data pages then read the setup
+ *  traffic's localStorage mirror. */
+export const ONBOARDING_WORKSPACE_PAGES: ReadonlySet<string> = new Set([
+  "/messages-onboarding",
+  "/conversations-onboarding",
+  "/security-onboarding",
+  "/audit-trail-onboarding",
+  "/policies-onboarding",
+  "/token-savings-onboarding",
+  "/models-onboarding",
+  "/activity-onboarding",
+  "/limits-onboarding",
+  "/members-onboarding",
+  "/teams-onboarding",
+  "/billing-onboarding",
+  "/billing-onboarding/plans",
+  "/api-keys-onboarding",
+  "/notifications-onboarding",
+  "/settings-onboarding",
+]);
+
 /** Exits: finishing or skipping setup lands on the user's real workspace,
- *  the Default twin of each page. */
+ *  the Default twin of each page. The four "Explore your Gateway" pages stay
+ *  in the onboarding workspace (owner 2026-10-13), on routes that mount
+ *  their Default twins (App.tsx). */
 export const ONBOARDING_EXITS = {
   overview: "/overview-default",
   messages: "/messages-default",
-  policies: "/policies-default",
-  limits: "/limits-default",
-  savings: "/token-savings-default",
-  models: "/models-default",
+  policies: "/policies-onboarding",
+  limits: "/limits-onboarding",
+  savings: "/token-savings-onboarding",
+  models: "/models-onboarding",
 } as const;

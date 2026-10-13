@@ -79,10 +79,11 @@ so a fix starts at the flow, not the styling.
 
 ## 4. The gate before building
 
-Write it with the Write tool to a file (for example `<your scratchpad>/ux-gate.md`),
-one labelled line each, before any UI write, and quote it in your report.
-The UI gate hook checks the nine labels; a gate only in your reply text may
-not reach the transcript until your turn ends, so the hook cannot see it. Objects come before screens and actions
+Answer these before any UI write. For a small edit, answer them in your
+head: no file, no write-up. For feature-size work (a new UI file, or one
+edit over 40 changed lines) they go into the ux-designer `design-spec.md`
+(skill `ux-designer:design-spec`), which the plugin hook checks before the
+build (owner 2026-10-10). Objects come before screens and actions
 attach to objects (OOUX), so the order matters. Why each line exists, with
 sources: `references/deciding-not-defaulting.md`.
 1. `Job:` what the user came to do.

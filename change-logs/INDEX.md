@@ -9,8 +9,48 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-13](./2026-10/changelog-10-13.md)
+
+- Activity: Top users and Recent key usage show the signed-in owner
+- Onboarding step 3: realistic request sizes, 0.1% compression
+- Workspace menu: Free sits under Pro
+- Onboarding workspace stays self-contained: sidebar routes, links, fallback
+- Onboarding: data pages and setup Overview show the step 3 data
+- Onboarding phone: A and B demos each start at their own signup
+- Onboarding: Explore your Gateway rows stay in the onboarding workspace
+- Onboarding step 3: spinner on pending buttons
+- Onboarding desktop: Gate Connect app defaults to Claude Code in emailed link and fallback
+- Onboarding desktop: Manual setup title, no upgrade promo, shorter model subtitle
+- Onboarding desktop: billing choice on both setup methods, Fable 5 default
+- Onboarding desktop: `/checkout-onboarding` page
+- Onboarding desktop: Manual route figure and landing card titles
+- Onboarding desktop: step 3 route animation
+- Onboarding desktop: setup steps, real Gate Chat, setup Overview
+
+### [2026-10-12](./2026-10/changelog-10-12.md)
+
+- Onboarding phone demo: chat, signup and mobile pages with demo traffic
+- Onboarding phone: auth 44px targets and chat readable at 200% text
+
+### [2026-10-11](./2026-10/changelog-10-11.md)
+
+- Onboarding Gate Chat: sign-up path and Onboarding version
+- Onboarding Gate Chat: top bar with site menu
+
+### [2026-10-10](./2026-10/changelog-10-10.md)
+
+- design.md rewritten to DESIGN.md best practice
+- Badge and Button contrast notes
+- Onboarding setup: lit tiles, wider orbit, Claude 5.5 models
+
 ### [2026-10-09](./2026-10/changelog-10-9.md)
 
+- Onboarding setup: Claude Code starts on an Anthropic model
+- Onboarding setup: route motion and model picker
+- `Combobox` primitive
+- Onboarding start page (phone and desktop picker)
+- Onboarding setup page
+- RadioGroupItem `indicator="check"`, Select `lg`, download link trigger
 - Retention helper carries the way past the ceiling
 - Button shadow rule, `touch` size
 - Card `elevation` prop

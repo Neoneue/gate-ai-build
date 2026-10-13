@@ -28,6 +28,7 @@ import { MiniRadio, MiniRadioGroup } from "@/components/ui/mini-radio-group";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TextLink } from "@/components/ui/text-link";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { cn } from "@/lib/utils";
 import { ChoiceCard } from "@/pages/onboarding-shared";
@@ -336,8 +337,15 @@ function detectPlatform(): PlatformId {
 
 export function DownloadGateConnectDialog({
   onDownload,
+  trigger = "button",
+  triggerLabel = "Download Gate Connect",
 }: {
   onDownload?: () => void;
+  /** `button` = the primary download key; `link` = a quiet text button
+   *  (TextLink), for a secondary "download again" beside another primary
+   *  action (onboarding routing step, owner 2026-10-09). */
+  trigger?: "button" | "link";
+  triggerLabel?: string;
 } = {}) {
   const detected = useMemo(() => detectPlatform(), []);
   const [open, setOpen] = useState(false);
@@ -368,10 +376,14 @@ export function DownloadGateConnectDialog({
     >
       <DialogTrigger
         render={
-          <Button size="default">
-            <DownloadIcon aria-hidden data-icon="inline-start" size={16} />{" "}
-            Download Gate Connect
-          </Button>
+          trigger === "link" ? (
+            <TextLink className="type-label-14">{triggerLabel}</TextLink>
+          ) : (
+            <Button size="default">
+              <DownloadIcon aria-hidden data-icon="inline-start" size={16} />{" "}
+              {triggerLabel}
+            </Button>
+          )
         }
       />
       <DialogContent

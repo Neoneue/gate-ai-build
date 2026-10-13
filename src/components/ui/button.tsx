@@ -77,6 +77,12 @@ const buttonVariants = cva(
         // (blue-600 on blue-700 light, blue-500 on blue-600 dark), so the hole
         // closes as a deliberate edge. Fixing it here rather than by dropping
         // `bg-clip-padding` from base keeps every bordered variant intact.
+        //
+        // Dark mode leans on that border. Measured on the tinted Policies
+        // banner: fill vs surface 11.7:1 light, 2.15:1 dark; border vs surface
+        // 6.8:1 light, 3.5:1 dark. The dark fill alone is under the 3:1
+        // non-text minimum (WCAG 2.2 SC 1.4.11), so the border carries the
+        // boundary there and is not optional.
         promo:
           "shadow-(color:--promo-cta-shadow) border-promo-cta-border bg-promo-cta text-promo-cta-foreground shadow-sm hover:bg-promo-cta-hover",
         // The outline for a control that sits ON an info Callout (added

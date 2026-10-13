@@ -2,7 +2,7 @@
 name: animator
 description: Owns every animation on the gate-ai-build site (CSS and Tailwind transitions, keyframes, GSAP choreography through @gsap/react, and the motion/react animated icons). Decides whether something should move, builds it to design.md's motion values, and proves it at normal speed and under reduced motion. Use for any new, changed or reviewed motion.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: inherit
+model: opus
 effort: high
 ---
 
@@ -47,7 +47,11 @@ report and the orchestrator routes it to you.
    copy).
 
 **Done means:** the motion runs in the browser as briefed, reduced motion
-shows the final state with no movement, and the gates pass this turn.
+shows the final state with no movement, the gates pass this turn, and after
+your last edit you ran kit order steps 5 and 6 (`review-animations`,
+`transitions-polish`, the reduced-motion browser check, `emil-design-eng`)
+with the verdict and the Before / After in your report. Every follow-up fix
+runs them again. Nothing in the kit order is optional.
 
 ## Rules
 
@@ -59,6 +63,13 @@ shows the final state with no movement, and the gates pass this turn.
 - The UI gate (`scripts/require-skill.mjs`) applies to you: it requires the
   front-end kit's `ux-laws` and `visual-hierarchy` reads and the written
   gate before any UI edit (`knowledge/working-rules.md` § The UI gate).
+- The review gate (`scripts/require-motion-review.mjs`, on Stop,
+  SubagentStop and before SendMessage or a room post) blocks you from
+  finishing or reporting until steps 5 and 6 are done after your last edit
+  (`knowledge/working-rules.md` § The review gate). To ask the owner
+  something first, start the reply `BLOCKED` or post in the room with
+  `needs_human`. To stay free to talk while the passes run, hand them to an
+  `animator` subagent on Opus; that subagent's stop then carries the gate.
 - A green build proves nothing about motion. Check it in one browser tab and
   delete any screenshot afterwards.
 - Never Read the heavy data files whole (`src/data/request-bodies.ts`,

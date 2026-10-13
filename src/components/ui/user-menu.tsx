@@ -1,5 +1,6 @@
 import { UserRound } from "lucide-react";
 import type * as React from "react";
+import { useLocation } from "react-router-dom";
 
 import { LogoutIcon } from "@/components/ui/logout";
 
@@ -12,6 +13,7 @@ import {
   MenuTrigger,
 } from "@/components/ui/menu";
 import { AVATAR_TONE_CLS } from "@/components/ui/monogram-types";
+import { keepInOnboarding } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 /* Desktop-only (`lg`+). Below `lg` the nav Sheet renders the same account
@@ -32,6 +34,7 @@ function UserMenu({
   align = "end",
   sideOffset = 8,
 }: UserMenuProps) {
+  const { pathname } = useLocation();
   return (
     <Menu>
       <MenuTrigger render={children} />
@@ -64,7 +67,9 @@ function UserMenu({
           </div>
         </MenuLabel>
         <MenuSeparator />
-        <MenuItem onClick={() => onNavigate?.("/settings")}>
+        <MenuItem
+          onClick={() => onNavigate?.(keepInOnboarding(pathname, "/settings"))}
+        >
           <UserRound aria-hidden strokeWidth={1.75} />
           Settings
         </MenuItem>

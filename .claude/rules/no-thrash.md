@@ -8,6 +8,21 @@ applied to the wrong twin looks identical to a fix that didn't work. Before
 editing, confirm which route renders what the user is looking at. The
 screenshot usually names the route.
 
+**Mobile demo versions are separate from desktop (owner 2026-10-11).** Work
+on a mobile onboarding version (Mobile A, Mobile B) never edits a file,
+route or shared primitive the desktop version uses. Copy the part into
+`src/pages/onboarding/` and route it as `/<page>-mobile-onboarding`; a phone
+link change goes only on the `lg:hidden` element. A desktop browser narrowed
+to phone width is a separate, later problem, never a reason to touch desktop.
+The routes are listed in `data-model.md` ("Onboarding workspace").
+Which page to copy (owner 2026-10-12, corrected 2026-10-13): with no data
+yet, the Default twin's layout; once the demo has data, the full Free page
+(every section, control and card), never Pro: a new workspace is Free until
+it upgrades. A section that has nothing to show keeps its own empty state.
+Never fill the Default layout with data. This holds for the desktop
+onboarding workspace too. Compare the result against the
+live product's phone page before reporting.
+
 **A green build is not proof the feature works.** Vite renders the app despite
 TypeScript errors, so `tsc`, lint, and build all passing says nothing about
 whether the behavior is correct. Verify in the browser before and after any

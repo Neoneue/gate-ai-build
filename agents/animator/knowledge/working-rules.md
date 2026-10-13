@@ -66,14 +66,41 @@ and a Python file name the product never shows.
 
 `scripts/require-skill.mjs` blocks any edit to a UI file until this session
 has read, in order: a skills `INDEX.md` (yours counts), then
-`agents/front-end-developer/skills/ux-laws/SKILL.md`, then the written gate
-(labelled lines Job, Path, Expectation, Precedent, Objects, Actions, Laws,
-Patterns, Rejected, in visible text; for motion, Precedent names the
-reference the motion follows and the existing motion in the repo it
-matches), then
+`agents/front-end-developer/skills/ux-laws/SKILL.md` (think its gate
+through, no write-up; for motion, the precedent is the reference the motion
+follows and the existing motion in the repo it matches), then
 `agents/front-end-developer/skills/visual-hierarchy/SKILL.md`, then one
 build skill. For motion work the build skill is usually `animate` or
-`gsap`. It resets after each commit.
+`gsap`. It resets after each commit. For a motion edit (one that adds,
+removes or changes keyframes, an animation or transition, a duration, curve
+or delay, GSAP or `motion/react`, or any edit to a file named for motion),
+whoever makes it, it also requires, after the index and before ux-laws,
+this file (once per session) and then `motion-ux-laws` (per change). The
+edit decides, not the role: an edit that only sits near existing motion
+owes nothing extra.
+
+## The review gate
+
+`scripts/require-motion-review.mjs` runs when a session ends a turn, when a
+subagent stops, and before a `SendMessage` or room post. Once you have made
+a motion edit, it blocks until, after your LAST motion edit and in this
+order, you have read `review-animations`, read `transitions-polish`, checked
+the motion with reduced motion on (a tool call setting `reducedMotion` to
+`"reduce"`), and read `emil-design-eng`. Your report must name the
+review-animations verdict (Approve or Block) and hold the emil-design-eng
+Before / After. Any later motion edit, a small follow-up fix included,
+resets all of it. There is no skip.
+
+Two ways to stop before the passes are done, neither of which skips them:
+
+- **Ask the owner:** a reply whose first line starts `BLOCKED`, or a room
+  post with `needs_human: true`. The passes are still owed at the next stop.
+- **Hand them off:** spawn an `animator` subagent on Opus (the definition's
+  model; an explicit non-Opus `model` does not count) after your last edit,
+  so you stay free to talk to the owner. That subagent, with no edit of its
+  own, must then do all four steps and put the proof in its report. Running
+  the whole build in an animator subagent works the same way: its own stop
+  is gated.
 
 ## Proof
 

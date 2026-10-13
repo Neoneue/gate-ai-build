@@ -299,38 +299,351 @@ path). Switching in always lands on `ONBOARDING_FIRST_STEP`
 
 - **State is in memory only.** `OnboardingLayout` (layout route, file
   `src/pages/onboarding/OnboardingLayout.tsx`) owns `OnboardingProvider`
-  (`onboarding-state.tsx`); no localStorage / sessionStorage. A refresh, a
-  typed URL or a cold load of any step other than `/overview-onboarding`
-  redirects there; leaving the workspace unmounts the layout and resets it.
+  (`OnboardingProvider.tsx`, state shape in `onboarding-state.ts`); no
+  localStorage / sessionStorage. A refresh, a typed URL or a cold load of
+  any step other than `/overview-onboarding` redirects there, unless it
+  arrives from the demo signup (`ONBOARDING_SIGNUP_STATE`); leaving the
+  workspace unmounts the layout and resets it. Exception: the Mobile A
+  signup marks the tab (`markMobileATab`, sessionStorage
+  `gate-onboarding-mobile-a`, in `onboarding-routes.ts`), and a cold load in
+  a marked tab redirects to `/sign-in-onboarding/a` instead, so a phone
+  refresh never lands on the desktop start. Loading `/overview-onboarding`
+  clears the mark. Second exception (owner 2026-10-13): desktop opens
+  Gate Chat in a new tab (the sidebar row, "Open Gate Chat", "Continue
+  chatting"; `openInNewTab`, with the `NEW_TAB_CUE` screen-reader cue), so a
+  cold load of `/chat-onboarding` on desktop starts there as a new user, and
+  `/chat-onboarding/:id` falls back to the landing. The phone keeps the
+  same tab and the redirect.
+- **Second stored value: the onboarding credit balance** (owner
+  2026-10-13: "During onboarding, if a user adds credits then opens Gate
+  chat any time during the demo it needs to show the updated balance and
+  they can then use paid models"). `onboarding-credits.ts` keeps it in
+  localStorage `gate-onboarding-credits` (every access in try/catch;
+  blocked storage reads 0). Every onboarding Add credits writes it
+  (`addOnboardingCredits`, from step 2 in `improved-setup.tsx` and the
+  hidden Current flow's `current-setup.tsx`), mirrored next to the setup
+  tab's in-memory `balanceUsd`. `useOnboardingBalance` reads it, live
+  through the `storage` event, so a chat tab already open updates. A fresh
+  run (`OnboardingLayout` mounting on `/overview-onboarding` or on the
+  Mobile A signup) resets it to 0; a cold chat tab never does. Gate Chat
+  (phone and desktop) shows it as Credits; above 0 a paid model sends, at 0
+  the refused send holds. Nothing is deducted per message (the shared chat
+  does not deduct either).
 - **Only the Improved flow is presented** (owner, 2026-10-08). The Current
   flow's screens are built but hidden: its routes exist and redirect to step 1.
+- **Demo versions (owner, 2026-10-11).** Mobile and desktop are SEPARATE
+  versions: nothing built for a mobile version edits a file, route or shared
+  primitive the desktop version uses (a desktop browser narrowed to phone
+  width is a later, separate problem). **Mobile A** (PRD "Onboarding by
+  device", built): `/sign-in-onboarding/a` -> `/sign-up-onboarding/a` ->
+  `/chat-onboarding` -> site menu. **Mobile B** (built 2026-10-13):
+  `/sign-in-onboarding/b` -> `/sign-up-onboarding/b` -> the 2-card phone
+  start on `/overview-onboarding` (no Mobile A mark); its phone chat entry
+  runs the Mobile A chat, see "The phone demo chat" below. Both versions
+  start at sign-in (owner 2026-10-13); the bare `/sign-in-onboarding` and
+  `/sign-up-onboarding` redirect to A. Paths live in `ONBOARDING_AUTH`
+  (`onboarding-routes.ts`); one `OnboardingSignIn` and one
+  `OnboardingSignUp` take a `version` prop. The phone chat's Sign out
+  returns to B's sign-in from an Option B chat, A's otherwise
+  (`chatSignInPath`). The **Desktop** entry is not
+  built.
+  Mobile pages follow one naming rule: `/<page>-mobile-onboarding`.
+- **Auth shell (owner 2026-10-12).** `/sign-in-onboarding/(a|b)` and
+  `/sign-up-onboarding/(a|b)` mount under `OnboardingAuthLayout`
+  (`src/pages/onboarding/OnboardingAuthLayout.tsx`), a copy of
+  `layouts/AuthLayout.tsx`, which keeps `/sign-in` and `/sign-up`. Below
+  `md` the dark stage is viewport-fixed at `h-lvh` and the page flows in the
+  document (`min-h-svh`), so with the phone keyboard open the card scrolls up
+  to every field while the background stays put. `md+` renders exactly as
+  AuthLayout. `/sign-in-onboarding/(a|b)` renders `OnboardingSignIn`
+  (`src/pages/onboarding/OnboardingSignIn.tsx`), the onboarding copy of
+  `pages/SignIn.tsx` (same card, copy and links), so `/sign-in` keeps the
+  shared one. Phone touch targets, below `md` on both screens: every
+  full-width action is 44px (Button `size="touch"`, `default` 36px from
+  `md`, picked by `useIsBelowMd` in `use-is-below-md.ts`); the
+  show-password toggle keeps its drawn size and gets a 36x36 tap area (a
+  centred `after:` box); the EULA checkbox keeps its 38x30 hit area.
+
+**Mobile A, the site from the chat.** The chat's top bar
+(`onboarding-chat-top-bar.tsx`, a copy of `pages/chat/chat-top-bar.tsx`) has
+no workspace switcher, notifications or Ask AI. Below `lg` it shows the logo
+mark and the site menu (outline Menu key, right Sheet with `SidebarPanel`,
+nav `phoneSiteSections(phoneOverviewPath())` in `onboarding-routes.ts`).
+Phone links (owner 2026-10-12: Overview differs so A and B can be shown
+side by side):
+
+| From the chat or a phone page (below `lg`) | Mobile A tab | Option B |
+| --- | --- | --- |
+| Logo mark, site menu Overview row, menu brand | `/overview-mobile-onboarding` (with counts) | `/overview-onboarding` (B's 2-card start) |
+| Site menu Messages row | `/messages-mobile-onboarding` | same |
+| Site menu Activity row | `/activity-mobile-onboarding` | same |
+| Site menu Conversations row | `/conversations-mobile-onboarding` | same |
+| Site menu Gate Chat row | the chat page last open (`lastOnboardingChatPath`, same tab: state is in memory) | same |
+| Every other site menu row | its `-default` twin (read only, unchanged) | same |
+
+`phoneOverviewPath()` is the Mobile A Overview when `isMobileATab()`, else
+B's start. B's phone start (`ImprovedStart` below `md`) gives the
+dashboard's phone menu the same nav with Overview at its own page, and its
+Gate Chat row starts the phone chat like the cards (`usePreparePhoneChat`
+on `onMobileNavigate`). Both props live on
+`src/pages/onboarding/OnboardingDashboardChrome.tsx`, the onboarding copy
+of `layouts/DashboardChrome.tsx` rendered only by `onboarding-chrome.tsx`
+(owner 2026-10-12: the shared chrome is never edited for the phone demo);
+phone Sheet only, the `lg+` rail keeps `sections`. **Drift risk:** the copy
+is the shared chrome verbatim plus those two props, so a fix to
+`DashboardChrome.tsx` must be copied into it. Before 2026-10-12 that menu
+sent Messages, Activity and Conversations to their `-default` twins and
+Gate Chat to the chat landing.
+
+**Desktop flow below the phone breakpoint = Option B (owner 2026-10-12).**
+One breakpoint, `useIsMobileSetup` (`max-width: 767px`, or a short touch
+screen): the switch `ImprovedStart` already used for `MobileStart` versus
+`DesktopPicker`. Below it, the desktop flow (no Mobile A tab) is Option B:
+the 2-card start, its cards and menu Gate Chat row open the phone chat, the
+menu goes to B's targets. At 768px and up the flow is unchanged: between
+768 and 1023 the `lg:hidden` menu shows the desktop nav beside
+`DesktopPicker`, as before. Resizing: narrowing on the start page sets no
+mark until a card or the menu row is tapped; widening on it mounts
+`DesktopPicker`, which clears the B mark, so its Open Gate Chat is the
+desktop chat. A chat keeps the mode it opened in (read once on mount):
+widened mid-chat, the phone chat and its conversation stay (the quick
+actions row is `sm:hidden`); a desktop chat narrowed stays the desktop
+chat.
+
+The `lg+` brand lockup keeps `chatOverviewUrl()` (`/overview-onboarding`),
+so the desktop chat is unchanged. **Demo traffic (owner 2026-10-12): every
+demo message counts.** The four phone pages (Overview, Messages, Activity,
+Conversations) are empty until the first Gate Chat reply settles, then count
+every settled scripted turn across every demo chat (Gate Chat traffic is
+real Gate traffic). One source: `useOnboardingDemoTraffic` /
+`onboardingDemoTraffic` (`onboarding-demo-traffic.ts`, replacing the
+first-message-only `onboarding-first-message.ts`) reads `scripted` and
+`titles` from `onboarding-chat-store.ts` and returns `messages` (newest
+first; each: prompt, send time, catalog model via the free twin's pay as
+you go id, MOCK `estimateTokens` in and out, `costOf` = $0.00, status
+success, security allow, not compressed), `conversations` (one per demo
+chat, newest first: title with rename, updated, Turns = Reqs, token and
+cost sums, models, prompts) and `models` (first-use order, each with a
+palette slot so a model keeps its colour on every page). A reply still
+writing is not counted; deleting a chat keeps its log. The demo run (chips
+1, 2, 3 in one chat) gives 3 messages and 1 conversation with 3 turns; a
+new chat adds a row. Every tile, chart and table reads this one list, so
+the numbers reconcile. Overview: Messages (this week), Threats detected 0,
+"Tokens used" bars per day stacked by model (`demoWeek`), "Latest messages"
+and "Latest conversations" rows (8-row cap). Activity keeps the
+`ActivityDefault` layout until then, then the Pro `Activity` layout: range
+control (local state), the KPI rail (Total spend $0.00, Total messages,
+Tokens used, no delta, sparks per bucket), Tokens over time stacked by
+model with a per-model breakdown (Tokens or Spend lens, no dimension
+Select or Savings), Top models (each model used), Top users (the Create
+account "Full name", or "You" on the Google path, `rememberSignupName` in
+`onboarding-routes.ts`, with every message), Top API keys empty, Top
+attack types at 0, Recent key usage empty. Buckets anchor on the newest
+send. Messages keeps the `RequestsDefault` layout until then, then the Pro
+`Requests` layout: range control (local state, never the shared
+`rangeStore`), the hero (Total messages, Success, Errors 0, no delta) with
+each message counted in its send bucket (`demoMessagesHero` in
+`onboarding-messages-hero.ts`, the Pro bucket counts per range anchored on
+real now), the search (filters by prompt), inert Filters and Export CSV,
+and the paged table (Time, Status, Security, Message, Model, Tokens In/Out,
+Cost). Conversations (`OnboardingMobileConversations.tsx`) keeps the
+`ConversationsDefault` layout until then, then the Pro `Conversations`
+layout: range control (local, anchored on real now), the KPI rail
+(Conversations, Avg turns, Avg cost / conv), the search (title and
+prompts), the Key select (only "All keys") and Model select (models used),
+and the paged table (Conversation, Models, Turns, Reqs, Tokens in, Tokens
+out, Cost, Updated). Cut from the Pro copy: the Key column, the conversation
+id line and the row click with its trace page and detail dialog (no API key
+and no Gate record). Savings, security events and key usage stay empty. No
+request id or detail page, so rows open nothing. Shared parts:
+`onboarding-mobile-parts.tsx` (`DemoUsageChart`).
+
+**The phone demo chat (owner 2026-10-12).** One gate,
+`isPhoneDemoChat()` (`onboarding-routes.ts`): the Mobile A tab mark OR
+Option B's phone chat mark (`markOptionBPhoneChat`, in memory, set by
+`useOpenChatOnPhone` in `improved-start.tsx`, the phone two-card start's
+"Open / Resume Gate Chat", its phone menu's Gate Chat row and the
+handoff's Gate Chat buttons). It survives
+a return to B's phone start (its menu Overview goes there mid-run); the
+desktop start (`DesktopPicker`) clears it on mount and a Mobile A signup
+(`markMobileATab`) clears it; `/overview-onboarding` still clears the Mobile
+A mark. "Resume Gate Chat" (after the first reply) returns to
+`lastOnboardingChatPath()`, the same conversation. So Option B's phone
+chat entry runs the same chat as Mobile A: free-model start, the picker,
+the refused paid-model state, the Mobile A quick actions, scripted replies
+with their follow-ups, the email button, no "Setup complete" toast and the
+demo traffic on the phone pages. It is the ONE "phone user not yet set up
+on a desktop" Gate Chat, built once and used by both versions; Option B
+also keeps the link card on its landing. The regular Gate Chat for Free,
+Pro and Enterprise (two-model compare) is separate and unchanged. The refresh redirect to `/sign-in-onboarding/a` stays on
+`isMobileATab` alone (Option B's signup sets no mark; a reload starts over). The
+desktop start's "Open Gate Chat" and the 1440 chat are unchanged.
+
+- **Picker:** `onboarding-model-selector.tsx`, a copy of
+  `pages/chat/chat-model-selector.tsx` with the Free tab shown (Favorites,
+  Free, Recent, All models; default All models). Recent is fed from the
+  onboarding store: `onboardingModelLastUsed` maps each model the session
+  sent with (lane `modelId`) to its latest turn's `sentAt`, applied to the
+  picker's list in `OnboardingChat` (phone and desktop); the `catalog` map itself keeps
+  `lastUsedAt: null`.
+- **Reply cards:** `onboarding-chat-message.tsx`, a copy of
+  `pages/chat/chat-message.tsx` (owner 2026-10-12), draws each Mobile A
+  turn; its `OnboardingChatLaneHeader` is shared with the follow-up cards
+  (`onboarding-computer-prompt.tsx`). It leaves out attachment and memory
+  chips, so a turn that carries either keeps the shared `ChatMessage`
+  (`canUseOnboardingChatMessage`). The cards' usage row is
+  `onboarding-chat-usage-row.tsx`, a copy of `pages/chat/chat-usage-row.tsx`.
+  At 200% text the header wraps (time and id drop below the name), the
+  metrics block wraps between metrics, and the composer's send drops below
+  the model chip so the name stays visible; 100% renders as the shared
+  parts do.
+- **Quick actions:** `ONBOARDING_STARTER_PROMPTS` (phone demo only; the
+  desktop chat shows the shared `CHAT_STARTER_PROMPTS`): "What is Gate
+  AI?", "What will Gate protect for me?", "How do I use Gate on my
+  computer?" (copywriter, owner-approved 2026-10-12; was "Email setup
+  link"). They stay
+  under the thread in a conversation too (owner 2026-10-12, "press the
+  first button, press the 2nd button, and then press the 3rd"), each adding
+  a turn to the open chat, disabled while a reply is writing. Chips 1 and
+  2: once a turn the matcher routes to that chip's reply (tapped or typed)
+  has its reply finished, the arrow becomes a success check, holds
+  `ONBOARDING_TIMING.quickActionAnsweredHold` (2000ms), then the chip leaves
+  the row (`data-chip-state` idle, answered, leaving; exit length
+  `quickActionExit`). Chip 3 never leaves:
+  once the link was sent (`setupLinkSent` or `improved.handoffSent`) it keeps
+  the check (`sent`) and reads and posts "Re-send email setup link", which
+  gets the offer card. Per conversation; the landing and every new chat
+  start with chips 1 and 2 unchecked. Typed text
+  close to a chip gets its reply (`selectOnboardingReply`, words not
+  strings: "what's gate", "tell me about Gate", "how does Gate work" ->
+  chip 1; protect, safe, secure, security -> chip 2; "Claude" -> the
+  Claude Code reply; anything else -> the fallback). Chip 3, tapped or
+  typed (`isSetupLinkRequest`, checked before the others: "use" with
+  computer, desktop or laptop and no "claude"; "email" with "setup" or
+  "link"; or "link" with "setup" or "send"; "set up" and "e-mail" fold
+  in), posts
+  as the user's message and its reply
+  settles into the computer offer card with the email button
+  (`OnboardingSetupLinkReply`); the store lists those turns in
+  `setupLinkTurnIds`. The first reply's follow-ups render right after their
+  own turn (`onboarding-chat-thread.tsx`, a copy of `pages/chat/chat-thread.tsx`
+  with `renderTurn`); when that first turn was chip 3's question, only the
+  logged note follows.
+- **Email sent:** every offer card reads "Re-send email setup link" once
+  the chat store's `setupLinkSent` or Option B's `improved.handoffSent`
+  (sent from its phone start) is true. The chat never sets `handoffSent`.
+  The other way, B's phone start email card reads "Re-send email" once
+  either is true (`useSendSetupLink({ sentInChat })`), without the
+  handoff's simulated desktop open.
+- **Getting the link again:** the offer card shows once, after the first
+  reply. To get it again the user scrolls up and taps Re-send, asks the
+  agent, or taps quick action 3, which answers with the card in the
+  button's current state. The PRD and ticket do not cover getting the link
+  again; this is the demo's answer.
+
+**Improved desktop setup: top-bar menu and failure previews (2026-10-13).**
+
+- **Menu** (`ImprovedProgress`, `onboarding-chrome.tsx`): shown only on step
+  2, step 3 and the final page for Gate Connect or Manual setup (none on the
+  picker or the Gate Chat path). Rows come from `IMPROVED_PATH_STEPS`, one
+  list per path (row 2 is that path's step 2 title); the count's total is
+  the list's length. A row counts once every row before it is done. The
+  trigger only opens the menu, on both flows. Forward only: the step due
+  next is the one link; done and later rows are plain text, on both flows,
+  and a visited task row in the Optional list is plain text too. "Tasks
+  N/4" with the Optional explore rows only once `finished`.
+  Switching method at the picker clears `connected`, `received`, `caught`
+  and `finished`; changing the app on step 2 clears `received`, `caught`
+  and `finished` (`RESET_CHECKS`; so do the billing type and model, when
+  `SHOW_BILLING_ON_GATE_CONNECT` brings them back).
+- **Failure previews:** the step 3 failure states are previewed with a URL
+  flag, read once: open `/overview-onboarding?simulate=fail-connection`
+  (the first test message check fails), `?simulate=fail-demo` (the first
+  protection demo run fails) or `?simulate=fail-both`, then run the flow; a
+  retry succeeds. The flag goes on the first URL because a reload restarts
+  the flow there (`simulateFlag`, `onboarding-routes.ts`); step 3 also reads
+  it from its own URL.
+- **Rail** (`setupSidebarSections`, `onboarding-routes.ts`; passed through
+  `OnboardingDashboardChrome`'s `sections`): in the Improved flow on
+  desktop a "Get started" row (ListChecks) sits above Overview and is the
+  active row on every step. Forward only: it opens the step due next, or
+  the final page after Finish setup. Overview is hidden until Finish setup,
+  then opens the Overview after setup; Get started leaves once all four
+  explore tasks are done. `ONBOARDING_SIDEBAR_SECTIONS` and the phone menus
+  are unchanged.
+- **Overview after setup** (`/overview-setup-onboarding`,
+  `OnboardingSetupOverview`): "Visit Overview" on the final page opens it
+  in the same tab. A copy of the Pro Overview fed only by the two step 3
+  messages (`setupTraffic`, `onboarding-setup-traffic.ts`, timestamps
+  `receivedAt` / `caughtAt`): Messages 2, Threats detected 1, the tokens
+  chart with its controls, Latest messages (success / allow, error /
+  block), Latest security events (Injection, blocked); Tokens saved and
+  Latest conversations in their empty states; no "View all", rows open
+  nothing. Cost is $0.00 on provider billing, the catalog list price on
+  Gate credits. Ask AI shows (`showAskAi`); the bell and the menu do not.
 
 ```mermaid
 graph LR
-    OVO["/overview-onboarding (choose: Gate Chat / Gate Connect / Manual)"] -->|Gate Chat| CHO["/chat-onboarding (existing Gate Chat)"]
+    SIO["/sign-in-onboarding/a"] --> SUO["/sign-up-onboarding/a"]
+    SUO -->|Mobile A signup| CHO
+    SIB["/sign-in-onboarding/b"] --> SUB["/sign-up-onboarding/b"]
+    SUB -->|Mobile B signup| OVO
+    CHO -->|phone A: logo or menu Overview| MOO["/overview-mobile-onboarding"]
+    CHO -->|phone B: logo or menu Overview| OVO
+    MOO -->|menu Gate Chat| CHO
+    CHO -->|menu Messages| MMO["/messages-mobile-onboarding"]
+    CHO -->|menu Activity| MAO["/activity-mobile-onboarding"]
+    CHO -->|menu Conversations| MCO["/conversations-mobile-onboarding"]
+    OVO["/overview-onboarding (choose: Gate Chat / Gate Connect / Manual)"] -->|Gate Chat| CHO["/chat-onboarding (onboarding Gate Chat)"]
     OVO -->|Connect or Manual| ICO["/improved-connect-onboarding"]
     OVO -->|phone: email a setup link| IHO["/improved-handoff-onboarding"]
     IHO -->|auto after 3s| ILO["/improved-link-onboarding (valid by default)"]
     ILO --> ICO
     ICO --> IVO["/improved-verify-onboarding"]
     IVO --> IDO["/improved-complete-onboarding"]
+    IDO -->|Visit Overview| SOO["/overview-setup-onboarding"]
     CHO -->|first send, then top-bar Setup complete| IDO
 ```
 
 | Route | Component (`src/pages/onboarding/`) | Notes |
 | --- | --- | --- |
-| `/overview-onboarding` | `OnboardingOverview` → `ImprovedStart` | Desktop: three method cards + Continue / Open Gate Chat. Phone (`max-width: 767px` or short touch): Gate Chat or "Continue on desktop". |
+| `/sign-in-onboarding/a`, `/sign-in-onboarding/b` | `OnboardingSignIn version` under `OnboardingAuthLayout` | The demo's sign-in, one per phone version (bare `/sign-in-onboarding` redirects to `/a`); Create an account opens the same version's sign-up. The onboarding copy of `pages/SignIn.tsx` (same card, copy and links, `/sign-in` keeps the shared one); below `md` its full-width actions are 44px and the show-password tap area 36x36. |
+| `/sign-up-onboarding/a`, `/sign-up-onboarding/b` | `OnboardingSignUp version` under `OnboardingAuthLayout` | "Create your account" (owner 2026-10-12, from the live product), replacing the shared invite-code `SignUp`, which `/sign-up` keeps. EULA checkbox enables Continue with Google; Create account also needs a Full name and Work email (any text) and all five password criteria (12+ characters, lowercase, uppercase, number, symbol), shown live in a two-column checklist and a strength meter (1-2 met danger, 3-4 warning, 5 success). Pressing either button disables both, shows "Creating account" with a spinner for `CREATE_ACCOUNT_DELAY_MS` (3000ms), then A: `markMobileATab()` and opens `/chat-onboarding`; B: opens `/overview-onboarding` (no mark); both with `ONBOARDING_SIGNUP_STATE`. Legal links are inert; Sign in goes to the same version's sign-in. |
+| `/overview-onboarding` | `OnboardingOverview` → `ImprovedStart` | Desktop: three method cards + Continue / Open Gate Chat. Phone (`max-width: 767px` or short touch): Gate Chat or "Continue on desktop"; Gate Chat reads "Open Gate Chat" until the first reply, then "Resume Gate Chat"; the email card reads "Re-send email" once sent here or from the chat. Phone menu: the phone demo nav (see the phone links table). |
 | `/improved-handoff-onboarding` | `ImprovedHandoff` | Phone: "Check your email"; auto-opens the link after 3s. Desktop: the picker. |
 | `/improved-link-onboarding` | `ImprovedLink` | Valid link restores the phone's setup (toast) and resumes on `/improved-connect-onboarding`; expired / other-account / other-workspace screens are built for a `linkRedemption.scenario` that names them. |
-| `/improved-connect-onboarding` | `ImprovedConnect` | App, Billing (provider account or Gate credits + model + Add credits), Gate Connect download or API key + client config (`client-configs.tsx`, six clients). |
-| `/improved-verify-onboarding` | `ImprovedVerify` | "Check connection" simulates the check (900ms) then "Message received". |
-| `/improved-complete-onboarding` | `ImprovedComplete` | Route figure done, next steps, optional protection demo. |
-| `/chat-onboarding`, `/chat-onboarding/:conversationId` | existing `Chat` under `ChatLayout` | The first send marks setup complete. |
+| `/improved-connect-onboarding` | `ImprovedConnect` | Each section is a `SetupGroup`: a label-16 title with a muted copy-14 subtitle (official setup strings where they exist), 24px apart. Gate Connect: "Select an app" (subtitle "Which app do you want to protect?", Info tooltip that the pick is only a starting point), then "Select your billing type" (shown again, `SHOW_BILLING_ON_GATE_CONNECT = true`: the app is chosen first, release outcome 3, and Gate Connect needs it, desktop step 4), Gate credits adds "Select a model" and "Add credits", then "Download Gate Connect" / "Sign in and connect". Manual setup: no app select and no billing (always Existing subscriptions); "Create your first key" ("Select an active key or create a new one" once keys exist; key Select disabled with none, Create API key inline), then "Set your base URL and key": the official repo's `ConnectTabs` ported verbatim to `onboarding-connect-tabs.tsx` (gate @ 16c2edaa2; six app tabs that are the app choice, official captions and BYOK snippets), dimmed and inert until a key is chosen, then "I've saved my settings". The user creates or picks the key themselves, as the live product does (owner 2026-10-13), though PRD desktop step 2 reads "a key created for them". |
+| `/checkout-onboarding` | `OnboardingCheckout` | Mock hosted checkout (owner 2026-10-13): Gate Connect step 2's Add credits dialog hands off here with the amount in router state. Order summary ("Add Gate credits" plus a 5.00% processing fee), payment card, Pay. Pay adds the credits to setup state and `onboarding-credits.ts`, then returns to step 2; Back returns with the dialog reopened. Inside `OnboardingLayout` so setup state survives; no payment brand marks or colours. |
+| `/improved-verify-onboarding` | `ImprovedVerify` | Step 2's layout (owner 2026-10-13): back link "Connection settings" to step 2, route stage on the left (the setup route run replays each time a check starts; idle, live, done), labelled groups on the right, each card led by its `StatusRow` (improved-parts.tsx: success or error, badge tone pairing, `role="status"` / `role="alert"`) once it has a result. "Send a test message": helper, test message + copy, "Check connection" (900ms), then "Message received" with what Gate saw (Model = `testModelOf`: the picked model on Gate credits, else `SUBSCRIPTION_MODEL[app]`; Tokens In/Out = MOCK `estimateTokens`; Security = allow badge). "Run the protection demo" (after received, required): "Send the message" sets `caught` after 850ms, then "Prompt injection blocked." with the same rows for the demo message (Security = block badge) in place of the message field. "Finish setup" renders only once received and caught; it sets `finished` and opens the final page. Failure states (the product's, when a message does not go through): an error `StatusRow` and "Try again"; the figure returns to idle on a failed check; group 2 and Finish setup stay hidden while their step fails. |
+| `/improved-complete-onboarding` | `ImprovedComplete` | The Current flow's "You're protected and live" body (`ProtectedAndLive` in `current-verify.tsx`, shared with `CurrentComplete`) in `ImprovedColumn`: "Explore your Gateway" N/4 bar and four rows that set `improved.tasks[task]` and open their `-onboarding` page in a new tab (`openInNewTab`, also the menu's Optional rows and the Current page), so this tab keeps the checks. Primary "Visit Overview" (opens the Overview after setup); the Gate Chat path keeps "Continue chatting". Guarded: before Finish setup (`finished`, with received and caught; Gate Chat: received) it redirects to the step still due. |
+| `/overview-setup-onboarding` | `OnboardingSetupOverview` | The Overview after desktop setup: the Pro Overview fed by the two step 3 messages (see "Overview after setup" above). Redirects to the final page before Finish setup. |
+| `/chat-onboarding`, `/chat-onboarding/:conversationId` | `OnboardingChat` under `OnboardingChatLayout` | The workspace's own copy of Gate Chat (phone and desktop); the main `Chat` / `ChatLayout` are untouched. Store `onboarding-chat-store.ts` starts empty. Desktop flow (owner 2026-10-13, "the real Gate chat, even on onboarding"; reverses the fixed model of 2026-10-11): the real Gate Chat composer toolbar in `onboarding-chat-composer.tsx` (`onSelectLaneModel`): attach (`ChatAttachmentPicker` and chips, held in the browser), one `OnboardingModelSelector` per lane (Free tab, onboarding Recent), Compare adds lane 2 (two lanes at most) and Remove comparison drops it, lanes held in `draftModelIds` for a new chat or `setConversationModels` in an open one, as `Chat.tsx`; a new chat starts on the free default. Landing: `OnboardingChatLanding` with the shared title, description and `CHAT_STARTER_PROMPTS`, so its prompts can be disabled. Send (owner 2026-10-13, "Do what the PRD suggests"): a send or starter from a new chat starts the user's own conversation (`sendScripted(null, prompt, laneModelIds)`, titled by the prompt, in the history rail), one scripted reply per lane streaming in step (`live.laneIds`), MOCK usage at the model's cost; further sends add turns; the first send marks setup complete. Refused send when any lane is paid and the onboarding balance is 0: placeholder `PAID_MODEL_REFUSAL`, helper `PAID_MODEL_HELPER` (one lane) or `PAID_COMPARE_HELPER` (comparing), send and starters off. Two free lanes: helper `FREE_COMPARE_HELPER`. A paid lane with credits: no helper line (string not written yet). Mobile A tab (`isMobileATab`): onboarding landing and quick actions (`onboarding-chat-landing.tsx`); the composer's model is the main chat's picker (`ChatModelSelector`, one lane, onboarding catalog with the free twins), starting on the free default `constellation/qwen3-8-flash-free`; a pick is held in `draftModelIds` for a new chat (the first send opens the conversation on it, `sendScripted(..., modelId)`) or stored with `setConversationModels` in an open one. Paid model picked (refused send, owner 2026-10-12): placeholder `PAID_MODEL_REFUSAL`, helper line `PAID_MODEL_HELPER` (polite live region) in place of the free line, send and Enter off, quick actions disabled but still scrollable, typing and the picker stay on; a free pick restores send with the draft kept. Every send or quick action is answered from `src/data/onboarding-chat-script.ts` (`selectOnboardingReply`, quick action 1 = the typed phrase) via `onboardingChatStore.sendScripted`, which stores the conversation in `scripted` and streams into `live`; after the first reply `computerPrompt` shows `OnboardingComputerPrompt`: two follow-up agent replies drawn as reply cards (model header, MOCK usage row, Copy, no Regenerate): `LOGGED_NOTE` (check Activity and Messages, PRD phone step 3) then `COMPUTER_PROMPT` (PRD phone step 4): its button shows a spinner and "Sending email" for 2s (`ONBOARDING_TIMING.emailSend`), then the toast, then reads "Re-send email setup link" (`setupLinkSent` in the store). Mobile A shows no "Setup complete" toast. Reply usage is MOCK: `estimateTokens` (about 4 characters a token) for in and out, the free model's $0.00 cost, settled, not compressed; no scan result and no `gateRequestId` (no View message link) yet. |
+| `/overview-mobile-onboarding` | `OnboardingMobileOverview` under `OnboardingChatLayout` | The phone demo's Overview: the `Dashboard` layout, empty until the first message, then every demo message (see "Demo traffic" above); no "View all". Mobile only. |
+| `/messages-mobile-onboarding` | `OnboardingMobileMessages` under `OnboardingChatLayout` | The phone demo's Messages: a `RequestsDefault` copy until the first message, then a Pro `Requests` copy fed by every demo message (range control, hero, search, table). Mobile only. |
+| `/activity-mobile-onboarding` | `OnboardingMobileActivity` under `OnboardingChatLayout` | The phone demo's Activity: an `ActivityDefault` copy until the first message, then a Pro `Activity` copy fed by every demo message (range control, KPI rail, trend stacked by model, Top cards, Recent key usage). Mobile only. |
+| `/conversations-mobile-onboarding` | `OnboardingMobileConversations` under `OnboardingChatLayout` | The phone demo's Conversations: a `ConversationsDefault` copy until the first message, then a Pro `Conversations` copy with one row per demo chat (range control, KPI rail, search, Key and Model selects, table; no Key column, id line or row click). Mobile only. |
 | `/setup-connect-onboarding`, `/setup-gate-connect-onboarding`, `/setup-manual-onboarding`, `/setup-listening-onboarding`, `/setup-attack-onboarding`, `/setup-complete-onboarding` | `current-setup.tsx`, `current-verify.tsx` | Current flow, hidden: redirect to step 1. |
 
 Exits ("Explore first", "Open Overview", next-step links) land on the Default
 workspace twin (`ONBOARDING_EXITS` in `onboarding-routes.ts`). Assets:
 `public/onboarding/image-*.png`, `public/icons/providers/{codex,claude-code,hermes,openclaw-color}.svg`.
+
+**No notifications and no Ask AI in onboarding (owner 2026-10-13).** A
+brand-new workspace has no notifications, and Ask AI shows only after the
+demo, once "Visit Overview" leaves for the real workspace. Two more
+differences in `OnboardingDashboardChrome.tsx` (so the drift-risk line above
+is "the shared chrome plus two props, minus these"), at every width: no
+notifications bell (the shared `NotificationsMenu` is not mounted; owner:
+"hide notifications for onboarding", which replaced an empty-menu copy the
+same day), so below `lg` the bar is the logo mark and the menu key. And no
+Ask AI trigger and no panel (`AskAiSurface` is not mounted; the chrome
+reads the panel as closed for the tight band and the FeedbackFab offset).
+The phone chat top bar (`onboarding-chat-top-bar.tsx`) already had neither. `OnboardingChatLayout` no
+longer mounts the panel either, so a panel left open on another page does
+not follow the user into `/chat-onboarding` or the phone pages. The shared
+`askAiOpen` in App's Layout is neither read nor changed in onboarding. The
+shared menu, `DashboardChrome` and `ChatLayout` are untouched, so `/overview`
+and every other workspace keep their notifications and Ask AI.
 
 ---
 
@@ -1027,6 +1340,27 @@ MODEL_ROWS.spend · API_KEY_ROWS.spend          grouped from the same cells
 
 Consequences worth knowing:
 
+- **Workspace pages and step 3 data (owner 2026-10-13).** The demo never
+  leaves the onboarding workspace: every sidebar row
+  (`ONBOARDING_SIDEBAR_SECTIONS`, `-default` -> `-onboarding`), the final
+  page's explore rows (`ONBOARDING_EXITS`) and every in-page link stay on
+  `-onboarding` routes. Shared links pass `keepInOnboarding(pathname,
+  target)` (`lib/plan.ts`; unchanged off onboarding), and an unknown
+  `-onboarding` address falls back to `/overview-onboarding`
+  (`UnknownRoute`, `App.tsx`). The workspace is Free (a new workspace is
+  Free until it upgrades): pages with no demo data mount their Default
+  twins; the data pages (`OnboardingMessages`, `OnboardingActivity`,
+  `OnboardingConversations`, `OnboardingSecurity`,
+  `OnboardingTokenSavings`) show their Default twin until step 3 passed,
+  then a copy of the Free page fed by `setupTraffic` (one source): 2
+  messages (test allow, demo block), 1 conversation with 2 turns, 2 of
+  2,366 input tokens compressed (0.1%; each request carries
+  `APP_CONTEXT_TOKENS` 1,170, `improved-data.ts`). Every workspace page
+  is in `ONBOARDING_WORKSPACE_PAGES` and renders on a cold load (the
+  explore rows open a new tab); the data pages read
+  `useSetupTraffic()`: this tab's state, else the localStorage mirror
+  `gate-onboarding-setup-traffic` (written when step 3 passes, cleared
+  on a fresh run).
 - **All three dimensions reconcile by construction**, on both metrics and on
   every day, because they group one set of cells and share one day shape. The
   cross-dimension invariant is arithmetic now, not tuning.

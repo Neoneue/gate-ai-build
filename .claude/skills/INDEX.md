@@ -21,6 +21,9 @@ agent owns are not here: each lives in its agent's kit and is indexed at
 | `/promote` | dev to main: divergence check, test-merge, PR, merge commit, one CI watch, sync back | User; the only path that pushes main |
 | `/handoff` | Rewrite `handoff.md` LATEST for the next session; OPEN items carry | User, end of session |
 | `/end-session` | `/commit-push`, then `/promote` (only if commit passed), then `/handoff` (even if promote failed, so the failure is the first OPEN item); ends with one `SAFE TO /clear` line or `NOT SAFE` naming the step | User, end of session; the user clears by hand on the safe line |
+| Weekly, or the user asks how token use or cost is trending | `token-report` (Haiku fork: runs `scripts/token-report.mjs`, compares against the 2026-09-26..10-10 baseline in `docs/token-report/`) | User, weekly |
+| Checking a page in a browser: one look at a route, theme, viewport or role | `node scripts/probe.mjs <route>` (one call, one JSON line); multi-step exploration: `npx playwright cli` (tester kit) | Any agent |
+| Checking the work before saying done or committing | `npm run gates` (CI verify in one call; `-- tsc test` for named gates, `-- --e2e` adds the smoke) | Any agent |
 
 ## Chains that recur
 
@@ -43,6 +46,10 @@ agent owns are not here: each lives in its agent's kit and is indexed at
 | `scripts/check-design-tokens.mjs` (`npm run lint:design`) | Seven design-contract checks incl. chart tooltip portal; pre-commit and CI |
 | `scripts/lint-copy.mjs` (`npm run lint:copy`) | Jev copy lint, opt-in, key in `.env.local` |
 | `npm run smoke` | vitest then Playwright, one command, one Runs row |
+| `scripts/gates.mjs` (`npm run gates`) | tsc, lint, lint:md, test, build by exit code; a failing gate prints its last 30 lines; ends `GATES PASS n/n` or `GATES FAIL` |
+| `scripts/probe.mjs <route> [--viewport WxH] [--theme] [--role] [--shot] [--eval] [--text]` | One browser look in one call; reuses or starts Vite on :3000, never :5173 |
+| `scripts/context-budget.mjs` | UserPromptSubmit hook: past 250K tokens of context (then every +100K), asks for `/handoff` then `/clear` |
+| `scripts/token-report.mjs [--since] [--until] [--no-jev]` | The `token-report` numbers; Jev gets scrubbed excerpts only and aborts on any leak |
 
 ## Rules of the road
 

@@ -1,14 +1,18 @@
+import { Card } from "@/components/ui/card";
 import { CodePanel } from "@/components/ui/code-panel";
 import { CopyButton } from "@/components/ui/copy-button";
+import { cn } from "@/lib/utils";
 
 /* ─── Client configs (Improved flow, Manual setup) ──────────────────────────
- * The six client configurations the onboarding mockup shows, one per app,
- * each in a provider-billing (BYOK) and a Gate-credits (PAYG) form. Copied
- * verbatim from the mockup bundle (docs/onboarding-mockup, `sw` and its
- * snippet constants) into the onboarding folder, so DashboardDefault's
- * ConnectTabs (three clients) is untouched. Only the base URL differs: the
- * mockup points at staging; this uses the gateway URL the app's own
- * ConnectTabs snippets use.
+ * The six client configurations Manual setup shows, one per app. Manual
+ * setup runs on Existing subscriptions only (owner 2026-10-13, PRD "Tool
+ * before billing"), so these are the provider-billing (BYOK) forms; the
+ * Gate-credits forms went with the billing choice. Copied verbatim from the
+ * mockup bundle (docs/onboarding-mockup, `sw` and its snippet constants),
+ * which matches the production dashboard's connect-tabs.tsx (gate repo,
+ * checked 2026-10-13: every snippet and caption identical). Only the base
+ * URL differs: the mockup points at staging; this uses the gateway URL the
+ * app's own ConnectTabs snippets use.
  * ───────────────────────────────────────────────────────────────────────── */
 
 const GATE_BASE_URL = "https://gateway.constellationgate.ai";
@@ -17,25 +21,6 @@ const BYOK_CLAUDE_CODE = `{
   "env": {
     "ANTHROPIC_BASE_URL": "${GATE_BASE_URL}",
     "ANTHROPIC_CUSTOM_HEADERS": "X-Gate-Api-Key: sk-gw-…your Gate key…\\nX-Gate-Upstream-Url: https://api.anthropic.com"
-  }
-}`;
-
-const DEFAULT_PAYG_SNIPPET_MODEL = "anthropic/claude-opus-4-8";
-
-const DEFAULT_HAIKU_MODEL = "anthropic/claude-haiku-4-5";
-
-const DEFAULT_PROVIDER_HINT = "bedrock";
-
-const paygClaudeCode = (
-  e: string = DEFAULT_PAYG_SNIPPET_MODEL,
-  t: string = DEFAULT_HAIKU_MODEL
-) => `{
-  "env": {
-    "ANTHROPIC_BASE_URL": "${GATE_BASE_URL}",
-    "ANTHROPIC_API_KEY": "sk-gw-…your Gate key…",
-    "ANTHROPIC_MODEL": "${e}",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "${t}",
-    "ANTHROPIC_CUSTOM_HEADERS": "X-Gate-Api-Key: sk-gw-…your Gate key…"
   }
 }`;
 
@@ -69,19 +54,6 @@ command = "/Users/you/.codex/gate-credential-helper.sh"
 #   EOF
 #   chmod 700 ~/.codex/gate-credential-helper.sh`;
 
-const paygCodex = (
-  e: string = DEFAULT_PAYG_SNIPPET_MODEL
-) => `model_provider = "gate"
-model = "${e}"
-
-[model_providers.gate]
-name = "Constellation Gate"
-base_url = "${GATE_BASE_URL}/v1"
-wire_api = "responses"
-
-[model_providers.gate.http_headers]
-"X-Gate-Api-Key" = "sk-gw-…your Gate key…"`;
-
 const BYOK_OPENCODE = `{
   "provider": {
     "openrouter-gate": {
@@ -97,22 +69,6 @@ const BYOK_OPENCODE = `{
       },
       "models": {
         "openrouter/auto": { "name": "openrouter/auto" }
-      }
-    }
-  }
-}`;
-
-const paygOpenCode = (e: string = DEFAULT_PAYG_SNIPPET_MODEL) => `{
-  "provider": {
-    "gate": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Constellation Gate",
-      "options": {
-        "baseURL": "${GATE_BASE_URL}/v1",
-        "apiKey": "sk-gw-…your Gate key…"
-      },
-      "models": {
-        "${e}": { "name": "${e}" }
       }
     }
   }
@@ -140,25 +96,6 @@ const BYOK_OPENCLAW = `{
 // In ~/.openclaw/.env:  OPENROUTER_API_KEY=sk-or-…your OpenRouter key…
 // Validate with:  openclaw doctor`;
 
-const paygOpenClaw = (e: string = DEFAULT_PAYG_SNIPPET_MODEL) => `{
-  "models": {
-    "providers": {
-      "gate": {
-        "baseUrl": "${GATE_BASE_URL}/v1",
-        "apiKey": "\${GATE_API_KEY}",
-        "api": "openai-completions",
-        "models": [
-          { "id": "${e}", "name": "${e}" }
-        ]
-      }
-    }
-  }
-}
-
-// In ~/.openclaw/.env:  GATE_API_KEY=sk-gw-…your Gate key…
-// List any Gate-catalog models you want under "models" above (id = provider/model).
-// Validate with:  openclaw doctor`;
-
 const BYOK_HERMES = `model:
   provider: custom
   base_url: ${GATE_BASE_URL}/v1
@@ -168,13 +105,6 @@ const BYOK_HERMES = `model:
   default_headers:
     X-Gate-Api-Key: sk-gw-…your Gate key…
     X-Gate-Upstream-Url: https://openrouter.ai/api`;
-
-const paygHermes = (e: string = DEFAULT_PAYG_SNIPPET_MODEL) => `model:
-  provider: custom
-  base_url: ${GATE_BASE_URL}/v1
-  default: ${e}
-  api_mode: chat_completions
-  api_key: sk-gw-…your Gate key…`;
 
 const BYOK_OPENAI_SDK = `import OpenAI from "openai";
 
@@ -194,31 +124,6 @@ const res = await client.chat.completions.create({
 
 console.log(res.choices[0].message.content);`;
 
-const providerHeader = (e: string | null) =>
-  e === null
-    ? ""
-    : `
-  defaultHeaders: {
-    "X-Gate-Provider": "${e}",
-  },`;
-
-const paygOpenAiSdk = (
-  e: string = DEFAULT_PAYG_SNIPPET_MODEL,
-  t: string | null = DEFAULT_PROVIDER_HINT
-) => `import OpenAI from "openai";
-
-const client = new OpenAI({
-  baseURL: "${GATE_BASE_URL}/v1",
-  apiKey: process.env.GATE_API_KEY, // your Gate key: sk-gw-…${providerHeader(t)}
-});
-
-const res = await client.chat.completions.create({
-  model: "${e}",
-  messages: [{ role: "user", content: "Hello" }],
-});
-
-console.log(res.choices[0].message.content);`;
-
 /** The caption line above each config (mockup `la`). */
 const CLIENT_CAPTIONS: Record<string, string> = {
   "claude-code": "Anthropic-shape CLI. Settings at ~/.claude/settings.json",
@@ -229,58 +134,74 @@ const CLIENT_CAPTIONS: Record<string, string> = {
   "openai-sdk": "OpenAI SDK (JS/TS). Point baseURL at the gateway",
 };
 
-function configFor(client: string, payg: boolean, model: string): string {
+function configFor(client: string): string {
   switch (client) {
     case "codex":
-      return payg ? paygCodex(model) : BYOK_CODEX;
+      return BYOK_CODEX;
     case "opencode":
-      return payg ? paygOpenCode(model) : BYOK_OPENCODE;
+      return BYOK_OPENCODE;
     case "hermes":
-      return payg ? paygHermes(model) : BYOK_HERMES;
+      return BYOK_HERMES;
     case "openclaw":
-      return payg ? paygOpenClaw(model) : BYOK_OPENCLAW;
+      return BYOK_OPENCLAW;
     case "openai-sdk":
-      return payg ? paygOpenAiSdk(model) : BYOK_OPENAI_SDK;
+      return BYOK_OPENAI_SDK;
     default:
-      return payg ? paygClaudeCode(model) : BYOK_CLAUDE_CODE;
+      return BYOK_CLAUDE_CODE;
   }
 }
 
-/** One app's config: the caption strip (both billing choices), the code and
- *  a floating copy control. The mockup hides the client tab strip here, the
- *  App select above already names the client. */
+/** One app's config, built as the original Manual setup's code block
+ *  (owner 2026-10-13, "use the old component here"): the production
+ *  dashboard's ConnectTabs + HeroCodeTab (gate repo,
+ *  apps/dashboard-web/src/components/connect-tabs.tsx, as rendered by
+ *  pages/setup/SetupManual.tsx, also the docs/onboarding-mockup bundle's
+ *  `sw` / `aa`). That component lives in the gate repo, not in this one, so
+ *  its markup is copied here: the caption row (`description`), the code well
+ *  at the original's 216px cap (`max-h-[216px]`, here `max-h-54`), and the
+ *  card-level Copy footer below the well, behind a hairline. Its tab strip
+ *  is left out: the App select above already names the client (one home
+ *  per value). */
 export function ClientConfig({
   client,
-  payg,
-  model,
+  disabled = false,
 }: {
   client: string;
-  payg: boolean;
-  model: string;
+  /** No key chosen yet (owner 2026-10-13): the block stays in view at the
+   *  system's disabled opacity (`opacity-50`, Button's `disabled:`
+   *  recipe) and is inert, so Copy code cannot be reached or pressed. */
+  disabled?: boolean;
 }) {
-  const code = configFor(client, payg, model);
+  const code = configFor(client);
   return (
-    <div className="relative flex flex-col" data-client-config={client}>
-      <div className="flex h-10 items-center border-border border-b px-4">
-        <span className="type-copy-12 text-muted-foreground">
-          {CLIENT_CAPTIONS[client] ?? CLIENT_CAPTIONS["claude-code"]}
-        </span>
-      </div>
-      {/* design-allow-clip: a code payload well. No focusable and no raised
-          child inside. */}
-      <div className="max-h-65 overflow-y-auto">
-        <CodePanel snippet={code} />
-      </div>
-      <div className="absolute right-4 bottom-4">
-        <CopyButton
-          className="shadow-sm"
-          label="code snippet"
-          mode="label"
-          size="sm"
-          text="Copy code"
-          value={code}
-        />
-      </div>
+    <div
+      aria-disabled={disabled || undefined}
+      className={cn(disabled && "opacity-50")}
+      data-client-config={client}
+      inert={disabled}
+    >
+      <Card className="flex flex-col" density="flush">
+        <div className="flex items-center border-border border-b px-4 py-3">
+          <p className="type-copy-12 m-0 text-foreground">
+            {CLIENT_CAPTIONS[client] ?? CLIENT_CAPTIONS["claude-code"]}
+          </p>
+        </div>
+        {/* design-allow-clip: a code payload well. No focusable and no
+            raised child inside; the Copy footer sits below it, outside the
+            clip. */}
+        <div className="max-h-54 overflow-y-auto">
+          <CodePanel snippet={code} />
+        </div>
+        <div className="flex shrink-0 items-center justify-end border-border border-t px-4 py-2">
+          <CopyButton
+            label="code snippet"
+            mode="label"
+            size="sm"
+            text="Copy code"
+            value={code}
+          />
+        </div>
+      </Card>
     </div>
   );
 }

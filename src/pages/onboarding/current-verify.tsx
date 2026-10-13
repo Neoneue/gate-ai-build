@@ -1,7 +1,7 @@
 import {
   ArrowRight,
+  ArrowUpRight,
   Box,
-  ChevronRight,
   CircleCheck,
   Clock,
   Coins,
@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { type Ref, useEffect, useState } from "react";
+import { type ReactNode, type Ref, useEffect, useState } from "react";
 import {
   useNavigate,
   useOutletContext,
@@ -31,8 +31,10 @@ import {
 } from "@/pages/onboarding/current-parts";
 import { OnboardingChrome } from "@/pages/onboarding/onboarding-chrome";
 import {
+  NEW_TAB_CUE,
   ONBOARDING_EXITS,
   ONBOARDING_ROUTES,
+  openInNewTab,
   parseFrom,
   setupPageFor,
 } from "@/pages/onboarding/onboarding-routes";
@@ -370,105 +372,138 @@ const EXPLORE: {
 export function CurrentComplete() {
   const navigate = useNavigate();
   const { current, updateCurrent } = useOnboarding();
-  const done = EXPLORE.filter(({ task }) => current.tasks[task]).length;
   return (
     <OnboardingChrome>
-      <div className="flex w-full @4xl:max-w-5xl flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <PageTitle>You’re protected and live</PageTitle>
-          <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
-            Gate is watching your traffic and you’re ready to start exploring
-            the site.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="type-label-14 m-0 text-foreground">
-              Explore your Gateway
-            </h2>
-            <span className="type-mono-12 text-muted-foreground">
-              {done}/{EXPLORE.length} done
-            </span>
-          </div>
-          <div
-            aria-label="Explore your Gateway progress"
-            aria-valuemax={EXPLORE.length}
-            aria-valuemin={0}
-            aria-valuenow={done}
-            className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
-            data-motion-root="explore-progress"
-            role="meter"
+      <ProtectedAndLive
+        action={
+          <Button
+            className="self-start"
+            onClick={() => navigate(ONBOARDING_EXITS.overview)}
+            size="default"
           >
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-success-500 to-success-400"
-              style={{ width: `${(done / EXPLORE.length) * 100}%` }}
-            />
-          </div>
-        </div>
-        <ul className="m-0 flex list-none flex-col gap-3 p-0">
-          {EXPLORE.map((item) => {
-            const finished = current.tasks[item.task];
-            const Icon = item.icon;
-            return (
-              <li key={item.task}>
-                <Card density="flush" interactive>
-                  <RowActionButton
-                    aria-label={item.title}
-                    className="gap-4 rounded-md p-4 focus-visible:ring-inset focus-visible:ring-offset-0"
-                    onClick={() => {
-                      updateCurrent({
-                        tasks: { ...current.tasks, [item.task]: true },
-                      });
-                      navigate(item.to);
-                    }}
-                  >
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "inline-flex size-9 shrink-0 items-center justify-center rounded-sm border",
-                        finished
-                          ? "border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-300"
-                          : "border-info-border bg-info-surface text-info-foreground-strong"
-                      )}
-                    >
-                      <Icon className="size-4" strokeWidth={1.75} />
-                    </span>
-                    <span className="flex flex-1 flex-col gap-1">
-                      <span className="type-label-14 text-foreground">
-                        {item.title}
-                      </span>
-                      <span className="type-copy-14 text-muted-foreground">
-                        {item.body}
-                      </span>
-                    </span>
-                    {finished ? (
-                      <CircleCheck
-                        aria-hidden
-                        className="size-5 shrink-0 text-success-600 dark:text-success-400"
-                        strokeWidth={1.75}
-                      />
-                    ) : (
-                      <ChevronRight
-                        aria-hidden
-                        className="size-4 shrink-0 text-muted-foreground"
-                        strokeWidth={1.75}
-                      />
-                    )}
-                  </RowActionButton>
-                </Card>
-              </li>
-            );
-          })}
-        </ul>
-        <Button
-          className="self-start"
-          onClick={() => navigate(ONBOARDING_EXITS.overview)}
-          size="default"
-        >
-          Visit Overview
-          <ArrowRight aria-hidden data-icon="inline-end" />
-        </Button>
-      </div>
+            Visit Overview
+            <ArrowRight aria-hidden data-icon="inline-end" />
+          </Button>
+        }
+        className="@4xl:max-w-5xl"
+        onVisit={(task) =>
+          updateCurrent({ tasks: { ...current.tasks, [task]: true } })
+        }
+        tasks={current.tasks}
+      />
     </OnboardingChrome>
+  );
+}
+
+/** The complete page's body, shared by both flows (the Improved flow's
+ *  `ImprovedComplete` since 2026-10-13): title, subtitle, "Explore your
+ *  Gateway" with its done count and bar, the four task rows (each marks its
+ *  task, then opens its page in a new tab, so this tab keeps the checks)
+ *  and the page's one primary `action`. */
+export function ProtectedAndLive({
+  tasks,
+  onVisit,
+  action,
+  className,
+}: {
+  tasks: Record<ExploreTask, boolean>;
+  /** Marks the task done; the row then opens its page in a new tab. */
+  onVisit: (task: ExploreTask) => void;
+  action: ReactNode;
+  className?: string;
+}) {
+  const done = EXPLORE.filter(({ task }) => tasks[task]).length;
+  return (
+    <div className={cn("flex w-full flex-col gap-6", className)}>
+      <div className="flex flex-col gap-2">
+        <PageTitle>You’re protected and live</PageTitle>
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
+          Gate is watching your traffic and you’re ready to start exploring the
+          site.
+        </p>
+      </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="type-label-14 m-0 text-foreground">
+            Explore your Gateway
+          </h2>
+          <span className="type-mono-12 text-muted-foreground">
+            {done}/{EXPLORE.length} done
+          </span>
+        </div>
+        <div
+          aria-label="Explore your Gateway progress"
+          aria-valuemax={EXPLORE.length}
+          aria-valuemin={0}
+          aria-valuenow={done}
+          className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+          data-motion-root="explore-progress"
+          role="meter"
+        >
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-success-500 to-success-400"
+            style={{ width: `${(done / EXPLORE.length) * 100}%` }}
+          />
+        </div>
+      </div>
+      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+        {EXPLORE.map((item) => {
+          const finished = tasks[item.task];
+          const Icon = item.icon;
+          return (
+            <li key={item.task}>
+              <Card density="flush" interactive>
+                <RowActionButton
+                  // The primitive names the row by aria-label, so the new-tab
+                  // cue joins the label here.
+                  aria-label={`${item.title} ${NEW_TAB_CUE}`}
+                  className="gap-4 rounded-md p-4 focus-visible:ring-inset focus-visible:ring-offset-0"
+                  onClick={() => {
+                    // A new tab, as Gate Chat opens (owner 2026-10-13): this
+                    // tab stays on the page, so the check stays with it.
+                    onVisit(item.task);
+                    openInNewTab(item.to);
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "inline-flex size-9 shrink-0 items-center justify-center rounded-sm border",
+                      finished
+                        ? "border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-300"
+                        : "border-info-border bg-info-surface text-info-foreground-strong"
+                    )}
+                  >
+                    <Icon className="size-4" strokeWidth={1.75} />
+                  </span>
+                  <span className="flex flex-1 flex-col gap-1">
+                    <span className="type-label-14 text-foreground">
+                      {item.title}
+                    </span>
+                    <span className="type-copy-14 text-muted-foreground">
+                      {item.body}
+                    </span>
+                  </span>
+                  {finished ? (
+                    <CircleCheck
+                      aria-hidden
+                      className="size-5 shrink-0 text-success-600 dark:text-success-400"
+                      strokeWidth={1.75}
+                    />
+                  ) : (
+                    <ArrowUpRight
+                      aria-hidden
+                      className="size-4 shrink-0 text-muted-foreground"
+                      strokeWidth={1.75}
+                    />
+                  )}
+                </RowActionButton>
+              </Card>
+            </li>
+          );
+        })}
+      </ul>
+      {action}
+    </div>
   );
 }

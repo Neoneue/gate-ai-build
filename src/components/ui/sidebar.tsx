@@ -1,6 +1,6 @@
 import { BookOpen, Moon, MoreHorizontal, Sun, UserRound } from "lucide-react";
 import type * as React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { LogoutIcon } from "@/components/ui/logout";
 import { AVATAR_TONE_CLS } from "@/components/ui/monogram-types";
@@ -12,6 +12,7 @@ import {
   useUpgradeCardDismissed,
 } from "@/data/upgrade-card-store";
 import { useTheme } from "@/hooks/use-theme";
+import { keepInOnboarding } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -490,6 +491,7 @@ function SidebarAccountRows({
 }) {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
+  const { pathname } = useLocation();
   return (
     <div className="flex shrink-0 flex-col lg:hidden">
       <div className="flex items-center gap-3 border-border border-t bg-card px-5 py-4">
@@ -536,7 +538,11 @@ function SidebarAccountRows({
             />
           )}
         </button>
-        <Link className={ACCOUNT_ROW} onClick={onNavItemClick} to="/settings">
+        <Link
+          className={ACCOUNT_ROW}
+          onClick={onNavItemClick}
+          to={keepInOnboarding(pathname, "/settings")}
+        >
           <span className="type-label-14">Account settings</span>
           <UserRound
             aria-hidden

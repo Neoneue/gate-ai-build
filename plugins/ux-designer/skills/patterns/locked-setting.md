@@ -42,6 +42,9 @@ mistaking it for a broken control.
 - A lock icon with the explanation only in a hover tooltip.
 - The upgrade action placed on a neighbouring card or at the top of the page.
 - Both Upgrade and Contact sales offered for the same lock.
+- An option that can never apply (a revoked key) listed, even greyed, in a
+  picker. Remove it from every selectable list; show it only in read-only
+  history.
 
 ## Evidence
 

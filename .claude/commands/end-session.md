@@ -12,12 +12,14 @@ Promotion is a separate, manual `/promote` whenever the user wants prod
 updated (user, 2026-09-22: the CI watch inside promote made the chain take
 about fifteen minutes, and most sessions do not need prod moved).
 
-## Runs on Opus
+## Runs on Sonnet, then Opus
 
-The orchestrator delegates this whole chain to one `general-purpose` agent
-with `model: opus`, briefed with the three command files, the facts the
-commit messages, changelog and handoff need, and this approval. Never on the
-orchestrator's own model.
+The orchestrator delegates the commit-push step to one `general-purpose`
+agent with `model: sonnet` (commits always run on Sonnet, user 2026-10-10),
+then the handoff step to one `general-purpose` agent with `model: opus`,
+each briefed with its command file, the facts its step needs, and this
+approval. The handoff agent starts only after the commit agent reports
+green. Never on the orchestrator's own model.
 
 ## Rules
 

@@ -6,17 +6,21 @@
 // parent's under <session_id>/subagents/).
 //
 // - UI files (isUiPath: src/components/, src/pages/, any src/ .tsx or .css
-//   that is not a test, the root design.md) need five steps, IN ORDER, since
+//   that is not a test, the root design.md) need four steps, IN ORDER, since
 //   this session's last landed git commit (skillState): read the skills
-//   INDEX.md (once per session), read the ux-laws skill, WRITE its gate
-//   (labelled Job:, Path:, Expectation:, Precedent:, Objects:, Actions:,
-//   Laws:, Patterns:, Rejected:; ux-laws SKILL.md section 4) with the Write tool
-//   to a file, or as reply text from an earlier turn (reply text reaches the
-//   transcript only when its turn ends, so a gate written this turn is
-//   invisible until then),
-//   read visual-hierarchy, then load ONE build skill picked from that index.
+//   INDEX.md (once per session), read the ux-laws skill, read
+//   visual-hierarchy, then load ONE build skill picked from that index. No
+//   write-up: feature-size work gets its spec from the ux-designer plugin
+//   (owner 2026-10-10).
 //   UX before UI: a step out of order does not count. One round covers one
 //   change: after a commit, the next change does them again.
+// - A motion edit (isMotionEdit: the text it adds or removes holds
+//   keyframes, an animation or transition, GSAP or motion/react, or the file
+//   is named for motion), by any writer, also needs, after the index and
+//   before ux-laws, agents/animator/knowledge/working-rules.md (once per
+//   session), then motion-ux-laws (per change): the animator kit's order
+//   steps 0 and 1. The review steps after it are require-motion-review.mjs's
+//   job. Who edits does not matter; what the edit holds does.
 // - The gate covers every way a session writes a file: Write, Edit and
 //   MultiEdit by path; Bash by its command (shellWritesUi: in-place sed or
 //   perl, a redirect or tee into the file, cp/mv/rm/touch on it, a python,
@@ -208,35 +212,10 @@ const EXEMPT_AGENT = /^impeccable-/;
 // A kit skill printed by a reader counts as loading it, as a Read does.
 const SKILL_SHELL_READ =
   /\b(?:cat|sed|head|tail|less|bat)\b[^|;&]*skills\/([^/\s"'|;&]+)\/SKILL\.md/;
-
-/**
- * The ux-laws gate (ux-laws SKILL.md section 4) written in the agent's own
- * visible text: one labelled line each, bullets and bold allowed.
- */
-const GATE_LABELS = [
-  "Job",
-  "Path",
-  "Expectation",
-  // The tested pattern the design follows and the repo component it maps
-  // to, or why a new component is needed (owner 2026-10-08: "no more
-  // invented ui that doesn't fit our work").
-  "Precedent",
-  "Objects",
-  "Actions",
-  "Laws",
-  "Patterns",
-  "Rejected",
-];
-const GATE_LINES = GATE_LABELS.map(
-  (label) =>
-    new RegExp(
-      String.raw`^[\s>*_-]*(?:\d+[.)]\s*)?(?:\*\*)?${label}(?:\*\*)?\s*:`,
-      "im"
-    )
-);
-function writesGate(text) {
-  return GATE_LINES.every((re) => re.test(text));
-}
+// The animator's working rules, read before its first build of a session.
+const RULES_FILE = /agents\/animator\/knowledge\/working-rules\.md\b/;
+const RULES_SHELL_READ =
+  /\b(?:cat|sed|head|tail|less|bat)\b[^|;&]*agents\/animator\/knowledge\/working-rules\.md/;
 
 /** The events that load a skill: the UX skills and any other. */
 const SKILL_KINDS = ["ux", "vh", "build"];
@@ -252,12 +231,6 @@ function eventsOf(part) {
   // The gate written to a file (Write, or an Edit whose new text holds it).
   // Reply text after a tool result can stay off disk until the turn ends;
   // a tool call is on disk at once, so this is the reliable route.
-  if (
-    (part.name === "Write" && writesGate(String(input.content ?? ""))) ||
-    (part.name === "Edit" && writesGate(String(input.new_string ?? "")))
-  ) {
-    return [{ kind: "gate" }];
-  }
   if (part.name === "Skill") {
     return [skillEvent(input.skill)];
   }
@@ -265,6 +238,9 @@ function eventsOf(part) {
     const file = String(input.file_path ?? "");
     if (INDEX_FILE.test(file)) {
       return [{ kind: "index", kit: kitOfIndex(file) }];
+    }
+    if (RULES_FILE.test(file)) {
+      return [{ kind: "rules" }];
     }
     // A kit skill loads by reading its SKILL.md.
     const skill = file.match(/skills\/([^/"\n]+)\/SKILL\.md$/)?.[1];
@@ -278,6 +254,9 @@ function eventsOf(part) {
     const events = [];
     if (INDEX_SHELL_READ.test(command)) {
       events.push({ kind: "index", kit: kitOfIndex(command) });
+    }
+    if (RULES_SHELL_READ.test(command)) {
+      events.push({ kind: "rules" });
     }
     // Every SKILL.md the command prints counts, in the order it names them.
     for (const m of command.matchAll(new RegExp(SKILL_SHELL_READ, "g"))) {
@@ -298,11 +277,13 @@ function eventsOf(part) {
  * nothing. `lastCommitAt` is when the last landed commit's result came back.
  * With `after` (a time from another transcript, in ms), a per-change step
  * counts only when it happened after it; an event with no timestamp then
- * never counts.
+ * never counts. With `motion` (the write being judged is motion work), the
+ * UI steps also need, between the index and ux-laws, "working-rules" (once
+ * per session) and then "motion-ux-laws" (per change).
  */
 export function skillState(
   text,
-  { after = null, kit = null, allows = null } = {}
+  { after = null, kit = null, allows = null, motion = false } = {}
 ) {
   const events = [];
   const landedAt = new Map();
@@ -324,9 +305,6 @@ export function skillState(
         const said = typeof part === "string" ? part : (part.text ?? "");
         if (entry.type === "user" && UX_COMMAND.test(said)) {
           events.push({ kind: "ux", skill: "ux-laws", ts });
-        }
-        if (entry.type === "assistant" && writesGate(said)) {
-          events.push({ kind: "gate", ts });
         }
       } else if (part?.type === "tool_result") {
         if (!part.is_error) {
@@ -351,7 +329,7 @@ export function skillState(
   const fresh = (e, i) => i >= from && (after === null || e.ts > after);
   // The index is read once per session (a full re-read before every small
   // fix costs too much); the rest is per change and must come in order:
-  // UX first (ux-laws, then its gate written out, then visual-hierarchy),
+  // UX first (ux-laws, then visual-hierarchy),
   // UI after (one build skill). A step out of order does not count.
   // A kit agent's index is its own kit's; another kit's does not count.
   const indexAt = events.findIndex(
@@ -363,8 +341,19 @@ export function skillState(
     from === -1
       ? -1
       : events.findIndex((e, i) => e.kind === kind && fresh(e, i) && i > from);
-  const uxAt = nextAfter("ux", indexAt);
-  const gateAt = nextAfter("gate", uxAt);
+  // A motion edit adds the animator kit's first steps: working rules (once
+  // per session), then motion-ux-laws, before the front-end UX steps.
+  const rulesAt =
+    !motion || indexAt === -1
+      ? indexAt
+      : events.findIndex((e, i) => e.kind === "rules" && i > indexAt);
+  const muxAt =
+    !motion || rulesAt === -1
+      ? rulesAt
+      : events.findIndex(
+          (e, i) => e.skill === "motion-ux-laws" && fresh(e, i) && i > rulesAt
+        );
+  const uxAt = nextAfter("ux", muxAt);
   const vhAt = nextAfter("vh", uxAt);
   const pickAt =
     vhAt === -1
@@ -376,11 +365,14 @@ export function skillState(
   if (indexAt === -1) {
     missing.push("index");
   }
+  if (motion && rulesAt === -1) {
+    missing.push("working-rules");
+  }
+  if (motion && muxAt === -1) {
+    missing.push("motion-ux-laws");
+  }
   if (uxAt === -1) {
     missing.push("ux-laws");
-  }
-  if (gateAt === -1) {
-    missing.push("gate");
   }
   if (vhAt === -1) {
     missing.push("visual-hierarchy");
@@ -409,6 +401,51 @@ export function skillState(
 }
 
 /**
+ * Motion in a text, one match per declaration or class with its value, so a
+ * changed duration or curve reads as a change: keyframes, animation and
+ * transition declarations, Tailwind animate / transition / duration / ease /
+ * delay / motion-reduce classes, data-motion attributes, GSAP, motion/react.
+ */
+const MOTION_TOKENS =
+  /@keyframes[^{\n]*|\banimation(?:-[a-z]+)?\s*:[^;"}\n]*|\btransition(?:-[a-z]+)?(?:\s*:[^;"}\n]*)?|\banimate-[\w-]+|\bmotion-(?:reduce|safe)[\w:[\].-]*|\bdata-motion[\w-]*(?:=["{][^"}]*["}])?|\bduration-[\w[\].]+|\bease-[\w[\](),.-]+|\bdelay-[\w[\].]+|\bgsap(?:\.[\w.]+)?|\buseGSAP\b|motion\/react/g;
+function motionOf(text) {
+  return [...String(text ?? "").matchAll(MOTION_TOKENS)]
+    .map((m) => m[0].trim())
+    .sort()
+    .join("\n");
+}
+/** A source file named for motion (use-onboarding-motion.ts, x-motion.css). */
+const MOTION_FILE = /(^|\/)src\/.*motion[^/]*$/i;
+
+/**
+ * Whether a write is motion work: the file is named for motion, or the edit
+ * adds, removes or changes motion. An Edit counts only when the motion in its
+ * old and new text differs, so an edit that merely sits near an existing
+ * animation class does not. A Write (its whole content) or a shell command
+ * counts when it holds any motion.
+ */
+export function isMotionEdit(tool, toolInput = {}) {
+  const file = String(toolInput.file_path ?? toolInput.path ?? "");
+  if (tool !== "Bash" && MOTION_FILE.test(file)) {
+    return true;
+  }
+  if (tool === "Bash") {
+    const command = String(toolInput.command ?? "");
+    return (
+      motionOf(command) !== "" || /motion[^/\s]*\.(css|tsx?)/i.test(command)
+    );
+  }
+  if (toolInput.content !== undefined) {
+    return motionOf(toolInput.content) !== "";
+  }
+  const edits = [
+    { old_string: toolInput.old_string, new_string: toolInput.new_string },
+    ...(toolInput.edits ?? []),
+  ];
+  return edits.some((e) => motionOf(e?.old_string) !== motionOf(e?.new_string));
+}
+
+/**
  * Whether one of this session's subagents loaded the full UI set since
  * `after` (the session's last landed commit, or null for none). Reads
  * <dir of transcript_path>/<session_id>/subagents/*.jsonl. With no such
@@ -433,8 +470,9 @@ export function subagentCovers(input, after, { readTranscript, listDir }) {
   return files.some((f) => {
     try {
       return (
-        skillState(readTranscript(path.join(dir, f)), { after }).missing
-          .length === 0
+        skillState(readTranscript(path.join(dir, f)), {
+          after,
+        }).missing.length === 0
       );
     } catch {
       return false;
@@ -563,7 +601,13 @@ export function verdict(
   }
   let state;
   try {
-    state = skillState(readTranscript(transcript), { kit, allows });
+    state = skillState(readTranscript(transcript), {
+      kit,
+      allows,
+      // Motion work owes the animator kit's first steps, whoever writes it.
+      // A commit is judged on its UI steps alone.
+      motion: !commitUi && isMotionEdit(tool, toolInput),
+    });
   } catch {
     return null;
   }
@@ -576,9 +620,14 @@ export function verdict(
       let after = state.lastCommitAt;
       if (transcript !== input.transcript_path) {
         try {
-          after = skillState(
-            readTranscript(input.transcript_path)
-          ).lastCommitAt;
+          const main = skillState(readTranscript(input.transcript_path));
+          // A commit agent committing UI the main session built: the main
+          // session's own full set since its last commit covers it
+          // (commits run on a Sonnet agent, owner 2026-10-10).
+          if (main.missing.length === 0) {
+            return null;
+          }
+          after = main.lastCommitAt;
         } catch {
           return uiMessage(ui, state.missing, true, kit);
         }
@@ -597,9 +646,12 @@ export function verdict(
 const STEP = {
   index:
     "read the skills INDEX.md in full, once this session (Read agents/front-end-developer/skills/INDEX.md)",
+  "working-rules":
+    "read the animator working rules in full, once this session (Read agents/animator/knowledge/working-rules.md)",
+  "motion-ux-laws":
+    "after the working rules, read motion-ux-laws, the animator kit's order step 1 (Read agents/animator/skills/motion-ux-laws/SKILL.md), and decide whether it should move at all",
   "ux-laws":
     "after the index, read the ux-laws skill by path (Read agents/front-end-developer/skills/ux-laws/SKILL.md)",
-  gate: "after reading ux-laws, write its gate (ux-laws section 4) with the Write tool to a file, for example <your scratchpad>/ux-gate.md (a gate only in your reply text may not reach the transcript until your turn ends, so the hook cannot see it), as nine labelled lines: `Job:` what the user came to do; `Path:` entry, steps, exit, errors; `Expectation:` which app they think this works like; `Precedent:` the tested pattern this follows (a competitor such as Stripe, Vercel or the OpenAI / Anthropic consoles, with its URL or name) and the existing repo component or precedent it maps to (file:line), or `new component:` and why nothing existing fits; `Objects:` the things the user acts on and which container shows each; `Actions:` each action added or moved as action -> object it changes -> container it sits in, where the object must be the container's own (or `none`); `Laws:` each law touched and how it passes; `Patterns:` the corrected patterns that apply and that they hold; `Rejected:` at least one alternative and why it lost. If any answer is no or unknown, fix the design before writing UI",
   "visual-hierarchy":
     "after ux-laws, load visual-hierarchy, the second UX skill (Read agents/front-end-developer/skills/visual-hierarchy/SKILL.md), and give every element its tier",
   pick: "after visual-hierarchy, load the ONE build skill from the index that fits this job (for example shadcn for a component or a button, ask-sonner for a toast): Read agents/front-end-developer/skills/<name>/SKILL.md. One build skill, not several",
@@ -614,7 +666,7 @@ function uiMessage(file, missing, commit = false, kit = null) {
     .join(" ");
   return (
     `Blocked (UI gate): this changes UI (${file}). Still missing: ${steps} ` +
-    "Then retry. Order matters: index, ux-laws, the written gate, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry.The index is read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
+    "Then retry. Order matters: index, (a motion edit: working rules, then motion-ux-laws), ux-laws, visual-hierarchy, then the build skill; a step out of order does not count, but nothing is lost: do the listed steps again in this order and retry. The index and the working rules are read once per session; the rest covers your work until your next commit, then repeat for the next change. " +
     (commit
       ? "A commit also passes when one of this session's subagents loaded all four since the last commit. "
       : "") +

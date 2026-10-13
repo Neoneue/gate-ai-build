@@ -39,6 +39,8 @@ else.
 - A tier table squeezed into an inline notice.
 - The same upgrade prompt on every row of a locked card.
 - A lock icon with no words and no action.
+- A guilt-trip decline ("No thanks, I don't care about security"). The dismiss
+  is neutral ("Not now").
 
 ## Evidence
 
