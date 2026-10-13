@@ -108,3 +108,36 @@ Prior day: [`changelog-10-12.md`](./changelog-10-12.md)
 - After: both use `"claude-code"`.
 - Where: `onboarding-state.ts` (`snapshotDesktopSetup`, `client`),
   `improved-start.tsx` (DesktopPicker connection switch fallback).
+
+### Onboarding phone: A and B demos each start at their own signup `7e9da81`
+
+- Before: one `/sign-in-onboarding` and `/sign-up-onboarding` for both phone
+  demos; the chat's Sign out always returned to it, and signup always opened
+  Mobile A's chat.
+- After: `/sign-in-onboarding/a|b` and `/sign-up-onboarding/a|b` (the bare
+  paths redirect to `/a`). `OnboardingSignIn` and `OnboardingSignUp` take a
+  `version` prop. B's signup lands on the 2-card phone start
+  `/overview-onboarding` without the Mobile A tab mark. The phone chat's Sign
+  out returns B testers to `/sign-in-onboarding/b`.
+- Where: `App.tsx`, `onboarding-routes.ts` (`ONBOARDING_AUTH`,
+  `chatSignInPath()`), `OnboardingSignIn.tsx`, `OnboardingSignUp.tsx`,
+  `onboarding-chat-sidebar.tsx`; `data-model.md` ("Onboarding workspace").
+
+### Onboarding: Explore your Gateway rows stay in the onboarding workspace `7e9da81`
+
+- Before: the final page's four "Explore your Gateway" rows opened the
+  Default workspace pages (`/policies-default` and peers).
+- After: they open `/policies-onboarding`, `/limits-onboarding`,
+  `/token-savings-onboarding` and `/models-onboarding`, new routes that mount
+  the Default twins inside the onboarding chrome.
+- Where: `App.tsx` (new routes), `onboarding-routes.ts` (`ONBOARDING_EXITS`),
+  `data-model.md`.
+
+### Onboarding step 3: spinner on pending buttons `191ecb3`
+
+- Before: Check connection and Send the message showed only a pending label.
+- After: both show `Loader2` (`data-icon="inline-start"`,
+  `animate-spin motion-reduce:animate-none`) while pending. `design.md`
+  "Feedback and loading" gains the Button pending rule, and Skeleton is "the
+  only loading motion for page data".
+- Where: `improved-setup.tsx`, `design.md`.
