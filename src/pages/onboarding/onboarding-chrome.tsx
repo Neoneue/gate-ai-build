@@ -356,7 +356,7 @@ const IMPROVED_PATH_STEPS: Record<
       to: ONBOARDING_ROUTES.start,
     },
     {
-      label: "Set up Manual setup",
+      label: "Manual setup",
       flag: "connected",
       to: ONBOARDING_ROUTES.improvedConnect,
     },

@@ -240,7 +240,7 @@ function PrepareSetup() {
       {/* Gate credits (either method): pick a model, then fund it. */}
       {payg ? (
         <SetupGroup
-          description="Choose which Gate model your tokens will use. It only sets up your first config, and you can change it anytime."
+          description="Choose which Gate model your tokens will use."
           title="Select a model"
         >
           {/* Manual: the full catalog whatever the tab, as the official PAYG
@@ -333,7 +333,7 @@ function PrepareSetup() {
       <BackLink href={ONBOARDING_ROUTES.start} label="Setup method" />
       <ImprovedHeader
         action={<TryGateChatLink />}
-        title={connect ? "Set up Gate Connect" : "Set up Manual setup"}
+        title={connect ? "Set up Gate Connect" : "Manual setup"}
       />
       <div className="grid @4xl:grid-cols-[5fr_6fr] items-start gap-10">
         <aside

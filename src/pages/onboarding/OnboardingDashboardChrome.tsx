@@ -171,9 +171,11 @@ export function OnboardingDashboardChrome({
   // CTA never jumps the user across workspaces.
   // It lands on the nested Manage subscription page rather than Billing
   // itself, so one click reaches the plan ladder instead of dropping the
-  // user on the page to hunt for the button.
-  const upgradePath =
-    isDefault || isOnboarding
+  // user on the page to hunt for the button. Hidden during onboarding
+  // (owner 2026-10-13).
+  const upgradePath = isOnboarding
+    ? undefined
+    : isDefault
       ? "/billing-default/plans"
       : isFree
         ? "/billing-free/plans"
