@@ -12,6 +12,7 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-10-12](./2026-10/changelog-10-12.md)
 
 - Onboarding phone demo: chat, signup and mobile pages with demo traffic
+- Onboarding phone: auth 44px targets and chat readable at 200% text
 
 ### [2026-10-11](./2026-10/changelog-10-11.md)
 

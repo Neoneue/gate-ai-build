@@ -28,3 +28,20 @@ unchanged; every mobile part is a copy under `src/pages/onboarding/`.
   page. A desktop onboarding narrowed below 767px uses Option B.
 - `OnboardingDashboardChrome.tsx`: onboarding copy of the dashboard chrome.
 - Docs: no-thrash page-copy rule; `data-model.md` updated.
+
+### Onboarding phone: auth 44px targets and chat readable at 200% text `4229173`
+
+Onboarding versions only. Desktop and the 100% phone render are unchanged
+(byte-identical).
+
+- Sign-in: onboarding copy of the sign-in page for `/sign-in-onboarding`
+  (`OnboardingSignIn.tsx`).
+- Auth buttons are full width and 44px tall below md; the show-password tap
+  area is 36x36. Desktop unchanged.
+- Chat at 200% text: the reply header and usage row wrap
+  (`onboarding-chat-message.tsx`, `onboarding-chat-usage-row.tsx`).
+- Helper line and picker count line spacing; the model chip truncates instead
+  of hiding.
+- Picker controls truncate and the active tab scrolls into view
+  (`onboarding-model-selector.tsx`); the setup-link button is capped to the
+  card.
