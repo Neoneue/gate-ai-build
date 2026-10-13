@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-13](./2026-10/changelog-10-13.md)
 
+- Onboarding desktop: Gate Connect app defaults to Claude Code in emailed link and fallback
 - Onboarding desktop: Manual setup title, no upgrade promo, shorter model subtitle
 - Onboarding desktop: billing choice on both setup methods, Fable 5 default
 - Onboarding desktop: `/checkout-onboarding` page

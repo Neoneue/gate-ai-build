@@ -98,3 +98,13 @@ Prior day: [`changelog-10-12.md`](./changelog-10-12.md)
 - Where: `improved-setup.tsx` (ImprovedHeader title, Select a model
   description), `onboarding-chrome.tsx` (`IMPROVED_PATH_STEPS` manual row),
   `OnboardingDashboardChrome.tsx` (`upgradePath`).
+
+### Onboarding desktop: Gate Connect app defaults to Claude Code in emailed link and fallback `1f76bdc`
+
+- Before: two spots still fell back to Codex after the default app became
+  Claude Code: the setup an emailed link carries when the phone chose Gate
+  Chat, and the app picked when the method switched to Gate Connect while
+  OpenAI SDK was selected.
+- After: both use `"claude-code"`.
+- Where: `onboarding-state.ts` (`snapshotDesktopSetup`, `client`),
+  `improved-start.tsx` (DesktopPicker connection switch fallback).
