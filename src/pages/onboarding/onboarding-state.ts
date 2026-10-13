@@ -156,7 +156,7 @@ export function snapshotDesktopSetup(state: ImprovedState): DesktopSetup {
     return {
       connection: "gate-connect",
       billing: "existing",
-      client: "codex",
+      client: "claude-code",
       model: DEFAULT_PAYG_MODEL,
       balanceUsd: state.balanceUsd,
       keys: state.keys,

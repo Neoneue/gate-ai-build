@@ -144,7 +144,7 @@ function DesktopPicker() {
       pathChosen: false,
       client:
         state.client === "openai-sdk" && connection === "gate-connect"
-          ? "codex"
+          ? "claude-code"
           : state.client,
     }));
   };
