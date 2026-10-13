@@ -195,6 +195,58 @@ function usePortalPosition(
   return style;
 }
 
+/** Closes the portalled box once the page scrolls or a press lands outside
+ *  its chart (owner 2026-10-13). On touch, Recharts keeps a tooltip active
+ *  after the finger lifts, and the box is fixed to the viewport where it
+ *  opened, so a scroll left it floating over the page and it never left. A
+ *  new press on the chart, or a mouse move over it, shows it again; a mouse
+ *  leaving the chart already closes it (Recharts' own `active`). Listens only
+ *  while this box is open. */
+function useDismissOnScroll(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  active: boolean | undefined
+) {
+  const [dismissed, setDismissed] = React.useState(false);
+  // Reset for the next opening (React's "adjust state on a prop change").
+  if (!active && dismissed) {
+    setDismissed(false);
+  }
+
+  React.useEffect(() => {
+    if (!active) {
+      return;
+    }
+    const inChart = (target: EventTarget | null) =>
+      target instanceof Node && Boolean(containerRef.current?.contains(target));
+    const onScroll = () => setDismissed(true);
+    const onPointerDown = (event: PointerEvent) =>
+      setDismissed(!inChart(event.target));
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && inChart(event.target)) {
+        setDismissed(false);
+      }
+    };
+    window.addEventListener("scroll", onScroll, {
+      capture: true,
+      passive: true,
+    });
+    document.addEventListener("pointerdown", onPointerDown, {
+      capture: true,
+      passive: true,
+    });
+    document.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll, { capture: true });
+      document.removeEventListener("pointerdown", onPointerDown, {
+        capture: true,
+      });
+      document.removeEventListener("pointermove", onPointerMove);
+    };
+  }, [active, containerRef]);
+
+  return dismissed;
+}
+
 /** The ONE chart-tooltip recipe (design.md "Chart tooltip & legend",
  *  2026-09-20). Consumers pass data plus a `valueFormatter`; they never draw a
  *  row. Recharts' `formatter` prop is deliberately NOT honoured here — a JSX
@@ -241,6 +293,7 @@ function ChartTooltipContent({
     coordinate,
     active
   );
+  const dismissed = useDismissOnScroll(containerRef, active);
 
   const tooltipLabel = React.useMemo(() => {
     if (hideLabel || !payload?.length) {
@@ -282,7 +335,7 @@ function ChartTooltipContent({
     labelKey,
   ]);
 
-  if (!(active && payload?.length)) {
+  if (!(active && payload?.length) || dismissed) {
     return null;
   }
 
