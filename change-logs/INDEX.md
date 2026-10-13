@@ -11,6 +11,9 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-13](./2026-10/changelog-10-13.md)
 
+- Component canvas: every ui primitive on one page
+- Onboarding workspace: no notifications bell in the top bar
+- Onboarding chat: pending reply shows Ask AI's "Thinking" loader for 2 seconds
 - Activity: Top users and Recent key usage show the signed-in owner
 - Onboarding step 3: realistic request sizes, 0.1% compression
 - Workspace menu: Free sits under Pro
