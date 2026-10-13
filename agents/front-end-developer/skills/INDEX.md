@@ -65,6 +65,7 @@ nesting, which `better-accessibility` covers.
 | React performance | `react-best-practices` | | `react-best-practices` |
 | Variants for the owner to pick (only when asked) | `prototype` | | the owner |
 | Stress-test with worst-case data (long names, unbreakable emails, one-letter names, empty, 1, 1,000 rows) | `break-ui` | `better-typography` (truncate or wrap), `better-accessibility` (zoom 200%) | `break-ui` report, then `rams` |
+| Show every component and variant on one page (the audit reference) | `component-canvas` | `better-accessibility` (canvas keyboard and focus) | `rams` |
 | Whole-page or whole-site audit | none (read-only) | | `rams`, `better-accessibility`, `better-typography`, `impeccable critique` |
 
 Reference only, never the build skill: `animation-vocabulary` (naming an
@@ -335,6 +336,11 @@ recorded.
   No `init --preset`, `apply`, `--overwrite` or registry adds without the
   owner; `customization.md` colors and dark mode differ from
   `design.md` (proposals only); ToggleGroup is 2 to 5 options.
+- **`component-canvas`** (owner 2026-10-13): the canvas is ONE root-level
+  `component-canvas.html`, a Vite entry beside `index.html` that renders the
+  real `src/components/ui` primitives, so a style change shows there on
+  reload (the owner audits components from it). No new dependency, mock
+  data only, components never import canvas code. Not a route in the app.
 - **`react-best-practices`**: read `rules/<name>.md`, never the compiled
   `AGENTS.md` (code missing from 5 rules, one wrong "Correct" example). Use
   the `rerender-*`, `rendering-*` (not hydration or script), `js-*`,
