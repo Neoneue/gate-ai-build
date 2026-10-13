@@ -1,0 +1,162 @@
+import { ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { GoogleG } from "@/components/icons/google-g";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { TextLink } from "@/components/ui/text-link";
+import { withTierOf } from "@/lib/plan";
+import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * OnboardingSignIn: the onboarding copy of `pages/SignIn.tsx`, on
+ * `/sign-in-onboarding` under `OnboardingAuthLayout` (owner 2026-10-12).
+ * Change it here, never in the shared SignIn.tsx: `/sign-in` keeps that one
+ * (`.claude/rules/no-thrash.md`). Same card, copy and links as SignIn.tsx;
+ * the one difference is the phone touch targets below md:
+ *   · full-width actions take Button `size="touch"` (44px), `default`
+ *     (36px) from md up, picked by `useIsBelowMd`;
+ *   · the show-password toggle keeps its 32px box and 16px eye, and gets a
+ *     36x36 tap area from a centred `after:` box (owner: "make the show
+ *     password 36 for now"), the checkbox's hit-area recipe. It reaches at
+ *     most 2px into the input's 8px end padding, so it never covers typed
+ *     text.
+ * md+ renders exactly as SignIn.tsx.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+export function OnboardingSignIn() {
+  const { pathname } = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const actionSize = useIsBelowMd() ? "touch" : "default";
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+  }
+
+  return (
+    <Card className="w-100 rounded-lg shadow-lg data-[density=default]:py-6">
+      <CardHeader className="gap-y-2 px-6">
+        <CardTitle className="type-heading-20">Sign in</CardTitle>
+        <CardDescription>
+          Welcome back. Pick any of the methods below to continue.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="px-6">
+        <form onSubmit={handleSubmit}>
+          <FieldGroup>
+            <Field>
+              <FieldLabel className="text-muted-foreground" htmlFor="email">
+                Email
+              </FieldLabel>
+              <Input
+                autoComplete="email"
+                id="email"
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                type="email"
+                value={email}
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel className="text-muted-foreground" htmlFor="password">
+                Password
+              </FieldLabel>
+              <InputGroup>
+                <InputGroupInput
+                  autoComplete="current-password"
+                  id="password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Your password"
+                  type={showPwd ? "text" : "password"}
+                  value={password}
+                />
+                <InputGroupAddon align="inline-end">
+                  {/* Below md: a 36x36 tap area, centred on the 32px box. */}
+                  <InputGroupButton
+                    aria-label={showPwd ? "Hide password" : "Show password"}
+                    className="max-md:after:-translate-1/2 max-md:relative max-md:after:absolute max-md:after:top-1/2 max-md:after:left-1/2 max-md:after:size-9"
+                    onClick={() => setShowPwd((v) => !v)}
+                    size="icon-sm"
+                  >
+                    {showPwd ? (
+                      <EyeOff aria-hidden className="size-4" />
+                    ) : (
+                      <Eye aria-hidden className="size-4" />
+                    )}
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </Field>
+
+            <Button className="w-full" size={actionSize} type="submit">
+              Sign in
+              <ArrowRight aria-hidden data-icon="inline-end" />
+            </Button>
+
+            <FieldSeparator>or</FieldSeparator>
+
+            <Button
+              className="w-full"
+              size={actionSize}
+              type="button"
+              variant="outline"
+            >
+              <KeyRound
+                aria-hidden
+                className="size-4"
+                data-icon="inline-start"
+              />
+              Continue with a passkey
+            </Button>
+
+            <Button
+              className="w-full"
+              size={actionSize}
+              type="button"
+              variant="outline"
+            >
+              <GoogleG />
+              Continue with Google
+            </Button>
+          </FieldGroup>
+        </form>
+      </CardContent>
+
+      <CardFooter className="justify-center p-6 pt-2">
+        <p className="type-copy-12 text-muted-foreground">
+          New to Constellation Gate?{" "}
+          <TextLink
+            className="type-copy-12"
+            to={withTierOf(pathname, "/sign-up")}
+          >
+            Create an account
+          </TextLink>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+}

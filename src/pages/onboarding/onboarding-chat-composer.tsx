@@ -207,11 +207,18 @@ export function OnboardingChatComposer({
         {/* Mobile A: the main composer's one-lane picker trigger
             (chat-composer.tsx), leading the row. With no attach key before
             it, pulling back the Button's own 10px icon padding (the
-            sanctioned px-2.5) lands its logo on the prompt's text edge. */}
+            sanctioned px-2.5) lands its logo on the prompt's text edge.
+            Large text (200%): the logo, chevron and padding alone fill a
+            narrow row, so the group keeps a 6rem floor (`min-w-24`, 96px
+            at 100%, where the group is always wider). When the row cannot
+            give it that floor beside send, send wraps to its own line
+            (`ml-auto` keeps it at the right edge) and the name truncates
+            instead of vanishing. PRD: the selected model's name is visible
+            in the composer before the first send. */}
         {models.length > 0 && onSelectModel ? (
           <div
             aria-label="Models"
-            className="flex min-w-0 flex-1 items-center gap-1"
+            className="flex min-w-24 flex-1 items-center gap-1"
             role="group"
           >
             <OnboardingModelSelector

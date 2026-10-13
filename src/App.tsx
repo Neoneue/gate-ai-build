@@ -19,6 +19,11 @@ const OnboardingAuthLayout = lazy(() =>
     default: m.OnboardingAuthLayout,
   }))
 );
+const OnboardingSignIn = lazy(() =>
+  import("@/pages/onboarding/OnboardingSignIn").then((m) => ({
+    default: m.OnboardingSignIn,
+  }))
+);
 const OnboardingSignUp = lazy(() =>
   import("@/pages/onboarding/OnboardingSignUp").then((m) => ({
     default: m.OnboardingSignUp,
@@ -438,9 +443,10 @@ export function AppRoutes() {
       {/* Onboarding demo (owner 2026-10-12): its own copy of the auth shell,
           whose phone background stays fixed under the keyboard, and its own
           "Create your account" card, whose signup opens the onboarding
-          workspace. /sign-in and /sign-up above are untouched. */}
+          workspace, and its own copy of the sign-in card (phone touch
+          targets). /sign-in and /sign-up above are untouched. */}
       <Route element={<OnboardingAuthLayout />}>
-        <Route element={<SignIn />} path="/sign-in-onboarding" />
+        <Route element={<OnboardingSignIn />} path="/sign-in-onboarding" />
         <Route element={<OnboardingSignUp />} path="/sign-up-onboarding" />
       </Route>
       {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.

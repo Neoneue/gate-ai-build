@@ -35,6 +35,7 @@ import {
   ONBOARDING_SIGNUP_STATE,
   rememberSignupName,
 } from "@/pages/onboarding/onboarding-routes";
+import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * OnboardingSignUp: the Onboarding demo's "Create your account" card on
@@ -49,6 +50,15 @@ import {
  * account" with a spinner on the pressed one; after CREATE_ACCOUNT_DELAY_MS
  * signup finishes the way SignUp.tsx does on the onboarding route: mark the
  * Mobile A tab, then open Gate Chat.
+ *
+ * Phone touch targets, below md (owner 2026-10-12): both full-width actions
+ * take Button `size="touch"` (44px), `default` (36px) from md up, picked by
+ * `useIsBelowMd`; the show-password toggle keeps its 24px box and 14px eye
+ * and gets a 36x36 tap area from a centred `after:` box (owner: "make the
+ * show password 36 for now"), the checkbox's hit-area recipe. It reaches at
+ * most 6px into the input's 8px end padding, so it never covers typed text.
+ * The EULA checkbox's own hit area (38x30) already clears 24x24. md+ is
+ * unchanged.
  * ───────────────────────────────────────────────────────────────────────── */
 
 const MIN_PASSWORD_LENGTH = 12;
@@ -120,6 +130,7 @@ export function OnboardingSignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const actionSize = useIsBelowMd() ? "touch" : "default";
 
   const results = CRITERIA.map((criterion) => ({
     ...criterion,
@@ -211,7 +222,7 @@ export function OnboardingSignUp() {
               className="w-full"
               disabled={!agreed || pending !== null}
               onClick={() => startSignup("google")}
-              size="default"
+              size={actionSize}
               type="button"
               variant="outline"
             >
@@ -293,11 +304,13 @@ export function OnboardingSignUp() {
                   value={password}
                 />
                 <InputGroupAddon align="inline-end">
+                  {/* Below md: a 36x36 tap area, centred on the 24px box. */}
                   <InputGroupButton
                     aria-controls="onboarding-signup-password"
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
+                    className="max-md:after:-translate-1/2 max-md:relative max-md:after:absolute max-md:after:top-1/2 max-md:after:left-1/2 max-md:after:size-9"
                     onClick={() => setShowPassword((shown) => !shown)}
                     size="icon-xs"
                     variant="ghost"
@@ -381,7 +394,7 @@ export function OnboardingSignUp() {
               aria-busy={pending === "email"}
               className="relative w-full"
               disabled={!canCreate || pending !== null}
-              size="default"
+              size={actionSize}
               type="submit"
             >
               {pending === "email" ? (

@@ -1,5 +1,12 @@
 import { Boxes, Check, Search, ShieldCheck, Star } from "lucide-react";
-import { type ReactElement, type ReactNode, useMemo, useState } from "react";
+import {
+  type ReactElement,
+  type ReactNode,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   isKnownVendor,
   VENDOR_META,
@@ -38,7 +45,10 @@ import type { ChatModel } from "@/pages/chat/types";
  * the shared picker on Free, Default, Pro and Enterprise. It differs in one
  * way: the Free tab is offered. Its Recent tab lists what the onboarding
  * user has sent with (the composer's caller sets `lastUsedAt` from the
- * onboarding store). Change it here, never in the shared picker.
+ * onboarding store). Large text (200%, owner 2026-10-12): the search
+ * placeholder and the provider value end in an ellipsis, the count line's
+ * 12/18 line box grows with its text, and the tab strip keeps the active tab
+ * scrolled into view. Change it here, never in the shared picker.
  * ───────────────────────────────────────────────────────────────────────── */
 import { CapabilityStrip } from "@/pages/Models";
 
@@ -154,6 +164,31 @@ export function OnboardingModelSelector({
   const [view, setView] = useState<ModelView>(DEFAULT_MODEL_VIEW);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const tabsListRef = useRef<HTMLDivElement>(null);
+
+  // The tab strip scrolls inside itself (the line TabsList is a scrollport)
+  // when its tabs outgrow the dialog, as they do at 200% text on a phone.
+  // On open and on every tab change, the strip scrolls just enough to show
+  // the whole active tab (the "nearest" edge), so the current category is
+  // never scrolled out of sight. Only the strip moves, never the dialog.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: view is the trigger; the effect reads the active tab from the DOM
+  useLayoutEffect(() => {
+    const list = tabsListRef.current;
+    if (!(open && list)) {
+      return;
+    }
+    const tab = list.querySelector<HTMLElement>("[data-active]");
+    if (!tab) {
+      return;
+    }
+    const start = tab.offsetLeft;
+    const end = start + tab.offsetWidth;
+    if (start < list.scrollLeft) {
+      list.scrollLeft = start;
+    } else if (end > list.scrollLeft + list.clientWidth) {
+      list.scrollLeft = end - list.clientWidth;
+    }
+  }, [open, view]);
 
   // Only vendors present in the catalog, in the house order, plus one bucket
   // for anything Gate has no logo for.
@@ -410,7 +445,9 @@ export function OnboardingModelSelector({
             <Input
               aria-label={CHAT_COPY.searchModels}
               autoFocus
-              className="pl-9"
+              // An ellipsis, not a hard cut, when the placeholder outgrows
+              // the field (200% text on a phone).
+              className="text-ellipsis pl-9"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key !== "Enter") {
@@ -434,7 +471,21 @@ export function OnboardingModelSelector({
               aria-label={CHAT_COPY.allProviders}
               className="w-full sm:w-fit"
             >
-              <SelectValue />
+              {/* The value in its own truncating span: the trigger lays the
+                  value out as a clipping flex box, which cuts a long label
+                  mid-letter (200% text on a phone); the span ends it in an
+                  ellipsis instead. Same labels as the items below. */}
+              <SelectValue>
+                {(value: string) => (
+                  <span className="min-w-0 truncate">
+                    {value === ALL_PROVIDERS
+                      ? CHAT_COPY.allProviders
+                      : (providerOptions.find(
+                          (option) => option.value === value
+                        )?.label ?? value)}
+                  </span>
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL_PROVIDERS}>
@@ -448,9 +499,11 @@ export function OnboardingModelSelector({
             </SelectContent>
           </Select>
         </div>
+        {/* `leading-normal!`: the voice's 12/18 line box as a ratio (1.5,
+            18px at 100%), so a wrapped count never overlaps at 200%. */}
         <p
           aria-live="polite"
-          className="type-copy-12 text-muted-foreground"
+          className="type-copy-12 text-muted-foreground leading-normal!"
           role="status"
         >
           {resultSummary}
@@ -495,6 +548,7 @@ export function OnboardingModelSelector({
               <TabsList
                 aria-label="Model categories"
                 className="h-auto w-full px-0"
+                ref={tabsListRef}
                 variant="line"
               >
                 {VISIBLE_MODEL_VIEWS.map((modelView) => (

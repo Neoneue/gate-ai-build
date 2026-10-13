@@ -46,6 +46,8 @@ import {
   OnboardingChatLanding,
   OnboardingStarterChips,
 } from "@/pages/onboarding/onboarding-chat-landing";
+import { OnboardingChatMessage } from "@/pages/onboarding/onboarding-chat-message";
+import { canUseOnboardingChatMessage } from "@/pages/onboarding/onboarding-chat-message-support";
 import { OnboardingChatSidebar } from "@/pages/onboarding/onboarding-chat-sidebar";
 import {
   onboardingChatStore,
@@ -317,6 +319,12 @@ export function OnboardingChat() {
   // turn; when that turn already was the offer, only the logged note follows.
   const renderMobileATurn = (turn: ChatTurn) => {
     const lane = turn.lanes[0];
+    // The onboarding copy of the message (its reply header wraps at large
+    // text sizes); a turn with attachments or memory chips, which the copy
+    // leaves out, keeps the shared one.
+    const Message = canUseOnboardingChatMessage(turn)
+      ? OnboardingChatMessage
+      : ChatMessage;
     const setupLinkTurn = store.setupLinkTurnIds.has(turn.id);
     const offerSettled =
       setupLinkTurn && lane !== undefined && lane.state !== "streaming";
@@ -326,11 +334,11 @@ export function OnboardingChat() {
           // The bubble alone (no lanes), then the offer card as its reply.
           // ChatMessage's own 16px gap above its empty lane row spaces them.
           <div className="flex flex-col">
-            <ChatMessage turn={{ ...turn, lanes: [] }} />
+            <Message turn={{ ...turn, lanes: [] }} />
             <OnboardingSetupLinkReply lane={lane} />
           </div>
         ) : (
-          <ChatMessage turn={turn} />
+          <Message turn={turn} />
         )}
         {turn.id === followUpTurnId && lane ? (
           <OnboardingComputerPrompt
@@ -646,10 +654,13 @@ export function OnboardingChat() {
               {/* PRD phone step 2: a short line under the composer says the
                   model is free and that Gate scans every message. Mobile A
                   swaps it for the paid line while a paid model is picked;
-                  polite, so the reason is read out when the model changes. */}
+                  polite, so the reason is read out when the model changes.
+                  `leading-normal!` holds the voice's 12/18 line box as a
+                  ratio (1.5, 18px at 100%), so it grows with the text and
+                  wrapped lines never overlap at 200%. */}
               <p
                 aria-live={mobileA ? "polite" : undefined}
-                className="type-copy-12 text-center text-muted-foreground"
+                className="type-copy-12 text-center text-muted-foreground leading-normal!"
               >
                 {paidModelPicked
                   ? PAID_MODEL_HELPER

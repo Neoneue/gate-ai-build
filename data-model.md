@@ -328,7 +328,14 @@ path). Switching in always lands on `ONBOARDING_FIRST_STEP`
   `md` the dark stage is viewport-fixed at `h-lvh` and the page flows in the
   document (`min-h-svh`), so with the phone keyboard open the card scrolls up
   to every field while the background stays put. `md+` renders exactly as
-  AuthLayout.
+  AuthLayout. `/sign-in-onboarding` renders `OnboardingSignIn`
+  (`src/pages/onboarding/OnboardingSignIn.tsx`), the onboarding copy of
+  `pages/SignIn.tsx` (same card, copy and links), so `/sign-in` keeps the
+  shared one. Phone touch targets, below `md` on both screens: every
+  full-width action is 44px (Button `size="touch"`, `default` 36px from
+  `md`, picked by `useIsBelowMd` in `use-is-below-md.ts`); the
+  show-password toggle keeps its drawn size and gets a 36x36 tap area (a
+  centred `after:` box); the EULA checkbox keeps its 38x30 hit area.
 
 **Mobile A, the site from the chat.** The chat's top bar
 (`onboarding-chat-top-bar.tsx`, a copy of `pages/chat/chat-top-bar.tsx`) has
@@ -452,6 +459,17 @@ desktop start's "Open Gate Chat" and the 1440 chat are unchanged.
   sent with (lane `modelId`) to its latest turn's `sentAt`, applied only to
   the picker's list in `OnboardingChat`; the `catalog` map itself keeps
   `lastUsedAt: null`.
+- **Reply cards:** `onboarding-chat-message.tsx`, a copy of
+  `pages/chat/chat-message.tsx` (owner 2026-10-12), draws each Mobile A
+  turn; its `OnboardingChatLaneHeader` is shared with the follow-up cards
+  (`onboarding-computer-prompt.tsx`). It leaves out attachment and memory
+  chips, so a turn that carries either keeps the shared `ChatMessage`
+  (`canUseOnboardingChatMessage`). The cards' usage row is
+  `onboarding-chat-usage-row.tsx`, a copy of `pages/chat/chat-usage-row.tsx`.
+  At 200% text the header wraps (time and id drop below the name), the
+  metrics block wraps between metrics, and the composer's send drops below
+  the model chip so the name stays visible; 100% renders as the shared
+  parts do.
 - **Quick actions:** `ONBOARDING_STARTER_PROMPTS` (phone demo only; the
   desktop chat shows the shared `CHAT_STARTER_PROMPTS`): "What is Gate
   AI?", "What will Gate protect for me?", "How do I use Gate on my
@@ -518,7 +536,7 @@ graph LR
 
 | Route | Component (`src/pages/onboarding/`) | Notes |
 | --- | --- | --- |
-| `/sign-in-onboarding` | `SignIn` (shared `pages/SignIn.tsx`) under `OnboardingAuthLayout` | The demo's sign-in. Same card as `/sign-in`; only the layout is the onboarding copy. |
+| `/sign-in-onboarding` | `OnboardingSignIn` under `OnboardingAuthLayout` | The demo's sign-in. The onboarding copy of `pages/SignIn.tsx` (same card, copy and links, `/sign-in` keeps the shared one); below `md` its full-width actions are 44px and the show-password tap area 36x36. |
 | `/sign-up-onboarding` | `OnboardingSignUp` under `OnboardingAuthLayout` | "Create your account" (owner 2026-10-12, from the live product), replacing the shared invite-code `SignUp`, which `/sign-up` keeps. EULA checkbox enables Continue with Google; Create account also needs a Full name and Work email (any text) and all five password criteria (12+ characters, lowercase, uppercase, number, symbol), shown live in a two-column checklist and a strength meter (1-2 met danger, 3-4 warning, 5 success). Pressing either button disables both, shows "Creating account" with a spinner for `CREATE_ACCOUNT_DELAY_MS` (3000ms), then `markMobileATab()` and opens `/chat-onboarding` with `ONBOARDING_SIGNUP_STATE`. Legal links are inert; Sign in goes to `/sign-in-onboarding`. |
 | `/overview-onboarding` | `OnboardingOverview` → `ImprovedStart` | Desktop: three method cards + Continue / Open Gate Chat. Phone (`max-width: 767px` or short touch): Gate Chat or "Continue on desktop"; Gate Chat reads "Open Gate Chat" until the first reply, then "Resume Gate Chat"; the email card reads "Re-send email" once sent here or from the chat. Phone menu: the phone demo nav (see the phone links table). |
 | `/improved-handoff-onboarding` | `ImprovedHandoff` | Phone: "Check your email"; auto-opens the link after 3s. Desktop: the picker. |

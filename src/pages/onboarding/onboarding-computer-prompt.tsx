@@ -12,15 +12,15 @@ import { useCopyFeedback } from "@/hooks/use-copy-feedback";
 import { cn } from "@/lib/utils";
 import { formatExactUsd } from "@/pages/chat/chat-data";
 import { CHAT_TOUCH_TARGET } from "@/pages/chat/chat-layout";
-import { ChatModelLogo } from "@/pages/chat/chat-model-logo";
 import { ChatProse } from "@/pages/chat/chat-prose";
-import { ChatUsageRow } from "@/pages/chat/chat-usage-row";
 import { CHAT_COPY } from "@/pages/chat/copy";
 import type { ChatLane, ChatUsage } from "@/pages/chat/types";
+import { OnboardingChatLaneHeader } from "@/pages/onboarding/onboarding-chat-message";
 import {
   onboardingChatStore,
   useOnboardingChatStore,
 } from "@/pages/onboarding/onboarding-chat-store";
+import { OnboardingChatUsageRow } from "@/pages/onboarding/onboarding-chat-usage-row";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 
 /** How long the inline "Copied" confirmation holds (chat-message.tsx). */
@@ -33,7 +33,8 @@ const COPY_HOLD_MS = 3000;
  * Messages"), then the computer offer with its email button (PRD phone
  * step 4). Each is drawn as the reply card (`ChatLaneCard`,
  * chat-message.tsx, copied here since that file is shared with the desktop
- * chat): the same model header and time, the usage row (MOCK tokens, the
+ * chat): the same model header and time (`OnboardingChatLaneHeader`, the
+ * onboarding message copy's, which wraps at 200%), the usage row (MOCK tokens, the
  * free model's $0.00) and Copy. No Regenerate: a scripted follow-up has
  * nothing to redo. A mockup: the email is a toast. Rendered inside the
  * thread (`onboarding-chat-thread.tsx`) right after the turn it follows, so a
@@ -152,26 +153,11 @@ function FollowUpCard({
   return (
     <div className="flex min-w-0 flex-col gap-2" data-slot="chat-lane">
       <div className="flex min-w-0 flex-col gap-3 rounded-md border border-border bg-chat-bubble-agent p-4 text-chat-bubble-agent-foreground shadow-xs">
-        <div className="flex min-w-0 items-center gap-2">
-          <ChatModelLogo model={lane.model} />
-          <span className="type-label-14 shrink-0 text-foreground">
-            <span className="sr-only">{CHAT_COPY.responded} </span>
-            {lane.model.label}
-          </span>
-          <span className="type-mono-12 min-w-0 truncate text-muted-foreground">
-            {lane.model.id}
-          </span>
-          <time
-            className="type-mono-12 shrink-0 text-muted-foreground"
-            dateTime={lane.timestampIso}
-          >
-            {lane.timestamp}
-          </time>
-        </div>
+        <OnboardingChatLaneHeader lane={lane} />
         <div className="flex min-h-9 min-w-0 flex-col justify-center">
           {children}
         </div>
-        <ChatUsageRow
+        <OnboardingChatUsageRow
           className="mt-auto border-border border-t pt-3"
           usage={usage}
         />
@@ -221,10 +207,14 @@ function SetupLinkButton() {
       toast.success(COMPUTER_PROMPT.toast);
     }, ONBOARDING_TIMING.emailSend);
   };
+  // Large text (200%): the label is wider than a phone card, so the button
+  // is capped at the card's width and the label ends in an ellipsis instead
+  // of pushing the page sideways. At 100% it fits and nothing changes.
   return (
     <Button
       aria-busy={sending}
       aria-disabled={sending}
+      className="max-w-full"
       onClick={send}
       size="sm"
       type="button"
@@ -239,11 +229,13 @@ function SetupLinkButton() {
       ) : (
         <Mail aria-hidden data-icon="inline-start" strokeWidth={1.75} />
       )}
-      {sending
-        ? COMPUTER_PROMPT.sending
-        : setupLinkSent
-          ? COMPUTER_PROMPT.resend
-          : COMPUTER_PROMPT.button}
+      <span className="min-w-0 truncate">
+        {sending
+          ? COMPUTER_PROMPT.sending
+          : setupLinkSent
+            ? COMPUTER_PROMPT.resend
+            : COMPUTER_PROMPT.button}
+      </span>
     </Button>
   );
 }
