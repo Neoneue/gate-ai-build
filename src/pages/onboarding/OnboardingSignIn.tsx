@@ -1,6 +1,5 @@
 import { ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
 import { GoogleG } from "@/components/icons/google-g";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +24,10 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { TextLink } from "@/components/ui/text-link";
-import { withTierOf } from "@/lib/plan";
+import {
+  ONBOARDING_AUTH,
+  type PhoneDemoVersion,
+} from "@/pages/onboarding/onboarding-routes";
 import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -41,11 +43,12 @@ import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
  *     password 36 for now"), the checkbox's hit-area recipe. It reaches at
  *     most 2px into the input's 8px end padding, so it never covers typed
  *     text.
- * md+ renders exactly as SignIn.tsx.
+ * md+ renders exactly as SignIn.tsx. Mobile A and B (owner 2026-10-13)
+ * each mount it on their own route; "Create an account" opens that
+ * version's sign-up (`ONBOARDING_AUTH`).
  * ───────────────────────────────────────────────────────────────────────── */
 
-export function OnboardingSignIn() {
-  const { pathname } = useLocation();
+export function OnboardingSignIn({ version }: { version: PhoneDemoVersion }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -151,7 +154,7 @@ export function OnboardingSignIn() {
           New to Constellation Gate?{" "}
           <TextLink
             className="type-copy-12"
-            to={withTierOf(pathname, "/sign-up")}
+            to={ONBOARDING_AUTH[version].signUp}
           >
             Create an account
           </TextLink>

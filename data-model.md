@@ -306,7 +306,7 @@ path). Switching in always lands on `ONBOARDING_FIRST_STEP`
   workspace unmounts the layout and resets it. Exception: the Mobile A
   signup marks the tab (`markMobileATab`, sessionStorage
   `gate-onboarding-mobile-a`, in `onboarding-routes.ts`), and a cold load in
-  a marked tab redirects to `/sign-in-onboarding` instead, so a phone
+  a marked tab redirects to `/sign-in-onboarding/a` instead, so a phone
   refresh never lands on the desktop start. Loading `/overview-onboarding`
   clears the mark. Second exception (owner 2026-10-13): desktop opens
   Gate Chat in a new tab (the sidebar row, "Open Gate Chat", "Continue
@@ -335,20 +335,27 @@ path). Switching in always lands on `ONBOARDING_FIRST_STEP`
   versions: nothing built for a mobile version edits a file, route or shared
   primitive the desktop version uses (a desktop browser narrowed to phone
   width is a later, separate problem). **Mobile A** (PRD "Onboarding by
-  device", built): `/sign-in-onboarding` -> `/sign-up-onboarding` ->
-  `/chat-onboarding` -> site menu. **Mobile B** (signup -> the 2-card phone
-  start on `/overview-onboarding`; its phone chat entry runs the Mobile A
-  chat, see "The phone demo chat" below) and the **Desktop** entry are not
+  device", built): `/sign-in-onboarding/a` -> `/sign-up-onboarding/a` ->
+  `/chat-onboarding` -> site menu. **Mobile B** (built 2026-10-13):
+  `/sign-in-onboarding/b` -> `/sign-up-onboarding/b` -> the 2-card phone
+  start on `/overview-onboarding` (no Mobile A mark); its phone chat entry
+  runs the Mobile A chat, see "The phone demo chat" below. Both versions
+  start at sign-in (owner 2026-10-13); the bare `/sign-in-onboarding` and
+  `/sign-up-onboarding` redirect to A. Paths live in `ONBOARDING_AUTH`
+  (`onboarding-routes.ts`); one `OnboardingSignIn` and one
+  `OnboardingSignUp` take a `version` prop. The phone chat's Sign out
+  returns to B's sign-in from an Option B chat, A's otherwise
+  (`chatSignInPath`). The **Desktop** entry is not
   built.
   Mobile pages follow one naming rule: `/<page>-mobile-onboarding`.
-- **Auth shell (owner 2026-10-12).** `/sign-in-onboarding` and
-  `/sign-up-onboarding` mount under `OnboardingAuthLayout`
+- **Auth shell (owner 2026-10-12).** `/sign-in-onboarding/(a|b)` and
+  `/sign-up-onboarding/(a|b)` mount under `OnboardingAuthLayout`
   (`src/pages/onboarding/OnboardingAuthLayout.tsx`), a copy of
   `layouts/AuthLayout.tsx`, which keeps `/sign-in` and `/sign-up`. Below
   `md` the dark stage is viewport-fixed at `h-lvh` and the page flows in the
   document (`min-h-svh`), so with the phone keyboard open the card scrolls up
   to every field while the background stays put. `md+` renders exactly as
-  AuthLayout. `/sign-in-onboarding` renders `OnboardingSignIn`
+  AuthLayout. `/sign-in-onboarding/(a|b)` renders `OnboardingSignIn`
   (`src/pages/onboarding/OnboardingSignIn.tsx`), the onboarding copy of
   `pages/SignIn.tsx` (same card, copy and links), so `/sign-in` keeps the
   shared one. Phone touch targets, below `md` on both screens: every
@@ -468,8 +475,8 @@ with their follow-ups, the email button, no "Setup complete" toast and the
 demo traffic on the phone pages. It is the ONE "phone user not yet set up
 on a desktop" Gate Chat, built once and used by both versions; Option B
 also keeps the link card on its landing. The regular Gate Chat for Free,
-Pro and Enterprise (two-model compare) is separate and unchanged. The refresh redirect to `/sign-in-onboarding` stays on
-`isMobileATab` alone (Option B has no signup; a reload starts over). The
+Pro and Enterprise (two-model compare) is separate and unchanged. The refresh redirect to `/sign-in-onboarding/a` stays on
+`isMobileATab` alone (Option B's signup sets no mark; a reload starts over). The
 desktop start's "Open Gate Chat" and the 1440 chat are unchanged.
 
 - **Picker:** `onboarding-model-selector.tsx`, a copy of
@@ -577,8 +584,10 @@ desktop start's "Open Gate Chat" and the 1440 chat are unchanged.
 
 ```mermaid
 graph LR
-    SIO["/sign-in-onboarding"] --> SUO["/sign-up-onboarding"]
+    SIO["/sign-in-onboarding/a"] --> SUO["/sign-up-onboarding/a"]
     SUO -->|Mobile A signup| CHO
+    SIB["/sign-in-onboarding/b"] --> SUB["/sign-up-onboarding/b"]
+    SUB -->|Mobile B signup| OVO
     CHO -->|phone A: logo or menu Overview| MOO["/overview-mobile-onboarding"]
     CHO -->|phone B: logo or menu Overview| OVO
     MOO -->|menu Gate Chat| CHO
@@ -598,8 +607,8 @@ graph LR
 
 | Route | Component (`src/pages/onboarding/`) | Notes |
 | --- | --- | --- |
-| `/sign-in-onboarding` | `OnboardingSignIn` under `OnboardingAuthLayout` | The demo's sign-in. The onboarding copy of `pages/SignIn.tsx` (same card, copy and links, `/sign-in` keeps the shared one); below `md` its full-width actions are 44px and the show-password tap area 36x36. |
-| `/sign-up-onboarding` | `OnboardingSignUp` under `OnboardingAuthLayout` | "Create your account" (owner 2026-10-12, from the live product), replacing the shared invite-code `SignUp`, which `/sign-up` keeps. EULA checkbox enables Continue with Google; Create account also needs a Full name and Work email (any text) and all five password criteria (12+ characters, lowercase, uppercase, number, symbol), shown live in a two-column checklist and a strength meter (1-2 met danger, 3-4 warning, 5 success). Pressing either button disables both, shows "Creating account" with a spinner for `CREATE_ACCOUNT_DELAY_MS` (3000ms), then `markMobileATab()` and opens `/chat-onboarding` with `ONBOARDING_SIGNUP_STATE`. Legal links are inert; Sign in goes to `/sign-in-onboarding`. |
+| `/sign-in-onboarding/a`, `/sign-in-onboarding/b` | `OnboardingSignIn version` under `OnboardingAuthLayout` | The demo's sign-in, one per phone version (bare `/sign-in-onboarding` redirects to `/a`); Create an account opens the same version's sign-up. The onboarding copy of `pages/SignIn.tsx` (same card, copy and links, `/sign-in` keeps the shared one); below `md` its full-width actions are 44px and the show-password tap area 36x36. |
+| `/sign-up-onboarding/a`, `/sign-up-onboarding/b` | `OnboardingSignUp version` under `OnboardingAuthLayout` | "Create your account" (owner 2026-10-12, from the live product), replacing the shared invite-code `SignUp`, which `/sign-up` keeps. EULA checkbox enables Continue with Google; Create account also needs a Full name and Work email (any text) and all five password criteria (12+ characters, lowercase, uppercase, number, symbol), shown live in a two-column checklist and a strength meter (1-2 met danger, 3-4 warning, 5 success). Pressing either button disables both, shows "Creating account" with a spinner for `CREATE_ACCOUNT_DELAY_MS` (3000ms), then A: `markMobileATab()` and opens `/chat-onboarding`; B: opens `/overview-onboarding` (no mark); both with `ONBOARDING_SIGNUP_STATE`. Legal links are inert; Sign in goes to the same version's sign-in. |
 | `/overview-onboarding` | `OnboardingOverview` → `ImprovedStart` | Desktop: three method cards + Continue / Open Gate Chat. Phone (`max-width: 767px` or short touch): Gate Chat or "Continue on desktop"; Gate Chat reads "Open Gate Chat" until the first reply, then "Resume Gate Chat"; the email card reads "Re-send email" once sent here or from the chat. Phone menu: the phone demo nav (see the phone links table). |
 | `/improved-handoff-onboarding` | `ImprovedHandoff` | Phone: "Check your email"; auto-opens the link after 3s. Desktop: the picker. |
 | `/improved-link-onboarding` | `ImprovedLink` | Valid link restores the phone's setup (toast) and resumes on `/improved-connect-onboarding`; expired / other-account / other-workspace screens are built for a `linkRedemption.scenario` that names them. |

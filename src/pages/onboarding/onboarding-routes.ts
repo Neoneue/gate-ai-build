@@ -56,8 +56,22 @@ export const openInNewTab = (to: string) => {
  *  its label in a visually hidden span (copywriter, owner 2026-10-13). */
 export const NEW_TAB_CUE = "(opens in a new tab)";
 
-/** The demo's sign-in screen: where it starts and where Sign out returns. */
-export const ONBOARDING_SIGN_IN = "/sign-in-onboarding";
+/** The two phone demos' auth entries (owner 2026-10-13): both start at
+ *  sign-in, then sign-up. Mobile A's signup opens Gate Chat; Mobile B's
+ *  opens the 2-card phone start (`ONBOARDING_ROUTES.start`). The bare
+ *  `/sign-in-onboarding` and `/sign-up-onboarding` redirect to A. */
+export type PhoneDemoVersion = "a" | "b";
+export const ONBOARDING_AUTH: Record<
+  PhoneDemoVersion,
+  { signIn: string; signUp: string }
+> = {
+  a: { signIn: "/sign-in-onboarding/a", signUp: "/sign-up-onboarding/a" },
+  b: { signIn: "/sign-in-onboarding/b", signUp: "/sign-up-onboarding/b" },
+};
+
+/** The demo's sign-in screen: where Mobile A starts and where Sign out
+ *  returns. */
+export const ONBOARDING_SIGN_IN = ONBOARDING_AUTH.a.signIn;
 
 /** The mockup's preview of step 3's failure states (owner 2026-10-13):
  *  `?simulate=fail-connection` (the first test message check fails),
@@ -152,6 +166,11 @@ export const clearOptionBPhoneChat = (): void => {
  *  stays on `isMobileATab` alone. */
 export const isPhoneDemoChat = (): boolean =>
   isMobileATab() || optionBPhoneChat;
+
+/** Where the chat's Sign out goes (owner 2026-10-13): B's sign-in from an
+ *  Option B phone chat, so a B tester stays in B; A's sign-in otherwise. */
+export const chatSignInPath = (): string =>
+  optionBPhoneChat ? ONBOARDING_AUTH.b.signIn : ONBOARDING_SIGN_IN;
 
 /** The chat page the Mobile A demo was last on (the landing or a
  *  conversation), so the site menu's Gate Chat row returns to it after a
@@ -319,12 +338,14 @@ export function flowOfRoute(pathname: string): "current" | "improved" | null {
 }
 
 /** Exits: finishing or skipping setup lands on the user's real workspace,
- *  the Default twin of each page. */
+ *  the Default twin of each page. The four "Explore your Gateway" pages stay
+ *  in the onboarding workspace (owner 2026-10-13), on routes that mount
+ *  their Default twins (App.tsx). */
 export const ONBOARDING_EXITS = {
   overview: "/overview-default",
   messages: "/messages-default",
-  policies: "/policies-default",
-  limits: "/limits-default",
-  savings: "/token-savings-default",
-  models: "/models-default",
+  policies: "/policies-onboarding",
+  limits: "/limits-onboarding",
+  savings: "/token-savings-onboarding",
+  models: "/models-onboarding",
 } as const;

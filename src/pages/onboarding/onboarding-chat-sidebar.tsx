@@ -60,7 +60,7 @@ import type {
   ChatConversationGroup,
   ChatCredits,
 } from "@/pages/chat/types";
-import { ONBOARDING_SIGN_IN } from "@/pages/onboarding/onboarding-routes";
+import { chatSignInPath } from "@/pages/onboarding/onboarding-routes";
 
 /* The nav row recipe (sidebar.tsx NAV_ROW's states): quiet by colour,
  * highlight at --accent-muted, the open chat at the full --accent. */
@@ -191,7 +191,7 @@ export function OnboardingChatSidebar({
               <Button
                 aria-label="Sign out"
                 nativeButton={false}
-                render={<Link to={ONBOARDING_SIGN_IN} />}
+                render={<Link to={chatSignInPath()} />}
                 size="icon"
                 variant="ghost"
               >
@@ -417,7 +417,7 @@ export function OnboardingChatSidebar({
                     touchFriendly && "h-11"
                   )}
                   nativeButton={false}
-                  render={<Link to={ONBOARDING_SIGN_IN} />}
+                  render={<Link to={chatSignInPath()} />}
                   size="default"
                   variant="ghost"
                 >

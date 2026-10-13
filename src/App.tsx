@@ -456,10 +456,34 @@ export function AppRoutes() {
           whose phone background stays fixed under the keyboard, and its own
           "Create your account" card, whose signup opens the onboarding
           workspace, and its own copy of the sign-in card (phone touch
-          targets). /sign-in and /sign-up above are untouched. */}
+          targets). /sign-in and /sign-up above are untouched. Mobile A and
+          B each start at their own sign-in (owner 2026-10-13); the bare
+          paths open A. */}
       <Route element={<OnboardingAuthLayout />}>
-        <Route element={<OnboardingSignIn />} path="/sign-in-onboarding" />
-        <Route element={<OnboardingSignUp />} path="/sign-up-onboarding" />
+        <Route
+          element={<Navigate replace to="/sign-in-onboarding/a" />}
+          path="/sign-in-onboarding"
+        />
+        <Route
+          element={<Navigate replace to="/sign-up-onboarding/a" />}
+          path="/sign-up-onboarding"
+        />
+        <Route
+          element={<OnboardingSignIn version="a" />}
+          path="/sign-in-onboarding/a"
+        />
+        <Route
+          element={<OnboardingSignUp version="a" />}
+          path="/sign-up-onboarding/a"
+        />
+        <Route
+          element={<OnboardingSignIn version="b" />}
+          path="/sign-in-onboarding/b"
+        />
+        <Route
+          element={<OnboardingSignUp version="b" />}
+          path="/sign-up-onboarding/b"
+        />
       </Route>
       {/* Reference sheet — URL-only, no nav entry, no dashboard chrome.
           A chart of the shell cannot be read from inside the shell, so it
@@ -637,6 +661,20 @@ export function AppRoutes() {
           }
           path="/settings-enterprise"
         />
+        {/* Onboarding workspace pages the final page's "Explore your Gateway"
+         * rows open in a new tab (owner 2026-10-13: the demo stays in the
+         * onboarding workspace). A set-up onboarding workspace is a Free
+         * (Default) one with only the demo's data, so each mounts its Default
+         * twin; the -onboarding path gives it the onboarding chrome. Outside
+         * OnboardingLayout, so a cold new-tab load is not sent back to the
+         * first step. */}
+        <Route element={<PoliciesDefault />} path="/policies-onboarding" />
+        <Route element={<LimitsDefault />} path="/limits-onboarding" />
+        <Route
+          element={<TokenSavingsDefault />}
+          path="/token-savings-onboarding"
+        />
+        <Route element={<ModelsDefault />} path="/models-onboarding" />
         {/* Onboarding workspace — reached via the workspace switcher, always
          * on its first step. The layout owns the flow state in memory, so a
          * refresh (or a cold load of any later step) starts over at

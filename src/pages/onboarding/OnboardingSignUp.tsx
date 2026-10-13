@@ -30,9 +30,10 @@ import { TextLink } from "@/components/ui/text-link";
 import { cn } from "@/lib/utils";
 import {
   markMobileATab,
+  ONBOARDING_AUTH,
   ONBOARDING_ROUTES,
-  ONBOARDING_SIGN_IN,
   ONBOARDING_SIGNUP_STATE,
+  type PhoneDemoVersion,
   rememberSignupName,
 } from "@/pages/onboarding/onboarding-routes";
 import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
@@ -49,7 +50,8 @@ import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
  * password criteria. Pressing either disables both and shows "Creating
  * account" with a spinner on the pressed one; after CREATE_ACCOUNT_DELAY_MS
  * signup finishes the way SignUp.tsx does on the onboarding route: mark the
- * Mobile A tab, then open Gate Chat.
+ * Mobile A tab, then open Gate Chat. Mobile B (`/sign-up-onboarding/b`,
+ * owner 2026-10-13) skips the mark and opens the 2-card phone start.
  *
  * Phone touch targets, below md (owner 2026-10-12): both full-width actions
  * take Button `size="touch"` (44px), `default` (36px) from md up, picked by
@@ -123,7 +125,7 @@ const preventNavigation = (e: React.MouseEvent<HTMLAnchorElement>) => {
   e.preventDefault();
 };
 
-export function OnboardingSignUp() {
+export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
   const navigate = useNavigate();
   const [agreed, setAgreed] = useState(false);
   const [name, setName] = useState("");
@@ -154,11 +156,15 @@ export function OnboardingSignUp() {
       return;
     }
     const timer = setTimeout(() => {
+      if (version === "b") {
+        navigate(ONBOARDING_ROUTES.start, { state: ONBOARDING_SIGNUP_STATE });
+        return;
+      }
       markMobileATab();
       navigate(ONBOARDING_ROUTES.chat, { state: ONBOARDING_SIGNUP_STATE });
     }, CREATE_ACCOUNT_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [pending, navigate]);
+  }, [pending, navigate, version]);
 
   function startSignup(path: SignupPath) {
     if (pending !== null) {
@@ -439,7 +445,10 @@ export function OnboardingSignUp() {
       <CardFooter className="justify-center p-6 pt-2">
         <p className="type-copy-12 text-muted-foreground">
           Already have an account?{" "}
-          <TextLink className="type-copy-12" to={ONBOARDING_SIGN_IN}>
+          <TextLink
+            className="type-copy-12"
+            to={ONBOARDING_AUTH[version].signIn}
+          >
             Sign in
           </TextLink>
         </p>
