@@ -11,6 +11,10 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-13](./2026-10/changelog-10-13.md)
 
+- Onboarding desktop: billing choice on both setup methods, Fable 5 default
+- Onboarding desktop: `/checkout-onboarding` page
+- Onboarding desktop: Manual route figure and landing card titles
+- Onboarding desktop: step 3 route animation
 - Onboarding desktop: setup steps, real Gate Chat, setup Overview
 
 ### [2026-10-12](./2026-10/changelog-10-12.md)
