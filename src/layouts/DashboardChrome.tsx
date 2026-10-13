@@ -350,6 +350,8 @@ function DashTopBar({
   /** See `DashboardChromeProps.topBarAction`. */
   topBarAction?: ReactNode;
 }) {
+  // The onboarding workspace has no bell (owner 2026-10-13); see below.
+  const isOnboarding = isOnboardingSurface(useLocation().pathname);
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-border border-b bg-card px-4 sm:px-6 lg:static">
       <div className="flex items-center gap-2">
@@ -386,7 +388,10 @@ function DashTopBar({
           mobile-only Ask AI on plain `ghost` — so the hamburger is the one
           bordered control in the compact bar. */}
       <div className="flex items-center gap-2">
-        <NotificationsMenu />
+        {/* No bell on the onboarding workspace's pages (owner 2026-10-13):
+            a brand-new workspace has nothing to notify about, as in
+            OnboardingDashboardChrome. */}
+        {isOnboarding ? null : <NotificationsMenu />}
         <ThemeToggle className="hidden lg:inline-flex" />
         {topBarAction ? (
           <div className="hidden lg:flex">{topBarAction}</div>
