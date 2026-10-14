@@ -32,6 +32,24 @@ Prior day: [`changelog-10-13.md`](./changelog-10-13.md)
   0 differences. Phone 390px touch: buttons 44, fields 44, no horizontal
   overflow.
 
+### Segmented controls step up on touch screens `213aeed`
+
+- `SegmentedPill` (the All / 24H / 7D / 30D range pickers and the Tokens /
+  Spend toggles, 23 call sites) gets `pointer-coarse:` `min-h` floors, the
+  same pattern as Button, Input and Select (`de0d7f7`). Before: a phone
+  showed the pointer sizes. After: items `sm` 24 becomes 32 and `default`
+  32 becomes 36; the container grows 8px with them (`sm` 32 becomes 40,
+  `default` 40 becomes 44). A mouse never sees it. `segmented-pill.tsx`.
+- `design.md`: the Touch targets line lists SegmentedPill items 32 / 36.
+- Proof: Overview, Messages and Activity (8 controls) at 390px touch: items
+  32, track 40, the sliding thumb sits exactly on the pressed item, no
+  horizontal overflow. At 1280px mouse unchanged (24 / 32).
+- Not touch targets, so left alone: the `IconActionButton` row icons
+  (Revoke, Remove, Expand, 24px visible) already have a 48px hit area
+  (`after:-inset-3`). Still small on touch, for a later sprint: the Models
+  copy icons and Inspect links.
+- Not yet tested: iPads. Touch sizes apply there too, on the desktop layout.
+
 ## Components
 
 ### Onboarding phone: Sign out returns to the demo's own sign-in `6e26ca2`

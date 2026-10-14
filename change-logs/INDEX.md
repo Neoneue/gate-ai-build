@@ -12,6 +12,7 @@ tokens; this index exists so nothing has to glob the directory.
 ### [2026-10-14](./2026-10/changelog-10-14.md)
 
 - Every control steps up on touch screens
+- Segmented controls step up on touch screens
 - Onboarding phone: Sign out returns to the demo's own sign-in
 - Onboarding auth pages on phones: logo, copyright and card spacing
 - Onboarding phone chat: follows the latest reply, tighter turns
