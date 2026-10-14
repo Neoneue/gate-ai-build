@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-14](./2026-10/changelog-10-14.md)
 
+- Onboarding sign-up: Name placeholder reads John Doe
 - Every control steps up on touch screens
 - Segmented controls step up on touch screens
 - Onboarding setup: models follow the app; Manual picks its app in a dropdown

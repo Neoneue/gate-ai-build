@@ -129,3 +129,9 @@ Prior day: [`changelog-10-13.md`](./changelog-10-13.md)
   Other snippets and the six captions match the Gate repo's `connect-tabs.tsx`.
 - Files: `improved-setup.tsx`, `improved-data.ts`, `improved-parts.tsx`,
   `improved-art.tsx`, `onboarding-connect-tabs.tsx`.
+
+### Onboarding sign-up: Name placeholder reads John Doe `53136d1`
+
+- Sign-up Name field placeholder. Before: "Jane Doe". After: "John Doe". It was
+  the only "Jane" in `src`.
+- Files: `OnboardingSignUp.tsx`.
