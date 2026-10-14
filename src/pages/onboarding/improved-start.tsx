@@ -363,7 +363,7 @@ function MobileStart() {
                       : "Start chatting with a model of your choice"}
                   </p>
                 </div>
-                <Button className="w-full" onClick={openChat} size="touch">
+                <Button className="w-full" onClick={openChat} size="default">
                   <MessageSquare aria-hidden data-icon="inline-start" />
                   {resume ? "Resume Gate Chat" : "Open Gate Chat"}
                 </Button>
@@ -401,7 +401,7 @@ function MobileStart() {
                 aria-disabled={link.busy}
                 className="w-full"
                 onClick={() => void link.send()}
-                size="touch"
+                size="default"
                 variant="outline"
               >
                 {link.sending ? (
@@ -504,7 +504,7 @@ function HandoffCard() {
               aria-disabled={link.busy}
               className="w-full"
               onClick={() => void link.send()}
-              size="touch"
+              size="default"
               variant={sent ? "outline" : "default"}
             >
               {link.label}
@@ -512,7 +512,7 @@ function HandoffCard() {
             <Button
               className="w-full"
               onClick={openChat}
-              size="touch"
+              size="default"
               variant="ghost"
             >
               <MessageSquare aria-hidden data-icon="inline-start" />

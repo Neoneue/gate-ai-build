@@ -28,7 +28,6 @@ import {
   ONBOARDING_AUTH,
   type PhoneDemoVersion,
 } from "@/pages/onboarding/onboarding-routes";
-import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * OnboardingSignIn: the onboarding copy of `pages/SignIn.tsx`, on
@@ -36,8 +35,8 @@ import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
  * Change it here, never in the shared SignIn.tsx: `/sign-in` keeps that one
  * (`.claude/rules/no-thrash.md`). Same card, copy and links as SignIn.tsx;
  * the one difference is the phone touch targets below md:
- *   · full-width actions take Button `size="touch"` (44px), `default`
- *     (36px) from md up, picked by `useIsBelowMd`;
+ *   · full-width actions are Button `default`, which steps up to 44px on
+ *     a touch screen by itself (design.md, Touch targets);
  *   · the show-password toggle keeps its 32px box and 16px eye, and gets a
  *     36x36 tap area from a centred `after:` box (owner: "make the show
  *     password 36 for now"), the checkbox's hit-area recipe. It reaches at
@@ -52,7 +51,6 @@ export function OnboardingSignIn({ version }: { version: PhoneDemoVersion }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
-  const actionSize = useIsBelowMd() ? "touch" : "default";
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -115,7 +113,7 @@ export function OnboardingSignIn({ version }: { version: PhoneDemoVersion }) {
               </InputGroup>
             </Field>
 
-            <Button className="w-full" size={actionSize} type="submit">
+            <Button className="w-full" size="default" type="submit">
               Sign in
               <ArrowRight aria-hidden data-icon="inline-end" />
             </Button>
@@ -124,7 +122,7 @@ export function OnboardingSignIn({ version }: { version: PhoneDemoVersion }) {
 
             <Button
               className="w-full"
-              size={actionSize}
+              size="default"
               type="button"
               variant="outline"
             >
@@ -138,7 +136,7 @@ export function OnboardingSignIn({ version }: { version: PhoneDemoVersion }) {
 
             <Button
               className="w-full"
-              size={actionSize}
+              size="default"
               type="button"
               variant="outline"
             >

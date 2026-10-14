@@ -129,7 +129,7 @@ export function OnboardingCheckout() {
             className="w-full"
             disabled={paying}
             onClick={() => void pay()}
-            size="touch"
+            size="default"
           >
             {paying ? "Processing…" : `Pay ${formatCurrency(total)}`}
           </Button>

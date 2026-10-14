@@ -36,7 +36,6 @@ import {
   type PhoneDemoVersion,
   rememberSignupName,
 } from "@/pages/onboarding/onboarding-routes";
-import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * OnboardingSignUp: the Onboarding demo's "Create your account" card on
@@ -54,8 +53,8 @@ import { useIsBelowMd } from "@/pages/onboarding/use-is-below-md";
  * owner 2026-10-13) skips the mark and opens the 2-card phone start.
  *
  * Phone touch targets, below md (owner 2026-10-12): both full-width actions
- * take Button `size="touch"` (44px), `default` (36px) from md up, picked by
- * `useIsBelowMd`; the show-password toggle keeps its 24px box and 14px eye
+ * are Button `default`, which steps up to 44px on a touch screen by itself
+ * (design.md, Touch targets); the show-password toggle keeps its 24px box and 14px eye
  * and gets a 36x36 tap area from a centred `after:` box (owner: "make the
  * show password 36 for now"), the checkbox's hit-area recipe. It reaches at
  * most 6px into the input's 8px end padding, so it never covers typed text.
@@ -132,7 +131,6 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const actionSize = useIsBelowMd() ? "touch" : "default";
 
   const results = CRITERIA.map((criterion) => ({
     ...criterion,
@@ -228,7 +226,7 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
               className="w-full"
               disabled={!agreed || pending !== null}
               onClick={() => startSignup("google")}
-              size={actionSize}
+              size="default"
               type="button"
               variant="outline"
             >
@@ -400,7 +398,7 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
               aria-busy={pending === "email"}
               className="relative w-full"
               disabled={!canCreate || pending !== null}
-              size={actionSize}
+              size="default"
               type="submit"
             >
               {pending === "email" ? (

@@ -22,14 +22,18 @@ const selectTriggerVariants = cva(
         // read and click, so it can go compact, while a field you type into
         // stays at 36px. See design.md §Selectors.
         //
+        // Touch (owner 2026-10-14): on a touch screen sm 32 -> 36, default
+        // and lg -> 44 (Input's touch height, Apple's minimum hit area), as
+        // `pointer-coarse:` floors. Desktop never sees them.
+        //
         // Asymmetric padding (pl-3 pr-2 = 12px text side / 8px chevron side)
         // per design.md.
-        sm: "h-8 gap-2 pr-2 pl-3 text-xs",
-        default: "h-9 gap-2 pr-2 pl-3 text-sm",
+        sm: "h-8 pointer-coarse:min-h-9 gap-2 pr-2 pl-3 text-xs",
+        default: "h-9 pointer-coarse:min-h-11 gap-2 pr-2 pl-3 text-sm",
         // `lg` 40px (added 2026-10-09, owner direction): shadcn's `lg`
         // height, for a lone form field that leads a setup step (the
         // onboarding "Select an app" picker). Not for filter rows.
-        lg: "h-10 gap-2 pr-2 pl-3 text-sm",
+        lg: "h-10 pointer-coarse:min-h-11 gap-2 pr-2 pl-3 text-sm",
       },
     },
     defaultVariants: {

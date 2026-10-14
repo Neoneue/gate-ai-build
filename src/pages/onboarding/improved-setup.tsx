@@ -1123,7 +1123,8 @@ export function ImprovedComplete() {
         <ProtectedAndLive
           action={
             <Button
-              className="self-start"
+              // Full width on a phone, like every phone-flow action.
+              className={mobile ? "w-full" : "self-start"}
               onClick={() =>
                 // Gate Chat opens in a new tab on desktop (owner 2026-10-13).
                 chat && !mobile
