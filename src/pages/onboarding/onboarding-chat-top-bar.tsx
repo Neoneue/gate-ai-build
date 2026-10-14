@@ -17,6 +17,7 @@ import { CHAT_BRAND_EXPANDED } from "@/pages/chat/chat-layout";
 import { chatOverviewUrl } from "@/pages/chat/chat-links";
 import { CHAT_COPY } from "@/pages/chat/copy";
 import {
+  chatSignInPath,
   PHONE_DEMO_PAGES,
   phoneOverviewPath,
   phoneSiteSections,
@@ -84,7 +85,8 @@ export function OnboardingChatTopBar({ className }: { className?: string }) {
  * last item of the right group, opening the shared `SidebarPanel` in a
  * right-docked Sheet with the Onboarding workspace's nav. No workspace
  * switcher in it (nothing to switch to yet) and no upgrade card. Below `lg`
- * only, like the dashboard's; a nav tap closes the drawer.
+ * only, like the dashboard's; a nav tap closes the drawer. Its Sign out
+ * restarts the demo at A's or B's sign-in (owner 2026-10-14).
  */
 function OnboardingSiteMenu() {
   const navigate = useNavigate();
@@ -125,6 +127,8 @@ function OnboardingSiteMenu() {
           }}
           overviewPath={overviewPath}
           sections={phoneSiteSections(overviewPath)}
+          // Restarts the demo at this version's sign-in (owner 2026-10-14).
+          signOutPath={chatSignInPath()}
         />
       </SheetContent>
     </Sheet>

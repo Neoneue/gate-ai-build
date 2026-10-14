@@ -15,16 +15,19 @@ import {
 import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 
 /* ─── The desktop setup's two messages, as the dashboard logs them ──────────
- * Owner direction 2026-10-13: the Overview after setup
- * (`/overview-setup-onboarding`) shows exactly the two messages step 3 sent:
- * the test message (success, allow) when "Check connection" passed, and the
- * protection demo message (blocked prompt injection) when the demo passed.
+ * Owner direction 2026-10-13: the workspace's Overview
+ * (`/overview-setup-onboarding`) and data pages show exactly the messages
+ * step 3 sent, one at a time as each lands: the test message (success,
+ * allow) once "Check connection" passed, then the protection demo message
+ * (blocked prompt injection) once the demo passed. A user can open
+ * Overview, Messages or Activity between the two, so every page reads 1
+ * message, then 2.
  *
  * ONE source: every tile, chart and table on that page reads this, so the
  * counts and sums reconcile. Same model for both (`testModelOf`), the step 3
  * token counts, and cost: $0.00 on provider billing, the catalog list price
  * over those tokens on Gate credits. MOCK: no Gate record exists, so there
- * is no request id and no detail page. Null until both steps passed.
+ * is no request id and no detail page. Null until the test message passed.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export type SetupMessage = {
@@ -39,8 +42,8 @@ export type SetupMessage = {
   guardrail: "allow" | "block";
 };
 
-/** The two messages as one conversation with 2 turns (owner 2026-10-13):
- *  both came from the same app session during setup. */
+/** The messages as one conversation, one turn per message (owner
+ *  2026-10-13): both came from the same app session during setup. */
 export type SetupConversation = {
   id: string;
   /** The first turn's prompt, as Conversations titles a session. */
@@ -54,7 +57,8 @@ export type SetupConversation = {
 };
 
 export type SetupTraffic = {
-  /** Newest first: the demo message, then the test message. */
+  /** Newest first: the demo message (once it passed), then the test
+   *  message. */
   messages: readonly SetupMessage[];
   /** The key column's caller: the selected key's name for Manual setup;
    *  for Gate Connect (OAuth, no key name) gate-main's substitute,
@@ -82,11 +86,7 @@ function listCost(modelId: string, inTokens: number, outTokens: number) {
 }
 
 export function setupTraffic(state: ImprovedState): SetupTraffic | null {
-  if (
-    !(state.received && state.caught) ||
-    state.receivedAt === null ||
-    state.caughtAt === null
-  ) {
+  if (!state.received || state.receivedAt === null) {
     return null;
   }
   const model = testModelOf(state);
@@ -118,15 +118,20 @@ export function setupTraffic(state: ImprovedState): SetupTraffic | null {
     TEST_TOKENS_OUT,
     "allow"
   );
-  const demo = message(
-    "demo",
-    state.caughtAt,
-    DEMO_TOKENS_IN,
-    DEMO_TOKENS_OUT,
-    "block"
-  );
+  const demo =
+    state.caught && state.caughtAt !== null
+      ? message(
+          "demo",
+          state.caughtAt,
+          DEMO_TOKENS_IN,
+          DEMO_TOKENS_OUT,
+          "block"
+        )
+      : null;
+  const messages = demo ? [demo, test] : [test];
+  const newest = demo ?? test;
   return {
-    messages: [demo, test],
+    messages,
     keyLabel: key ?? `gate-connect (${OWNER_EMAIL.slice(0, 12)}...)`,
     app: appNameOf(state),
     billing: state.billing,
@@ -134,11 +139,11 @@ export function setupTraffic(state: ImprovedState): SetupTraffic | null {
       id: SETUP_CONVERSATION_ID,
       title: TEST_MESSAGE,
       startedAt: test.sentAt,
-      updatedAt: demo.sentAt,
-      turns: 2,
-      inTokens: test.inTokens + demo.inTokens,
-      outTokens: test.outTokens + demo.outTokens,
-      costUsd: test.costUsd + demo.costUsd,
+      updatedAt: newest.sentAt,
+      turns: messages.length,
+      inTokens: messages.reduce((sum, m) => sum + m.inTokens, 0),
+      outTokens: messages.reduce((sum, m) => sum + m.outTokens, 0),
+      costUsd: messages.reduce((sum, m) => sum + m.costUsd, 0),
     },
   };
 }
@@ -146,50 +151,7 @@ export function setupTraffic(state: ImprovedState): SetupTraffic | null {
 /** The setup conversation's id: mock, no Gate record exists. */
 export const SETUP_CONVERSATION_ID = "cnv_setup";
 
-/* ─── The mirror a new tab reads (owner 2026-10-13) ─────────────────────────
- * The final page's explore rows open the workspace pages in a NEW tab, which
- * has no flow state, so the two messages are mirrored to localStorage when
- * step 3 passes (the credit balance's precedent, onboarding-credits.ts) and
- * cleared when a fresh run starts. In-tab pages read the live state first. */
-const SETUP_TRAFFIC_KEY = "gate-onboarding-setup-traffic";
-
-export function saveSetupTraffic(traffic: SetupTraffic | null): void {
-  try {
-    if (traffic) {
-      localStorage.setItem(SETUP_TRAFFIC_KEY, JSON.stringify(traffic));
-    } else {
-      localStorage.removeItem(SETUP_TRAFFIC_KEY);
-    }
-  } catch {
-    // Storage blocked: a new tab shows the empty Default layouts.
-  }
-}
-
-export function storedSetupTraffic(): SetupTraffic | null {
-  try {
-    const raw = localStorage.getItem(SETUP_TRAFFIC_KEY);
-    if (!raw) {
-      return null;
-    }
-    const parsed = JSON.parse(raw) as SetupTraffic;
-    return {
-      ...parsed,
-      messages: parsed.messages.map((m) => ({
-        ...m,
-        sentAt: new Date(m.sentAt),
-      })),
-      conversation: {
-        ...parsed.conversation,
-        startedAt: new Date(parsed.conversation.startedAt),
-        updatedAt: new Date(parsed.conversation.updatedAt),
-      },
-    };
-  } catch {
-    return null;
-  }
-}
-
-/** Gate's compression over the two messages: tokens saved and the share of
+/** Gate's compression over the messages: tokens saved and the share of
  *  input tokens, one decimal ("0.1%"). */
 export function setupCompression(traffic: SetupTraffic): {
   savedTokens: number;

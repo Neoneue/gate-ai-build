@@ -34,7 +34,7 @@ export const BUTTON_VARIANTS = [
   "lift-ghost",
 ] as const;
 
-const BUTTON_TEXT_SIZES = ["xs", "sm", "default", "touch"] as const;
+const BUTTON_TEXT_SIZES = ["xs", "sm", "default"] as const;
 const BUTTON_ICON_SIZES = [
   "icon-xs",
   "icon-sm",

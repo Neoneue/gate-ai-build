@@ -1,6 +1,6 @@
 import { BookOpen, BotMessageSquare, Menu } from "lucide-react";
 import { domAnimation, LazyMotion } from "motion/react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, use, useEffect, useState } from "react";
 import { Navigate, useLocation, useOutletContext } from "react-router-dom";
 import type { LayoutContext } from "@/App";
 import { AskAiSurface } from "@/components/ui/ask-ai-surface";
@@ -45,13 +45,18 @@ import {
   isOnboardingSurface,
   isTeamRoleSurface,
 } from "@/lib/plan";
+import {
+  onboardingUpgradePath,
+  phoneSignInPath,
+} from "@/pages/onboarding/onboarding-routes";
+import { OnboardingContext } from "@/pages/onboarding/use-onboarding";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
 
 /* ─── OnboardingDashboardChrome ─────────────────────────────────────────────
  * The Onboarding workspace's copy of `layouts/DashboardChrome.tsx` (owner
  * 2026-10-12: mobile demo work never edits a file the desktop uses). Change
  * it here, never in the shared one. Only `onboarding-chrome.tsx` renders it.
- * The only differences, both phone only (the `lg:hidden` menu Sheet):
+ * The only differences, all phone only (the `lg:hidden` menu Sheet):
  *   • `mobileSections`: the phone menu's nav. B's phone start passes the
  *     phone demo nav; the lg+ rail keeps `sections`.
  *   • `onMobileNavigate`: called with a phone menu link's href as it is
@@ -59,6 +64,8 @@ import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
  *     on the Gate Chat row).
  *   • `sections`: the Improved flow's desktop rail with its "Get started"
  *     row (owner 2026-10-13).
+ *   • Sign out at the foot of the phone menu restarts the demo at that
+ *     version's sign-in (`phoneSignInPath`, owner 2026-10-14).
  * Two more, at every width (owner 2026-10-13):
  *   • No notifications bell: a brand-new workspace has nothing to notify
  *     about, so the shared chrome's NotificationsMenu is left out. The bell
@@ -171,10 +178,12 @@ export function OnboardingDashboardChrome({
   // CTA never jumps the user across workspaces.
   // It lands on the nested Manage subscription page rather than Billing
   // itself, so one click reaches the plan ladder instead of dropping the
-  // user on the page to hunt for the button. Hidden during onboarding
-  // (owner 2026-10-13).
+  // user on the page to hunt for the button. During onboarding only from
+  // the final page on (owner 2026-10-13, `onboardingUpgradePath`), read
+  // from the setup state (null outside the onboarding flow).
+  const onboarding = use(OnboardingContext);
   const upgradePath = isOnboarding
-    ? undefined
+    ? onboardingUpgradePath(onboarding?.improved)
     : isDefault
       ? "/billing-default/plans"
       : isFree
@@ -569,6 +578,7 @@ function MobileNav({
           onNavigate={handleNavigate}
           overviewPath={overviewPath}
           sections={sections}
+          signOutPath={phoneSignInPath()}
           topSlot={
             <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />

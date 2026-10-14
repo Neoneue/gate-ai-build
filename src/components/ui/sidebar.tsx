@@ -280,6 +280,10 @@ export interface SidebarPanelProps {
   onNavigate?: (pageId: string) => void;
   overviewPath?: string;
   sections: SidebarSection[];
+  /** Where the below-`lg` account rows' "Sign out" goes, as a full page
+   *  load so a demo restarts clean. Only the onboarding phone menu passes it
+   *  (owner 2026-10-14); without it the row stays the inert demo button. */
+  signOutPath?: string;
   /** Optional node rendered above the nav sections (below the brand header).
    *  Used by the mobile drawer to host the workspace switcher above Overview
    *  at the compact `xs` breakpoint. */
@@ -318,6 +322,7 @@ export function SidebarPanel({
   userArea,
   topSlot,
   upgradePath,
+  signOutPath,
 }: SidebarPanelProps) {
   // The promo's corner X hides it for the rest of the visit (in memory, back
   // on a reload; owner 2026-10-08).
@@ -427,6 +432,7 @@ export function SidebarPanel({
         <SidebarAccountRows
           hideDocsButton={hideDocsButton}
           onNavItemClick={onNavItemClick}
+          signOutPath={signOutPath}
         />
       </div>
     </div>
@@ -485,9 +491,11 @@ const ACCOUNT_ROW =
 function SidebarAccountRows({
   hideDocsButton,
   onNavItemClick,
+  signOutPath,
 }: {
   hideDocsButton?: boolean;
   onNavItemClick?: () => void;
+  signOutPath?: string;
 }) {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
@@ -560,15 +568,27 @@ function SidebarAccountRows({
             />
           </button>
         )}
-        <button className={ACCOUNT_ROW} type="button">
-          <span className="type-label-14">Sign out</span>
-          <LogoutIcon
-            aria-hidden
-            className="size-4 shrink-0 text-muted-foreground"
-            size={16}
-            strokeWidth={1.75}
-          />
-        </button>
+        {signOutPath ? (
+          <Link className={ACCOUNT_ROW} reloadDocument to={signOutPath}>
+            <span className="type-label-14">Sign out</span>
+            <LogoutIcon
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground"
+              size={16}
+              strokeWidth={1.75}
+            />
+          </Link>
+        ) : (
+          <button className={ACCOUNT_ROW} type="button">
+            <span className="type-label-14">Sign out</span>
+            <LogoutIcon
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground"
+              size={16}
+              strokeWidth={1.75}
+            />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -61,14 +61,16 @@ export const IMPROVED_CLIENTS = [
 
 /** The model a test message reports on "Existing subscriptions" billing,
  *  per app (owner 2026-10-13): the app's own vendor, never Gate's default.
- *  Codex and the OpenAI SDK are OpenAI's, Claude Code is Anthropic's. The
+ *  Codex and the OpenAI SDK are OpenAI's (Codex on GPT-5.3-Codex: GPT-4.1
+ *  cannot serve Codex's tools, owner 2026-10-14), Claude Code is
+ *  Anthropic's. The
  *  vendor-neutral apps take their usual default: OpenCode and OpenClaw an
  *  Anthropic model, Hermes an OpenAI one. Ids from IMPROVED_MODELS. */
 export const SUBSCRIPTION_MODEL: Record<
   (typeof IMPROVED_CLIENTS)[number]["id"],
   string
 > = {
-  codex: "openai/gpt-4.1",
+  codex: "openai/gpt-5-3-codex",
   "claude-code": "anthropic/claude-sonnet-4",
   opencode: "anthropic/claude-sonnet-4",
   hermes: "openai/gpt-4.1",
@@ -178,6 +180,54 @@ export const CATALOG_MODELS: readonly ImprovedModel[] = [
  *  further down (owner 2026-10-10; was Claude Sonnet 5). */
 export const CATALOG_DEFAULT_MODEL = CATALOG_MODELS[0].id;
 
+/** Manual setup on Gate credits: the models the selected app's tab can use
+ *  (owner 2026-10-14). On Gate credits Gate picks the provider without
+ *  checking the request's format and converts formats only on Bedrock and
+ *  Vertex (gate repo, resolve-upstream.ts and probe-wire.ts), so the app
+ *  decides the list:
+ *   - Claude Code (Anthropic Messages): Anthropic's models. Others depend on
+ *     Bedrock, which this catalog does not record, or on OpenRouter's
+ *     Messages endpoint, which Gate marks unverified.
+ *   - Codex (OpenAI Responses): GPT-5 only, the one family that serves
+ *     Codex's tools (tool-shape-verdicts.ts), one row per name, opening on
+ *     GPT-5.3-Codex, OpenAI's agentic coding model.
+ *   - The Chat Completions apps (OpenCode, Hermes, OpenClaw, OpenAI SDK):
+ *     the whole catalog. Every catalog model is served through OpenRouter,
+ *     whose Chat Completions endpoint takes them all (probe-wire.ts); the
+ *     OpenAI SDK snippet carries no Bedrock pin, so it routes the same. */
+const CLAUDE_CODE_MODELS = CATALOG_MODELS.filter(
+  (model) => model.vendor === "anthropic"
+);
+const CODEX_DEFAULT_MODEL = "openai/gpt-5-3-codex";
+const CODEX_MODELS: readonly ImprovedModel[] = (() => {
+  const seen = new Set<string>();
+  const rows = CATALOG_MODELS.filter((model) => {
+    if (
+      !model.id.startsWith("openai/gpt-5") ||
+      model.id.includes("image") ||
+      seen.has(model.label)
+    ) {
+      return false;
+    }
+    seen.add(model.label);
+    return true;
+  });
+  return [
+    ...rows.filter((model) => model.id === CODEX_DEFAULT_MODEL),
+    ...rows.filter((model) => model.id !== CODEX_DEFAULT_MODEL),
+  ];
+})();
+
+export const manualModelsFor = (clientId: string): readonly ImprovedModel[] => {
+  if (clientId === "claude-code") {
+    return CLAUDE_CODE_MODELS;
+  }
+  if (clientId === "codex") {
+    return CODEX_MODELS;
+  }
+  return CATALOG_MODELS;
+};
+
 export type ImprovedModel = {
   id: string;
   label: string;
@@ -202,14 +252,24 @@ export const modelOf = (state: ImprovedState): ImprovedModel => {
     : IMPROVED_MODELS[0];
 };
 
-/** The model the test message ran on: the picked model with Gate credits,
- *  else the app's own vendor model (SUBSCRIPTION_MODEL). */
+/** The model the test message ran on: the picked model with Gate credits
+ *  on Manual, else the app's own model (SUBSCRIPTION_MODEL). Gate Connect
+ *  has no model pick (owner 2026-10-14, the Gate Connect PRD: the desktop
+ *  app keeps each tool on its own default until the user picks a Gate
+ *  model there), so the app runs its own model whatever the billing. */
 export const testModelOf = (state: ImprovedState): ImprovedModel => {
-  if (state.billing === "payg") {
+  if (state.billing === "payg" && state.connection === "manual") {
     return modelOf(state);
   }
   const id = SUBSCRIPTION_MODEL[clientOf(state).id];
-  return IMPROVED_MODELS.find((model) => model.id === id) ?? modelOf(state);
+  const listed = IMPROVED_MODELS.find((model) => model.id === id);
+  if (listed) {
+    return listed;
+  }
+  const catalog = modelById(id);
+  return catalog
+    ? { id: catalog.id, label: catalog.name, vendor: catalog.vendor }
+    : modelOf(state);
 };
 
 export const clientOf = (state: ImprovedState) =>

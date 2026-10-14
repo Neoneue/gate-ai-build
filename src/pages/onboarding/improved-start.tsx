@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
@@ -182,7 +183,13 @@ function DesktopPicker() {
         >
           {chat ? "Open Gate Chat" : "Continue"}
           {chat ? <span className="sr-only"> {NEW_TAB_CUE}</span> : null}
-          <ArrowRight aria-hidden data-icon="inline-end" />
+          {/* A new tab gets the new-tab icon (owner 2026-10-13), as the
+              Default Overview's "Read API docs" (DashboardDefault.tsx). */}
+          {chat ? (
+            <ExternalLinkIcon aria-hidden data-icon="inline-end" size={16} />
+          ) : (
+            <ArrowRight aria-hidden data-icon="inline-end" />
+          )}
         </Button>
       </div>
     </ImprovedColumn>
@@ -356,7 +363,7 @@ function MobileStart() {
                       : "Start chatting with a model of your choice"}
                   </p>
                 </div>
-                <Button className="w-full" onClick={openChat} size="touch">
+                <Button className="w-full" onClick={openChat} size="default">
                   <MessageSquare aria-hidden data-icon="inline-start" />
                   {resume ? "Resume Gate Chat" : "Open Gate Chat"}
                 </Button>
@@ -394,7 +401,7 @@ function MobileStart() {
                 aria-disabled={link.busy}
                 className="w-full"
                 onClick={() => void link.send()}
-                size="touch"
+                size="default"
                 variant="outline"
               >
                 {link.sending ? (
@@ -497,7 +504,7 @@ function HandoffCard() {
               aria-disabled={link.busy}
               className="w-full"
               onClick={() => void link.send()}
-              size="touch"
+              size="default"
               variant={sent ? "outline" : "default"}
             >
               {link.label}
@@ -505,7 +512,7 @@ function HandoffCard() {
             <Button
               className="w-full"
               onClick={openChat}
-              size="touch"
+              size="default"
               variant="ghost"
             >
               <MessageSquare aria-hidden data-icon="inline-start" />

@@ -139,16 +139,18 @@ const buttonVariants = cva(
         // the lopsided edge was visible on every icon+label button in the app.
         // 10px is deliberately OFF the 4px grid — it is shadcn's value, and
         // the grid rule carves this one case out. See design.md §Buttons.
-        xs: "h-6 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
-        sm: "h-8 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
+        //
+        // Touch steps every size up one (owner 2026-10-14): on a touch screen
+        // (`pointer-coarse:`, the primary pointer) xs 24 -> 32, sm 32 -> 36,
+        // default 36 -> 44, and the icon squares the same. Adobe Spectrum's
+        // mobile scale is the precedent (one larger set, picked by input,
+        // not width); Tailwind documents `pointer-coarse:` for exactly this.
+        // A floor (`min-h`), not a height, so a call site's `h-auto` still
+        // grows; a mouse never sees it, so desktop is pixel-identical.
+        xs: "h-6 pointer-coarse:min-h-8 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-8 pointer-coarse:min-h-9 gap-2 in-data-[slot=button-group]:rounded-sm px-3 text-xs has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
         default:
-          "h-9 gap-2 px-3 text-sm has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5",
-        // Touch (added 2026-10-09, owner direction): `default` at 44px, the
-        // Apple HIG / WCAG 2.5.5 touch target, for full-width actions in a
-        // phone-only layout (the onboarding phone start and handoff cards).
-        // Never on a pointer-first surface; there `default` is the size.
-        touch:
-          "h-11 gap-2 px-3 text-sm has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5",
+          "h-9 pointer-coarse:min-h-11 gap-2 px-3 text-sm has-data-[icon=inline-end]:px-2.5 has-data-[icon=inline-start]:px-2.5",
         // Icon-only — one square per text-size step, same heights: xs 24 /
         // sm 32 / icon 36. `icon-lg` is deleted along with `lg`; there is no
         // "lg" anywhere in this API. `icon` tracks `default` at 36px.
@@ -158,9 +160,11 @@ const buttonVariants = cva(
         // shadcn's own default for the size. One step up the design.md
         // ladder (12 / 14 / 16 / 20), applied at the primitive so all 17
         // call sites move together.
-        "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3.5",
-        "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-4",
-        icon: "size-9",
+        "icon-xs":
+          "size-6 pointer-coarse:min-h-8 pointer-coarse:min-w-8 [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-sm":
+          "size-8 pointer-coarse:min-h-9 pointer-coarse:min-w-9 [&_svg:not([class*='size-'])]:size-4",
+        icon: "size-9 pointer-coarse:min-h-11 pointer-coarse:min-w-11",
         /* The ONE responsive size (added 2026-07-29). A dense action row —
            reply feedback, message tools — wants a 24px box on a pointer
            device and a bigger TAP target on touch. 32px below `lg`, 24px from

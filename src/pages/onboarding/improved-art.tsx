@@ -486,8 +486,8 @@ export function RouteFigure({
   centered = false,
   ref,
 }: {
-  /** Omit for a two-node figure (Gate to target): Manual setup before its
-   *  app is chosen (owner 2026-10-13). */
+  /** Omit for a two-node figure (Gate to target). Every setup figure now
+   *  names its app (owner 2026-10-14). */
   app?: string;
   appIcon?: ReactNode;
   target: string;

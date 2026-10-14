@@ -609,8 +609,8 @@ panel internals and the outer margins.
 
 ### Touch targets
 
-- **Pointer**: controls are 24px minimum (WCAG 2.5.8 AA); dense chrome is 32px and default controls 36px. This is a desktop operator tool, so 44px is not the pointer target.
-- **Coarse pointer**: full-width phone actions use `Button size="touch"` (44px); chat surfaces keep a 44px floor; every text field renders at 16px.
+- **Pointer**: controls are 24px minimum (WCAG 2.5.8 AA); dense chrome is 32px and default controls 36px.
+- **Touch screen** (`pointer-coarse:`, owner 2026-10-14): every Button, Input, InputGroup and Select size steps up, inside the primitive, as a `min-h` floor (Button 32 / 36 / 44, icon squares the same, Input 44, Select 36 / 44 / 44; 44 is Apple's minimum hit area; SegmentedPill items 32 / 36). Picked by the input device, never the width (Adobe Spectrum's mobile scale; Tailwind's `pointer-coarse:`), so a mouse at any width keeps the sizes above. Chat surfaces keep their 44px floor; every text field renders at 16px.
 - **Small controls** (checkbox, radio, icon actions): a 16px or 24px visual with an invisible hit area that reaches at least 24px.
 
 ## Elevation & Depth
@@ -726,30 +726,30 @@ express, add a variant and record it here first.
 - **promo** (`--promo-cta-*` fill and border, `shadow-sm`): upgrade and plan actions only. Keep its border: it carries the edge in dark mode.
 - **info-outline** (`border-info-border text-info-foreground-strong`, transparent): a control on an info `Callout`, never on a plain surface.
 - **ghost-to-outline** (ghost below `lg`, outline from `lg`): the top bar's notifications bell only.
-- **Sizes** (`xs` 24px, `sm` 32px, `default` 36px): `default` is the largest. Icon squares match (`icon-xs` 24, `icon-sm` 32, `icon` 36) with a 14px, 16px and inherited glyph.
-- **touch** (44px, `h-11`): full-width actions in a phone-only layout.
+- **Sizes** (`xs` 24px, `sm` 32px, `default` 36px; on a touch screen 32 / 36 / 44): `default` is the largest. Icon squares match (`icon-xs` 24, `icon-sm` 32, `icon` 36; touch 32 / 36 / 44) with a 14px, 16px and inherited glyph.
 - **icon-action** (32px below `lg`, 24px from `lg`): dense action rows only (message tools, Ask AI reply tools). Give the row `gap-0 px-0 lg:gap-1 lg:px-1` so the icons never move.
 - **shape** (`default` 6px, `pill` and `circle` full): radius comes from `shape`, never a `rounded-full` class.
 - **Icon padding** (10px both sides, `px-2.5` via `data-icon`): the one sanctioned half-step off the 4px grid.
 
-**The 36px Ceiling Rule.** No Button, Input or Select is taller than 36px,
-except `touch` on phone layouts and the 40px `lg` Select that leads a setup
-step. A control that needs to be bigger is a row, a card or a tile. Ask before
+**The 36px Ceiling Rule.** With a mouse, no Button, Input or Select is
+taller than 36px, except the 40px `lg` Select that leads a setup step. On a
+touch screen every size steps up (Touch targets). A control that needs to be bigger is a row, a card or a tile. Ask before
 adding a size.
 
 **The Surface Shadow Rule.** Every variant with a fill or an edge carries
 `shadow-xs`. Tinted variants (`destructive`, `promo`, `info-outline`) carry
 none of their own, and `raised` keeps `shadow-sm`.
 
-**The One Responsive Entry Rule.** `icon-action` is the only responsive size
-and `ghost-to-outline` the only responsive variant. A second one needs a
-written reason here.
+**The One Responsive Entry Rule.** `icon-action` is the only size that
+changes with width and `ghost-to-outline` the only responsive variant. A
+second one needs a written reason here. The touch step-up is by input device,
+not width, and applies to every size alike.
 
 ### Inputs and forms
 
-- **Input** (`input.tsx`; 36px `h-9`, `px-3`, `bg-muted`): one size, no `size` prop. `variant="elevated"` (`bg-card shadow-xs`) for a search field outside a card on the page background.
+- **Input** (`input.tsx`; 36px `h-9`, 44px on a touch screen, `px-3`, `bg-muted`): one size, no `size` prop. `variant="elevated"` (`bg-card shadow-xs`) for a search field outside a card on the page background.
 - **Textarea** (`textarea.tsx`): the Input surface, growing with its content.
-- **InputGroup** (`input-group.tsx`; 36px): an Input with an icon, key hint or button attached.
+- **InputGroup** (`input-group.tsx`; 36px, 44px on a touch screen): an Input with an icon, key hint or button attached.
 - **Field** (`field.tsx`): label, description, error and control as one unit, 16px between fields. Group related fields in `FieldSet` with a `FieldLegend`.
 - **Label** (`label.tsx`; `font-medium`): pairs one-to-one with a single control.
 - **Field group label** (`FieldLegend variant="label"`, muted): names a group of controls that sits under it (preset tiles, a slider, a segmented control). It stays quiet so the values lead.
@@ -765,7 +765,7 @@ written reason here.
 
 ### Selectors
 
-- **Select** (`select.tsx`; `sm` 32px, `default` 36px, `lg` 40px): the default single choice. `sm` is for dense chrome (rows-per-page, date-range month pickers); `lg` only for a lone field that leads a setup step. The chevron turns while open; the field label never uses `htmlFor` on the trigger (that would open it), the trigger takes an `aria-label`.
+- **Select** (`select.tsx`; `sm` 32px, `default` 36px, `lg` 40px; on a touch screen 36 / 44 / 44): the default single choice. `sm` is for dense chrome (rows-per-page, date-range month pickers); `lg` only for a lone field that leads a setup step. The chevron turns while open; the field label never uses `htmlFor` on the trigger (that would open it), the trigger takes an `aria-label`.
 - **MultiSelect** (`multi-select.tsx`): a checkbox list on a popover, flush beside a Select. Options may carry a `description` line. Opt-in props: `maxVisibleOptions`, `selectAll`, `commitMode` (Apply / Cancel footer), `minSelected`, `showSelectedLabels`, `popupWidth`.
 - **Combobox** (`combobox.tsx`): a searchable single choice for long lists (the Claude Code model picker). Same popup and rows as Select.
 - **Tabs, line** (`tabs.tsx`, `variant="line"`): sibling sub-pages of one surface, each of which could have its own URL. The active trigger never takes a hover fill.
@@ -817,7 +817,7 @@ is a label-value row (`DetailList`), not a sentence and not a tile.
 - **SortableTableHead** (`table.tsx`): every sortable column. Click cycles ascending, descending, unsorted; the click target is the label width only. Numeric columns put the arrow left of the label so the label stays flush right. Pairs with `useTableSort`.
 - **RowActionButton** (`row-action-button.tsx`; `layout` `row`, `stack`, `inline`): a row that opens something puts a real button in its identifier cell; the `<tr>` never takes `role="button"`.
 - **TablePaginationFooter** (`table-pagination-footer.tsx`): the only pagination chrome. The page strip renders only when there is more than one page; the count line always stays.
-- **TableEmptyState** (`table-empty-state.tsx`): the empty state for every table card, for a fresh workspace and for a filter with no matches alike. Title `No {things}`; the body says what will appear. Hide the toolbar and the pagination footer with it.
+- **TableEmptyState** (`table-empty-state.tsx`): the empty state for every table card, for a fresh workspace and for a filter with no matches alike. Title `No {things}`, at the card-title heading in `muted-foreground` (`type-heading-16`, EmptyState `size="card"`, owner 2026-10-13) so it never outranks the card's title; the body says what will appear. Hide the toolbar and the pagination footer with it.
 - **Bulk select**: a leading checkbox column, a select-all for the visible page only, cleared on page, page-size and tab change. The selection banner is the first body row and pushes the rows down. Spell both numbers ("Move 1 notification", "Move 3 notifications").
 - **DetailList** (`detail-list.tsx`; `boxed` in a modal, `flush` in a card): label and value on one row; on a wide flush list the value sits flush right in tabular figures, and on a narrow list it stacks under its label.
 - **Cell ink**: the row identifier and body data in `text-foreground`; context fragments (a sub-id, a separator) in `text-muted-foreground`; a missing value is a muted dash with an `sr-only` meaning.

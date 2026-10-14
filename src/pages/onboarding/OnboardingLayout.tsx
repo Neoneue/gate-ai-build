@@ -20,17 +20,14 @@ import {
   ONBOARDING_SIGN_IN,
   ONBOARDING_WORKSPACE_PAGES,
 } from "@/pages/onboarding/onboarding-routes";
-import {
-  saveSetupTraffic,
-  setupTraffic,
-} from "@/pages/onboarding/onboarding-setup-traffic";
 import { isMobileSetupNow } from "@/pages/onboarding/use-is-mobile-setup";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 import { useOnboardingMotion } from "@/pages/onboarding/use-onboarding-motion";
 
 /* ─── OnboardingLayout ──────────────────────────────────────────────────────
- * Layout route for every `-onboarding` path. It owns the in-memory flow
- * state (OnboardingProvider) and enforces the demo contract:
+ * Layout route for every `-onboarding` path. It owns the flow state
+ * (OnboardingProvider, shared with the workspace's other tabs) and enforces
+ * the demo contract:
  *   • A cold load of the desktop Gate Chat (`/chat-onboarding`, opened in a
  *     new tab) starts there; a conversation URL falls back to the landing.
  *   • A cold load (refresh, typed URL) of any other step but the first redirects
@@ -76,9 +73,9 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   if (coldThread && pathname === ONBOARDING_ROUTES.chat) {
     setColdThread(false);
   }
-  // A workspace page (a sidebar row or an explore row's new tab) renders
-  // on a cold load too (owner 2026-10-13); its data comes from the setup
-  // traffic's mirror (onboarding-setup-traffic.ts).
+  // A workspace page (a sidebar row, the Overview, or an explore row's new
+  // tab) renders on a cold load too (owner 2026-10-13); it resumes the
+  // setup state the other tabs share (OnboardingProvider).
   const [started, setStarted] = useState(
     () =>
       pathname === ONBOARDING_ROUTES.start ||
@@ -92,7 +89,8 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   // A fresh run (this layout mounting on the start page, or on the Mobile A
   // signup) begins with no credits: the stored balance the Gate Chat tab
   // reads (onboarding-credits.ts, owner 2026-10-13) goes back to 0. A cold
-  // chat tab is part of the running demo, so it never resets.
+  // chat tab is part of the running demo, so it never resets. (The shared
+  // setup state starts over in OnboardingProvider.)
   const [freshRun] = useState(
     () =>
       pathname === ONBOARDING_ROUTES.start || isOnboardingSignup(locationState)
@@ -100,16 +98,8 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   useEffect(() => {
     if (freshRun) {
       resetOnboardingBalance();
-      saveSetupTraffic(null);
     }
   }, [freshRun]);
-  // Step 3's two messages, mirrored for the workspace pages a new tab opens.
-  useEffect(() => {
-    const traffic = setupTraffic(improved);
-    if (traffic) {
-      saveSetupTraffic(traffic);
-    }
-  }, [improved]);
   // The start page ends any Mobile A run in this tab. Option B's phone chat
   // mark stays: B's site menu Overview returns to its phone start mid-run
   // (owner 2026-10-12); the desktop start clears it (`DesktopPicker`).
@@ -122,17 +112,27 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   // The Improved flow's chat path: the existing Gate Chat page opens its
   // conversation on the first send, which is the first message through Gate.
   const chatThreadOpen = pathname.startsWith(`${ONBOARDING_ROUTES.chat}/`);
+  // A load that redirects (a refresh or cold open of a conversation URL) is
+  // not a send, so it neither completes setup nor toasts (owner 2026-10-14:
+  // a phone refresh, which forgets Option B's in-memory chat mark, toasted).
+  const redirecting = coldThread || !started;
   useEffect(() => {
-    if (chatThreadOpen && flow === "improved" && !improved.received) {
+    if (
+      chatThreadOpen &&
+      !redirecting &&
+      flow === "improved" &&
+      !improved.received
+    ) {
       updateImproved({ received: true, connected: true, pathChosen: true });
       // Desktop flow only: the phone demo chat's first message (Mobile A or
       // Option B's phone chat) is a chat, not a setup step, so it gets no
-      // "Setup complete" toast (owner 2026-10-12).
-      if (!isPhoneDemoChat()) {
-        toast.success("Setup complete");
+      // "Setup complete" toast (owner 2026-10-12), nor does any phone. One id,
+      // so it can never stack.
+      if (!(isPhoneDemoChat() || isMobileSetupNow())) {
+        toast.success("Setup complete", { id: "onboarding-setup-complete" });
       }
     }
-  }, [chatThreadOpen, flow, improved.received, updateImproved]);
+  }, [chatThreadOpen, redirecting, flow, improved.received, updateImproved]);
 
   if (coldThread) {
     return <Navigate replace to={ONBOARDING_ROUTES.chat} />;

@@ -55,9 +55,10 @@ import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
  * `Conversations.tsx`: PageHeader, Overview bar, KpiRail,
  * ConversationsTableSection), every section and control kept.
  *
- * Before setup step 3 passed (`useSetupTraffic()` null): `ConversationsDefault`,
- * unchanged. After it: the two step 3 messages came from one app session, so
- * the table holds ONE row, `traffic.conversation` (2 turns, 2 requests), and
+ * Before step 3's first message (`useSetupTraffic()` null):
+ * `ConversationsDefault`, unchanged. After it: the step 3 messages came from
+ * one app session, so the table holds ONE row, `traffic.conversation` (one
+ * turn and one request per message: 1, then 2 once the demo lands), and
  * the rail reads the same ranged array, so its count, mean turns and mean
  * cost reconcile with that row.
  *
@@ -180,7 +181,7 @@ function SetupConversations({ traffic }: { traffic: SetupTraffic }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
           <PageTitle>Conversations</PageTitle>
-          <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+          <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
             {PAGE_DESCRIPTION}
           </p>
         </div>

@@ -278,7 +278,8 @@ export function OnboardingChatMessage({
   return (
     <article
       aria-labelledby={promptId}
-      className={cn("flex flex-col gap-4", className)}
+      // Prompt to reply: 8px on a phone, 16px from sm (owner 2026-10-14).
+      className={cn("flex flex-col gap-2 sm:gap-4", className)}
     >
       <div className="flex flex-col items-end gap-2">
         <div className="flex items-center justify-end gap-2">

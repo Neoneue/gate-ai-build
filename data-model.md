@@ -563,24 +563,45 @@ desktop start's "Open Gate Chat" and the 1440 chat are unchanged.
   retry succeeds. The flag goes on the first URL because a reload restarts
   the flow there (`simulateFlag`, `onboarding-routes.ts`); step 3 also reads
   it from its own URL.
-- **Rail** (`setupSidebarSections`, `onboarding-routes.ts`; passed through
-  `OnboardingDashboardChrome`'s `sections`): in the Improved flow on
-  desktop a "Get started" row (ListChecks) sits above Overview and is the
-  active row on every step. Forward only: it opens the step due next, or
-  the final page after Finish setup. Overview is hidden until Finish setup,
-  then opens the Overview after setup; Get started leaves once all four
-  explore tasks are done. `ONBOARDING_SIDEBAR_SECTIONS` and the phone menus
-  are unchanged.
-- **Overview after setup** (`/overview-setup-onboarding`,
-  `OnboardingSetupOverview`): "Visit Overview" on the final page opens it
-  in the same tab. A copy of the Pro Overview fed only by the two step 3
-  messages (`setupTraffic`, `onboarding-setup-traffic.ts`, timestamps
-  `receivedAt` / `caughtAt`): Messages 2, Threats detected 1, the tokens
-  chart with its controls, Latest messages (success / allow, error /
-  block), Latest security events (Injection, blocked); Tokens saved and
-  Latest conversations in their empty states; no "View all", rows open
-  nothing. Cost is $0.00 on provider billing, the catalog list price on
-  Gate credits. Ask AI shows (`showAskAi`); the bell and the menu do not.
+- **Rail** (`setupSidebarSections(improved)`, `onboarding-routes.ts`; the
+  setup steps pass it through `OnboardingDashboardChrome`'s `sections`, the
+  workspace pages through `DashboardChrome`, owner 2026-10-13): on every
+  onboarding page and in every tab, a "Get started" row (ListChecks) above
+  Overview, the active row on every step. Forward only: it opens the step
+  due next, or the final page after Finish setup. It leaves once all four
+  explore tasks are checked off on the final page or in the Tasks menu
+  (`setupTasksDone`; the live Gate build's rule, `get-started-menu.tsx`).
+  Overview is always present and opens `/overview-setup-onboarding`.
+  `ONBOARDING_SIDEBAR_SECTIONS` and the phone menus are unchanged.
+- **Shared setup state** (`onboarding-shared-setup.ts`, owner 2026-10-13):
+  the Improved state is mirrored to localStorage
+  `gate-onboarding-setup-state` on every change and read back by the other
+  tabs (`storage` event, shape-checked). `OnboardingProvider` decides per
+  tab on its first route: a workspace page resumes it; the desktop Gate Chat
+  tab keeps its own state; any other first load is a fresh run that
+  replaces it.
+- **Billing and the Upgrade card** (owner 2026-10-13): `/billing-onboarding`
+  mounts `OnboardingBilling`, the Free page with `credits` from
+  `onboardingCredits` (`onboarding-billing.ts`) over `ImprovedState.topUps`
+  (each mock checkout that went through, `OnboardingCheckout`): no balance,
+  Last top-up "Never" and no history until the user adds credits on Gate
+  credits billing; then the balance, the Last top-up and one "Credits
+  added" row per top-up. Existing subscriptions never show credits. The
+  rail's Upgrade card is hidden during setup and shows from the final page
+  on (`onboardingUpgradePath`, `improved.finished`), opening
+  `/billing-onboarding/plans`.
+- **Overview** (`/overview-setup-onboarding`, `OnboardingSetupOverview`):
+  the rail's Overview from step 1; it never redirects. Before step 3's
+  first message every block shows its empty state (the phone Overview's
+  blocks and strings). Then a copy of the Pro Overview fed by the step 3
+  messages as each lands (`setupTraffic`, `onboarding-setup-traffic.ts`,
+  timestamps `receivedAt` / `caughtAt`): 1 message (test, success / allow;
+  Threats detected 0; Latest security events empty), then 2 (the demo,
+  error / block; Threats detected 1; Latest security events Injection,
+  blocked); Latest conversations one row, one turn per message; no "View
+  all", rows open nothing. Cost is $0.00 on provider billing, the catalog
+  list price on Gate credits. Ask AI shows once setup is finished; the bell
+  and the menu do not.
 
 ```mermaid
 graph LR
@@ -616,7 +637,7 @@ graph LR
 | `/checkout-onboarding` | `OnboardingCheckout` | Mock hosted checkout (owner 2026-10-13): Gate Connect step 2's Add credits dialog hands off here with the amount in router state. Order summary ("Add Gate credits" plus a 5.00% processing fee), payment card, Pay. Pay adds the credits to setup state and `onboarding-credits.ts`, then returns to step 2; Back returns with the dialog reopened. Inside `OnboardingLayout` so setup state survives; no payment brand marks or colours. |
 | `/improved-verify-onboarding` | `ImprovedVerify` | Step 2's layout (owner 2026-10-13): back link "Connection settings" to step 2, route stage on the left (the setup route run replays each time a check starts; idle, live, done), labelled groups on the right, each card led by its `StatusRow` (improved-parts.tsx: success or error, badge tone pairing, `role="status"` / `role="alert"`) once it has a result. "Send a test message": helper, test message + copy, "Check connection" (900ms), then "Message received" with what Gate saw (Model = `testModelOf`: the picked model on Gate credits, else `SUBSCRIPTION_MODEL[app]`; Tokens In/Out = MOCK `estimateTokens`; Security = allow badge). "Run the protection demo" (after received, required): "Send the message" sets `caught` after 850ms, then "Prompt injection blocked." with the same rows for the demo message (Security = block badge) in place of the message field. "Finish setup" renders only once received and caught; it sets `finished` and opens the final page. Failure states (the product's, when a message does not go through): an error `StatusRow` and "Try again"; the figure returns to idle on a failed check; group 2 and Finish setup stay hidden while their step fails. |
 | `/improved-complete-onboarding` | `ImprovedComplete` | The Current flow's "You're protected and live" body (`ProtectedAndLive` in `current-verify.tsx`, shared with `CurrentComplete`) in `ImprovedColumn`: "Explore your Gateway" N/4 bar and four rows that set `improved.tasks[task]` and open their `-onboarding` page in a new tab (`openInNewTab`, also the menu's Optional rows and the Current page), so this tab keeps the checks. Primary "Visit Overview" (opens the Overview after setup); the Gate Chat path keeps "Continue chatting". Guarded: before Finish setup (`finished`, with received and caught; Gate Chat: received) it redirects to the step still due. |
-| `/overview-setup-onboarding` | `OnboardingSetupOverview` | The Overview after desktop setup: the Pro Overview fed by the two step 3 messages (see "Overview after setup" above). Redirects to the final page before Finish setup. |
+| `/overview-setup-onboarding` | `OnboardingSetupOverview` | The onboarding workspace's Overview, in the rail from step 1: empty blocks, then the Pro Overview fed by the step 3 messages as each lands (see "Overview" above). Never redirects. |
 | `/chat-onboarding`, `/chat-onboarding/:conversationId` | `OnboardingChat` under `OnboardingChatLayout` | The workspace's own copy of Gate Chat (phone and desktop); the main `Chat` / `ChatLayout` are untouched. Store `onboarding-chat-store.ts` starts empty. Desktop flow (owner 2026-10-13, "the real Gate chat, even on onboarding"; reverses the fixed model of 2026-10-11): the real Gate Chat composer toolbar in `onboarding-chat-composer.tsx` (`onSelectLaneModel`): attach (`ChatAttachmentPicker` and chips, held in the browser), one `OnboardingModelSelector` per lane (Free tab, onboarding Recent), Compare adds lane 2 (two lanes at most) and Remove comparison drops it, lanes held in `draftModelIds` for a new chat or `setConversationModels` in an open one, as `Chat.tsx`; a new chat starts on the free default. Landing: `OnboardingChatLanding` with the shared title, description and `CHAT_STARTER_PROMPTS`, so its prompts can be disabled. Send (owner 2026-10-13, "Do what the PRD suggests"): a send or starter from a new chat starts the user's own conversation (`sendScripted(null, prompt, laneModelIds)`, titled by the prompt, in the history rail), one scripted reply per lane streaming in step (`live.laneIds`), MOCK usage at the model's cost; further sends add turns; the first send marks setup complete. Refused send when any lane is paid and the onboarding balance is 0: placeholder `PAID_MODEL_REFUSAL`, helper `PAID_MODEL_HELPER` (one lane) or `PAID_COMPARE_HELPER` (comparing), send and starters off. Two free lanes: helper `FREE_COMPARE_HELPER`. A paid lane with credits: no helper line (string not written yet). Mobile A tab (`isMobileATab`): onboarding landing and quick actions (`onboarding-chat-landing.tsx`); the composer's model is the main chat's picker (`ChatModelSelector`, one lane, onboarding catalog with the free twins), starting on the free default `constellation/qwen3-8-flash-free`; a pick is held in `draftModelIds` for a new chat (the first send opens the conversation on it, `sendScripted(..., modelId)`) or stored with `setConversationModels` in an open one. Paid model picked (refused send, owner 2026-10-12): placeholder `PAID_MODEL_REFUSAL`, helper line `PAID_MODEL_HELPER` (polite live region) in place of the free line, send and Enter off, quick actions disabled but still scrollable, typing and the picker stay on; a free pick restores send with the draft kept. Every send or quick action is answered from `src/data/onboarding-chat-script.ts` (`selectOnboardingReply`, quick action 1 = the typed phrase) via `onboardingChatStore.sendScripted`, which stores the conversation in `scripted` and streams into `live`; after the first reply `computerPrompt` shows `OnboardingComputerPrompt`: two follow-up agent replies drawn as reply cards (model header, MOCK usage row, Copy, no Regenerate): `LOGGED_NOTE` (check Activity and Messages, PRD phone step 3) then `COMPUTER_PROMPT` (PRD phone step 4): its button shows a spinner and "Sending email" for 2s (`ONBOARDING_TIMING.emailSend`), then the toast, then reads "Re-send email setup link" (`setupLinkSent` in the store). Mobile A shows no "Setup complete" toast. Reply usage is MOCK: `estimateTokens` (about 4 characters a token) for in and out, the free model's $0.00 cost, settled, not compressed; no scan result and no `gateRequestId` (no View message link) yet. |
 | `/overview-mobile-onboarding` | `OnboardingMobileOverview` under `OnboardingChatLayout` | The phone demo's Overview: the `Dashboard` layout, empty until the first message, then every demo message (see "Demo traffic" above); no "View all". Mobile only. |
 | `/messages-mobile-onboarding` | `OnboardingMobileMessages` under `OnboardingChatLayout` | The phone demo's Messages: a `RequestsDefault` copy until the first message, then a Pro `Requests` copy fed by every demo message (range control, hero, search, table). Mobile only. |
@@ -1351,16 +1372,16 @@ Consequences worth knowing:
   Free until it upgrades): pages with no demo data mount their Default
   twins; the data pages (`OnboardingMessages`, `OnboardingActivity`,
   `OnboardingConversations`, `OnboardingSecurity`,
-  `OnboardingTokenSavings`) show their Default twin until step 3 passed,
-  then a copy of the Free page fed by `setupTraffic` (one source): 2
-  messages (test allow, demo block), 1 conversation with 2 turns, 2 of
-  2,366 input tokens compressed (0.1%; each request carries
-  `APP_CONTEXT_TOKENS` 1,170, `improved-data.ts`). Every workspace page
-  is in `ONBOARDING_WORKSPACE_PAGES` and renders on a cold load (the
-  explore rows open a new tab); the data pages read
-  `useSetupTraffic()`: this tab's state, else the localStorage mirror
-  `gate-onboarding-setup-traffic` (written when step 3 passes, cleared
-  on a fresh run).
+  `OnboardingTokenSavings`) show their Default twin until step 3's first
+  message, then a copy of the Free page fed by `setupTraffic` (one
+  source), one message at a time: the test message (allow), then the demo
+  (block); at 2, 1 conversation with 2 turns and 2 of 2,366 input tokens
+  compressed (0.1%; each request carries `APP_CONTEXT_TOKENS` 1,170,
+  `improved-data.ts`). Security events keeps its Default twin until the
+  blocked message lands. Every workspace page, the Overview included, is in
+  `ONBOARDING_WORKSPACE_PAGES` and renders on a cold load (the explore
+  rows open a new tab); the data pages read `useSetupTraffic()` over the
+  shared setup state (`onboarding-shared-setup.ts`).
 - **All three dimensions reconcile by construction**, on both metrics and on
   every day, because they group one set of cells and share one day shape. The
   cross-dimension invariant is arithmetic now, not tuning.

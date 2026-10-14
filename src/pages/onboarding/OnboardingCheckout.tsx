@@ -55,6 +55,7 @@ export function OnboardingCheckout() {
     await wait(PAY_MS);
     updateImproved((current) => ({
       balanceUsd: current.balanceUsd + amount,
+      topUps: [...current.topUps, { at: Date.now(), amountUsd: amount }],
     }));
     addOnboardingCredits(amount);
     navigate(returnTo, { replace: true });
@@ -128,7 +129,7 @@ export function OnboardingCheckout() {
             className="w-full"
             disabled={paying}
             onClick={() => void pay()}
-            size="touch"
+            size="default"
           >
             {paying ? "Processing…" : `Pay ${formatCurrency(total)}`}
           </Button>

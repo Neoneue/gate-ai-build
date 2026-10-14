@@ -83,6 +83,7 @@ export function TableEmptyState({
         className="rounded-none border-none bg-transparent shadow-none"
         footnote={footnote}
         icon={icon}
+        size="card"
         title={title}
       />
     </div>

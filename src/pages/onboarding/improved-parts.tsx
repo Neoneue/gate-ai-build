@@ -1,8 +1,8 @@
 import {
   ArrowUpRight,
+  Box,
   CircleAlert,
   CircleCheck,
-  Cloud,
   Info,
   Sparkles,
 } from "lucide-react";
@@ -30,28 +30,31 @@ import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 
 /* ─── Improved flow: shared parts ───────────────────────────────────────── */
 
-/** The route figure for the current choices: app -> Gate -> target. */
+/** The route figure for the current choices: app -> Gate -> target. Manual
+ *  shows its app too, the one its snippet tabs have selected (owner
+ *  2026-10-14, matching Gate Connect's figure). */
 export function ImprovedRouteFigure({
   improved,
   state,
   caption,
   centered,
-  showApp = true,
 }: {
   improved: ImprovedState;
   state?: "idle" | "live" | "done" | "error" | "blocked";
   caption?: ReactNode;
   centered?: boolean;
-  /** Off on Manual setup step 2 (owner 2026-10-13): the figure is just Gate
-   *  and the provider or model. */
-  showApp?: boolean;
 }) {
   const chat = improved.connection === "gate-chat";
   const payg = chat || improved.billing === "payg";
   const model = modelOf(improved);
+  // The figure is the route, not the bill (owner 2026-10-14): App -> Gate
+  // -> Model on either billing type. Only a model picked on Manual with
+  // Gate credits is named; Gate Connect has no pick (the desktop app keeps
+  // the tool's own default), so the rest show a generic model.
+  const pickedModel = payg && improved.connection === "manual";
   return (
     <RouteFigure
-      app={showApp ? appNameOf(improved) : undefined}
+      app={appNameOf(improved)}
       appIcon={
         chat ? (
           <GateMark className="size-6" />
@@ -62,7 +65,7 @@ export function ImprovedRouteFigure({
       caption={caption}
       centered={centered}
       state={state}
-      target={chat ? "Free model" : payg ? model.label : "Your provider"}
+      target={chat ? "Free model" : pickedModel ? model.label : "Model"}
       targetIcon={
         chat ? (
           <Sparkles
@@ -70,10 +73,10 @@ export function ImprovedRouteFigure({
             className="size-6 text-foreground"
             strokeWidth={1.75}
           />
-        ) : payg ? (
+        ) : pickedModel ? (
           <VendorAvatar decorative size="md" vendor={model.vendor} />
         ) : (
-          <Cloud
+          <Box
             aria-hidden
             className="size-6 text-foreground"
             strokeWidth={1.75}

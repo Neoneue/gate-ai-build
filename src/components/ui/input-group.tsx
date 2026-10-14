@@ -10,9 +10,10 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
     <div
       className={cn(
         // Wrapper owns the surface so the inner control can render transparent.
-        // Height matches <Input /> (h-9 — Input's only size). Surface mirrors <Input>:
+        // Height matches <Input /> (h-9 — Input's only size, 44px on a touch
+        // screen, owner 2026-10-14). Surface mirrors <Input>:
         // bg-neutral-50 + border-border so the group sits flush in a filter row.
-        "group/input-group relative flex h-9 w-full min-w-0 items-center rounded-sm border border-border bg-muted text-foreground outline-none transition-colors has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-start]]:h-auto has-[>textarea]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:flex-col has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot][aria-invalid=true]]:border-destructive has-disabled:opacity-50 has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-ring has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[[data-slot=input-group-control]:focus-visible]:ring-offset-2 has-[[data-slot=input-group-control]:focus-visible]:ring-offset-background motion-reduce:transition-none has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=inline-end]]:[&>input]:pr-2 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-start]]:[&>input]:pl-2",
+        "group/input-group relative flex h-9 pointer-coarse:min-h-11 w-full min-w-0 items-center rounded-sm border border-border bg-muted text-foreground outline-none transition-colors has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-start]]:h-auto has-[>textarea]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:flex-col has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot][aria-invalid=true]]:border-destructive has-disabled:opacity-50 has-[[data-slot=input-group-control]:focus-visible]:ring-2 has-[[data-slot=input-group-control]:focus-visible]:ring-ring has-[[data-slot][aria-invalid=true]]:ring-3 has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[[data-slot=input-group-control]:focus-visible]:ring-offset-2 has-[[data-slot=input-group-control]:focus-visible]:ring-offset-background motion-reduce:transition-none has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=inline-end]]:[&>input]:pr-2 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-start]]:[&>input]:pl-2",
         className
       )}
       data-slot="input-group"
@@ -122,8 +123,9 @@ function InputGroupInput({
   return (
     <Input
       className={cn(
-        // The wrapper owns surface + height; the control renders transparent.
-        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:border-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0",
+        // The wrapper owns surface + height; the control renders transparent
+        // (and drops Input's touch floor, which would overflow the wrapper).
+        "h-full pointer-coarse:min-h-0 flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:border-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0",
         className
       )}
       data-slot="input-group-control"

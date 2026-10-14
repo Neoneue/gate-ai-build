@@ -1,5 +1,12 @@
-import { type ReactNode, useMemo, useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import {
+  ArrowLeftRight,
+  BarChart2,
+  MessageSquare,
+  ShieldCheck,
+  Zap,
+} from "lucide-react";
+import { type ComponentProps, type ReactNode, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { vendorLabel } from "@/components/icons/vendor-meta";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +55,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableEmptyState } from "@/components/ui/table-empty-state";
 import {
   formatCompactCount,
   formatCurrency,
@@ -56,12 +64,15 @@ import {
 } from "@/lib/formatters";
 import { type ChartSeries, seriesColor } from "@/pages/activity-data";
 import { OnboardingChrome } from "@/pages/onboarding/onboarding-chrome";
-import { PreviewCard } from "@/pages/onboarding/onboarding-mobile-parts";
-import { ONBOARDING_ROUTES } from "@/pages/onboarding/onboarding-routes";
+import {
+  EmptyChartCard,
+  EmptyKpiTile,
+  IconChip,
+  PreviewCard,
+} from "@/pages/onboarding/onboarding-mobile-parts";
 import {
   type SetupTraffic,
   setupCompression,
-  setupTraffic,
   setupWeek,
   tokensOf,
 } from "@/pages/onboarding/onboarding-setup-traffic";
@@ -71,21 +82,24 @@ import { GUARDRAIL_BADGE } from "@/pages/requests/data";
 import { ACTION_BADGE, TYPE_META } from "@/pages/security-data";
 
 /* ─── OnboardingSetupOverview ───────────────────────────────────────────────
- * `/overview-setup-onboarding`: the Overview after desktop setup (owner
- * 2026-10-13), reached from "Visit Overview" on the final page in the same
- * tab, so it reads this tab's setup state. A copy of the Pro Overview
- * (`Dashboard.tsx`, unchanged) per no-thrash's rule for a demo with data:
- * every section and control, fed by exactly the two step 3 messages
- * (`useSetupTraffic`: this tab's setup state, else the localStorage mirror a
- * new tab reads; the one source, so the tiles, chart and tables reconcile).
- * Every section shows data (owner 2026-10-13): Tokens saved is Gate's
- * compression over the two messages (`setupCompression`: 2 of 2,366 input
- * tokens, "0.1%", its spark the tokens saved per day), and Latest
- * conversations lists the one conversation of 2 turns both messages came
- * from (`traffic.conversation`). Rows open nothing and the preview cards
- * carry no "View all": no list or detail page holds these messages (the
- * phone Overview's precedent). Ask AI shows here (owner: once the demo is
- * done); the notifications bell stays hidden.
+ * `/overview-setup-onboarding`: the onboarding workspace's Overview, the
+ * rail's Overview row on every onboarding page from step 1 (owner
+ * 2026-10-13). It never redirects. Before step 3's first message every block
+ * says what will appear there (`EmptyOverview`, the phone Overview's empty
+ * blocks and strings, OnboardingMobileOverview.tsx). Then it is a copy of
+ * the Pro Overview (`Dashboard.tsx`, unchanged) per no-thrash's rule for a
+ * demo with data: every section and control, fed by the step 3 messages
+ * as each lands, 1 then 2 (`useSetupTraffic`: the setup state every tab
+ * shares; the one source, so the tiles, chart and tables reconcile).
+ * Tokens saved is Gate's compression over the messages
+ * (`setupCompression`: 2 of 2,366 input tokens, "0.1%", its spark the
+ * tokens saved per day), and Latest conversations lists the one
+ * conversation they came from, one turn per message. Latest security events
+ * keeps its empty state until the blocked message lands. Rows open nothing
+ * and the preview cards carry no "View all": no list or detail page holds
+ * these messages (the phone Overview's precedent). Ask AI shows once setup
+ * is finished (owner: once the demo is done); the notifications bell stays
+ * hidden.
  * ───────────────────────────────────────────────────────────────────────── */
 
 type Dimension = "model" | "provider" | "apiKey";
@@ -122,18 +136,83 @@ const timeLabel = (date: Date) =>
 export function OnboardingSetupOverview() {
   const { improved } = useOnboarding();
   const traffic = useSetupTraffic();
-  // Only after setup: before both step 3 messages passed, the final page's
-  // guard sends the user to the step still due. This tab's own run also
-  // needs the final page reached; a new tab (no flow state) has the mirror
-  // only once step 3 passed.
-  const inThisTab = setupTraffic(improved) !== null;
-  if (!traffic || (inThisTab && !improved.finished)) {
-    return <Navigate replace to={ONBOARDING_ROUTES.improvedComplete} />;
-  }
   return (
-    <OnboardingChrome showAskAi>
-      <SetupOverview traffic={traffic} />
+    <OnboardingChrome showAskAi={improved.finished}>
+      {traffic ? <SetupOverview traffic={traffic} /> : <EmptyOverview />}
     </OnboardingChrome>
+  );
+}
+
+function OverviewHeader() {
+  return (
+    <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
+      <PageTitle>Overview</PageTitle>
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
+        Monitor request volume, token usage, spend, and security signals across
+        your gateway.
+      </p>
+    </div>
+  );
+}
+
+/** Before the first message: the phone Overview's empty blocks, each
+ *  saying what will appear there, never zeros. */
+function EmptyOverview() {
+  return (
+    <>
+      <OverviewHeader />
+      <div className="flex flex-col gap-4">
+        <SectionTitle as="h2">Activity this week</SectionTitle>
+        <KpiRail columns={3}>
+          <EmptyKpiTile icon={ArrowLeftRight} label="No messages yet" />
+          <EmptyKpiTile icon={BarChart2} label="No savings yet" />
+          <EmptyKpiTile icon={ShieldCheck} label="No events yet" />
+        </KpiRail>
+        <EmptyChartCard icon={Zap} label="No tokens used" />
+      </div>
+      <div className="grid @4xl:grid-cols-3 grid-cols-1 gap-6">
+        <PreviewCard title="Latest messages">
+          <CardEmptyState
+            body="Individual messages routed through the gateway will appear here."
+            icon={<IconChip icon={ArrowLeftRight} />}
+            title="No messages"
+          />
+        </PreviewCard>
+        <PreviewCard title="Latest conversations">
+          <CardEmptyState
+            body="Multi-turn conversations grouped by key and model will appear here as your workspace routes traffic."
+            icon={<IconChip icon={MessageSquare} />}
+            title="No conversations"
+          />
+        </PreviewCard>
+        <PreviewCard title="Latest security events">
+          <NoSecurityEvents />
+        </PreviewCard>
+      </div>
+    </>
+  );
+}
+
+/** A preview card's empty state, centered in the whole card (owner
+ *  2026-10-13): lifted by the card's 48px title row (PreviewCard: py-3 and
+ *  a 24px line), which it clears with its own top padding, and centered in
+ *  the height a taller card in the same grid row stretches it to. */
+function CardEmptyState(props: ComponentProps<typeof TableEmptyState>) {
+  return (
+    <div className="-mt-12 flex flex-1 flex-col justify-center">
+      <TableEmptyState {...props} />
+    </div>
+  );
+}
+
+/** Latest security events' empty state: before the blocked message lands. */
+function NoSecurityEvents() {
+  return (
+    <CardEmptyState
+      body="Prompt injection, PII, and credential leak events flagged by your policies will appear here."
+      icon={<IconChip icon={ShieldCheck} />}
+      title="No security events"
+    />
   );
 }
 
@@ -143,13 +222,7 @@ function SetupOverview({ traffic }: { traffic: SetupTraffic }) {
   const compression = setupCompression(traffic);
   return (
     <>
-      <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
-        <PageTitle>Overview</PageTitle>
-        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
-          Monitor request volume, token usage, spend, and security signals
-          across your gateway.
-        </p>
-      </div>
+      <OverviewHeader />
       <div className="flex flex-col gap-4">
         <SectionTitle as="h2">Activity this week</SectionTitle>
         <KpiRail columns={3}>
@@ -216,7 +289,11 @@ function SetupOverview({ traffic }: { traffic: SetupTraffic }) {
           <LatestConversationsTable traffic={traffic} />
         </PreviewCard>
         <PreviewCard title="Latest security events">
-          <SecurityEventsTable traffic={traffic} />
+          {threats.length > 0 ? (
+            <SecurityEventsTable traffic={traffic} />
+          ) : (
+            <NoSecurityEvents />
+          )}
         </PreviewCard>
       </div>
     </>

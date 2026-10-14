@@ -403,6 +403,7 @@ export function ConnectTabs({
   providerHint = DEFAULT_PROVIDER_HINT,
   backgroundModel,
   onTabChange,
+  hideTabs = false,
   control,
 }: {
   textMaxWidth?: string;
@@ -431,6 +432,10 @@ export function ConnectTabs({
   /** Onboarding: told the tab id on each switch (the Manual setup uses the
    *  tab as its app choice). Replaces the official analytics callback. */
   onTabChange?: (tab: string) => void;
+  /** Onboarding: no tab strip, only `defaultTab`'s snippet (owner
+   *  2026-10-14: Manual picks its app in a "Select an app" dropdown above;
+   *  the caller keys this on the app so a new pick remounts it). */
+  hideTabs?: boolean;
   /** AG-958 analytics name PREFIX, chosen by the caller (`api_keys.snippets`):
    *  tabs are `<control>.tab.<client>`, the copy button `<control>.copy`, the
    *  mode radios `<control>.mode.<mode>`, and the Gate Connect tab's download
@@ -476,7 +481,7 @@ export function ConnectTabs({
       }}
       value={activeTab}
     >
-      {!gateConnectOnly && (
+      {!(gateConnectOnly || hideTabs) && (
         <div className="flex items-center overflow-x-auto border-border border-b px-4 [scrollbar-width:none]">
           {/* Onboarding: six tabs overflow the setup column, so the strip
               scrolls sideways (px-4 keeps the focus ring inside). */}

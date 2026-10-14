@@ -422,6 +422,13 @@ const OnboardingTokenSavings = lazy(() =>
   }))
 );
 
+/* The onboarding workspace's Billing (owner 2026-10-13): credits and
+ * history only once the user added credits. */
+const OnboardingBilling = lazy(() =>
+  import("@/pages/onboarding/OnboardingBilling").then((m) => ({
+    default: m.OnboardingBilling,
+  }))
+);
 const OnboardingSetupOverview = lazy(() =>
   import("@/pages/onboarding/OnboardingSetupOverview").then((m) => ({
     default: m.OnboardingSetupOverview,
@@ -729,7 +736,7 @@ export function AppRoutes() {
           <Route element={<LimitsDefault />} path="/limits-onboarding" />
           <Route element={<TeamDefault />} path="/members-onboarding" />
           <Route element={<TeamsDefault />} path="/teams-onboarding" />
-          <Route element={<BillingDefault />} path="/billing-onboarding" />
+          <Route element={<OnboardingBilling />} path="/billing-onboarding" />
           <Route
             element={<ManageSubscription />}
             path="/billing-onboarding/plans"

@@ -35,6 +35,7 @@ import { RefreshCWIcon } from "@/components/ui/refresh-cw";
 import { SectionTitle } from "@/components/ui/section-title";
 import { SquareArrowUpIcon } from "@/components/ui/square-arrow-up";
 import { Switch } from "@/components/ui/switch";
+import type { HistoryRow } from "@/data/billing-history";
 import { DashboardChrome } from "@/layouts/DashboardChrome";
 import { formatCurrency } from "@/lib/formatters";
 import { withTierOf } from "@/lib/plan";
@@ -50,7 +51,21 @@ import { HistoryLedger } from "@/pages/billing/HistorySection";
  * running balance after the last history row).
  * ───────────────────────────────────────────────────────────────────────── */
 
-export function BillingFree() {
+/** The Credits card and the history, when a caller supplies them (the
+ *  onboarding workspace, OnboardingBilling, owner 2026-10-13: credits show
+ *  only once the user added some). Without it the page is unchanged. */
+export type BillingFreeCredits = {
+  balanceUsd: number;
+  /** "Last top-up" value, null for "Never". */
+  lastTopUp: string | null;
+  history: HistoryRow[];
+};
+
+export function BillingFree({
+  credits,
+}: {
+  credits?: BillingFreeCredits;
+} = {}) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -80,7 +95,7 @@ export function BillingFree() {
         <div className="mt-2 flex flex-col gap-4">
           <SectionTitle as="h2">Credits</SectionTitle>
           <div className="grid grid-cols-1 gap-4">
-            <CreditsCard />
+            <CreditsCard credits={credits} />
             <PaymentMethodCard />
           </div>
         </div>
@@ -94,7 +109,7 @@ export function BillingFree() {
             </Button>
           </div>
           <Card density="flush">
-            <HistoryLedger />
+            <HistoryLedger rows={credits?.history} />
           </Card>
         </div>
       </div>
@@ -106,7 +121,7 @@ function PageHeader() {
   return (
     <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
       <PageTitle>Billing</PageTitle>
-      <p className="type-copy-18 m-0 text-pretty text-muted-foreground">
+      <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
         Everything you pay for Gate, in one place.
       </p>
     </div>
@@ -219,7 +234,7 @@ function readAutoRecharge(): AutoRechargeConfig {
   }
 }
 
-function CreditsCard() {
+function CreditsCard({ credits }: { credits?: BillingFreeCredits }) {
   const [addOpen, setAddOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [auto, setAuto] = useState<AutoRechargeConfig>(readAutoRecharge);
@@ -227,7 +242,7 @@ function CreditsCard() {
   return (
     <Card className="min-w-0 pb-0!">
       <CardContent className="flex flex-1 flex-col gap-3">
-        <HeroNumeric>$0.00</HeroNumeric>
+        <HeroNumeric>{formatCurrency(credits?.balanceUsd ?? 0)}</HeroNumeric>
         <p className="type-copy-14 m-0 text-pretty text-foreground">
           Used for messages routed through our gateway. Each call is charged at
           our per-model rate. Security and audit are included.
@@ -244,7 +259,10 @@ function CreditsCard() {
               auto.enabled ? `+$${auto.topUp} below $${auto.threshold}` : "Off"
             }
           />
-          <CreditStatRow label="Last top-up" value="Never" />
+          <CreditStatRow
+            label="Last top-up"
+            value={credits?.lastTopUp ?? "Never"}
+          />
         </dl>
       </CardContent>
       <CardFooter className="justify-end gap-2 border-border border-t py-2">

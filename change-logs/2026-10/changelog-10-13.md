@@ -285,3 +285,57 @@ Prior day: [`changelog-10-12.md`](./changelog-10-12.md)
   "hello", and a new test covers the greeting.
 - Where: `src/data/onboarding-chat-script.ts`,
   `src/data/onboarding-chat-script.test.ts`.
+
+### Onboarding sidebar: Overview always in the rail, Get started leaves after the tasks `94047a8`
+
+- Before: the rail hid Overview until Finish setup, so opening
+  `/overview-setup-onboarding` earlier bounced to the setup start through the
+  chrome's role guard.
+- After: Get started then Overview show on every onboarding page from step 1,
+  in every tab (setup steps and workspace pages). Overview never redirects.
+  Get started leaves only once all 4 explore tasks are checked off on the
+  final page or the Tasks menu. The rail shows the Upgrade card from the final
+  page on, opening `/billing-onboarding/plans`.
+- Where: `onboarding-routes.ts`, `onboarding-chrome.tsx`,
+  `OnboardingDashboardChrome.tsx`, `DashboardChrome.tsx`, `OnboardingLayout.tsx`.
+
+### Onboarding step 3: messages land one at a time, setup state shared across tabs `94047a8`
+
+- Before: Overview, Messages, Activity, Conversations and Token savings showed
+  the whole demo at once; setup state was mirrored through
+  `gate-onboarding-setup-traffic`.
+- After: the test message lands 1 message, the protection demo 2, on those five
+  pages. Security events stays empty until the blocked message. Overview shows
+  empty blocks before message 1. Setup state lives in localStorage
+  `gate-onboarding-setup-state` (`onboarding-shared-setup.ts`, shape-checked)
+  and is shared across tabs; the desktop Gate Chat tab keeps its own state.
+- Where: `onboarding-shared-setup.ts`, `onboarding-setup-traffic.ts`,
+  `use-setup-traffic.ts`, `onboarding-state.ts`, `OnboardingProvider.tsx`,
+  `OnboardingSetupOverview.tsx` and the five data pages.
+
+### Onboarding Billing: no history until credits are added `94047a8`
+
+- Before: the onboarding Billing page showed placeholder history.
+- After: no history and $0.00 / Last top-up Never until the user adds credits
+  on Gate credits; then the balance, Last top-up and one "Credits added" row per
+  top-up. Never on Existing subscriptions.
+- Where: `OnboardingBilling.tsx`, `onboarding-billing.ts`, `BillingFree.tsx`,
+  `OnboardingCheckout.tsx`.
+
+### New-tab icon on "Open Gate Chat" and "Continue chatting" `94047a8`
+
+- Before: both buttons open a new tab with no cue.
+- After: an ExternalLinkIcon trails the label on "Open Gate Chat" and on the
+  desktop "Continue chatting".
+- Where: `improved-start.tsx`, `improved-setup.tsx`.
+
+### Table-card empty-state titles 16px muted, page subtitles 16px `c94692a`
+
+- Before: EmptyState `size="card"` titles were 20px; page subtitles were 18px
+  (`type-copy-18`).
+- After: card empty-state titles are `type-heading-16` in `muted-foreground`,
+  site-wide through TableEmptyState. Overview's empty states center in the
+  whole card. Page subtitles are `type-copy-16`, as design.md already
+  specified.
+- Where: `empty-state.tsx`, `table-empty-state.tsx`, `onboarding-mobile-parts.tsx`,
+  every page header in `src/pages/`, `design.md`.

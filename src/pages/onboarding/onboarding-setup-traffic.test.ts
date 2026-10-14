@@ -7,11 +7,9 @@ import {
   TEST_TOKENS_OUT,
 } from "@/pages/onboarding/improved-data";
 import {
-  saveSetupTraffic,
   setupCompression,
   setupTraffic,
   setupWeek,
-  storedSetupTraffic,
   tokensOf,
 } from "@/pages/onboarding/onboarding-setup-traffic";
 import { initialImprovedState } from "@/pages/onboarding/onboarding-state";
@@ -34,10 +32,28 @@ const finished = () => ({
 });
 
 describe("setupTraffic", () => {
-  test("is null until both step 3 messages passed", () => {
+  test("is null until the test message passed", () => {
     expect(setupTraffic(initialImprovedState())).toBeNull();
-    expect(setupTraffic({ ...finished(), caught: false })).toBeNull();
-    expect(setupTraffic({ ...finished(), caughtAt: null })).toBeNull();
+    expect(setupTraffic({ ...finished(), received: false })).toBeNull();
+    expect(setupTraffic({ ...finished(), receivedAt: null })).toBeNull();
+  });
+
+  test("lands one message at a time: the test message, then the demo", () => {
+    const first = setupTraffic({
+      ...finished(),
+      caught: false,
+      caughtAt: null,
+    });
+    expect(first?.messages.map((m) => [m.id, m.guardrail])).toEqual([
+      ["test", "allow"],
+    ]);
+    expect(first?.conversation.turns).toBe(1);
+    expect(first?.conversation.updatedAt.getTime()).toBe(RECEIVED);
+    expect(first?.conversation.inTokens).toBe(TEST_TOKENS_IN);
+    expect(
+      setupTraffic({ ...finished(), caughtAt: null })?.messages
+    ).toHaveLength(1);
+    expect(setupTraffic(finished())?.messages).toHaveLength(2);
   });
 
   test("lists the demo message then the test message, with step 3's tokens", () => {
@@ -56,9 +72,9 @@ describe("setupTraffic", () => {
 
   test("uses the app's model on provider billing, at no cost", () => {
     const traffic = setupTraffic(finished());
-    expect(traffic?.messages.every((m) => m.model.label === "GPT-4.1")).toBe(
-      true
-    );
+    expect(
+      traffic?.messages.every((m) => m.model.label === "GPT-5.3-Codex")
+    ).toBe(true);
     expect(traffic?.messages.every((m) => m.costUsd === 0)).toBe(true);
   });
 
@@ -118,15 +134,5 @@ describe("setup traffic after step 3 (owner 2026-10-13)", () => {
     expect(conversation?.inTokens).toBe(TEST_TOKENS_IN + DEMO_TOKENS_IN);
     expect(conversation?.startedAt.getTime()).toBe(RECEIVED);
     expect(conversation?.updatedAt.getTime()).toBe(CAUGHT);
-  });
-
-  test("round-trips through the new-tab mirror, dates revived", () => {
-    const traffic = setupTraffic(finished());
-    saveSetupTraffic(traffic);
-    const stored = storedSetupTraffic();
-    expect(stored?.messages[0]?.sentAt.getTime()).toBe(CAUGHT);
-    expect(stored?.conversation.updatedAt.getTime()).toBe(CAUGHT);
-    saveSetupTraffic(null);
-    expect(storedSetupTraffic()).toBeNull();
   });
 });

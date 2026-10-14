@@ -104,13 +104,14 @@ import { useViewRole } from "@/pages/teams/teams-store";
 /* ─── OnboardingMessages ────────────────────────────────────────────────────
  * The onboarding workspace's Messages (owner 2026-10-13). A brand-new Free
  * workspace: before step 3 passes it has no messages and the page is the
- * Default twin, `RequestsDefault`, unchanged. After "Check connection" and
- * the protection demo pass it holds exactly the two step 3 messages
+ * Default twin, `RequestsDefault`, unchanged. Once "Check connection"
+ * passes it holds the test message, and once the protection demo passes
+ * the demo message too: the step 3 messages, one at a time as each lands
  * (`useSetupTraffic`, the one source), and the page is a COPY of the Free
  * Messages page (`RequestsFree` renders `Requests.tsx` +
  * `requests/HeroMetric.tsx` + `requests/RequestsTable.tsx`) with every
- * section and control, fed by those two messages: the hero counts them, the
- * table lists both, newest first. A copy, never an import of the Pro tree
+ * section and control, fed by those messages: the hero counts them, the
+ * table lists them, newest first. A copy, never an import of the Pro tree
  * (no-thrash: separate files), and the range is local state, not the shared
  * `rangeStore`, so the onboarding range never leaks into `/messages`.
  *
@@ -398,7 +399,7 @@ function PageHeader() {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex @4xl:max-w-1/2 max-w-full flex-col gap-2">
         <PageTitle>Messages</PageTitle>
-        <p className="type-copy-18 m-0 text-pretty text-muted-foreground tracking-snug">
+        <p className="type-copy-16 m-0 text-pretty text-muted-foreground tracking-snug">
           Every model call across your stack, inspected for injection, PII, and
           credentials before it reaches the model.
         </p>

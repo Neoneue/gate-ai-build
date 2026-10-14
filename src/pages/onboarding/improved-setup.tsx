@@ -17,6 +17,7 @@ import {
   ComboboxValue,
 } from "@/components/ui/combobox";
 import { CopyButton } from "@/components/ui/copy-button";
+import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { InputGroupAddon } from "@/components/ui/input-group";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -49,6 +50,7 @@ import {
   IMPROVED_CLIENTS,
   IMPROVED_MODELS,
   type ImprovedModel,
+  manualModelsFor,
   modelOf,
   TEST_MESSAGE,
   TEST_TOKENS_IN,
@@ -111,6 +113,10 @@ const BILLING_OPTIONS: {
  *  official repo has a pay-as-you-go Manual path (SetupManual.tsx PaygSetup).
  *  Set to false to hide it (both then run on Existing subscriptions). */
 const SHOW_BILLING_CHOICE = true;
+
+/** Gate Connect's "Select a model" (owner 2026-10-14: hidden for now, the
+ *  desktop app picks each tool's model). True brings it back. */
+const SHOW_CONNECT_MODEL_PICKER = false;
 
 /** The official Manual setup block's app tabs (onboarding-connect-tabs.tsx,
  *  ported from the official repo), in its order. */
@@ -180,6 +186,19 @@ function PrepareSetup() {
       updateImproved({ client: manualTab, connected: false, ...RESET_CHECKS });
     }
   }, [connect, client.id, manualTab, updateImproved]);
+  // Manual on Gate credits lists only the models the tab's app can use; a
+  // pick the new app cannot use moves to its list's first model (owner
+  // 2026-10-14).
+  const manualModels = manualModelsFor(manualTab);
+  useEffect(() => {
+    if (
+      !connect &&
+      payg &&
+      !manualModels.some((option) => option.id === model.id)
+    ) {
+      updateImproved({ model: manualModels[0].id, ...RESET_CHECKS });
+    }
+  }, [connect, payg, manualModels, model.id, updateImproved]);
 
   // Billing, then on Gate credits the model and credits: after the app on
   // Gate Connect, after the key on Manual setup (owner 2026-10-13).
@@ -237,17 +256,18 @@ function PrepareSetup() {
         </SetupGroup>
       ) : null}
 
-      {/* Gate credits (either method): pick a model, then fund it. */}
-      {payg ? (
+      {/* Gate Connect's model pick: hidden for now (owner 2026-10-14). Per
+          the Gate Connect PRD the desktop app picks each tool's model,
+          starting on the tool's own default. Manual's picker sits below its
+          app tabs instead (manualModelPicker). */}
+      {payg && connect && SHOW_CONNECT_MODEL_PICKER ? (
         <SetupGroup
           description="Choose which Gate model your tokens will use."
           title="Select a model"
         >
-          {/* Manual: the full catalog whatever the tab, as the official PAYG
-                Manual step does (owner 2026-10-13); Gate Connect keeps the
-                per-app list. */}
-          {!connect || client.id === CATALOG_CLIENT ? (
+          {client.id === CATALOG_CLIENT ? (
             <CatalogModelPicker
+              models={CATALOG_MODELS}
               onChange={(next) =>
                 updateImproved({ model: next, ...RESET_CHECKS })
               }
@@ -328,6 +348,69 @@ function PrepareSetup() {
     navigate(ONBOARDING_ROUTES.verify);
   };
 
+  // "Select an app" (owner 2026-10-14): Gate Connect's first step; on Manual
+  // it replaces the snippet's tabs and follows the key, billing and credits,
+  // since the app decides which models work and the snippet's shape. The
+  // tip is Gate Connect's.
+  const appSection = (
+    <SetupGroup
+      description="Which app do you want to protect?"
+      tip={
+        connect
+          ? "Just a starting point. Gate Connect can route any of your apps, not only this one."
+          : undefined
+      }
+      title="Select an app"
+    >
+      <Select
+        onValueChange={(value) =>
+          updateImproved({
+            client: String(value),
+            connected: false,
+            ...RESET_CHECKS,
+            // The default (Claude Fable 5) is already an Anthropic
+            // model, so Claude Code keeps it; no per-app swap.
+          })
+        }
+        value={client.id}
+      >
+        <SelectTrigger
+          aria-label="Select an app"
+          className="w-full"
+          id="setup-app"
+          size="lg"
+        >
+          <SelectValue>
+            <span className="flex items-center gap-2">
+              <AppIcon src={client.icon} />
+              {client.label}
+            </span>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {CLIENT_GROUPS.map((group) => {
+            const members = clients.filter(
+              (option) => option.group === group.id
+            );
+            return members.length > 0 ? (
+              <SelectGroup key={group.id}>
+                <SelectLabel>{group.label}</SelectLabel>
+                {members.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    <span className="flex items-center gap-2">
+                      <AppIcon src={option.icon} />
+                      {option.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ) : null;
+          })}
+        </SelectContent>
+      </Select>
+    </SetupGroup>
+  );
+
   return (
     <ImprovedColumn>
       <BackLink href={ONBOARDING_ROUTES.start} label="Setup method" />
@@ -349,67 +432,10 @@ function PrepareSetup() {
             centered
             improved={improved}
             key={`${client.id}:${improved.billing}:${model.id}`}
-            showApp={connect}
           />
         </aside>
         <div className="flex min-w-0 flex-col gap-6">
-          {/* Manual setup picks its app with the original block's tabs
-              below (owner 2026-10-13), so "Select an app" is Gate Connect's
-              only. */}
-          {connect ? (
-            <SetupGroup
-              description="Which app do you want to protect?"
-              tip="Just a starting point. Gate Connect can route any of your apps, not only this one."
-              title="Select an app"
-            >
-              <Select
-                onValueChange={(value) =>
-                  updateImproved({
-                    client: String(value),
-                    connected: false,
-                    ...RESET_CHECKS,
-                    // The default (Claude Fable 5) is already an Anthropic
-                    // model, so Claude Code keeps it; no per-app swap.
-                  })
-                }
-                value={client.id}
-              >
-                <SelectTrigger
-                  aria-label="Select an app"
-                  className="w-full"
-                  id="setup-app"
-                  size="lg"
-                >
-                  <SelectValue>
-                    <span className="flex items-center gap-2">
-                      <AppIcon src={client.icon} />
-                      {client.label}
-                    </span>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {CLIENT_GROUPS.map((group) => {
-                    const members = clients.filter(
-                      (option) => option.group === group.id
-                    );
-                    return members.length > 0 ? (
-                      <SelectGroup key={group.id}>
-                        <SelectLabel>{group.label}</SelectLabel>
-                        {members.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>
-                            <span className="flex items-center gap-2">
-                              <AppIcon src={option.icon} />
-                              {option.label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ) : null;
-                  })}
-                </SelectContent>
-              </Select>
-            </SetupGroup>
-          ) : null}
+          {connect ? appSection : null}
 
           {/* Gate Connect: billing right after the app (owner 2026-10-13). */}
           {connect ? billingSections : null}
@@ -488,8 +514,8 @@ function PrepareSetup() {
             </div>
           ) : null}
 
-          {/* Manual setup: the key first, then billing as its step 2
-              (owner 2026-10-13). */}
+          {/* Manual: the key first, always (owner 2026-10-13, restated
+              2026-10-14). */}
           {connect ? null : (
             <SetupGroup
               description="One key the app uses to sign in."
@@ -547,9 +573,10 @@ function PrepareSetup() {
             </SetupGroup>
           )}
 
-          {/* Manual setup step 2: the billing choice, then on Gate credits
-              the model and credits, dimmed until a key is chosen (owner
-              2026-10-13). */}
+          {/* Manual after the key (owner 2026-10-14): billing, credits on
+              Gate credits, the app, then on Gate credits the model the app
+              can use (manualModelsFor). Dimmed and inert until a key is
+              chosen (owner 2026-10-13: hide branches, dim sequences). */}
           {connect ? null : (
             <div
               aria-disabled={!keySelected || undefined}
@@ -560,35 +587,63 @@ function PrepareSetup() {
               inert={!keySelected}
             >
               {billingSections}
+              {/* The app on both billings (owner 2026-10-14: a dropdown lists
+                  all six apps where the snippet's tabs showed four). Gate
+                  credits adds the model the app can use, both dimmed and
+                  inert until credits are added. */}
+              {payg ? null : appSection}
+              {payg ? (
+                <div
+                  aria-disabled={!funded || undefined}
+                  className={cn("flex flex-col gap-6", !funded && "opacity-50")}
+                  inert={!funded}
+                >
+                  {appSection}
+                  <SetupGroup
+                    description="Choose which Gate model your tokens will use."
+                    title="Select a model"
+                  >
+                    <CatalogModelPicker
+                      models={manualModels}
+                      onChange={(next) =>
+                        updateImproved({ model: next, ...RESET_CHECKS })
+                      }
+                      value={model.id}
+                    />
+                  </SetupGroup>
+                </div>
+              ) : null}
             </div>
           )}
 
-          {/* Hidden until a key is made or picked (owner 2026-10-13); then
-              live at once on Existing subscriptions, dimmed until a balance
-              on Gate credits. */}
-          {connect || !keySelected ? null : (
-            <SetupGroup
-              // The official pair per billing (SetupManual.tsx: BYOK step 2,
-              // PaygSetup step 4), since Gate credits snippets add the model.
-              description={
-                payg
-                  ? "Set these in your client. Use the model you picked above."
-                  : "These two settings work for any OpenAI or Anthropic-compatible client."
-              }
-              title={
-                payg ? "Point your app to Gate" : "Set your base URL and key"
-              }
+          {/* The snippet comes last and only once it can work: hidden until a
+              key is chosen and, on Gate credits, there is a balance; the app
+              and model always have a value by then (owner 2026-10-14: hide
+              it, never show it dimmed under a live title). */}
+          {/* Always shown, dimmed until a key and, on Gate credits, a
+              balance (owner 2026-10-14). */}
+          {connect ? null : (
+            <div
+              aria-disabled={!(keySelected && funded) || undefined}
+              className={cn(!(keySelected && funded) && "opacity-50")}
+              inert={!(keySelected && funded)}
             >
-              {/* The official Manual setup's block (gate repo,
-                  pages/setup/SetupManual.tsx): ConnectTabs with its app tabs, which are the
-                  app choice here. Always in view, dimmed and inert until a
-                  key is chosen (owner 2026-10-13); the tabs live inside the
-                  inert wrapper, so a key comes first. */}
-              <div
-                aria-disabled={!(keySelected && funded) || undefined}
-                className={cn(!(keySelected && funded) && "opacity-50")}
-                inert={!(keySelected && funded)}
+              <SetupGroup
+                // The official pair per billing (SetupManual.tsx: BYOK step 2,
+                // PaygSetup step 4), since Gate credits snippets add the model.
+                description={
+                  payg
+                    ? "Set these in your client."
+                    : "These two settings work for any OpenAI or Anthropic-compatible client."
+                }
+                title={
+                  payg ? "Point your app to Gate" : "Set your base URL and key"
+                }
               >
+                {/* The official Manual setup's block (gate repo,
+                  pages/setup/SetupManual.tsx), showing only the chosen app's
+                  snippet: its tabs became "Select an app" (owner
+                  2026-10-14). */}
                 <Card className="flex flex-1 flex-col" density="flush">
                   <ConnectTabs
                     byokOnly={!payg}
@@ -596,6 +651,10 @@ function PrepareSetup() {
                     defaultTab={manualTab}
                     floatingCopy
                     hideStrip
+                    // The app is picked above on both billings, so the snippet
+                    // drops its tabs (owner 2026-10-14).
+                    hideTabs
+                    key={manualTab}
                     onTabChange={(tab) =>
                       updateImproved({
                         client: tab,
@@ -605,12 +664,29 @@ function PrepareSetup() {
                     }
                     paygModel={model.id}
                     paygOnly={payg}
+                    // No Bedrock pin on the OpenAI SDK snippet (owner
+                    // 2026-10-14): a pinned request never fails over (gate
+                    // repo, resolve-upstream.ts), and the catalog serves
+                    // every model through OpenRouter, so a pin would refuse
+                    // them all. Unpinned, it routes like the other Chat
+                    // Completions apps.
+                    providerHint={null}
                     showGateConnect={false}
                   />
                 </Card>
-              </div>
+              </SetupGroup>
+            </div>
+          )}
+
+          {connect ? null : (
+            <div
+              aria-disabled={!(keySelected && funded) || undefined}
+              className={cn(!(keySelected && funded) && "opacity-50")}
+              inert={!(keySelected && funded)}
+            >
               {/* The finishing steps as a numbered card, the same pattern as
-                  Gate Connect's "Sign in and connect" (owner 2026-10-13). */}
+                  Gate Connect's "Sign in and connect" (owner 2026-10-13).
+                  Shown with the snippet (owner 2026-10-14). */}
               <Card>
                 <CardContent className="flex flex-col gap-4">
                   <ol className="m-0 flex list-none flex-col gap-3 p-0">
@@ -638,7 +714,7 @@ function PrepareSetup() {
                   </Button>
                 </CardContent>
               </Card>
-            </SetupGroup>
+            </div>
           )}
         </div>
       </div>
@@ -681,22 +757,25 @@ function PrepareSetup() {
   );
 }
 
-/** Claude Code's "Select a model": the whole Gate catalog behind the same
- *  40px trigger as the other apps' Select, with a search input pinned in
- *  the popup above a scrolling list (owner 2026-10-09). */
+/** "Select a model": a model list behind the same 40px trigger as the other
+ *  apps' Select, with a search input pinned in the popup above a scrolling
+ *  list (owner 2026-10-09). Manual passes the tab's app's list (owner
+ *  2026-10-14). */
 function CatalogModelPicker({
+  models,
   value,
   onChange,
 }: {
+  models: readonly ImprovedModel[];
   value: string;
   onChange: (model: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const selected = CATALOG_MODELS.find((model) => model.id === value) ?? null;
+  const selected = models.find((model) => model.id === value) ?? null;
   return (
     <Combobox
       isItemEqualToValue={(item, current) => item.id === current.id}
-      items={CATALOG_MODELS}
+      items={models}
       itemToStringLabel={(item) => item.label}
       onInputValueChange={setQuery}
       onValueChange={(next) => {
@@ -1122,7 +1201,8 @@ export function ImprovedComplete() {
         <ProtectedAndLive
           action={
             <Button
-              className="self-start"
+              // Full width on a phone, like every phone-flow action.
+              className={mobile ? "w-full" : "self-start"}
               onClick={() =>
                 // Gate Chat opens in a new tab on desktop (owner 2026-10-13).
                 chat && !mobile
@@ -1141,7 +1221,17 @@ export function ImprovedComplete() {
               {chat && !mobile ? (
                 <span className="sr-only"> {NEW_TAB_CUE}</span>
               ) : null}
-              <ArrowRight aria-hidden data-icon="inline-end" />
+              {/* The new-tab icon only where it opens a new tab (owner
+                  2026-10-13): desktop Gate Chat. */}
+              {chat && !mobile ? (
+                <ExternalLinkIcon
+                  aria-hidden
+                  data-icon="inline-end"
+                  size={16}
+                />
+              ) : (
+                <ArrowRight aria-hidden data-icon="inline-end" />
+              )}
             </Button>
           }
           onVisit={(task) =>
