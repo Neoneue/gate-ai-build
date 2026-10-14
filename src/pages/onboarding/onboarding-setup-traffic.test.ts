@@ -72,9 +72,9 @@ describe("setupTraffic", () => {
 
   test("uses the app's model on provider billing, at no cost", () => {
     const traffic = setupTraffic(finished());
-    expect(traffic?.messages.every((m) => m.model.label === "GPT-4.1")).toBe(
-      true
-    );
+    expect(
+      traffic?.messages.every((m) => m.model.label === "GPT-5.3-Codex")
+    ).toBe(true);
     expect(traffic?.messages.every((m) => m.costUsd === 0)).toBe(true);
   });
 
