@@ -98,3 +98,34 @@ Prior day: [`changelog-10-13.md`](./changelog-10-13.md)
   open of a conversation URL), never on a phone, and a fixed toast id so it
   cannot stack. Before: phone B refresh showed 2 toasts. After: 0. Desktop
   first send still shows 1. `OnboardingLayout.tsx`.
+
+### Onboarding setup: models follow the app; Manual picks its app in a dropdown `2862183`
+
+- Gate Connect setup: "Select a model" is hidden (`SHOW_CONNECT_MODEL_PICKER = false`).
+  Model choice lives in the app, per tool, defaulting to App default. Before:
+  a model picker in setup. After: none.
+- Setup route figure is App -> Gate -> Model on both billing types (3D box
+  icon, label "Model"). Before: the figure ended at a cloud labelled "Your
+  provider". Manual Gate credits names the picked model, and Manual now shows
+  the app node too.
+- Test messages on Gate Connect report the app's own model. Codex's own model
+  is GPT-5.3-Codex (was GPT-4.1, which fails Codex's tools);
+  `onboarding-setup-traffic.test.ts` updated to match.
+- Manual: the snippet's six app tabs (only four fit, two hid off-screen)
+  become a "Select an app" dropdown listing all six, on both billing types.
+  The code card shows only the chosen app's snippet (`hideTabs`).
+- Manual order. Existing subscriptions: key, billing, Select an app, Set your
+  base URL and key, steps. Gate credits: key, billing, Add credits, Select an
+  app, Select a model, Point your app to Gate, steps. Everything is always
+  shown: all after the key is dimmed until a key exists; on Gate credits the
+  app, model, snippet and steps stay dimmed until credits are added.
+- Manual Gate credits model list follows the app (`manualModelsFor`): Claude
+  Code lists Anthropic models only; Codex lists the GPT-5 family and opens on
+  GPT-5.3-Codex; OpenCode, Hermes, OpenClaw and OpenAI SDK list the full
+  catalog.
+- Manual OpenAI SDK snippet passes `providerHint={null}` (no
+  `X-Gate-Provider: bedrock`): a pinned request never fails over and the
+  catalog has no Bedrock models, so the pin would refuse every listed model.
+  Other snippets and the six captions match the Gate repo's `connect-tabs.tsx`.
+- Files: `improved-setup.tsx`, `improved-data.ts`, `improved-parts.tsx`,
+  `improved-art.tsx`, `onboarding-connect-tabs.tsx`.

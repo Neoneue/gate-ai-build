@@ -13,6 +13,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 - Every control steps up on touch screens
 - Segmented controls step up on touch screens
+- Onboarding setup: models follow the app; Manual picks its app in a dropdown
 - Onboarding phone: Sign out returns to the demo's own sign-in
 - Onboarding auth pages on phones: logo, copyright and card spacing
 - Onboarding phone chat: follows the latest reply, tighter turns
