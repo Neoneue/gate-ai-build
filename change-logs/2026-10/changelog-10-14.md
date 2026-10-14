@@ -158,3 +158,25 @@ Prior day: [`changelog-10-13.md`](./changelog-10-13.md)
 - Files: `BillingFree.tsx`, `OnboardingBilling.tsx`, `OnboardingCheckout.tsx`,
   `OnboardingLayout.tsx`, `onboarding-billing.ts`, `onboarding-billing.test.ts`,
   `onboarding-credits.ts`, `onboarding-state.ts`.
+
+### Onboarding setup: Gate Connect drops billing; points Gate-model users to Billing `b4fe72c`
+
+- Gate Connect setup. Before: it showed a billing section (Existing
+  subscriptions or Gate credits) between the app pick and the connect step.
+  After: no billing section (Select an app, then Download / Sign in and
+  connect). It always runs on Existing subscriptions, and a leftover Gate
+  credits pick is reset. Matches the product: `SetupConnect.tsx` (BYOK branch)
+  and `SetupGateConnect.tsx` have no credits step, and each tool's model source
+  (App default or Gate models) is chosen in the Gate Connect app.
+- Route figure. Before: it carried a billing badge on both setups. After: the
+  badge is dropped on Gate Connect only; Manual keeps "Uses Gate credits" /
+  "Billed by your provider".
+- Sign in and connect step. New muted note with an info icon aligned to the
+  step numbers: "To use Gate models in Gate Connect, add Gate credits on
+  Billing." It links to `/billing-onboarding`, since Gate credits cannot be
+  bought in the Gate Connect app.
+- Manual. Before: the steps card sat outside the "Point your app to Gate" /
+  "Set your base URL and key" section, 24px under the code card. After: it is
+  inside the section, 12px (the section's gap) under the code card.
+- Start-page card copy was tried and reverted; it is unchanged.
+- Files: `src/pages/onboarding/improved-setup.tsx`.

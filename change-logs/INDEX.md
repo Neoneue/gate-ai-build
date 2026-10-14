@@ -21,6 +21,7 @@ tokens; this index exists so nothing has to glob the directory.
 - Onboarding chat reply actions: Retry re-streams, Copy works on http
 - Onboarding: "Setup complete" toast fires once, only when it should
 - Onboarding: Gate Chat credits match this run, Billing adds credits, no chat setup toast
+- Onboarding setup: Gate Connect drops billing; points Gate-model users to Billing
 
 ### [2026-10-13](./2026-10/changelog-10-13.md)
 

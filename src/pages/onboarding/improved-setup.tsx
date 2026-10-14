@@ -1,4 +1,4 @@
-import { ArrowRight, CirclePlus, Loader2, Search } from "lucide-react";
+import { ArrowRight, CirclePlus, Info, Loader2, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
@@ -167,7 +167,17 @@ function PrepareSetup() {
   const [pendingName, setPendingName] = useState("");
 
   const connect = improved.connection === "gate-connect";
-  const payg = improved.billing === "payg";
+  // Gate Connect has no billing step (owner 2026-10-14; gate repo
+  // SetupConnect.tsx and SetupGateConnect.tsx: Gate Connect is the
+  // existing-subscriptions path, and credits are bought on Billing for the
+  // app's Gate models and Gate Chat), so it always runs on Existing
+  // subscriptions.
+  const payg = !connect && improved.billing === "payg";
+  useEffect(() => {
+    if (connect && improved.billing === "payg") {
+      updateImproved({ billing: "existing" });
+    }
+  }, [connect, improved.billing, updateImproved]);
   const funded = !payg || improved.balanceUsd > 0;
   const client = clientOf(improved);
   const app = appNameOf(improved);
@@ -428,7 +438,15 @@ function PrepareSetup() {
               remounts the figure, so its sequence replays from frame one
               (onboarding-motion.css, Setup route). */}
           <ImprovedRouteFigure
-            caption={payg ? "Uses Gate credits" : "Billed by your provider"}
+            // Gate Connect has one billing, so its figure carries no billing
+            // badge (owner 2026-10-14); Manual keeps it.
+            caption={
+              connect
+                ? undefined
+                : payg
+                  ? "Uses Gate credits"
+                  : "Billed by your provider"
+            }
             centered
             improved={improved}
             key={`${client.id}:${improved.billing}:${model.id}`}
@@ -436,9 +454,6 @@ function PrepareSetup() {
         </aside>
         <div className="flex min-w-0 flex-col gap-6">
           {connect ? appSection : null}
-
-          {/* Gate Connect: billing right after the app (owner 2026-10-13). */}
-          {connect ? billingSections : null}
 
           {/* Dimmed and inert until there are credits (owner 2026-10-13:
               hide branches, dim sequences). */}
@@ -479,6 +494,31 @@ function PrepareSetup() {
                           </li>
                         ))}
                       </ol>
+                    ) : null}
+                    {/* Gate credits can't be bought in the Gate Connect app,
+                        so the step that sets each app's model source says
+                        where they are (owner 2026-10-14). */}
+                    {improved.downloaded ? (
+                      <p className="type-copy-14 m-0 flex items-start gap-3 text-muted-foreground">
+                        {/* An info mark sets the note apart from the
+                            numbered steps above (owner 2026-10-14), the same
+                            mark as the "Select an app" tip. */}
+                        {/* The step circles' 24px slot and 12px gap, so the
+                            mark centres under the numbers and the text starts
+                            where the steps' text does (owner 2026-10-14). */}
+                        <span className="flex h-5 w-6 shrink-0 items-center justify-center">
+                          <Info
+                            aria-hidden
+                            className="size-4"
+                            strokeWidth={1.75}
+                          />
+                        </span>
+                        <span>
+                          To use Gate models in Gate Connect, add Gate credits
+                          on{" "}
+                          <TextLink to="/billing-onboarding">Billing</TextLink>.
+                        </span>
+                      </p>
                     ) : null}
                     <div className="flex flex-wrap items-center gap-4">
                       {improved.downloaded ? (
@@ -674,46 +714,37 @@ function PrepareSetup() {
                     showGateConnect={false}
                   />
                 </Card>
+                {/* The finishing steps as a numbered card, the same pattern as
+                    Gate Connect's "Sign in and connect" (owner 2026-10-13).
+                    Shown with the snippet (owner 2026-10-14). */}
+                <Card>
+                  <CardContent className="flex flex-col gap-4">
+                    <ol className="m-0 flex list-none flex-col gap-3 p-0">
+                      {[
+                        `Paste the code into ${app}'s config.`,
+                        "Add your saved key secret.",
+                        ...(client.restart ? [`Quit and reopen ${app}.`] : []),
+                      ].map((text, index) => (
+                        <li className="flex items-center gap-3" key={text}>
+                          <StepIndicator n={index + 1} state="upcoming" />
+                          <span className="type-copy-14 text-foreground">
+                            {text}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                    <Button
+                      className="self-start"
+                      disabled={!(keySelected && funded)}
+                      onClick={acknowledge}
+                      size="default"
+                    >
+                      I've saved my settings
+                      <ArrowRight aria-hidden data-icon="inline-end" />
+                    </Button>
+                  </CardContent>
+                </Card>
               </SetupGroup>
-            </div>
-          )}
-
-          {connect ? null : (
-            <div
-              aria-disabled={!(keySelected && funded) || undefined}
-              className={cn(!(keySelected && funded) && "opacity-50")}
-              inert={!(keySelected && funded)}
-            >
-              {/* The finishing steps as a numbered card, the same pattern as
-                  Gate Connect's "Sign in and connect" (owner 2026-10-13).
-                  Shown with the snippet (owner 2026-10-14). */}
-              <Card>
-                <CardContent className="flex flex-col gap-4">
-                  <ol className="m-0 flex list-none flex-col gap-3 p-0">
-                    {[
-                      `Paste the code into ${app}'s config.`,
-                      "Add your saved key secret.",
-                      ...(client.restart ? [`Quit and reopen ${app}.`] : []),
-                    ].map((text, index) => (
-                      <li className="flex items-center gap-3" key={text}>
-                        <StepIndicator n={index + 1} state="upcoming" />
-                        <span className="type-copy-14 text-foreground">
-                          {text}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                  <Button
-                    className="self-start"
-                    disabled={!(keySelected && funded)}
-                    onClick={acknowledge}
-                    size="default"
-                  >
-                    I've saved my settings
-                    <ArrowRight aria-hidden data-icon="inline-end" />
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
           )}
         </div>
