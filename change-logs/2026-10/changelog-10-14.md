@@ -129,3 +129,32 @@ Prior day: [`changelog-10-13.md`](./changelog-10-13.md)
   Other snippets and the six captions match the Gate repo's `connect-tabs.tsx`.
 - Files: `improved-setup.tsx`, `improved-data.ts`, `improved-parts.tsx`,
   `improved-art.tsx`, `onboarding-connect-tabs.tsx`.
+
+### Onboarding sign-up: Name placeholder reads John Doe `53136d1`
+
+- Sign-up Name field placeholder. Before: "Jane Doe". After: "John Doe". It was
+  the only "Jane" in `src`.
+- Files: `OnboardingSignUp.tsx`.
+
+### Onboarding: Gate Chat credits match this run, Billing adds credits, no chat setup toast `dace448`
+
+- Gate Chat credits. Before: its stored balance (`gate-onboarding-credits`)
+  reset only when a tab first loaded the landing page, so reaching it in-app
+  (the logo) kept earlier runs' credits and showed a stale $50. After: the new
+  `syncOnboardingBalance` runs whenever the landing page shows, and sets Gate
+  Chat's balance to this run's setup balance: $0 until credits are added, then
+  the amount added. Paid models in Gate Chat stay refused at $0 and unlock with
+  any balance (existing rule, desktop and phone alike).
+- "Setup complete" toast. Before: it fired on Gate Chat's first message. After:
+  opening Gate Chat is not a setup, so no toast; the state update stays.
+- Billing: Add credits works in onboarding. `BillingFree` gets an optional
+  `onCheckout(amount)` (the site's own Billing is unchanged without it).
+  `OnboardingBilling` sends the chosen amount ($25, $50, $100, $500 or custom)
+  through the same mock checkout as setup and returns to Billing. Billing
+  purchases are marked `source: "billing"` and show on Billing's card and
+  history on either billing type (credits can always be bought on Billing);
+  setup credits keep the 2026-10-13 rule (shown on Gate credits only).
+- Tests: `onboarding-billing.test.ts` covers both.
+- Files: `BillingFree.tsx`, `OnboardingBilling.tsx`, `OnboardingCheckout.tsx`,
+  `OnboardingLayout.tsx`, `onboarding-billing.ts`, `onboarding-billing.test.ts`,
+  `onboarding-credits.ts`, `onboarding-state.ts`.

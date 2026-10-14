@@ -60,6 +60,13 @@ export function addOnboardingCredits(usd: number): void {
   writeOnboardingBalance(readOnboardingBalance() + usd);
 }
 
+/** Sets the shared balance to this run's setup balance: the landing page
+ *  (`OnboardingLayout`) so a balance left by an earlier run never shows in
+ *  the chat (owner 2026-10-14). */
+export function syncOnboardingBalance(usd: number): void {
+  writeOnboardingBalance(Number.isFinite(usd) && usd > 0 ? usd : 0);
+}
+
 /** Back to 0: a fresh onboarding run starts. */
 export function resetOnboardingBalance(): void {
   writeOnboardingBalance(0);

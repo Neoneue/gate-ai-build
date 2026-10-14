@@ -63,8 +63,13 @@ export type BillingFreeCredits = {
 
 export function BillingFree({
   credits,
+  onCheckout,
 }: {
   credits?: BillingFreeCredits;
+  /** Add credits' "Continue to checkout" with the chosen amount. The
+   *  onboarding Billing passes its mock checkout (owner 2026-10-14); the
+   *  site's own page leaves it out and the dialog just closes. */
+  onCheckout?: (amountUsd: number) => void;
 } = {}) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -95,7 +100,7 @@ export function BillingFree({
         <div className="mt-2 flex flex-col gap-4">
           <SectionTitle as="h2">Credits</SectionTitle>
           <div className="grid grid-cols-1 gap-4">
-            <CreditsCard credits={credits} />
+            <CreditsCard credits={credits} onCheckout={onCheckout} />
             <PaymentMethodCard />
           </div>
         </div>
@@ -234,7 +239,13 @@ function readAutoRecharge(): AutoRechargeConfig {
   }
 }
 
-function CreditsCard({ credits }: { credits?: BillingFreeCredits }) {
+function CreditsCard({
+  credits,
+  onCheckout,
+}: {
+  credits?: BillingFreeCredits;
+  onCheckout?: (amountUsd: number) => void;
+}) {
   const [addOpen, setAddOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
   const [auto, setAuto] = useState<AutoRechargeConfig>(readAutoRecharge);
@@ -279,7 +290,11 @@ function CreditsCard({ credits }: { credits?: BillingFreeCredits }) {
           Add credits
         </Button>
       </CardFooter>
-      <AddCreditsDialog onOpenChange={setAddOpen} open={addOpen} />
+      <AddCreditsDialog
+        onCheckout={onCheckout}
+        onOpenChange={setAddOpen}
+        open={addOpen}
+      />
       <AutoRechargeDialog
         initial={auto}
         key={autoOpen ? "open" : "closed"}
@@ -309,9 +324,11 @@ const CREDIT_PRESETS = [25, 50, 100, 500] as const;
 function AddCreditsDialog({
   open,
   onOpenChange,
+  onCheckout,
 }: {
   open: boolean;
   onOpenChange: (next: boolean) => void;
+  onCheckout?: (amountUsd: number) => void;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState("");
@@ -329,6 +346,9 @@ function AddCreditsDialog({
   const presetRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
 
   const handleCheckout = () => {
+    if (amount !== null) {
+      onCheckout?.(amount);
+    }
     onOpenChange(false);
     setSelected(null);
     setCustom("");

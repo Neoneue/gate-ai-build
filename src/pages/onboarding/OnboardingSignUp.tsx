@@ -260,7 +260,7 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                 autoComplete="name"
                 id="onboarding-signup-name"
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Jane Doe"
+                placeholder="John Doe"
                 type="text"
                 value={name}
               />
