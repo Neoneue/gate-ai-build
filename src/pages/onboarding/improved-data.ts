@@ -13,48 +13,52 @@ export const CLIENT_GROUPS = [
   { id: "other", label: "Other apps" },
 ] as const;
 
-/** Client apps a Gate route can carry (the mockup's `_i`). */
+/** Client apps a Gate route can carry (the mockup's `_i`). `restartStep`
+ *  is the last setup step that makes the app pick up its new config, or
+ *  null when none is needed. */
 export const IMPROVED_CLIENTS = [
   {
     id: "codex",
     group: "openai",
     label: "Codex",
-    restart: true,
+    // Codex reads its config per conversation (owner 2026-10-14).
+    restartStep: "Start a new conversation.",
     icon: "/icons/providers/codex.svg",
   },
   {
     id: "claude-code",
     group: "anthropic",
     label: "Claude Code",
-    restart: true,
+    restartStep: "Quit and reopen Claude Code.",
     icon: "/icons/providers/claude-code.svg",
   },
   {
     id: "opencode",
     group: "other",
     label: "OpenCode",
-    restart: true,
+    restartStep: "Quit and reopen OpenCode.",
     icon: "/icons/providers/opencode.svg",
   },
   {
     id: "hermes",
     group: "other",
     label: "Hermes",
-    restart: false,
+    restartStep: null,
     icon: "/icons/providers/hermes.svg",
   },
   {
     id: "openclaw",
     group: "other",
     label: "OpenClaw",
-    restart: false,
+    // Its config loads at launch, like Claude Code's (owner 2026-10-14).
+    restartStep: "Quit and reopen OpenClaw.",
     icon: "/icons/providers/openclaw-color.svg",
   },
   {
     id: "openai-sdk",
     group: "openai",
     label: "OpenAI SDK",
-    restart: false,
+    restartStep: null,
     icon: "/icons/providers/openai.svg",
   },
 ] as const;
