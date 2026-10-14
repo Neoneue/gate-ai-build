@@ -56,3 +56,32 @@ describe("onboarding credits (owner 2026-10-13)", () => {
     ).toEqual({ balanceUsd: 0, lastTopUp: null, history: [] });
   });
 });
+
+describe("credits bought on Billing (owner 2026-10-14)", () => {
+  test("show on Existing subscriptions; setup credits there stay hidden", () => {
+    const credits = onboardingCredits({
+      ...initialImprovedState(),
+      billing: "existing",
+      topUps: [
+        { at: AT, amountUsd: 25 },
+        { at: AT + 60_000, amountUsd: 50, source: "billing" },
+      ],
+    });
+    expect(credits.balanceUsd).toBe(50);
+    expect(credits.lastTopUp).toMatch(/· \$50$/);
+    expect(credits.history).toHaveLength(1);
+  });
+
+  test("count with setup credits on Gate credits", () => {
+    const credits = onboardingCredits({
+      ...initialImprovedState(),
+      billing: "payg",
+      topUps: [
+        { at: AT, amountUsd: 25 },
+        { at: AT + 60_000, amountUsd: 100, source: "billing" },
+      ],
+    });
+    expect(credits.balanceUsd).toBe(125);
+    expect(credits.history).toHaveLength(2);
+  });
+});

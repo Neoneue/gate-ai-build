@@ -5,17 +5,18 @@ import {
   useLocation,
   useOutletContext,
 } from "react-router-dom";
-import { toast } from "sonner";
 import type { LayoutContext } from "@/App";
 import "@/pages/onboarding/onboarding-motion.css";
 import { OnboardingProvider } from "@/pages/onboarding/OnboardingProvider";
-import { resetOnboardingBalance } from "@/pages/onboarding/onboarding-credits";
+import {
+  resetOnboardingBalance,
+  syncOnboardingBalance,
+} from "@/pages/onboarding/onboarding-credits";
 import {
   clearMobileATab,
   flowOfRoute,
   isMobileATab,
   isOnboardingSignup,
-  isPhoneDemoChat,
   ONBOARDING_ROUTES,
   ONBOARDING_SIGN_IN,
   ONBOARDING_WORKSPACE_PAGES,
@@ -108,6 +109,15 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
       clearMobileATab();
     }
   }, [pathname]);
+  // The landing page, however it is reached (a fresh load or in-app, as the
+  // logo does), sets Gate Chat's balance to this run's: $0 until credits are
+  // added on Gate Connect or Manual setup, then what was added. Without it,
+  // a balance from an earlier run showed in the chat (owner 2026-10-14).
+  useEffect(() => {
+    if (pathname === ONBOARDING_ROUTES.start) {
+      syncOnboardingBalance(improved.balanceUsd);
+    }
+  }, [pathname, improved.balanceUsd]);
 
   // The Improved flow's chat path: the existing Gate Chat page opens its
   // conversation on the first send, which is the first message through Gate.
@@ -123,14 +133,10 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
       flow === "improved" &&
       !improved.received
     ) {
+      // No "Setup complete" toast: opening Gate Chat is not a setup, so its
+      // first message never announces one (owner 2026-10-14, replacing the
+      // desktop toast of 2026-10-12).
       updateImproved({ received: true, connected: true, pathChosen: true });
-      // Desktop flow only: the phone demo chat's first message (Mobile A or
-      // Option B's phone chat) is a chat, not a setup step, so it gets no
-      // "Setup complete" toast (owner 2026-10-12), nor does any phone. One id,
-      // so it can never stack.
-      if (!(isPhoneDemoChat() || isMobileSetupNow())) {
-        toast.success("Setup complete", { id: "onboarding-setup-complete" });
-      }
     }
   }, [chatThreadOpen, redirecting, flow, improved.received, updateImproved]);
 

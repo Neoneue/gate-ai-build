@@ -26,6 +26,9 @@ import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 export interface CheckoutState {
   amount: number;
   returnTo: string;
+  /** "billing" when bought on the onboarding Billing page (owner
+   *  2026-10-14): those show on its Credits card on either billing type. */
+  source?: "billing";
 }
 
 /** The card-processing fee line, as the old design's checkout showed it. */
@@ -45,7 +48,7 @@ export function OnboardingCheckout() {
   if (!checkout?.amount) {
     return <Navigate replace to={ONBOARDING_ROUTES.improvedConnect} />;
   }
-  const { amount, returnTo } = checkout;
+  const { amount, returnTo, source } = checkout;
   const fee = Math.round(amount * PROCESSING_FEE_RATE * 100) / 100;
   const total = amount + fee;
 
@@ -55,7 +58,10 @@ export function OnboardingCheckout() {
     await wait(PAY_MS);
     updateImproved((current) => ({
       balanceUsd: current.balanceUsd + amount,
-      topUps: [...current.topUps, { at: Date.now(), amountUsd: amount }],
+      topUps: [
+        ...current.topUps,
+        { at: Date.now(), amountUsd: amount, ...(source ? { source } : {}) },
+      ],
     }));
     addOnboardingCredits(amount);
     navigate(returnTo, { replace: true });

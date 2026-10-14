@@ -14,15 +14,16 @@ import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function onboardingCredits(improved: ImprovedState): BillingFreeCredits {
-  const topUps =
-    improved.billing === "payg"
-      ? improved.topUps.filter(
-          (t) =>
-            Number.isFinite(t.at) &&
-            Number.isFinite(t.amountUsd) &&
-            t.amountUsd > 0
-        )
-      : [];
+  // Setup top-ups count on Gate credits only (owner 2026-10-13). A top-up
+  // bought on Billing itself counts on either billing type: credits can
+  // always be bought there (owner 2026-10-14).
+  const topUps = improved.topUps.filter(
+    (t) =>
+      (improved.billing === "payg" || t.source === "billing") &&
+      Number.isFinite(t.at) &&
+      Number.isFinite(t.amountUsd) &&
+      t.amountUsd > 0
+  );
   let balanceUsd = 0;
   const history: HistoryRow[] = topUps
     .map((t, index) => {

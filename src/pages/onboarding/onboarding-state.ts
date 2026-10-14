@@ -75,7 +75,9 @@ export type ImprovedState = {
   /** Each Add credits checkout that went through (epoch ms, whole USD),
    *  oldest first: the workspace Billing page's history and Last top-up
    *  (OnboardingBilling, owner 2026-10-13). */
-  topUps: { at: number; amountUsd: number }[];
+  /** `source: "billing"` marks a top-up bought on the onboarding Billing
+   *  page rather than in setup (owner 2026-10-14). */
+  topUps: { at: number; amountUsd: number; source?: "billing" }[];
   keys: { id: string; name: string }[];
   selectedKeyId: string | null;
   downloaded: boolean;
