@@ -316,7 +316,10 @@ export function OnboardingChat() {
             <OnboardingSetupLinkReply lane={lane} />
           </div>
         ) : (
-          <Message turn={turn} />
+          <Message
+            onRetry={(laneId) => onboardingChatStore.regenerateScripted(laneId)}
+            turn={turn}
+          />
         )}
         {turn.id === followUpTurnId && lane ? (
           <OnboardingComputerPrompt

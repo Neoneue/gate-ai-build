@@ -4,6 +4,34 @@ import { toast } from "sonner";
 /** How long the success state holds before reverting. */
 const HOLD_MS = 2000;
 
+/** `navigator.clipboard` exists only on a secure page (https or localhost);
+ *  a phone on the LAN dev server (`http://<ip>:5173`) has none, and reading
+ *  `.writeText` there threw before the failure toast could show. There the
+ *  legacy copy command still works inside the tap (owner 2026-10-14). */
+function writeClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise((resolve, reject) => {
+    const field = document.createElement("textarea");
+    field.value = text;
+    field.readOnly = true;
+    field.style.position = "fixed";
+    field.style.top = "0";
+    field.style.opacity = "0";
+    document.body.append(field);
+    field.select();
+    field.setSelectionRange(0, text.length);
+    const copied = document.execCommand("copy");
+    field.remove();
+    if (copied) {
+      resolve();
+    } else {
+      reject(new Error("copy command failed"));
+    }
+  });
+}
+
 /**
  * Custom hook — owns the click→success→revert state machine and the toast
  * call. Exposed as a hook (rather than only via the component) so the rare
@@ -50,8 +78,7 @@ export function useCopyFeedback({
     if (timerRef.current !== null) {
       return;
     }
-    void navigator.clipboard
-      .writeText(value)
+    void writeClipboard(value)
       .then(() => {
         setCopied(true);
         if (notify) {

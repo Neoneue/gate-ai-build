@@ -45,7 +45,10 @@ import {
   isOnboardingSurface,
   isTeamRoleSurface,
 } from "@/lib/plan";
-import { onboardingUpgradePath } from "@/pages/onboarding/onboarding-routes";
+import {
+  onboardingUpgradePath,
+  phoneSignInPath,
+} from "@/pages/onboarding/onboarding-routes";
 import { OnboardingContext } from "@/pages/onboarding/use-onboarding";
 import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
 
@@ -53,7 +56,7 @@ import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
  * The Onboarding workspace's copy of `layouts/DashboardChrome.tsx` (owner
  * 2026-10-12: mobile demo work never edits a file the desktop uses). Change
  * it here, never in the shared one. Only `onboarding-chrome.tsx` renders it.
- * The only differences, both phone only (the `lg:hidden` menu Sheet):
+ * The only differences, all phone only (the `lg:hidden` menu Sheet):
  *   • `mobileSections`: the phone menu's nav. B's phone start passes the
  *     phone demo nav; the lg+ rail keeps `sections`.
  *   • `onMobileNavigate`: called with a phone menu link's href as it is
@@ -61,6 +64,8 @@ import { teamsStore, useViewRole } from "@/pages/teams/teams-store";
  *     on the Gate Chat row).
  *   • `sections`: the Improved flow's desktop rail with its "Get started"
  *     row (owner 2026-10-13).
+ *   • Sign out at the foot of the phone menu restarts the demo at that
+ *     version's sign-in (`phoneSignInPath`, owner 2026-10-14).
  * Two more, at every width (owner 2026-10-13):
  *   • No notifications bell: a brand-new workspace has nothing to notify
  *     about, so the shared chrome's NotificationsMenu is left out. The bell
@@ -573,6 +578,7 @@ function MobileNav({
           onNavigate={handleNavigate}
           overviewPath={overviewPath}
           sections={sections}
+          signOutPath={phoneSignInPath()}
           topSlot={
             <div className="flex flex-col gap-2 border-border border-b px-3 pt-3 pb-3 lg:hidden">
               <WorkspaceSwitcher className="w-full" />

@@ -112,17 +112,27 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   // The Improved flow's chat path: the existing Gate Chat page opens its
   // conversation on the first send, which is the first message through Gate.
   const chatThreadOpen = pathname.startsWith(`${ONBOARDING_ROUTES.chat}/`);
+  // A load that redirects (a refresh or cold open of a conversation URL) is
+  // not a send, so it neither completes setup nor toasts (owner 2026-10-14:
+  // a phone refresh, which forgets Option B's in-memory chat mark, toasted).
+  const redirecting = coldThread || !started;
   useEffect(() => {
-    if (chatThreadOpen && flow === "improved" && !improved.received) {
+    if (
+      chatThreadOpen &&
+      !redirecting &&
+      flow === "improved" &&
+      !improved.received
+    ) {
       updateImproved({ received: true, connected: true, pathChosen: true });
       // Desktop flow only: the phone demo chat's first message (Mobile A or
       // Option B's phone chat) is a chat, not a setup step, so it gets no
-      // "Setup complete" toast (owner 2026-10-12).
-      if (!isPhoneDemoChat()) {
-        toast.success("Setup complete");
+      // "Setup complete" toast (owner 2026-10-12), nor does any phone. One id,
+      // so it can never stack.
+      if (!(isPhoneDemoChat() || isMobileSetupNow())) {
+        toast.success("Setup complete", { id: "onboarding-setup-complete" });
       }
     }
-  }, [chatThreadOpen, flow, improved.received, updateImproved]);
+  }, [chatThreadOpen, redirecting, flow, improved.received, updateImproved]);
 
   if (coldThread) {
     return <Navigate replace to={ONBOARDING_ROUTES.chat} />;

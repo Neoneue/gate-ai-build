@@ -213,7 +213,10 @@ export function OnboardingAuthLayout() {
         <div className="hidden bg-muted md:block" />
       </div>
 
-      <div className="relative grid min-h-svh grid-cols-1 grid-rows-[auto_1fr_auto] gap-x-4 px-6 py-8 md:h-full md:min-h-0 md:grid-cols-12 md:px-16 md:py-10">
+      {/* Below md (owner 2026-10-14): the logo 20px from the top, the
+          copyright 16px from the bottom, and 24px at least between each and
+          the card, which no longer meets them when it outgrows the screen. */}
+      <div className="relative grid min-h-svh grid-cols-1 grid-rows-[auto_1fr_auto] gap-x-4 gap-y-6 px-6 pt-5 pb-4 md:h-full md:min-h-0 md:grid-cols-12 md:gap-y-0 md:px-16 md:py-10">
         <div className="row-start-1 flex items-center justify-center md:col-span-5 md:justify-start">
           <img
             alt="Gate AI"

@@ -201,6 +201,12 @@ export const PHONE_DEMO_PAGES: Record<string, string> = {
 export const phoneOverviewPath = (): string =>
   isMobileATab() ? ONBOARDING_ROUTES.mobileOverview : ONBOARDING_ROUTES.start;
 
+/** Where the phone menu's Sign out goes (owner 2026-10-14): Mobile A's
+ *  sign-in in a Mobile A tab, else Option B's, so each version restarts at
+ *  its own first screen. */
+export const phoneSignInPath = (): string =>
+  isMobileATab() ? ONBOARDING_AUTH.a.signIn : ONBOARDING_AUTH.b.signIn;
+
 /** The site menu's nav (phone only, below `lg`): the Onboarding nav with
  *  Overview at `overviewPath` and Messages, Activity and Conversations at
  *  the phone demo's own copies, so the phone demo never opens a desktop page

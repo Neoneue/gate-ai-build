@@ -92,7 +92,8 @@ export interface OnboardingChatSidebarProps {
   onSelectConversation: (conversationId: string) => void;
   searchQuery: string;
   /** "Sign out" at the foot of the expanded rail. The phone drawer passes
-   *  false (owner 2026-10-11); the desktop rail keeps it. */
+   *  false (owner 2026-10-11); its Sign out is the site menu's. A full page
+   *  load, so the in-memory chat history starts over (owner 2026-10-14). */
   showSignOut?: boolean;
   /** Whether this workspace is still eligible for the upgrade path. */
   showUpgrade?: boolean;
@@ -191,7 +192,7 @@ export function OnboardingChatSidebar({
               <Button
                 aria-label="Sign out"
                 nativeButton={false}
-                render={<Link to={chatSignInPath()} />}
+                render={<Link reloadDocument to={chatSignInPath()} />}
                 size="icon"
                 variant="ghost"
               >
@@ -417,7 +418,7 @@ export function OnboardingChatSidebar({
                     touchFriendly && "h-11"
                   )}
                   nativeButton={false}
-                  render={<Link to={chatSignInPath()} />}
+                  render={<Link reloadDocument to={chatSignInPath()} />}
                   size="default"
                   variant="ghost"
                 >

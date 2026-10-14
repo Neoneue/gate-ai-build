@@ -325,6 +325,54 @@ export const onboardingChatStore = {
     })();
     return id;
   },
+  /**
+   * Regenerate one settled reply (owner 2026-10-14): the reply card's retry
+   * button. The demo's answer is scripted, so the same reply streams into
+   * that lane again, through `live` like a send. Nothing while another reply
+   * is still writing, or when the lane is not found.
+   */
+  regenerateScripted(laneId: string): void {
+    if (state.live) {
+      return;
+    }
+    const conversation = Object.values(state.scripted).find((entry) =>
+      entry?.turns.some((turn) => turn.lanes.some((lane) => lane.id === laneId))
+    );
+    const reply = conversation?.turns
+      .flatMap((turn) => turn.lanes)
+      .find((lane) => lane.id === laneId)?.body;
+    if (!(conversation && reply)) {
+      return;
+    }
+    const id = conversation.id;
+    set({ live: { conversationId: id, laneId, laneIds: [laneId], body: "" } });
+    (async () => {
+      let body = "";
+      for await (const chunk of streamOnboardingReply(reply, {
+        immediate: prefersReducedMotion(),
+      })) {
+        body += chunk;
+        set({ live: { conversationId: id, laneId, laneIds: [laneId], body } });
+      }
+      const current = state.scripted[id];
+      set({
+        live: null,
+        scripted: current
+          ? setScripted({
+              ...current,
+              turns: current.turns.map((turn) => ({
+                ...turn,
+                lanes: turn.lanes.map((lane) =>
+                  lane.id === laneId
+                    ? { ...lane, answeredAt: new Date() }
+                    : lane
+                ),
+              })),
+            })
+          : state.scripted,
+      });
+    })();
+  },
   /** Test hook: back to the empty state. */
   reset() {
     memorySeq = 0;
