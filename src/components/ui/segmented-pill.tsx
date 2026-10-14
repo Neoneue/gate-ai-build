@@ -67,8 +67,13 @@ export function SegmentedPill({
         // border slot was always reserved (previously transparent) — no layout shift.
         // `size="sm"` drops the container to h-8 for inline header chrome
         // (toolbars next to size="sm" buttons / selects); items shrink to h-6.
+        // On a touch screen both sizes step up like Button (owner 2026-10-14):
+        // items 24 -> 32 and 32 -> 36, the container 8px taller with them, as
+        // `pointer-coarse:` floors; a mouse never sees them.
         "relative gap-0 rounded-sm border border-border bg-background px-1 py-px",
-        size === "sm" ? "h-8" : "h-10",
+        size === "sm"
+          ? "h-8 pointer-coarse:min-h-10"
+          : "h-10 pointer-coarse:min-h-11",
         className
       )}
       onValueChange={(v) => v.length > 0 && onValueChange?.(v[0])}
@@ -104,7 +109,9 @@ export function SegmentedPill({
             // so a plain px-* base can't win. Both sizes override that SAME
             // variant to px-3 (12px L/R); only the box height is size-aware.
             "relative z-10 min-w-0 rounded-xs! px-3 font-medium font-sans text-xs leading-4 group-data-[spacing=0]/toggle-group:px-3",
-            size === "sm" ? "h-6" : "h-8",
+            size === "sm"
+              ? "h-6 pointer-coarse:min-h-8"
+              : "h-8 pointer-coarse:min-h-9",
             "border-0 bg-transparent text-muted-foreground",
             "hover:bg-transparent hover:text-foreground",
             "data-[pressed]:bg-transparent data-[pressed]:text-foreground",
