@@ -45,9 +45,10 @@ import {
 } from "@/lib/range";
 import { ConversationsDefault } from "@/pages/ConversationsDefault";
 import type { ImprovedModel } from "@/pages/onboarding/improved-data";
-import type {
-  WorkspaceConversation,
-  WorkspaceTraffic,
+import {
+  NO_KEY,
+  type WorkspaceConversation,
+  type WorkspaceTraffic,
 } from "@/pages/onboarding/onboarding-workspace-traffic";
 import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 
@@ -431,7 +432,7 @@ function ConversationsTableSection({
       return (
         !q ||
         row.title.toLowerCase().includes(q) ||
-        row.keyLabel.toLowerCase().includes(q)
+        (row.keyLabel ?? "").toLowerCase().includes(q)
       );
     });
     return sortRows(filtered, sort, conversationSortValue);
@@ -463,13 +464,17 @@ function ConversationsTableSection({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All keys</SelectItem>
-              {[...new Set(traffic.conversations.map((c) => c.keyLabel))].map(
-                (label) => (
-                  <SelectItem key={label} value={label}>
-                    {label}
-                  </SelectItem>
-                )
-              )}
+              {[
+                ...new Set(
+                  traffic.conversations.flatMap((c) =>
+                    c.keyLabel ? [c.keyLabel] : []
+                  )
+                ),
+              ].map((label) => (
+                <SelectItem key={label} value={label}>
+                  {label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select onValueChange={setModel} value={model}>
@@ -592,7 +597,9 @@ function ConversationsTableSection({
                       </span>
                     </TableCell>
                     <TableCell className="type-mono-14 whitespace-nowrap">
-                      <span className="text-foreground">{row.keyLabel}</span>
+                      <span className="text-foreground">
+                        {row.keyLabel ?? NO_KEY}
+                      </span>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       <div

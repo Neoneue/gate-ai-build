@@ -95,6 +95,7 @@ import {
   type Metric,
   seriesColor,
 } from "@/pages/activity-data";
+import { GATE_CONNECT_KEY_LABEL } from "@/pages/onboarding/onboarding-setup-traffic";
 import {
   tokensOf,
   type WorkspaceMessage,
@@ -226,7 +227,11 @@ function ActivityWithTraffic({ traffic }: { traffic: WorkspaceTraffic }) {
         />
       </div>
       <TopByAxisRow setup={setup} />
-      <UsageByKey setup={setup} />
+      {keyedMessages(setup.messages).length > 0 ? (
+        <UsageByKey setup={setup} />
+      ) : (
+        <RecentKeyUsageEmpty />
+      )}
     </DashboardChrome>
   );
 }
@@ -884,7 +889,10 @@ function TopByAxisRow({ setup }: { setup: SetupWindow }) {
       avatar: g.vendor ? <VendorAvatar vendor={g.vendor} /> : null,
     }));
 
-  const keyRows: TopRow[] = workspaceGroups(setup.messages, "apiKey")
+  const keyRows: TopRow[] = workspaceGroups(
+    keyedMessages(setup.messages),
+    "apiKey"
+  )
     .toSorted((a, b) => byLens(keyMetric)(b) - byLens(keyMetric)(a))
     .map((g) => ({
       rowKey: g.id,
@@ -940,14 +948,18 @@ function TopByAxisRow({ setup }: { setup: SetupWindow }) {
         subtitle={subtitleFor(modelMetric)}
         title="Top models"
       />
-      <TopList
-        metric={keyMetric}
-        onMetricChange={setKeyMetric}
-        options={METRIC_OPTIONS}
-        rows={keyRows}
-        subtitle={subtitleFor(keyMetric)}
-        title="Top API keys"
-      />
+      {keyRows.length > 0 ? (
+        <TopList
+          metric={keyMetric}
+          onMetricChange={setKeyMetric}
+          options={METRIC_OPTIONS}
+          rows={keyRows}
+          subtitle={subtitleFor(keyMetric)}
+          title="Top API keys"
+        />
+      ) : (
+        <TopKeysEmpty />
+      )}
       <TopList
         metric={userMetric}
         onMetricChange={setUserMetric}
@@ -1011,6 +1023,65 @@ function keySortValue(row: KeyRow, key: string): string | number | null {
   }
 }
 
+/** The messages sent with an API key: Manual setup's. Gate Chat and Gate
+ *  Connect use none, and keys are made on desktop setup only, so until one
+ *  is used both key sections keep the Default empty state (owner
+ *  2026-10-15). */
+const keyedMessages = (messages: readonly WorkspaceMessage[]) =>
+  messages.filter(
+    (m) => m.keyLabel !== null && m.keyLabel !== GATE_CONNECT_KEY_LABEL
+  );
+
+/** The Default key icon chip (ActivityDefault.tsx). */
+const KEY_CHIP = (
+  <div
+    aria-hidden
+    className="flex size-12 items-center justify-center rounded-md bg-muted"
+  >
+    <Key
+      aria-hidden
+      className="size-5 text-muted-foreground"
+      strokeWidth={1.75}
+    />
+  </div>
+);
+
+/** Top API keys with no key used: the phone copy's empty card
+ *  (OnboardingMobileActivity.tsx `TopEmptyCard`). */
+function TopKeysEmpty() {
+  return (
+    <Card density="flush">
+      <div className="flex items-start justify-between gap-2 p-4">
+        <h3 className="type-heading-16 m-0 text-foreground leading-snug">
+          Top API keys
+        </h3>
+      </div>
+      <div className="flex flex-col items-center justify-center gap-3 px-4 pb-8">
+        {KEY_CHIP}
+        <span className="type-copy-14 text-muted-foreground">
+          No API keys yet
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+/** Recent key usage with no key used: ActivityDefault's empty state. */
+function RecentKeyUsageEmpty() {
+  return (
+    <div className="mt-2 flex flex-col gap-4">
+      <SectionTitle>Recent key usage</SectionTitle>
+      <Card density="flush">
+        <TableEmptyState
+          body="Per-key usage across messages, tokens, and spend will appear here as your workspace routes traffic."
+          icon={KEY_CHIP}
+          title="No usage yet"
+        />
+      </Card>
+    </div>
+  );
+}
+
 function UsageByKey({ setup }: { setup: SetupWindow }) {
   const { sort, toggle: toggleSort } = useTableSort();
   const [query, setQuery] = useState("");
@@ -1031,7 +1102,7 @@ function UsageByKey({ setup }: { setup: SetupWindow }) {
   // revoked" keeps them.
   const rows = useMemo<KeyRow[]>(
     () =>
-      workspaceGroups(setup.messages, "apiKey").map((g) => ({
+      workspaceGroups(keyedMessages(setup.messages), "apiKey").map((g) => ({
         key: g.id,
         label: g.label,
         owner: ownerName(),

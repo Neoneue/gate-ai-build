@@ -70,6 +70,7 @@ import {
   PreviewCard,
 } from "@/pages/onboarding/onboarding-mobile-parts";
 import {
+  NO_KEY,
   tokensOf,
   type WorkspaceTraffic,
   workspaceCompression,
@@ -658,7 +659,7 @@ function SecurityEventsTable({ traffic }: { traffic: WorkspaceTraffic }) {
               <Badge variant={badge.variant}>{badge.label}</Badge>
             </TableCell>
             <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
-              {m.keyLabel.split(" (")[0]}
+              {m.keyLabel?.split(" (")[0] ?? NO_KEY}
             </TableCell>
           </TableRow>
         ))}
