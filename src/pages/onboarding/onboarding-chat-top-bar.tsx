@@ -18,6 +18,7 @@ import { chatOverviewUrl } from "@/pages/chat/chat-links";
 import { CHAT_COPY } from "@/pages/chat/copy";
 import {
   chatSignInPath,
+  ONBOARDING_ROUTES,
   PHONE_DEMO_PAGES,
   phoneOverviewPath,
   phoneSiteSections,
@@ -95,7 +96,10 @@ function OnboardingSiteMenu() {
     Object.entries(PHONE_DEMO_PAGES).find(
       ([, path]) => path === pathname
     )?.[0] ?? "chat";
-  const overviewPath = phoneOverviewPath();
+  // The Overview row is the real phone Overview on both versions (owner
+  // 2026-10-15): empty, then filled by the chat's messages. Option B's
+  // phone start is the chat drawer's "Main" link.
+  const overviewPath = ONBOARDING_ROUTES.mobileOverview;
   const isDesktop = useIsDesktop();
   const [open, setOpen] = useState(false);
   // At lg+ the key hides, so an open drawer must not survive the resize.

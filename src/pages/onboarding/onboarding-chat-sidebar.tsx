@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   Download,
   MoreHorizontal,
   Pencil,
@@ -84,6 +85,10 @@ export interface OnboardingChatSidebarProps {
   history: readonly ChatConversationGroup[];
   historyError?: string | null;
   historyLoading?: boolean;
+  /** Option B's phone drawer (owner 2026-10-15): a "Main" link at the
+   *  foot, under credits, back to its phone start, the way the shared rail
+   *  ends on "Back to dashboard". */
+  mainPath?: string;
   onDeleteConversation?: (conversationId: string) => void;
   onNewChat: () => void;
   onRenameConversation?: (conversationId: string, title: string) => void;
@@ -126,6 +131,7 @@ export function OnboardingChatSidebar({
   historyError = null,
   credits,
   showSignOut = true,
+  mainPath,
   showUpgrade = true,
   touchFriendly = false,
   topSlot,
@@ -406,7 +412,9 @@ export function OnboardingChatSidebar({
                 </div>
                 {/* Separates credits from Sign out (user,
                   2026-10-06); shown wherever both are. */}
-                {showSignOut ? <Separator className="xl:hidden" /> : null}
+                {showSignOut || mainPath ? (
+                  <Separator className="xl:hidden" />
+                ) : null}
               </>
             ) : null}
             {/* 12px above and below in the phone drawer, 16px in the rail. */}
@@ -429,6 +437,27 @@ export function OnboardingChatSidebar({
                     strokeWidth={1.75}
                   />
                   <span className="truncate">Sign out</span>
+                </Button>
+              </div>
+            ) : null}
+            {mainPath ? (
+              <div className={cn("shrink-0 p-4", touchFriendly && "py-3")}>
+                <Button
+                  className={cn(
+                    "w-full justify-start",
+                    touchFriendly && "h-11"
+                  )}
+                  nativeButton={false}
+                  render={<Link to={mainPath} />}
+                  size="default"
+                  variant="ghost"
+                >
+                  <ArrowLeft
+                    aria-hidden
+                    data-icon="inline-start"
+                    strokeWidth={1.75}
+                  />
+                  <span className="truncate">Main</span>
                 </Button>
               </div>
             ) : null}

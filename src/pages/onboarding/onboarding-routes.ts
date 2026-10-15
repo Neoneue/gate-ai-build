@@ -186,8 +186,9 @@ export const rememberChatPath = (path: string): void => {
 
 export const lastOnboardingChatPath = (): string => lastChatPath;
 
-/** Nav rows the phone demo has its own copy of, by nav id. Overview is
- *  Mobile A's; Option B's Overview is its phone start (`phoneOverviewPath`). */
+/** Nav rows the phone demo has its own copy of, by nav id. Both versions'
+ *  Overview row opens the phone Overview (owner 2026-10-15); Option B's
+ *  phone start is the chat drawer's "Main" link. */
 export const PHONE_DEMO_PAGES: Record<string, string> = {
   overview: ONBOARDING_ROUTES.mobileOverview,
   requests: ONBOARDING_ROUTES.mobileMessages,
@@ -195,9 +196,10 @@ export const PHONE_DEMO_PAGES: Record<string, string> = {
   conversations: ONBOARDING_ROUTES.mobileConversations,
 };
 
-/** Where the phone demo's Overview row, logo and menu brand go (owner
- *  2026-10-12): Mobile A's Overview with counts in a Mobile A tab, else
- *  Option B's two-card start. */
+/** Where the chat top bar's logo goes (owner 2026-10-12): Mobile A's
+ *  Overview with counts in a Mobile A tab, else Option B's two-card start.
+ *  The site menu's Overview row and brand open the phone Overview on both
+ *  versions (owner 2026-10-15). */
 export const phoneOverviewPath = (): string =>
   isMobileATab() ? ONBOARDING_ROUTES.mobileOverview : ONBOARDING_ROUTES.start;
 
