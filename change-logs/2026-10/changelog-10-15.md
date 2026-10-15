@@ -123,3 +123,24 @@ Prior day: [`changelog-10-14.md`](./changelog-10-14.md)
   `OnboardingConversations.tsx`, `OnboardingMessages.tsx`,
   `OnboardingSecurity.tsx`, `OnboardingSetupOverview.tsx`,
   `onboarding-workspace-traffic.test.ts`.
+
+### Onboarding phone: Option B menus get "Get started"; Overview is always the real Overview `4ec7c66`
+
+- Rule (owner 2026-10-15): on Option B the phone landing
+  (`/overview-onboarding`) is "Get started", mirroring the desktop rail's Get
+  started row (desktop hosts the setup steps; the phone hosts only the
+  landing). Loop: Get started, Gate Chat, data pages, Get started.
+- Site menus. Before: B's start page menu had Overview pointing at the start
+  page itself, and no Get started row. After: `phoneSiteSections(overviewPath,
+  improved?)` adds a "Get started" row (ListChecks, `SETUP_NAV_ID`) above
+  Overview, linking to the landing while `!setupTasksDone(improved)`. B's
+  start page menu and the chat site menu pass it (the chat menu not in a
+  Mobile A tab). Overview now always opens the phone Overview
+  (`/overview-mobile-onboarding`).
+- Active row. B's start page highlights Get started (`onboarding-chrome.tsx`).
+- Chat drawer. The foot link "Main" is renamed "Get started" and hides on the
+  same rule (`setupTasksDone`).
+- Mobile A unchanged.
+- Files: `onboarding-routes.ts`, `improved-start.tsx`,
+  `onboarding-chat-top-bar.tsx`, `onboarding-chrome.tsx`,
+  `OnboardingChat.tsx`, `onboarding-chat-sidebar.tsx`.

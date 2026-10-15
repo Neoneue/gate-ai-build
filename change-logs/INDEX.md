@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-15](./2026-10/changelog-10-15.md)
 
+- Onboarding phone: Option B menus get "Get started"; Overview is always the real Overview
 - Onboarding: Gate Chat traffic carries no API key; key sections stay Default
 - Onboarding phone: Option B chat drawer gets Main; Overview row opens the real Overview
 - Onboarding Gate Chat: attach on phone; files go with the prompt
