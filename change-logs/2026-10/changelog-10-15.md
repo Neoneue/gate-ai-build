@@ -60,3 +60,22 @@ Prior day: [`changelog-10-14.md`](./changelog-10-14.md)
   app you choose, not only this one."
 - Files: `improved-art.tsx`, `improved-parts.tsx`, `improved-setup.tsx`,
   `onboarding-motion.css`.
+
+### Onboarding Gate Chat: attach on phone; files go with the prompt `6f9880a`
+
+- Phone Gate Chat composer (Mobile A and B). Before: no attach key (removed
+  2026-10-12). After: attach leads the toolbar like desktop (paperclip, a
+  separator from `sm`, then the model picker). The picker's `-ml-2.5` pull
+  moved to attach's edge pull (`EDGE_KEY_START`). Compare stays desktop-only.
+- Send still needs a prompt, as the main Gate Chat composer. Picked files go
+  with that prompt: `sendScripted` takes them, the turn's `attachments` hold
+  id, filename, bytes and content type, and the composer clears them with the
+  draft. The thread draws such a turn with the shared `ChatMessage`
+  (attachment chips). The reply stays scripted from the prompt.
+- The picker now records each file's size and type as optional `ChatPickedFile`
+  fields; the main Gate Chat ignores them.
+- Saved chat history keeps a turn's attachments, checks each one and drops a
+  malformed one without losing the turn.
+- Files: `onboarding-chat-composer.tsx`, `OnboardingChat.tsx`,
+  `onboarding-chat-store.ts`, `onboarding-chat-storage.ts`,
+  `onboarding-chat-message.tsx`, `chat-attachment-picker.tsx`.
