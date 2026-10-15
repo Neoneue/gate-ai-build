@@ -59,9 +59,10 @@ function OnboardingGuard({ parent }: { parent: LayoutContext }) {
   const { pathname, state: locationState } = useLocation();
   const { flow, improved, updateImproved } = useOnboarding();
   // Desktop Gate Chat opens in a new tab (owner 2026-10-13), so a cold load
-  // of the chat on desktop starts there, as a new user. A conversation URL
-  // falls back to the chat landing (its store is empty in a fresh tab). The
-  // phone keeps the redirect: Mobile A to its sign-in, Option B to the start.
+  // of the chat on desktop starts there, as a new user with the run's shared
+  // chat history (owner 2026-10-14). A conversation URL falls back to the
+  // chat landing. The phone keeps the redirect: Mobile A to its sign-in,
+  // Option B to the start.
   const [coldChat] = useState(
     () =>
       pathname.startsWith(ONBOARDING_ROUTES.chat) &&

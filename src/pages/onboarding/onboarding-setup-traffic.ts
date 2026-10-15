@@ -132,7 +132,7 @@ export function setupTraffic(state: ImprovedState): SetupTraffic | null {
   const newest = demo ?? test;
   return {
     messages,
-    keyLabel: key ?? `gate-connect (${OWNER_EMAIL.slice(0, 12)}...)`,
+    keyLabel: key ?? GATE_CONNECT_KEY_LABEL,
     app: appNameOf(state),
     billing: state.billing,
     conversation: {
@@ -147,6 +147,11 @@ export function setupTraffic(state: ImprovedState): SetupTraffic | null {
     },
   };
 }
+
+/** gate-main's caller for OAuth traffic, which has no key name: Gate
+ *  Connect's messages and Gate Chat's (owner 2026-10-14) both log under it
+ *  (requests.ts `keyLabel`). */
+export const GATE_CONNECT_KEY_LABEL = `gate-connect (${OWNER_EMAIL.slice(0, 12)}...)`;
 
 /** The setup conversation's id: mock, no Gate record exists. */
 export const SETUP_CONVERSATION_ID = "cnv_setup";

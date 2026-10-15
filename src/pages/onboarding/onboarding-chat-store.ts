@@ -13,17 +13,29 @@ import {
 } from "@/data/onboarding-chat-script";
 import type { ChatConversationInput } from "@/pages/chat/chat-data";
 import type { ChatMemory } from "@/pages/chat/contract";
+import {
+  highestSeq,
+  ONBOARDING_CHAT_KEY,
+  type PendingTurn,
+  parseOnboardingChat,
+  type StoredOnboardingChat,
+  serializeOnboardingChat,
+} from "@/pages/onboarding/onboarding-chat-storage";
 import { isPhoneDemoChat } from "@/pages/onboarding/onboarding-routes";
 
 /* ─────────────────────────────────────────────────────────────────────────
  * The Onboarding workspace's own Gate Chat state: a copy of
  * `pages/chat/chat-store.ts` that starts as a brand-new user, so the
  * onboarding chat can change without touching the current Gate Chat on
- * every other workspace. Module-scoped, IN MEMORY, never persisted.
+ * every other workspace. Module-scoped, and mirrored to localStorage so
+ * every tab of the onboarding run shares one history (owner 2026-10-14,
+ * `onboarding-chat-storage.ts`): a message sent in the Gate Chat tab
+ * reaches the workspace's data pages in the setup tab. A fresh run clears
+ * it (`reset`, OnboardingProvider).
  *
  * Clean slate: no conversations, no memories, no favourite models. A
  * conversation joins the history only when this session opens it
- * (`openConversation`), which the first send does. A reload starts over.
+ * (`openConversation`), which the first send does.
  *
  * Snapshots are REPLACED, never mutated: useSyncExternalStore compares by
  * identity.
@@ -88,14 +100,139 @@ function emptyState(): OnboardingChatState {
   };
 }
 
-let state: OnboardingChatState = emptyState();
+let memorySeq = 0;
+let scriptedSeq = 0;
+/** The send whose reply is still being written: kept out of storage until
+ *  it settles, so no other tab counts a half-written reply. */
+let pending: PendingTurn | null = null;
+/** The last stored value this tab wrote or read, so a tab never echoes
+ *  another tab's change back. */
+let lastRaw: string | null = null;
+
+/** Keeps the id counters above every id the history holds. */
+function bumpSeqs(stored: StoredOnboardingChat) {
+  const conversations = Object.values(stored.scripted);
+  scriptedSeq = Math.max(
+    scriptedSeq,
+    highestSeq(Object.keys(stored.scripted), "chat_onboarding_"),
+    highestSeq(
+      conversations.flatMap((c) => c.turns.map((turn) => turn.id)),
+      "turn_onboarding_"
+    )
+  );
+  memorySeq = Math.max(
+    memorySeq,
+    highestSeq(
+      stored.memories.map((m) => m.id),
+      "mem_session_"
+    )
+  );
+}
+
+/** The stored history, or null when none (or storage is blocked). */
+function readStored(): { raw: string; chat: StoredOnboardingChat } | null {
+  try {
+    const raw = localStorage.getItem(ONBOARDING_CHAT_KEY);
+    const chat = parseOnboardingChat(raw, {
+      memoryToolsEnabled: CHAT_SEED_MEMORY_TOOLS_ENABLED,
+    });
+    return raw && chat ? { raw, chat } : null;
+  } catch {
+    return null;
+  }
+}
+
+function save() {
+  try {
+    const raw = serializeOnboardingChat(state, pending);
+    if (raw !== lastRaw) {
+      lastRaw = raw;
+      localStorage.setItem(ONBOARDING_CHAT_KEY, raw);
+    }
+  } catch {
+    // Storage blocked: each tab keeps its own history, as before.
+  }
+}
+
+function initialState(): OnboardingChatState {
+  const stored = readStored();
+  if (!stored) {
+    return emptyState();
+  }
+  lastRaw = stored.raw;
+  bumpSeqs(stored.chat);
+  return { ...stored.chat, live: null };
+}
+
+let state: OnboardingChatState = initialState();
 const listeners = new Set<() => void>();
 
-function set(next: Partial<OnboardingChatState>) {
-  state = { ...state, ...next };
+function notify() {
   for (const listener of listeners) {
     listener();
   }
+}
+
+function set(next: Partial<OnboardingChatState>) {
+  state = { ...state, ...next };
+  // A streamed chunk changes only `live`, which is never stored.
+  if (Object.keys(next).some((key) => key !== "live")) {
+    save();
+  }
+  notify();
+}
+
+/** Another tab's history, with this tab's own reply still being written
+ *  kept on top of it. */
+function adopt(stored: StoredOnboardingChat) {
+  bumpSeqs(stored);
+  let next: OnboardingChatState = { ...stored, live: state.live };
+  const own = pending ? state.scripted[pending.conversationId] : undefined;
+  const turn = own?.turns.find((t) => t.id === pending?.turnId);
+  if (pending && own && turn) {
+    const incoming = next.scripted[own.id];
+    next = {
+      ...next,
+      scripted: {
+        ...next.scripted,
+        [own.id]: incoming
+          ? { ...incoming, turns: [...incoming.turns, turn] }
+          : { ...own, turns: [turn] },
+      },
+      conversationIds: next.conversationIds.includes(own.id)
+        ? next.conversationIds
+        : [...next.conversationIds, own.id],
+      setupLinkTurnIds: state.setupLinkTurnIds.has(turn.id)
+        ? new Set([...next.setupLinkTurnIds, turn.id])
+        : next.setupLinkTurnIds,
+    };
+  }
+  state = next;
+  notify();
+}
+
+// Another tab's change lands here. A cleared entry (a fresh run in another
+// tab, or storage cleared) empties this tab's history too.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key !== null && event.key !== ONBOARDING_CHAT_KEY) {
+      return;
+    }
+    const stored = readStored();
+    if (stored) {
+      if (stored.raw !== lastRaw) {
+        lastRaw = stored.raw;
+        adopt(stored.chat);
+      }
+      return;
+    }
+    if (lastRaw !== null) {
+      lastRaw = null;
+      pending = null;
+      state = { ...emptyState(), live: state.live };
+      notify();
+    }
+  });
 }
 
 function subscribe(listener: () => void) {
@@ -106,9 +243,6 @@ function subscribe(listener: () => void) {
 }
 
 const getSnapshot = () => state;
-
-let memorySeq = 0;
-let scriptedSeq = 0;
 
 /** The free default a scripted reply comes from when no model is passed
  *  (owner 2026-10-11). */
@@ -250,6 +384,7 @@ export const onboardingChatStore = {
     // the follow-up offer card counts it.
     const setupLink = isSetupLinkRequest(prompt);
     const output = setupLink ? `${reply} ${COMPUTER_PROMPT.button}` : reply;
+    pending = { conversationId: id, turnId };
     set({
       scripted: setScripted({
         ...conversation,
@@ -294,6 +429,10 @@ export const onboardingChatStore = {
       })) {
         body += chunk;
         set({ live: { conversationId: id, laneId, laneIds, body } });
+      }
+      // Settled: the turn joins the stored history.
+      if (pending?.turnId === turnId) {
+        pending = null;
       }
       const current = state.scripted[id];
       if (!current) {
@@ -373,14 +512,20 @@ export const onboardingChatStore = {
       });
     })();
   },
-  /** Test hook: back to the empty state. */
+  /** Back to the empty state and an empty stored history: a fresh
+   *  onboarding run (OnboardingProvider, owner 2026-10-14), and tests. */
   reset() {
     memorySeq = 0;
     scriptedSeq = 0;
+    pending = null;
+    lastRaw = null;
     state = emptyState();
-    for (const listener of listeners) {
-      listener();
+    try {
+      localStorage.removeItem(ONBOARDING_CHAT_KEY);
+    } catch {
+      // Storage blocked: nothing was stored.
     }
+    notify();
   },
 };
 

@@ -40,11 +40,11 @@ import { formatChartTooltipDate, formatDate } from "@/lib/formatters";
 import { keepInOnboarding } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 import {
-  type SetupMessage,
-  type SetupTraffic,
-  setupCompression,
-} from "@/pages/onboarding/onboarding-setup-traffic";
-import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
+  type WorkspaceMessage,
+  type WorkspaceTraffic,
+  workspaceCompression,
+} from "@/pages/onboarding/onboarding-workspace-traffic";
+import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 import { PlanComparisonDialog } from "@/pages/plan-comparison-dialog";
 import { TokenSavingsDefault } from "@/pages/TokenSavingsDefault";
 import { SummaryCard } from "@/pages/token-savings/SummaryCard";
@@ -67,9 +67,12 @@ import {
  * `/token-savings-onboarding`: the desktop onboarding workspace's Token
  * savings (owner 2026-10-13).
  *
- * Before step 3's first message (`useSetupTraffic()` null):
+ * Before the first message (`useWorkspaceTraffic()` null):
  * `TokenSavingsDefault`, unchanged. Then the messages land one at a time
- * (the test message, then the demo); the numbers below are at 2.
+ * (the test message, then the demo); the numbers below are at 2. Every
+ * Gate Chat reply of the run, from any tab, counts too (owner 2026-10-14,
+ * `useWorkspaceTraffic`): its requests and input tokens, and 0 tokens saved
+ * (Gate Chat does not compress), so the savings stay setup's.
  *
  * After it: a copy of the FREE page (`TokenSavingsFree` -> `TokenSavings.tsx`
  * with `plan="free"`; the Pro variant is not copied, a new workspace is Free)
@@ -95,7 +98,7 @@ import {
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function OnboardingTokenSavings() {
-  const traffic = useSetupTraffic();
+  const traffic = useWorkspaceTraffic();
   return traffic ? (
     <TokenSavingsAfterSetup traffic={traffic} />
   ) : (
@@ -106,7 +109,7 @@ export function OnboardingTokenSavings() {
 /** The savings switches on the Savings options cards (TokenSavings.tsx). */
 type SavingsSwitches = { compression: boolean; caching: boolean };
 
-function TokenSavingsAfterSetup({ traffic }: { traffic: SetupTraffic }) {
+function TokenSavingsAfterSetup({ traffic }: { traffic: WorkspaceTraffic }) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -186,17 +189,12 @@ type SetupRates = {
   cacheHits: number;
 };
 
-function ratesOf(
-  traffic: SetupTraffic,
-  messages: readonly SetupMessage[]
-): SetupRates {
-  const { savedTokens, inTokens, percent } = setupCompression({
-    ...traffic,
-    messages,
-  });
+function ratesOf(messages: readonly WorkspaceMessage[]): SetupRates {
+  const { savedTokens, inTokens, percent } = workspaceCompression(messages);
   const compression = Number.parseFloat(percent);
-  // Neither step 3 message was served from Gate's cache: both reached the
-  // guardrail and the provider path, so the cache answered 0 requests.
+  // No message was served from Gate's cache: step 3's both reached the
+  // guardrail and the provider path, and no Gate Chat reply records a hit,
+  // so the cache answered 0 requests.
   const cacheHits = 0;
   const caching =
     messages.length === 0
@@ -257,7 +255,7 @@ function sparkBuckets(range: PresetRange, anchor: Date): SparkBucket[] {
   }));
 }
 
-const inBucket = (bucket: SparkBucket, m: SetupMessage) =>
+const inBucket = (bucket: SparkBucket, m: WorkspaceMessage) =>
   m.sentAt.getTime() > bucket.start && m.sentAt.getTime() <= bucket.end;
 
 /* ─── KPI rail ──────────────────────────────────────────────────────────── */
@@ -269,7 +267,7 @@ function OverviewSection({
   onRangeChange,
   onCustomRangeChange,
 }: {
-  traffic: SetupTraffic;
+  traffic: WorkspaceTraffic;
   range: Range;
   customRange: CustomRange | null;
   onRangeChange: (r: PresetRange) => void;
@@ -293,13 +291,10 @@ function OverviewSection({
             (m) => m.sentAt.getTime() > first.start && m.sentAt <= anchor
           );
     const perBucket = buckets.map((bucket) =>
-      ratesOf(
-        traffic,
-        traffic.messages.filter((m) => inBucket(bucket, m))
-      )
+      ratesOf(traffic.messages.filter((m) => inBucket(bucket, m)))
     );
     return {
-      rates: ratesOf(traffic, messages),
+      rates: ratesOf(messages),
       labels: buckets.map((b) => b.label),
       perBucket,
     };
@@ -387,7 +382,7 @@ const tenthsLabel = (tenths: number) => `${(tenths / 10).toFixed(1)}%`;
  *  30D count back from it, All starts at the first message, Custom is the
  *  picked span. */
 function summaryWindow(
-  traffic: SetupTraffic,
+  traffic: WorkspaceTraffic,
   range: Range,
   customRange: CustomRange | null
 ): { from: Date; to: Date } {
@@ -441,7 +436,7 @@ function periodCopy(
 /** The Summary card's model (the shape `summaryFor` returns) built from the
  *  messages in the window, so the card and the rail read one source. */
 function setupSummary(
-  traffic: SetupTraffic,
+  traffic: WorkspaceTraffic,
   range: Range,
   customRange: CustomRange | null
 ): SummaryModel {
@@ -451,7 +446,7 @@ function setupSummary(
       m.sentAt.getTime() >= w.from.getTime() &&
       m.sentAt.getTime() <= w.to.getTime()
   );
-  const rates = ratesOf(traffic, messages);
+  const rates = ratesOf(messages);
   const { label: periodLabel, phrase: periodPhrase } = periodCopy(range, w);
   const requests = messages.length;
   const noTraffic = requests === 0;

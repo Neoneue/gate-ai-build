@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useLocation } from "react-router-dom";
+import { onboardingChatStore } from "@/pages/onboarding/onboarding-chat-store";
 import {
   isMobileATab,
   ONBOARDING_ROUTES,
@@ -38,7 +39,9 @@ import { OnboardingContext } from "@/pages/onboarding/use-onboarding";
  *     user, OnboardingLayout) and never writes the shared one.
  *   • Any other first load (the start page, a signup, a refresh that
  *     returns to the start) is a fresh run: its initial state replaces the
- *     shared one, so every tab starts over with it. */
+ *     shared one, so every tab starts over with it. The shared Gate Chat
+ *     history (onboarding-chat-storage.ts, owner 2026-10-14) starts over
+ *     with it. */
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [shared] = useState(
@@ -49,6 +52,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         !isMobileSetupNow()
       )
   );
+  const [freshRun] = useState(
+    () => shared && !ONBOARDING_WORKSPACE_PAGES.has(pathname)
+  );
+  useEffect(() => {
+    if (freshRun) {
+      onboardingChatStore.reset();
+    }
+  }, [freshRun]);
   const [flow, setFlowState] = useState<OnboardingFlow>("improved");
   const [current, setCurrent] = useState(initialCurrentState);
   const [improved, setImproved] = useState(

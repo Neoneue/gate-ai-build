@@ -176,7 +176,7 @@ function LatestConversationTable({
       <TableBody>
         {traffic.conversations
           .slice(0, PREVIEW_ROWS)
-          .map(({ id, title, updated, turns }) => (
+          .map(({ id, title, updated, turns, requests }) => (
             <TableRow className="h-12" key={id}>
               <TableCell className="w-full max-w-0">
                 <span className="block w-full truncate">{title}</span>
@@ -187,8 +187,10 @@ function LatestConversationTable({
               <TableCell className="type-mono-14 whitespace-nowrap text-right">
                 {turns}
               </TableCell>
+              {/* Reqs: one per reply; a desktop compare turn sends two
+                  (owner 2026-10-14, the shared chat history). */}
               <TableCell className="type-mono-14 whitespace-nowrap text-right">
-                {turns}
+                {requests}
               </TableCell>
             </TableRow>
           ))}

@@ -75,8 +75,8 @@ import {
   RANGE_OPTIONS,
 } from "@/lib/range";
 import { cn } from "@/lib/utils";
-import type { SetupTraffic } from "@/pages/onboarding/onboarding-setup-traffic";
-import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
+import type { WorkspaceTraffic } from "@/pages/onboarding/onboarding-workspace-traffic";
+import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 import { SecurityDefault } from "@/pages/SecurityDefault";
 import {
   ATTACK_MIX,
@@ -104,6 +104,10 @@ const WHITESPACE_GLOBAL_RE = /\s+/g;
  * (hero, chart, Action types, Attack types, the table and its "of N") comes
  * from that one event in the picked range, so they reconcile.
  *
+ * Gate Chat replies of the run (owner 2026-10-14, `useWorkspaceTraffic`)
+ * all pass the guardrail (Allow), so they are not security events either;
+ * they only move the range anchor, the newest message.
+ *
  * The range is local state, anchored on the newest message's real send time
  * (the phone Messages precedent), so the event sits in the last bucket of
  * every preset. Left out of the Free copy:
@@ -128,7 +132,7 @@ type SetupEvent = {
 
 /** The blocked messages as events: step 3's demo message, a prompt
  *  injection (the step's whole point), blocked by the guardrail. */
-function setupEvents(traffic: SetupTraffic): SetupEvent[] {
+function setupEvents(traffic: WorkspaceTraffic): SetupEvent[] {
   return traffic.messages
     .filter((m) => m.guardrail === "block")
     .map((m) => ({
@@ -136,8 +140,8 @@ function setupEvents(traffic: SetupTraffic): SetupEvent[] {
       sentAt: m.sentAt,
       type: "injection",
       action: "blocked",
-      key: traffic.keyLabel,
-      conversationId: traffic.conversation.id,
+      key: m.keyLabel,
+      conversationId: m.conversationId,
     }));
 }
 
@@ -268,7 +272,7 @@ function setupEventsChartView(
 }
 
 export function OnboardingSecurity() {
-  const traffic = useSetupTraffic();
+  const traffic = useWorkspaceTraffic();
   // The test message is not a security event: until the blocked message
   // lands (owner 2026-10-13: messages land one at a time) the page keeps
   // its empty state.
@@ -279,7 +283,7 @@ export function OnboardingSecurity() {
   );
 }
 
-function SetupSecurity({ traffic }: { traffic: SetupTraffic }) {
+function SetupSecurity({ traffic }: { traffic: WorkspaceTraffic }) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
