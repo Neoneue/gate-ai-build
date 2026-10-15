@@ -97,3 +97,29 @@ Prior day: [`changelog-10-14.md`](./changelog-10-14.md)
 - Comments in `onboarding-routes.ts` refreshed to match; no logic change there.
 - Files: `onboarding-chat-sidebar.tsx`, `OnboardingChat.tsx`,
   `onboarding-chat-top-bar.tsx`, `onboarding-routes.ts`.
+
+### Onboarding: Gate Chat traffic carries no API key; key sections stay Default `89f3057`
+
+- Rule (owner 2026-10-15): "There are no keys assigned until after desktop
+  setup or this breaks the demo showing false data". Before: Gate Chat
+  messages and conversations carried Gate Connect's caller label as their key,
+  so the key tables and Activity key sections filled with a key that does not
+  exist. After: they carry no key (`keyLabel: null`).
+- Key cells. A new `NO_KEY` mark (`"—"` in `onboarding-workspace-traffic.ts`)
+  renders in the Key column of Messages, Conversations, the Overview security
+  preview and Security events. The key filters on Messages and Conversations
+  list only real keys, and key search skips the empty value.
+- Grouping. `workspaceGroups(..., "apiKey")` skips keyless messages, so no
+  key group is made for Gate Chat.
+- Desktop Activity. Before: "Top API keys" and "Recent key usage" filled as
+  soon as any message existed. After: both show their Default empty states
+  ("No API keys yet" and ActivityDefault's "No usage yet") until a message
+  used a real API key (Manual setup's; Gate Connect's caller label is not a
+  key either), through `keyedMessages` in `OnboardingActivity.tsx`. Phone
+  Activity already showed both empty.
+- Tests: `onboarding-workspace-traffic.test.ts` asserts chat rows have no key
+  and that the key groups hold only setup's messages.
+- Files: `onboarding-workspace-traffic.ts`, `OnboardingActivity.tsx`,
+  `OnboardingConversations.tsx`, `OnboardingMessages.tsx`,
+  `OnboardingSecurity.tsx`, `OnboardingSetupOverview.tsx`,
+  `onboarding-workspace-traffic.test.ts`.
