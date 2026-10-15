@@ -333,7 +333,9 @@
  * layer tweens into its partner: the tile's own inset (dark's top highlight)
  * holds, the ring layer fades in blue, and the tile's resting shadow-md
  * lifts to shadow-lg (owner, 2026-10-10). A shorter list put an inset layer
- * against a plain one and the whole shadow jumped instead of fading. */
+ * against a plain one and the whole shadow jumped instead of fading.
+ * --tap-ring recolours the ring per tile (blue unless set; the demo's app
+ * sets it red, owner 2026-10-14). */
 @keyframes art-tap {
   30%,
   60% {
@@ -341,7 +343,7 @@
       var(--tw-inset-shadow),
       var(--tw-inset-ring-shadow),
       var(--tw-ring-offset-shadow),
-      0 0 0 1px var(--info),
+      0 0 0 1px var(--tap-ring, var(--info)),
       var(--shadow-lg);
     transform: scale(1.11);
   }
@@ -601,9 +603,15 @@
  *            Gate swells (500ms), its border turns from blue to green and
  *            the shield badge fades in (200ms); at 200ms a green packet
  *            and run cross wire 2 (600ms); at 800ms the target taps and
- *            its border turns green (200ms). Demo caught (remounts): Gate
- *            as on a pass, and at 200ms a gray circle-slash fades in on
- *            wire 2 (200ms) in place of the packet; the target stays gray.
+ *            its border turns green (200ms). Demo caught (remounts; owner
+ *            2026-10-14): the live beats above run with a red app ring,
+ *            packet and run on wire 1 (the threat), Gate's flash stays
+ *            blue. Then
+ *            Gate swells (500ms) and its border turns from blue to red
+ *            (200ms); at 200ms a red circle-slash pops in on wire 2
+ *            (200ms) in place of the packet; at 600ms Gate's border turns
+ *            from red to green (200ms) as the shield badge fades in
+ *            (200ms). The target stays gray. Settles at 800ms (1.1s).
  *            Fail (no remount, so no run replays): Gate's border turns from
  *            blue to red and the circle-slash badge fades in (200ms);
  *            nothing passes on. */
@@ -612,6 +620,35 @@
   from {
     border-color: var(--info);
   }
+}
+
+/* Demo caught (owner 2026-10-14): blue -> red (0-25%), red held (25-75%),
+   red -> Gate's own green border (75-100%); no `to` stop, so the class
+   colour is the end frame. Each step runs on the rule's curve. */
+@keyframes art-route-caught {
+  0% {
+    border-color: var(--info);
+  }
+  25%,
+  75% {
+    border-color: var(--destructive);
+  }
+}
+
+/* The blocked slash arrives: from 90% scale, never from nothing. */
+@keyframes art-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* The app sending the demo's red message taps with a red ring, matching
+   its packet (owner 2026-10-14). The check's tap stays blue. */
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-threat]
+  [data-motion="route-app"] {
+  --tap-ring: var(--destructive);
 }
 
 [data-motion-root="route-stage"]
@@ -682,14 +719,19 @@
 }
 
 [data-motion-root="route-stage"]
-  [data-motion-root="route"][data-motion-play]:is(
-    [data-state="done"],
-    [data-state="blocked"]
-  )
+  [data-motion-root="route"][data-motion-play][data-state="done"]
   [data-motion="route-gate"] {
   animation:
     improved-hub calc(500ms * var(--pace)),
     art-route-result calc(200ms * var(--pace)) var(--ease-out) backwards;
+}
+
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="blocked"]
+  [data-motion="route-gate"] {
+  animation:
+    improved-hub calc(500ms * var(--pace)),
+    art-route-caught calc(800ms * var(--pace)) var(--ease-out) backwards;
 }
 
 [data-motion-root="route-stage"]
@@ -705,8 +747,16 @@
 [data-motion-root="route-stage"]
   [data-motion-root="route"][data-motion-play][data-state="blocked"]
   [data-motion="route-blocked"] {
-  animation: art-fade calc(200ms * var(--pace)) calc(200ms * var(--pace))
+  animation: art-pop calc(200ms * var(--pace)) calc(200ms * var(--pace))
     var(--ease-out) backwards;
+}
+
+/* The shield lands with Gate's turn to green, not before (owner
+   2026-10-14): the caught beat shows red first. */
+[data-motion-root="route-stage"]
+  [data-motion-root="route"][data-motion-play][data-state="blocked"]
+  [data-motion="route-check"] {
+  animation-delay: calc(600ms * var(--pace));
 }
 
 [data-motion-root="route-stage"]

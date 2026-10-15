@@ -360,15 +360,15 @@ function PrepareSetup() {
 
   // "Select an app" (owner 2026-10-14): Gate Connect's first step; on Manual
   // it replaces the snippet's tabs and follows the key, billing and credits,
-  // since the app decides which models work and the snippet's shape. The
-  // tip is Gate Connect's.
+  // since the app decides which models work and the snippet's shape. Both
+  // methods carry the tip (Manual's added owner 2026-10-14).
   const appSection = (
     <SetupGroup
       description="Which app do you want to protect?"
       tip={
         connect
           ? "Just a starting point. Gate Connect can route any of your apps, not only this one."
-          : undefined
+          : "Just a starting point. Your base URL and key work in any app you choose, not only this one."
       }
       title="Select an app"
     >
@@ -993,6 +993,7 @@ function VerifyConnection() {
             improved={improved}
             key={`${client.id}:${improved.billing}:${model.id}:${routeRun}`}
             state={route}
+            threat={running || improved.caught}
           />
         </aside>
         <div className="flex min-w-0 flex-col gap-6">
