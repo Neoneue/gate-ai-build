@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import type { SidebarSection } from "@/components/ui/sidebar";
 import { TabsCount } from "@/components/ui/tabs-count";
+import { sectionsIncludePage } from "@/layouts/nav-sections";
 import { cn } from "@/lib/utils";
 import { OnboardingDashboardChrome } from "@/pages/onboarding/OnboardingDashboardChrome";
 import {
@@ -74,7 +75,10 @@ export function OnboardingChrome({
     <OnboardingDashboardChrome
       // B's phone start is its "Get started" row (owner 2026-10-15).
       activeNavId={
-        setupNav?.activeNavId ?? (mobileSections ? SETUP_NAV_ID : "overview")
+        setupNav?.activeNavId ??
+        (mobileSections && sectionsIncludePage(mobileSections, SETUP_NAV_ID)
+          ? SETUP_NAV_ID
+          : "overview")
       }
       mobileSections={mobileSections}
       onMobileNavigate={onMobileNavigate}

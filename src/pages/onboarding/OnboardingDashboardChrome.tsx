@@ -228,7 +228,14 @@ export function OnboardingDashboardChrome({
   // Placed below every hook above: the early return must never change hook
   // order. Overview is always reachable (every variant carries `overview`),
   // so the redirect target cannot bounce again.
-  if (!sectionsIncludePage(sections, activeNavId)) {
+  // The phone menu's own rows count too: B's phone start is its "Get
+  // started" row, which only the phone menu carries (owner 2026-10-15).
+  if (
+    !(
+      sectionsIncludePage(sections, activeNavId) ||
+      (mobileSections && sectionsIncludePage(mobileSections, activeNavId))
+    )
+  ) {
     return <Navigate replace to={overviewPath} />;
   }
   return (

@@ -144,3 +144,28 @@ Prior day: [`changelog-10-14.md`](./changelog-10-14.md)
 - Files: `onboarding-routes.ts`, `improved-start.tsx`,
   `onboarding-chat-top-bar.tsx`, `onboarding-chrome.tsx`,
   `OnboardingChat.tsx`, `onboarding-chat-sidebar.tsx`.
+
+### Onboarding: B's Get started landing renders after signup; reload once on a stale chunk `82671c0`
+
+- Bug (prod, 2026-10-15): after Mobile B signup the screen stayed blank.
+  `4ec7c66` made B's phone start page's active nav id `get-started`, but the
+  URL guard in `OnboardingDashboardChrome.tsx` only checked the desktop
+  `sections`, which have no such row. It rendered `<Navigate>` to
+  `/overview-onboarding`, the page already open, so nothing painted.
+- Guard. Before: a page id counted only if a desktop `sections` row held it.
+  After: a row in `mobileSections` counts too, so B's "Get started" is valid.
+- Active id. Before: any `mobileSections` made the active id `get-started`.
+  After: `onboarding-chrome.tsx` marks Get started active only when the phone
+  menu carries that row, else Overview, so the guard can never redirect to
+  the page it is on.
+- Stale chunk. Before: a tab open across a deploy failed to load the next
+  lazy page (the old hashed chunk is gone) and went blank. After:
+  `src/main.tsx` listens for Vite's `vite:preloadError` and reloads once onto
+  the new build. The `gate-chunk-reload` sessionStorage flag stops a loop on a
+  truly broken chunk and is cleared on every load.
+- Missing chunk. Before: `vercel.json` rewrote every path, `/assets/*`
+  included, to `index.html`, so a missing chunk came back as HTML. After: the
+  rewrite source is `/((?!assets/).*)`, so a missing chunk is a 404 and the
+  preload error fires.
+- Files: `OnboardingDashboardChrome.tsx`, `onboarding-chrome.tsx`,
+  `src/main.tsx`, `vercel.json`.
