@@ -21,10 +21,9 @@ import { OnboardingChatUsageRow } from "@/pages/onboarding/onboarding-chat-usage
  * (200%), so the time drops below the model name instead of pushing the
  * page sideways. At 100% it lays out exactly as the shared header.
  *
- * Left out: attachment chips and notes and memory chips. A Mobile A turn
- * never carries them (its composer has no attachments and its replies use
- * no memory tools); the thread hands any turn that does to the shared
- * `ChatMessage` (`canUseOnboardingChatMessage`,
+ * Left out: attachment chips and notes and memory chips. The thread hands
+ * a turn that carries them (a prompt sent with files, owner 2026-10-15) to
+ * the shared `ChatMessage` (`canUseOnboardingChatMessage`,
  * `onboarding-chat-message-support.ts`).
  * ───────────────────────────────────────────────────────────────────────── */
 

@@ -74,6 +74,45 @@ describe("onboarding chat history persistence (owner 2026-10-14)", () => {
     expect(parsed?.titles[id]).toBe("Renamed");
   });
 
+  it("keeps the files sent with a prompt and drops a malformed one (owner 2026-10-15)", async () => {
+    store();
+    vi.setSystemTime(new Date(2026, 9, 15, 9));
+    let id: string | null = null;
+    act(() => {
+      id = onboardingChatStore.sendScripted(null, "Read this", FREE_QWEN, [
+        {
+          id: "att_local_1",
+          filename: "notes.txt",
+          bytes: 120,
+          contentType: "text/plain",
+        },
+        { id: "att_local_2", filename: "photo.png" },
+      ]);
+    });
+    await act(() => vi.runAllTimersAsync());
+    const turn = stored()?.scripted[id as unknown as string]?.turns[0];
+    expect(turn?.attachments).toEqual([
+      {
+        id: "att_local_1",
+        filename: "notes.txt",
+        bytes: 120,
+        contentType: "text/plain",
+      },
+      {
+        id: "att_local_2",
+        filename: "photo.png",
+        bytes: 0,
+        contentType: "application/octet-stream",
+      },
+    ]);
+    const raw = localStorage.getItem(ONBOARDING_CHAT_KEY) ?? "";
+    const broken = raw.replace('"bytes":120', '"bytes":"120"');
+    const reparsed = parseOnboardingChat(broken, DEFAULTS);
+    expect(
+      reparsed?.scripted[id as unknown as string]?.turns[0]?.attachments
+    ).toHaveLength(1);
+  });
+
   it("never stores a reply still being written", async () => {
     store();
     vi.setSystemTime(new Date(2026, 9, 14, 9));
