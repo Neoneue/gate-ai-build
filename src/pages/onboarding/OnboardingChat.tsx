@@ -66,7 +66,9 @@ import {
 } from "@/pages/onboarding/onboarding-computer-prompt";
 import { useOnboardingBalance } from "@/pages/onboarding/onboarding-credits";
 import {
+  isMobileATab,
   isPhoneDemoChat,
+  ONBOARDING_ROUTES,
   rememberChatPath,
 } from "@/pages/onboarding/onboarding-routes";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
@@ -495,6 +497,12 @@ export function OnboardingChat() {
             {...sidebarProps}
             className="w-full border-r-0"
             collapsed={false}
+            // Phone drawer: no logo row and no Sign out (owner 2026-10-11).
+            // Option B ends on "Main", back to its phone start (owner
+            // 2026-10-15); Mobile A's way back is the site menu.
+            mainPath={
+              mobileA && !isMobileATab() ? ONBOARDING_ROUTES.start : undefined
+            }
             onNewChat={() => {
               setMobileRailOpen(false);
               navigate(chatHomePath(pathname));
@@ -503,7 +511,6 @@ export function OnboardingChat() {
               setMobileRailOpen(false);
               navigate(chatConversationPath(pathname, id));
             }}
-            // Phone drawer: no logo row and no Sign out (owner 2026-10-11).
             showSignOut={false}
             touchFriendly
           />
