@@ -9,6 +9,11 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-15](./2026-10/changelog-10-15.md)
+
+- Onboarding: Gate Chat use fills the workspace data pages, across tabs
+- Onboarding setup: protection demo shows the blocked threat in red; Manual app tip
+
 ### [2026-10-14](./2026-10/changelog-10-14.md)
 
 - Onboarding sign-up: Name placeholder reads John Doe
