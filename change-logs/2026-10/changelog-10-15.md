@@ -79,3 +79,21 @@ Prior day: [`changelog-10-14.md`](./changelog-10-14.md)
 - Files: `onboarding-chat-composer.tsx`, `OnboardingChat.tsx`,
   `onboarding-chat-store.ts`, `onboarding-chat-storage.ts`,
   `onboarding-chat-message.tsx`, `chat-attachment-picker.tsx`.
+
+### Onboarding phone: Option B chat drawer gets Main; Overview row opens the real Overview `ad9ef23`
+
+- Option B phone chat drawer (the phone demo chat without the Mobile A tab
+  mark). Before: the drawer ended on credits. After: it ends on a ghost "Main"
+  link with an ArrowLeft, under credits, back to B's two-card phone start
+  (`/overview-onboarding`). A separator sits above it, as the shared rail's
+  "Back to dashboard". New optional `mainPath` prop on `OnboardingChatSidebar`;
+  `OnboardingChat` passes it only on Option B. Mobile A's way back stays the
+  site menu.
+- Site menu. Before: the Overview row and the menu brand opened Option B's
+  phone start on B. After: both open the phone Overview
+  (`/overview-mobile-onboarding`) on A and B, empty at first, then filled by
+  the chat's traffic. The chat top bar logo still uses `phoneOverviewPath()`
+  (B's phone start on B).
+- Comments in `onboarding-routes.ts` refreshed to match; no logic change there.
+- Files: `onboarding-chat-sidebar.tsx`, `OnboardingChat.tsx`,
+  `onboarding-chat-top-bar.tsx`, `onboarding-routes.ts`.

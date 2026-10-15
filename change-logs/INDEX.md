@@ -11,6 +11,7 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-15](./2026-10/changelog-10-15.md)
 
+- Onboarding phone: Option B chat drawer gets Main; Overview row opens the real Overview
 - Onboarding Gate Chat: attach on phone; files go with the prompt
 - Onboarding: Gate Chat use fills the workspace data pages, across tabs
 - Onboarding setup: protection demo shows the blocked threat in red; Manual app tip
