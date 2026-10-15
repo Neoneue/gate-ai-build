@@ -81,12 +81,11 @@ import {
 } from "@/lib/formatters";
 import { keepInOnboarding } from "@/lib/plan";
 import { oldestInWindow, retentionCeilingDays } from "@/lib/retention";
-import { ATTACK_MESSAGE, TEST_MESSAGE } from "@/pages/onboarding/improved-data";
 import type {
-  SetupMessage,
-  SetupTraffic,
-} from "@/pages/onboarding/onboarding-setup-traffic";
-import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
+  WorkspaceMessage,
+  WorkspaceTraffic,
+} from "@/pages/onboarding/onboarding-workspace-traffic";
+import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 import { RequestsDefault } from "@/pages/RequestsDefault";
 import {
   GUARDRAIL_BADGE,
@@ -107,7 +106,9 @@ import { useViewRole } from "@/pages/teams/teams-store";
  * Default twin, `RequestsDefault`, unchanged. Once "Check connection"
  * passes it holds the test message, and once the protection demo passes
  * the demo message too: the step 3 messages, one at a time as each lands
- * (`useSetupTraffic`, the one source), and the page is a COPY of the Free
+ * and every Gate Chat reply of the run, from any tab (owner 2026-10-14:
+ * Success, Allow, the Gate Connect caller, the cost the chat showed)
+ * (`useWorkspaceTraffic`, the one source), and the page is a COPY of the Free
  * Messages page (`RequestsFree` renders `Requests.tsx` +
  * `requests/HeroMetric.tsx` + `requests/RequestsTable.tsx`) with every
  * section and control, fed by those messages: the hero counts them, the
@@ -133,18 +134,12 @@ import { useViewRole } from "@/pages/teams/teams-store";
 
 const MINUTE_MS = 60_000;
 
-/** What each step 3 message said (improved-data.ts). */
-const PROMPT_BY_ID: Record<SetupMessage["id"], string> = {
-  test: TEST_MESSAGE,
-  demo: ATTACK_MESSAGE,
-};
-
 /** A blocked message never reached the provider: `error | block`. */
-const statusOf = (message: SetupMessage): ResponseStatus =>
+const statusOf = (message: WorkspaceMessage): ResponseStatus =>
   message.guardrail === "block" ? "error" : "success";
 
 export function OnboardingMessages() {
-  const traffic = useSetupTraffic();
+  const traffic = useWorkspaceTraffic();
   return traffic ? <SetupMessages traffic={traffic} /> : <RequestsDefault />;
 }
 
@@ -166,14 +161,14 @@ const PRESETS: Record<
 
 /** The newest message's send time: the range anchor (the phone copy's
  *  precedent), so a preset always ends on the latest message. */
-function anchorOf(messages: readonly SetupMessage[]): number {
+function anchorOf(messages: readonly WorkspaceMessage[]): number {
   return Math.max(...messages.map((m) => m.sentAt.getTime()));
 }
 
 /** Whether a message falls inside the selected range: the same window the
  *  hero buckets cover, so the hero total and the table rows reconcile. */
 function inRange(
-  message: SetupMessage,
+  message: WorkspaceMessage,
   range: RangeKey,
   customRange: CustomRange | null,
   anchor: number
@@ -238,7 +233,7 @@ function deriveTicks(data: { time: string }[], tickCount: number): string[] {
  *  per-point errors sum to the headline's. */
 function buildHeroView(
   stamps: Date[],
-  buckets: SetupMessage[][],
+  buckets: WorkspaceMessage[][],
   clockOnly: boolean,
   tickCount: number,
   tipRange: { start: Date; end: Date }
@@ -268,7 +263,7 @@ function buildHeroView(
 }
 
 function setupHeroView(
-  messages: readonly SetupMessage[],
+  messages: readonly WorkspaceMessage[],
   range: RangeKey,
   customRange: CustomRange | null
 ): SetupHeroView {
@@ -282,7 +277,7 @@ function setupHeroView(
       { length: count },
       (_, i) => new Date(from + i * sizeMs)
     );
-    const buckets: SetupMessage[][] = stamps.map(() => []);
+    const buckets: WorkspaceMessage[][] = stamps.map(() => []);
     for (const message of messages) {
       if (inRange(message, range, customRange, from)) {
         const index = Math.min(
@@ -308,7 +303,7 @@ function setupHeroView(
     { length: preset.count },
     (_, i) => new Date(anchor - (preset.count - 1 - i) * sizeMs)
   );
-  const buckets: SetupMessage[][] = stamps.map(() => []);
+  const buckets: WorkspaceMessage[][] = stamps.map(() => []);
   for (const message of messages) {
     const back = Math.floor((anchor - message.sentAt.getTime()) / sizeMs);
     if (back >= 0 && back < preset.count) {
@@ -323,7 +318,7 @@ function setupHeroView(
 
 /* ─── The page (Requests.tsx) ───────────────────────────────────────────── */
 
-function SetupMessages({ traffic }: { traffic: SetupTraffic }) {
+function SetupMessages({ traffic }: { traffic: WorkspaceTraffic }) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -421,7 +416,7 @@ function SetupHeroCard({
   range,
   customRange,
 }: {
-  messages: readonly SetupMessage[];
+  messages: readonly WorkspaceMessage[];
   range: RangeKey;
   customRange: CustomRange | null;
 }) {
@@ -621,7 +616,7 @@ function SetupRetentionStatement({
 /* ─── Recent messages (RequestsTable.tsx RequestsTableSection) ──────────── */
 
 type SetupRow = {
-  message: SetupMessage;
+  message: WorkspaceMessage;
   prompt: string;
   status: ResponseStatus;
 };
@@ -638,11 +633,7 @@ const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
 
 /** RequestsTable's column sort keys, read off a setup row. Device and
  *  latency have no value, so they sort as null (last). */
-function setupSortValue(
-  row: SetupRow,
-  key: string,
-  traffic: SetupTraffic
-): string | number | null {
+function setupSortValue(row: SetupRow, key: string): string | number | null {
   switch (key) {
     case "time":
       return row.message.sentAt.getTime();
@@ -651,11 +642,11 @@ function setupSortValue(
     case "guardrail":
       return row.message.guardrail;
     case "keyId":
-      return traffic.keyLabel;
+      return row.message.keyLabel;
     case "message":
       return row.prompt;
     case "conversation":
-      return traffic.conversation.title;
+      return row.message.conversationTitle;
     case "model":
       return row.message.model.label;
     case "inTokens":
@@ -671,7 +662,7 @@ function SetupMessagesTable({
   customRange,
   now,
 }: {
-  traffic: SetupTraffic;
+  traffic: WorkspaceTraffic;
   range: RangeKey;
   customRange: CustomRange | null;
   now: Date;
@@ -684,7 +675,7 @@ function SetupMessagesTable({
       .filter((m) => inRange(m, range, customRange, anchor))
       .map((message) => ({
         message,
-        prompt: PROMPT_BY_ID[message.id],
+        prompt: message.prompt,
         status: statusOf(message),
       }));
   }, [traffic, range, customRange]);
@@ -792,7 +783,7 @@ function SetupMessagesTable({
           : r.message.guardrail === guardrailFilter;
       const matchesModel =
         model === "all" ? true : r.message.model.id === model;
-      const matchesKey = keyId === "all" ? true : traffic.keyLabel === keyId;
+      const matchesKey = keyId === "all" ? true : r.message.keyLabel === keyId;
       const matchesDevice = device === "all";
       if (
         !(
@@ -808,25 +799,16 @@ function SetupMessagesTable({
       if (!q) {
         return true;
       }
-      return [r.message.model.label, traffic.keyLabel, r.prompt].some((field) =>
-        field.toLowerCase().includes(q)
+      return [r.message.model.label, r.message.keyLabel, r.prompt].some(
+        (field) => field.toLowerCase().includes(q)
       );
     });
-  }, [
-    rows,
-    traffic,
-    responseFilter,
-    guardrailFilter,
-    model,
-    keyId,
-    device,
-    query,
-  ]);
+  }, [rows, responseFilter, guardrailFilter, model, keyId, device, query]);
 
   const { sort, toggle: toggleSort } = useTableSort();
   const sortValue = useCallback(
-    (row: SetupRow, key: string) => setupSortValue(row, key, traffic),
-    [traffic]
+    (row: SetupRow, key: string) => setupSortValue(row, key),
+    []
   );
   const sortedRows = useMemo(
     () => sortRows(filteredRows, sort, sortValue),
@@ -900,9 +882,13 @@ function SetupMessagesTable({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All keys</SelectItem>
-                    <SelectItem value={traffic.keyLabel}>
-                      {traffic.keyLabel}
-                    </SelectItem>
+                    {[...new Set(traffic.messages.map((m) => m.keyLabel))].map(
+                      (label) => (
+                        <SelectItem key={label} value={label}>
+                          {label}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -1136,12 +1122,7 @@ function SetupMessagesTable({
               </TableHeader>
               <TableBody>
                 {pagedRows.map((row) => (
-                  <SetupMessageRow
-                    key={row.message.id}
-                    now={now}
-                    row={row}
-                    traffic={traffic}
-                  />
+                  <SetupMessageRow key={row.message.id} now={now} row={row} />
                 ))}
               </TableBody>
             </Table>
@@ -1218,15 +1199,7 @@ function CostHead() {
 
 /** One row in RequestsTable's cell styles. No detail page exists for a
  *  setup message, so the row is not clickable and Model is not a link. */
-function SetupMessageRow({
-  row,
-  traffic,
-  now,
-}: {
-  row: SetupRow;
-  traffic: SetupTraffic;
-  now: Date;
-}) {
+function SetupMessageRow({ row, now }: { row: SetupRow; now: Date }) {
   const { message } = row;
   return (
     <TableRow>
@@ -1262,11 +1235,11 @@ function SetupMessageRow({
           <TooltipTrigger
             render={(props) => (
               <span {...props} className="block truncate text-foreground">
-                {traffic.keyLabel}
+                {message.keyLabel}
               </span>
             )}
           />
-          <TooltipContent>{traffic.keyLabel}</TooltipContent>
+          <TooltipContent>{message.keyLabel}</TooltipContent>
         </Tooltip>
       </TableCell>
       {/* Device name: none is recorded for a setup message, so the Pro
@@ -1297,12 +1270,12 @@ function SetupMessageRow({
       <TableCell className="whitespace-nowrap">
         <span
           className="type-copy-14 block truncate text-foreground"
-          title={traffic.conversation.title}
+          title={message.conversationTitle}
         >
-          {traffic.conversation.title}
+          {message.conversationTitle}
         </span>
         <span className="type-mono-12 block text-muted-foreground">
-          {traffic.conversation.id}
+          {message.conversationId}
         </span>
       </TableCell>
       <TableCell className="whitespace-nowrap">
@@ -1334,7 +1307,7 @@ function SetupMessageRow({
           isByokKey): Gate credits bill through Gate; Existing subscriptions
           bill through the user's provider, so no Gate charge. */}
       <TableCell className="type-mono-14 whitespace-nowrap text-right">
-        {traffic.billing === "payg" ? (
+        {message.billing === "payg" ? (
           <span className="inline-flex items-center justify-end gap-2">
             <Tooltip>
               <TooltipTrigger

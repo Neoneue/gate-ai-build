@@ -8,7 +8,6 @@ import {
 import { type ComponentProps, type ReactNode, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { vendorLabel } from "@/components/icons/vendor-meta";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -71,13 +70,14 @@ import {
   PreviewCard,
 } from "@/pages/onboarding/onboarding-mobile-parts";
 import {
-  type SetupTraffic,
-  setupCompression,
-  setupWeek,
   tokensOf,
-} from "@/pages/onboarding/onboarding-setup-traffic";
+  type WorkspaceTraffic,
+  workspaceCompression,
+  workspaceGroups,
+  workspaceWeek,
+} from "@/pages/onboarding/onboarding-workspace-traffic";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
-import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
+import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 import { GUARDRAIL_BADGE } from "@/pages/requests/data";
 import { ACTION_BADGE, TYPE_META } from "@/pages/security-data";
 
@@ -89,8 +89,10 @@ import { ACTION_BADGE, TYPE_META } from "@/pages/security-data";
  * blocks and strings, OnboardingMobileOverview.tsx). Then it is a copy of
  * the Pro Overview (`Dashboard.tsx`, unchanged) per no-thrash's rule for a
  * demo with data: every section and control, fed by the step 3 messages
- * as each lands, 1 then 2 (`useSetupTraffic`: the setup state every tab
- * shares; the one source, so the tiles, chart and tables reconcile).
+ * as each lands, 1 then 2, and by every Gate Chat reply of the run, in any
+ * tab (owner 2026-10-14, `useWorkspaceTraffic`: the one source, so the
+ * tiles, chart and tables reconcile; a chart series per model, provider or
+ * key; the preview tables keep Dashboard's 5 rows).
  * Tokens saved is Gate's compression over the messages
  * (`setupCompression`: 2 of 2,366 input tokens, "0.1%", its spark the
  * tokens saved per day), and Latest conversations lists the one
@@ -120,6 +122,9 @@ const fmtTokens = (n: number) =>
 const fmtSpend = (v: number) => formatCurrency(v, { minFrac: 0, maxFrac: 0 });
 const fmtPct = (frac: number) => `${(frac * 100).toFixed(1)}%`;
 
+/** Dashboard's preview tables show 5 rows (Dashboard.tsx `.slice(0, 5)`). */
+const PREVIEW_ROWS = 5;
+
 /** "Oct 13 11:47:05": the Pro preview's day + time cell. */
 const DAY_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -135,7 +140,7 @@ const timeLabel = (date: Date) =>
 
 export function OnboardingSetupOverview() {
   const { improved } = useOnboarding();
-  const traffic = useSetupTraffic();
+  const traffic = useWorkspaceTraffic();
   return (
     <OnboardingChrome showAskAi={improved.finished}>
       {traffic ? <SetupOverview traffic={traffic} /> : <EmptyOverview />}
@@ -216,10 +221,10 @@ function NoSecurityEvents() {
   );
 }
 
-function SetupOverview({ traffic }: { traffic: SetupTraffic }) {
-  const week = useMemo(() => setupWeek(traffic), [traffic]);
+function SetupOverview({ traffic }: { traffic: WorkspaceTraffic }) {
+  const week = useMemo(() => workspaceWeek(traffic), [traffic]);
   const threats = traffic.messages.filter((m) => m.guardrail === "block");
-  const compression = setupCompression(traffic);
+  const compression = workspaceCompression(traffic.messages);
   return (
     <>
       <OverviewHeader />
@@ -306,8 +311,8 @@ function UsageChart({
   traffic,
   week,
 }: {
-  traffic: SetupTraffic;
-  week: ReturnType<typeof setupWeek>;
+  traffic: WorkspaceTraffic;
+  week: ReturnType<typeof workspaceWeek>;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [metric, setMetric] = useState<Metric>(
@@ -330,26 +335,35 @@ function UsageChart({
       { replace: true }
     );
 
-  // Both messages share one model, one provider and one caller, so every
-  // dimension is one series: its label is what changes.
-  const model = traffic.messages[0]?.model;
-  const label =
-    dim === "model"
-      ? (model?.label ?? "")
-      : dim === "provider"
-        ? model
-          ? vendorLabel(model.vendor)
-          : ""
-        : traffic.keyLabel;
-  const series: ChartSeries[] = [{ key: "setup", label, slot: 1 }];
-  const data = week.labels.map((date, index) => ({
-    date,
-    setup: (week.days[index] ?? []).reduce(
-      (sum, m) => sum + (metric === "spend" ? m.costUsd : tokensOf(m)),
-      0
-    ),
+  // One series per model, provider or caller, in first-use order.
+  const measure = (m: WorkspaceTraffic["messages"][number]) =>
+    metric === "spend" ? m.costUsd : tokensOf(m);
+  const groups = workspaceGroups(traffic.messages, dim);
+  const series: ChartSeries[] = groups.map((g) => ({
+    key: g.key,
+    label: g.label,
+    slot: g.slot,
   }));
-  const total = data.reduce((sum, row) => sum + row.setup, 0);
+  const data: Array<Record<string, number | string>> = week.labels.map(
+    (date, index) => ({
+      date,
+      ...Object.fromEntries(
+        groups.map((g) => [
+          g.key,
+          (week.days[index] ?? [])
+            .filter((m) => g.messages.includes(m))
+            .reduce((sum, m) => sum + measure(m), 0),
+        ])
+      ),
+    })
+  );
+  const totals = new Map(
+    groups.map((g) => [
+      g.key,
+      data.reduce((sum, row) => sum + Number(row[g.key] ?? 0), 0),
+    ])
+  );
+  const total = [...totals.values()].reduce((sum, v) => sum + v, 0);
   const yFormatter = metric === "spend" ? fmtSpend : fmtTokens;
 
   return (
@@ -419,11 +433,11 @@ function UsageChart({
                   style={{ gridTemplateColumns: "9ch min-content 4ch" }}
                 >
                   <span className="text-right text-foreground">
-                    {yFormatter(total)}
+                    {yFormatter(totals.get(s.key) ?? 0)}
                   </span>
                   <span className="text-muted-foreground">·</span>
                   <span className="text-right text-foreground">
-                    {fmtPct(total > 0 ? 1 : 0)}
+                    {fmtPct(total > 0 ? (totals.get(s.key) ?? 0) / total : 0)}
                   </span>
                 </div>
               </div>
@@ -536,16 +550,15 @@ function PreviewTable({
   );
 }
 
-/** The two messages, newest first. A blocked message logs as an error with
- *  the block guardrail, the pairing every blocked row in the Messages data
- *  carries. */
-function LatestMessagesTable({ traffic }: { traffic: SetupTraffic }) {
+/** The newest messages. A blocked message logs as an error with the block
+ *  guardrail, the pairing every blocked row in the Messages data carries. */
+function LatestMessagesTable({ traffic }: { traffic: WorkspaceTraffic }) {
   return (
     <PreviewTable
       heads={["Time", "Model", "Status", "Security"]}
       label="Latest messages"
     >
-      {traffic.messages.map((m) => {
+      {traffic.messages.slice(0, PREVIEW_ROWS).map((m) => {
         const status = m.guardrail === "block" ? "error" : "success";
         return (
           <TableRow className="h-12" key={m.id}>
@@ -570,11 +583,11 @@ function LatestMessagesTable({ traffic }: { traffic: SetupTraffic }) {
   );
 }
 
-/** The one setup conversation: Dashboard's RecentConversationsTable columns.
- *  One request per turn, so Reqs equals Turns (the phone Conversations
- *  copy's precedent). The title truncates with its full text on hover. */
-function LatestConversationsTable({ traffic }: { traffic: SetupTraffic }) {
-  const { conversation } = traffic;
+/** The latest conversations (setup's, and one per Gate Chat chat):
+ *  Dashboard's RecentConversationsTable columns. Reqs counts messages: a
+ *  desktop compare turn sends two. The title truncates with its full text
+ *  on hover. */
+function LatestConversationsTable({ traffic }: { traffic: WorkspaceTraffic }) {
   return (
     <Table aria-label="Latest conversations">
       <TableHeader>
@@ -586,22 +599,27 @@ function LatestConversationsTable({ traffic }: { traffic: SetupTraffic }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow className="h-12">
-          <TableCell className="w-full max-w-0">
-            <span className="block w-full truncate" title={conversation.title}>
-              {conversation.title}
-            </span>
-          </TableCell>
-          <TableCell className="type-mono-14 whitespace-nowrap">
-            {formatTimestamp(conversation.updatedAt)}
-          </TableCell>
-          <TableCell className="type-mono-14 whitespace-nowrap text-right">
-            {conversation.turns}
-          </TableCell>
-          <TableCell className="type-mono-14 whitespace-nowrap text-right">
-            {conversation.turns}
-          </TableCell>
-        </TableRow>
+        {traffic.conversations.slice(0, PREVIEW_ROWS).map((conversation) => (
+          <TableRow className="h-12" key={conversation.id}>
+            <TableCell className="w-full max-w-0">
+              <span
+                className="block w-full truncate"
+                title={conversation.title}
+              >
+                {conversation.title}
+              </span>
+            </TableCell>
+            <TableCell className="type-mono-14 whitespace-nowrap">
+              {formatTimestamp(conversation.updated)}
+            </TableCell>
+            <TableCell className="type-mono-14 whitespace-nowrap text-right">
+              {conversation.turns}
+            </TableCell>
+            <TableCell className="type-mono-14 whitespace-nowrap text-right">
+              {conversation.reqs}
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );
@@ -609,7 +627,7 @@ function LatestConversationsTable({ traffic }: { traffic: SetupTraffic }) {
 
 /** The blocked prompt injection: Dashboard's SecurityEventsTable columns,
  *  the key cut at " (" as it cuts its key cells. */
-function SecurityEventsTable({ traffic }: { traffic: SetupTraffic }) {
+function SecurityEventsTable({ traffic }: { traffic: WorkspaceTraffic }) {
   const injection = TYPE_META.injection;
   const TypeIcon = injection.Icon;
   const badge = ACTION_BADGE.blocked;
@@ -640,7 +658,7 @@ function SecurityEventsTable({ traffic }: { traffic: SetupTraffic }) {
               <Badge variant={badge.variant}>{badge.label}</Badge>
             </TableCell>
             <TableCell className="type-mono-14 whitespace-nowrap text-muted-foreground">
-              {traffic.keyLabel.split(" (")[0]}
+              {m.keyLabel.split(" (")[0]}
             </TableCell>
           </TableRow>
         ))}

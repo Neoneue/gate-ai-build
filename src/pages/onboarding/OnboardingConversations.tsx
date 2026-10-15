@@ -45,8 +45,11 @@ import {
 } from "@/lib/range";
 import { ConversationsDefault } from "@/pages/ConversationsDefault";
 import type { ImprovedModel } from "@/pages/onboarding/improved-data";
-import type { SetupTraffic } from "@/pages/onboarding/onboarding-setup-traffic";
-import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
+import type {
+  WorkspaceConversation,
+  WorkspaceTraffic,
+} from "@/pages/onboarding/onboarding-workspace-traffic";
+import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 
 /* ─── OnboardingConversations ───────────────────────────────────────────────
  * `/conversations-onboarding`: the desktop onboarding workspace's
@@ -55,17 +58,19 @@ import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
  * `Conversations.tsx`: PageHeader, Overview bar, KpiRail,
  * ConversationsTableSection), every section and control kept.
  *
- * Before step 3's first message (`useSetupTraffic()` null):
- * `ConversationsDefault`, unchanged. After it: the step 3 messages came from
- * one app session, so the table holds ONE row, `traffic.conversation` (one
- * turn and one request per message: 1, then 2 once the demo lands), and
- * the rail reads the same ranged array, so its count, mean turns and mean
- * cost reconcile with that row.
+ * Before the first message (`useWorkspaceTraffic()` null):
+ * `ConversationsDefault`, unchanged. After it: a row per conversation,
+ * `traffic.conversations` (owner 2026-10-14): the step 3 messages came from
+ * one app session, so setup is ONE row (one turn and one request per
+ * message: 1, then 2 once the demo lands), and each Gate Chat chat of the
+ * run, from any tab, is a row of its own (Reqs counts its replies: a
+ * compare turn sends two). The rail reads the same ranged array, so its
+ * count, mean turns and mean cost reconcile with the rows.
  *
  * Left out of the Pro copy, each because no Gate record exists for a mock
  * conversation: the conversation id line under the title, the row click
- * with its trace page, and the `?open=` detail dialog. The Key select lists
- * only `traffic.keyLabel`; the Model select only the model the setup used.
+ * with its trace page, and the `?open=` detail dialog. The Key and Model
+ * selects list only the keys and models the rows used.
  *
  * Conversations scales nothing: the range pills FILTER rows by their
  * `updated` time (Pro's `rangedSeeds`). Pro anchors its windows on the demo
@@ -84,50 +89,16 @@ const EMPTY_BODY =
  *  behind it is unknown, not 0. */
 const NO_VALUE = String.fromCodePoint(0x20_14);
 
-/** The setup conversation as the table and rail read it. */
-type SetupConversationRow = {
-  id: string;
-  title: string;
-  keyLabel: string;
-  models: ImprovedModel[];
-  turns: number;
-  /** One request per message. */
-  reqs: number;
-  inTokens: number;
-  outTokens: number;
-  costUsd: number;
-  updated: Date;
-};
+/** A conversation as the table and rail read it. */
+type SetupConversationRow = WorkspaceConversation;
 
 export function OnboardingConversations() {
-  const traffic = useSetupTraffic();
+  const traffic = useWorkspaceTraffic();
   return traffic ? (
     <SetupConversations traffic={traffic} />
   ) : (
     <ConversationsDefault />
   );
-}
-
-/** The one row, built from `traffic.conversation` and its messages. */
-function setupRows(traffic: SetupTraffic): SetupConversationRow[] {
-  const { conversation, messages, keyLabel } = traffic;
-  const models = [
-    ...new Map(messages.map((m) => [m.model.id, m.model])).values(),
-  ];
-  return [
-    {
-      id: conversation.id,
-      title: conversation.title,
-      keyLabel,
-      models,
-      turns: conversation.turns,
-      reqs: messages.length,
-      inTokens: conversation.inTokens,
-      outTokens: conversation.outTokens,
-      costUsd: conversation.costUsd,
-      updated: conversation.updatedAt,
-    },
-  ];
 }
 
 /** `rangeWindow` (lib/range) anchored on `anchor` instead of `DEMO_NOW`. */
@@ -151,7 +122,7 @@ function rangeWindowAt(
   return { from, to: new Date(anchor) };
 }
 
-function SetupConversations({ traffic }: { traffic: SetupTraffic }) {
+function SetupConversations({ traffic }: { traffic: WorkspaceTraffic }) {
   const navigate = useNavigate();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
     sidebarExpanded: boolean;
@@ -159,11 +130,9 @@ function SetupConversations({ traffic }: { traffic: SetupTraffic }) {
   }>();
   const [range, setRange] = useState<Range>("all");
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
-  const anchorTime = (
-    traffic.messages[0]?.sentAt ?? traffic.conversation.updatedAt
-  ).getTime();
+  const anchorTime = (traffic.messages[0]?.sentAt ?? new Date()).getTime();
   const anchor = useMemo(() => new Date(anchorTime), [anchorTime]);
-  const allRows = useMemo(() => setupRows(traffic), [traffic]);
+  const allRows = traffic.conversations;
   // ONE ranged array, shared by the rail and the table (Pro's `rangedSeeds`),
   // so the headline cannot advertise a row the table does not own.
   const rows = useMemo(() => {
@@ -224,7 +193,11 @@ function SetupConversations({ traffic }: { traffic: SetupTraffic }) {
         />
       </div>
       <ConversationsTableSection
-        models={allRows[0]?.models ?? []}
+        models={[
+          ...new Map(
+            allRows.flatMap((r) => r.models).map((m) => [m.id, m])
+          ).values(),
+        ]}
         rangeKey={`${range}|${customRange?.from.getTime() ?? ""}|${customRange?.to.getTime() ?? ""}`}
         rows={rows}
         traffic={traffic}
@@ -427,7 +400,7 @@ function ConversationsTableSection({
 }: {
   rows: SetupConversationRow[];
   models: ImprovedModel[];
-  traffic: SetupTraffic;
+  traffic: WorkspaceTraffic;
   rangeKey: string;
 }) {
   const [query, setQuery] = useState("");
@@ -490,9 +463,13 @@ function ConversationsTableSection({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All keys</SelectItem>
-              <SelectItem value={traffic.keyLabel}>
-                {traffic.keyLabel}
-              </SelectItem>
+              {[...new Set(traffic.conversations.map((c) => c.keyLabel))].map(
+                (label) => (
+                  <SelectItem key={label} value={label}>
+                    {label}
+                  </SelectItem>
+                )
+              )}
             </SelectContent>
           </Select>
           <Select onValueChange={setModel} value={model}>

@@ -311,9 +311,10 @@ path). Switching in always lands on `ONBOARDING_FIRST_STEP`
   clears the mark. Second exception (owner 2026-10-13): desktop opens
   Gate Chat in a new tab (the sidebar row, "Open Gate Chat", "Continue
   chatting"; `openInNewTab`, with the `NEW_TAB_CUE` screen-reader cue), so a
-  cold load of `/chat-onboarding` on desktop starts there as a new user, and
-  `/chat-onboarding/:id` falls back to the landing. The phone keeps the
-  same tab and the redirect.
+  cold load of `/chat-onboarding` on desktop starts there as a new user
+  (with the run's shared chat history, owner 2026-10-14, see "Shared Gate
+  Chat history"), and `/chat-onboarding/:id` falls back to the landing.
+  The phone keeps the same tab and the redirect.
 - **Second stored value: the onboarding credit balance** (owner
   2026-10-13: "During onboarding, if a user adds credits then opens Gate
   chat any time during the demo it needs to show the updated balance and
@@ -420,9 +421,9 @@ real Gate traffic). One source: `useOnboardingDemoTraffic` /
 first-message-only `onboarding-first-message.ts`) reads `scripted` and
 `titles` from `onboarding-chat-store.ts` and returns `messages` (newest
 first; each: prompt, send time, catalog model via the free twin's pay as
-you go id, MOCK `estimateTokens` in and out, `costOf` = $0.00, status
+you go id, MOCK `estimateTokens` in and out, `laneCostUsd` = $0.00, status
 success, security allow, not compressed), `conversations` (one per demo
-chat, newest first: title with rename, updated, Turns = Reqs, token and
+chat, newest first: title with rename, updated, Turns, Reqs (one per reply lane: equal to Turns on the phone, two per desktop compare turn), token and
 cost sums, models, prompts) and `models` (first-use order, each with a
 palette slot so a model keeps its colour on every page). A reply still
 writing is not counted; deleting a chat keeps its log. The demo run (chips
@@ -580,6 +581,39 @@ desktop start's "Open Gate Chat" and the 1440 chat are unchanged.
   tab on its first route: a workspace page resumes it; the desktop Gate Chat
   tab keeps its own state; any other first load is a fresh run that
   replaces it.
+- **Shared Gate Chat history** (`onboarding-chat-storage.ts`, owner
+  2026-10-14): `onboarding-chat-store.ts` is mirrored to localStorage
+  `gate-onboarding-chat-state` (versioned, `v: 1`) on every change but a
+  streamed chunk, and other tabs adopt it on the `storage` event, so a
+  message sent in a Gate Chat tab (the desktop chat's own tab, "Try Gate
+  Chat instead") reaches the setup tab's data pages. The phone demo chat
+  writes the same store (owner 2026-10-14, "mobile chat also does this"),
+  so the desktop pages count phone chat and the four phone pages count
+  desktop chat. Stored: everything but
+  `live` and the turn it is writing (that turn joins once it settles); Sets
+  as arrays, dates as ISO strings; parsing is shape-checked (a wrong-typed
+  field falls back, an invalid conversation is dropped). A new tab hydrates
+  from it; the id counters rise above every stored id. Lifetime: the fresh
+  run that replaces the shared setup state (`OnboardingProvider`) calls
+  `onboardingChatStore.reset()`, which removes the entry, and every open
+  tab empties on that `storage` event.
+- **Workspace traffic** (`onboarding-workspace-traffic.ts`,
+  `useWorkspaceTraffic`, owner 2026-10-14: "any Gate Chat usage while on an
+  onboarding session adds to it"): the ONE source of the six desktop data
+  pages (Overview, Messages, Activity, Conversations, Security, Token
+  savings). `workspaceTraffic(setupTraffic, onboardingDemoTraffic)` merges
+  setup's messages with every settled Gate Chat reply (one message per
+  reply lane: a desktop compare turn is two requests) into `messages`
+  (newest first) and `conversations` (setup's row plus one per chat, most
+  recently updated first; Turns and Reqs apart). A chat message: its
+  prompt, time, reply model, in/out tokens, Success, Allow, key
+  `GATE_CONNECT_KEY_LABEL` (`gate-connect (<first 12 chars of
+  OWNER_EMAIL>...)`, the label setup's Gate Connect uses), billed by Gate
+  at `laneCostUsd` (the chat usage row's cost, $0.00 on a free model), 0
+  tokens saved. Null when neither source has a message (Default layouts).
+  Helpers: `workspaceWeek`, `workspaceCompression` (savings stay setup's),
+  `workspaceGroups` (a chart series or Top row per model, provider or key,
+  slot by first use, data key `s<slot>`).
 - **Billing and the Upgrade card** (owner 2026-10-13): `/billing-onboarding`
   mounts `OnboardingBilling`, the Free page with `credits` from
   `onboardingCredits` (`onboarding-billing.ts`) over `ImprovedState.topUps`
@@ -599,7 +633,8 @@ desktop start's "Open Gate Chat" and the 1440 chat are unchanged.
   Threats detected 0; Latest security events empty), then 2 (the demo,
   error / block; Threats detected 1; Latest security events Injection,
   blocked); Latest conversations one row, one turn per message; no "View
-  all", rows open nothing. Cost is $0.00 on provider billing, the catalog
+  all", rows open nothing. Gate Chat replies of the run add to every block
+  (Workspace traffic above; preview tables at Dashboard's 5 rows). Cost is $0.00 on provider billing, the catalog
   list price on Gate credits. Ask AI shows once setup is finished; the bell
   and the menu do not.
 

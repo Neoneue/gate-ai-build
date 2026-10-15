@@ -36,11 +36,14 @@ import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 export function ImprovedRouteFigure({
   improved,
   state,
+  threat,
   caption,
   centered,
 }: {
   improved: ImprovedState;
   state?: "idle" | "live" | "done" | "error" | "blocked";
+  /** The protection demo's red message (owner 2026-10-14). */
+  threat?: boolean;
   caption?: ReactNode;
   centered?: boolean;
 }) {
@@ -83,6 +86,7 @@ export function ImprovedRouteFigure({
           />
         )
       }
+      threat={threat}
     />
   );
 }

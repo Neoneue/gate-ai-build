@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { VendorSlug } from "@/components/icons/vendor-meta";
 import { FREE_MODELS } from "@/data/free-models";
-import { costOf, modelById, modelName } from "@/data/models";
+import { laneCostUsd } from "@/data/gate-chat";
+import { modelById, modelName } from "@/data/models";
 import { formatExactUsd } from "@/pages/chat/chat-data";
 import {
   type OnboardingChatState,
@@ -12,14 +13,17 @@ import {
  * Owner direction 2026-10-12: every message sent in the demo chat counts on
  * Overview, Messages, Activity and Conversations ("press the first button,
  * press the 2nd button, and then press the 3rd"). Gate Chat traffic is real
- * Gate traffic (PRD principle), so each settled scripted turn in
- * `onboarding-chat-store.ts` is one logged message, and each scripted
+ * Gate traffic (PRD principle), so each settled scripted reply in
+ * `onboarding-chat-store.ts` is one logged message (one per lane: a desktop
+ * compare turn sends two requests, owner 2026-10-14), and each scripted
  * conversation is one logged conversation: the 2nd and 3rd chips in one chat
  * add turns to it, a new chat adds a row.
  *
  * ONE source: every tile, chart and table on the four phone pages reads this
- * list, so the counts, sums and rows reconcile. Each message carries the
- * prompt, time, tokens and $0.00 the chat reply shows. Null until the first
+ * list, so the counts, sums and rows reconcile; the desktop workspace reads
+ * it too, merged with setup's messages (onboarding-workspace-traffic.ts).
+ * Each message carries the prompt, time, tokens and the cost the chat reply
+ * shows (`laneCostUsd`: $0.00 on a free model). Null until the first
  * reply settles, and the pages keep their empty Default layouts. A reply
  * still being written is not counted yet. Deleting a chat does not delete
  * its log, as on a real gateway. MOCK: no Gate record exists, so there is no
@@ -30,6 +34,8 @@ export type OnboardingDemoMessage = {
   /** The reply lane's id: unique per message. */
   id: string;
   conversationId: string;
+  /** The turn it answered: a compare turn's two lanes share it. */
+  turnId: string;
   prompt: string;
   sentAt: Date;
   /** "Oct 12 11:47:05", the Overview preview's day + time cell. */
@@ -52,8 +58,11 @@ export type OnboardingDemoConversation = {
   title: string;
   /** The latest counted turn's send time. */
   updated: Date;
-  /** Counted turns; one request per turn, so Reqs equals Turns. */
+  /** Counted turns. */
   turns: number;
+  /** Counted requests, one per reply lane: equal to `turns` on the phone,
+   *  which sends one lane. */
+  requests: number;
   inTokens: number;
   outTokens: number;
   costUsd: number;
@@ -103,40 +112,45 @@ function catalogIdOf(chatModelId: string): string {
 }
 
 /** The demo's traffic from a store snapshot. Pure, so tests can call it.
- *  `liveLaneId` is the reply still being written, left out until it
- *  settles. */
+ *  `liveLaneIds` are the reply lanes still being written, left out until
+ *  they settle. */
 export function onboardingDemoTraffic(
   state: Pick<OnboardingChatState, "scripted" | "titles">,
-  liveLaneId: string | null = null
+  liveLaneIds: string | readonly string[] | null = null
 ): OnboardingDemoTraffic | null {
+  const live = new Set(
+    typeof liveLaneIds === "string" ? [liveLaneIds] : (liveLaneIds ?? [])
+  );
   const messages: OnboardingDemoMessage[] = [];
   const conversations: OnboardingDemoConversation[] = [];
 
   for (const conversation of Object.values(state.scripted)) {
     const counted: OnboardingDemoMessage[] = [];
     for (const turn of conversation.turns) {
-      const lane = turn.lanes[0];
-      if (!lane || lane.id === liveLaneId) {
-        continue;
+      for (const lane of turn.lanes) {
+        if (live.has(lane.id)) {
+          continue;
+        }
+        const modelId = catalogIdOf(lane.modelId);
+        const inTokens = lane.promptTokens ?? 0;
+        const outTokens = lane.completionTokens ?? 0;
+        const costUsd = laneCostUsd(lane) ?? 0;
+        counted.push({
+          id: lane.id,
+          conversationId: conversation.id,
+          turnId: turn.id,
+          prompt: turn.prompt,
+          sentAt: turn.sentAt,
+          timeLabel: `${DAY_FORMAT.format(turn.sentAt)} ${TIME_FORMAT.format(turn.sentAt)}`,
+          modelId,
+          modelLabel: modelName(modelId),
+          vendor: modelById(modelId)?.vendor ?? modelId.split("/")[0] ?? "",
+          inTokens,
+          outTokens,
+          costUsd,
+          cost: formatExactUsd(costUsd),
+        });
       }
-      const modelId = catalogIdOf(lane.modelId);
-      const inTokens = lane.promptTokens ?? 0;
-      const outTokens = lane.completionTokens ?? 0;
-      const costUsd = costOf(lane.modelId, inTokens, outTokens);
-      counted.push({
-        id: lane.id,
-        conversationId: conversation.id,
-        prompt: turn.prompt,
-        sentAt: turn.sentAt,
-        timeLabel: `${DAY_FORMAT.format(turn.sentAt)} ${TIME_FORMAT.format(turn.sentAt)}`,
-        modelId,
-        modelLabel: modelName(modelId),
-        vendor: modelById(modelId)?.vendor ?? modelId.split("/")[0] ?? "",
-        inTokens,
-        outTokens,
-        costUsd,
-        cost: formatExactUsd(costUsd),
-      });
     }
     const last = counted.at(-1);
     if (!last) {
@@ -148,13 +162,17 @@ export function onboardingDemoTraffic(
       id: conversation.id,
       title: state.titles[conversation.id] ?? conversation.title,
       updated: last.sentAt,
-      turns: counted.length,
+      turns: new Set(counted.map((m) => m.turnId)).size,
+      requests: counted.length,
       inTokens: counted.reduce((sum, m) => sum + m.inTokens, 0),
       outTokens: counted.reduce((sum, m) => sum + m.outTokens, 0),
       costUsd,
       cost: formatExactUsd(costUsd),
       modelIds: [...new Set(counted.map((m) => m.modelId))],
-      prompts: counted.map((m) => m.prompt),
+      // One prompt per turn: a compare turn's lanes share theirs.
+      prompts: counted
+        .filter((m, i) => counted.findIndex((o) => o.turnId === m.turnId) === i)
+        .map((m) => m.prompt),
     });
   }
 
@@ -189,12 +207,16 @@ export function onboardingDemoTraffic(
 /** The demo's traffic, live from the onboarding chat store. */
 export function useOnboardingDemoTraffic(): OnboardingDemoTraffic | null {
   const { live, scripted, titles } = useOnboardingChatStore();
-  const liveLaneId = live?.laneId ?? null;
+  const liveLanes = live?.laneIds.join(" ") ?? "";
   // Re-derive only when a turn, a title or the writing reply changes, not on
   // every streamed chunk.
   return useMemo(
-    () => onboardingDemoTraffic({ scripted, titles }, liveLaneId),
-    [liveLaneId, scripted, titles]
+    () =>
+      onboardingDemoTraffic(
+        { scripted, titles },
+        liveLanes ? liveLanes.split(" ") : null
+      ),
+    [liveLanes, scripted, titles]
   );
 }
 

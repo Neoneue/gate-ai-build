@@ -341,9 +341,10 @@ export function DownloadGateConnectDialog({
   triggerLabel = "Download Gate Connect",
 }: {
   onDownload?: () => void;
-  /** `button` = the primary download key; `link` = a quiet text button
-   *  (TextLink), for a secondary "download again" beside another primary
-   *  action (onboarding routing step, owner 2026-10-09). */
+  /** `button` = the primary download key; `link` = an inline text button
+   *  (TextLink) in the surrounding text's voice, for a quiet "download
+   *  again" inside a setup step (onboarding "Sign in and connect", owner
+   *  2026-10-14; was a label-voice link beside the primary action). */
   trigger?: "button" | "link";
   triggerLabel?: string;
 } = {}) {
@@ -377,7 +378,7 @@ export function DownloadGateConnectDialog({
       <DialogTrigger
         render={
           trigger === "link" ? (
-            <TextLink className="type-label-14">{triggerLabel}</TextLink>
+            <TextLink>{triggerLabel}</TextLink>
           ) : (
             <Button size="default">
               <DownloadIcon aria-hidden data-icon="inline-start" size={16} />{" "}

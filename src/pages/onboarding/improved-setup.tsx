@@ -360,15 +360,15 @@ function PrepareSetup() {
 
   // "Select an app" (owner 2026-10-14): Gate Connect's first step; on Manual
   // it replaces the snippet's tabs and follows the key, billing and credits,
-  // since the app decides which models work and the snippet's shape. The
-  // tip is Gate Connect's.
+  // since the app decides which models work and the snippet's shape. Both
+  // methods carry the tip (Manual's added owner 2026-10-14).
   const appSection = (
     <SetupGroup
       description="Which app do you want to protect?"
       tip={
         connect
           ? "Just a starting point. Gate Connect can route any of your apps, not only this one."
-          : undefined
+          : "Just a starting point. Your base URL and key work in any app you choose, not only this one."
       }
       title="Select an app"
     >
@@ -481,15 +481,27 @@ function PrepareSetup() {
                       <ol className="m-0 flex list-none flex-col gap-3 p-0">
                         {[
                           "Sign in to Gate Connect.",
-                          `Toggle Proxy On for ${app}.`,
-                          ...(client.restart
-                            ? [`Quit and reopen ${app}.`]
-                            : []),
+                          `Toggle Routing On for ${app}.`,
+                          ...(client.restartStep ? [client.restartStep] : []),
                         ].map((text, index) => (
                           <li className="flex items-center gap-3" key={text}>
                             <StepIndicator n={index + 1} state="upcoming" />
                             <span className="type-copy-14 text-foreground">
                               {text}
+                              {/* Download again sits on the sign-in step, the
+                                  one that needs the app, muted so the button
+                                  stays the card's one action (owner
+                                  2026-10-14; was a link beside it). */}
+                              {index === 0 ? (
+                                <span className="text-muted-foreground">
+                                  {" "}
+                                  Not installed?{" "}
+                                  <DownloadGateConnectDialog
+                                    trigger="link"
+                                    triggerLabel="Download"
+                                  />
+                                </span>
+                              ) : null}
                             </span>
                           </li>
                         ))}
@@ -520,18 +532,19 @@ function PrepareSetup() {
                         </span>
                       </p>
                     ) : null}
-                    <div className="flex flex-wrap items-center gap-4">
+                    {/* 24px above the action, the footer-button gap (owner
+                        2026-10-14); the download row has nothing above it. */}
+                    <div
+                      className={cn(
+                        "flex flex-wrap items-center gap-4",
+                        improved.downloaded && "mt-2"
+                      )}
+                    >
                       {improved.downloaded ? (
-                        <>
-                          <Button onClick={acknowledge} size="default">
-                            I've connected {app}
-                            <ArrowRight aria-hidden data-icon="inline-end" />
-                          </Button>
-                          <DownloadGateConnectDialog
-                            trigger="link"
-                            triggerLabel="Re-download Gate Connect"
-                          />
-                        </>
+                        <Button onClick={acknowledge} size="default">
+                          I've connected {app}
+                          <ArrowRight aria-hidden data-icon="inline-end" />
+                        </Button>
                       ) : (
                         <>
                           <DownloadGateConnectDialog
@@ -723,7 +736,7 @@ function PrepareSetup() {
                       {[
                         `Paste the code into ${app}'s config.`,
                         "Add your saved key secret.",
-                        ...(client.restart ? [`Quit and reopen ${app}.`] : []),
+                        ...(client.restartStep ? [client.restartStep] : []),
                       ].map((text, index) => (
                         <li className="flex items-center gap-3" key={text}>
                           <StepIndicator n={index + 1} state="upcoming" />
@@ -734,7 +747,7 @@ function PrepareSetup() {
                       ))}
                     </ol>
                     <Button
-                      className="self-start"
+                      className="mt-2 self-start"
                       disabled={!(keySelected && funded)}
                       onClick={acknowledge}
                       size="default"
@@ -980,6 +993,7 @@ function VerifyConnection() {
             improved={improved}
             key={`${client.id}:${improved.billing}:${model.id}:${routeRun}`}
             state={route}
+            threat={running || improved.caught}
           />
         </aside>
         <div className="flex min-w-0 flex-col gap-6">

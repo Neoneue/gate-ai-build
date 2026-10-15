@@ -407,7 +407,7 @@ function conversationSortValue(
     case "turns":
       return row.turns;
     case "reqs":
-      return row.turns;
+      return row.requests;
     case "inTokens":
       return row.inTokens;
     case "outTokens":
@@ -626,8 +626,10 @@ function ConversationsTableSection({
                     <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {row.turns}
                     </TableCell>
+                    {/* Reqs: one per reply; a desktop compare turn sends two
+                        (owner 2026-10-14, the shared chat history). */}
                     <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
-                      {row.turns}
+                      {row.requests}
                     </TableCell>
                     <TableCell className="type-mono-14 whitespace-nowrap text-right text-foreground">
                       {formatNumber(row.inTokens)}

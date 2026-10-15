@@ -466,7 +466,10 @@ export function HandoffArt({
  *  shield badge, a green packet runs on and the target's border turns
  *  green), error (Gate's border turns red with the circle-slash badge;
  *  nothing passes on), blocked (the protection demo: Gate green with the
- *  shield badge and a gray circle-slash on wire 2; nothing passes on). The
+ *  shield badge and a red circle-slash on wire 2; nothing passes on).
+ *  `threat` (the protection demo, owner 2026-10-14) turns the app's tap
+ *  ring and wire 1's packet and run red: the demo message is the threat
+ *  Gate catches. The
  *  wires stay gray dashes in every state; colour only travels with a
  *  packet. The tile columns are exactly tile-wide,
  *  so each wire runs edge to edge between tiles (owner 2026-10-09); labels
@@ -482,6 +485,7 @@ export function RouteFigure({
   target,
   targetIcon,
   state = "idle",
+  threat = false,
   caption,
   centered = false,
   ref,
@@ -493,6 +497,9 @@ export function RouteFigure({
   target: string;
   targetIcon: ReactNode;
   state?: "idle" | "live" | "done" | "error" | "blocked";
+  /** The protection demo's message (owner 2026-10-14): wire 1's packet and
+   *  run are red instead of blue. Gate's checking flash stays blue. */
+  threat?: boolean;
   caption?: ReactNode;
   /** For a stage that centers the figure (owner 2026-10-09): the tile
    *  row sits 16px above the stage's centre line (an empty `1fr` row
@@ -508,12 +515,14 @@ export function RouteFigure({
   // signal) outside the line's clip, so the dot can overhang the 2px line,
   // and a blue copy of the dashes (same box, so the dashes line up) that
   // the animator shows through a short travelling window. After a passed
-  // check, Gate's onward packet and run are green: checked traffic. A
-  // blocked demo message stops at Gate: a gray circle-slash sits on wire 2's
-  // midpoint, on a stage-coloured disc that cuts the dashes.
+  // check, Gate's onward packet and run are green: checked traffic. The
+  // protection demo's message is red on wire 1 (owner 2026-10-14) and stops
+  // at Gate: a red circle-slash sits on wire 2's midpoint, on a
+  // stage-coloured disc that cuts the dashes.
   const guarded = state === "done" || state === "blocked";
   const wire = (hop: number) => {
     const passed = state === "done" && hop === 1;
+    const hostile = threat && hop === 0;
     return (
       <span aria-hidden className="relative h-0.5">
         <span className="absolute inset-0 border-input border-t-2 border-dashed" />
@@ -522,7 +531,9 @@ export function RouteFigure({
             "absolute inset-0 border-t-2 border-dashed opacity-0",
             passed
               ? "border-success-600 dark:border-success-400"
-              : "border-info"
+              : hostile
+                ? "border-destructive"
+                : "border-info"
           )}
           data-motion="route-run"
           data-motion-index={hop}
@@ -535,13 +546,17 @@ export function RouteFigure({
           <span
             className={cn(
               "absolute top-1/2 left-0 size-2 -translate-y-1/2 rounded-full",
-              passed ? "bg-success-600 dark:bg-success-400" : "bg-info"
+              passed
+                ? "bg-success-600 dark:bg-success-400"
+                : hostile
+                  ? "bg-destructive"
+                  : "bg-info"
             )}
           />
         </span>
         {state === "blocked" && hop === 1 ? (
           <span
-            className="absolute top-1/2 left-1/2 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-muted text-input"
+            className="absolute top-1/2 left-1/2 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-muted text-destructive"
             data-motion="route-blocked"
           >
             <CircleSlash className="size-5" strokeWidth={1.75} />
@@ -576,6 +591,7 @@ export function RouteFigure({
       data-motion-root="route"
       data-route-nodes={app ? 3 : 2}
       data-state={state}
+      data-threat={threat || undefined}
       ref={ref}
     >
       {centered ? <span aria-hidden className="col-span-full" /> : null}

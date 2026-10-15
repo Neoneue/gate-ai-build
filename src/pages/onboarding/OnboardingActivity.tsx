@@ -8,7 +8,6 @@ import {
 } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
-import { vendorLabel } from "@/components/icons/vendor-meta";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -97,18 +96,19 @@ import {
   seriesColor,
 } from "@/pages/activity-data";
 import {
-  type SetupMessage,
-  type SetupTraffic,
   tokensOf,
-} from "@/pages/onboarding/onboarding-setup-traffic";
-import { useSetupTraffic } from "@/pages/onboarding/use-setup-traffic";
+  type WorkspaceMessage,
+  type WorkspaceTraffic,
+  workspaceGroups,
+} from "@/pages/onboarding/onboarding-workspace-traffic";
+import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 import { ATTACK_MIX } from "@/pages/security/events-data";
 import { TYPE_META } from "@/pages/security-data";
 
 /* ─── OnboardingActivity ────────────────────────────────────────────────────
  * The desktop onboarding workspace's Activity (owner 2026-10-13).
  *
- * Before step 3's first message (`useSetupTraffic()` null): `ActivityDefault`,
+ * Before the first message (`useWorkspaceTraffic()` null): `ActivityDefault`,
  * unchanged. Then the messages land one at a time (the test message, then
  * the blocked demo); with the test message alone, every count below reads
  * it and the attack types read 0 (the phone Activity's precedent).
@@ -116,18 +116,20 @@ import { TYPE_META } from "@/pages/security-data";
  * After it: a COPY of the Free page (`ActivityFree` renders `Activity.tsx`:
  * control row :133, KpiRail :287, TopByAxisRow :472, UsageByKey :719; plus
  * `activity/TrendCard.tsx`), every section and control kept, fed by exactly
- * the step 3 messages (`SetupTraffic`, the one source, so the tiles, the
- * chart, the Top cards and the key table reconcile):
+ * the step 3 messages and every Gate Chat reply of the run, from any tab
+ * (owner 2026-10-14, `useWorkspaceTraffic`, the one source, so the tiles,
+ * the chart, the Top cards and the key table reconcile):
  *   - KPI rail: total spend (sum of costUsd), the message count, the token
  *     sum. No delta: there is no prior period.
- *   - Trend card: one series per dimension (both messages share one model,
- *     one provider and one key), on Tokens, Spend and Savings (Gate's
- *     compression: saved over input tokens, one decimal).
- *   - Top models: the one model. Top API keys: `traffic.keyLabel`. Top users:
+ *   - Trend card: a series per model, provider or key (`workspaceGroups`),
+ *     on Tokens, Spend and Savings (Gate's compression: saved over input
+ *     tokens, one decimal; Pro's stack, so a bucket's bars sum to its rate
+ *     and the panel shows each series' own rate).
+ *   - Top models: a row per model. Top API keys: a row per key. Top users:
  *     the account owner, named as the phone copy names them
  *     (the workspace's owner member, as the sidebar's account row shows). Top attack types: Pro's three
  *     rows, prompt injection 1 (the blocked demo), the rest 0, biggest first.
- *   - Recent key usage: one row, the key both messages used. Messages and
+ *   - Recent key usage: a row per key the messages used. Messages and
  *     tokens are the sums, Alerts the blocked count, Saved the compression
  *     rate, Spend the cost sum. Device has no source for these messages, so
  *     it reads "—", Pro's own value for an unknown device (activity-data.ts
@@ -141,7 +143,7 @@ import { TYPE_META } from "@/pages/security-data";
  * ───────────────────────────────────────────────────────────────────────── */
 
 export function OnboardingActivity() {
-  const traffic = useSetupTraffic();
+  const traffic = useWorkspaceTraffic();
   return traffic ? (
     <ActivityWithTraffic traffic={traffic} />
   ) : (
@@ -149,7 +151,7 @@ export function OnboardingActivity() {
   );
 }
 
-function ActivityWithTraffic({ traffic }: { traffic: SetupTraffic }) {
+function ActivityWithTraffic({ traffic }: { traffic: WorkspaceTraffic }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { sidebarExpanded, toggleSidebar } = useOutletContext<{
@@ -223,8 +225,8 @@ function ActivityWithTraffic({ traffic }: { traffic: SetupTraffic }) {
           traffic={traffic}
         />
       </div>
-      <TopByAxisRow setup={setup} traffic={traffic} />
-      <UsageByKey setup={setup} traffic={traffic} />
+      <TopByAxisRow setup={setup} />
+      <UsageByKey setup={setup} />
     </DashboardChrome>
   );
 }
@@ -250,27 +252,27 @@ const fmtSpend = (usd: number) =>
   formatCurrency(usd, { minFrac: 2, maxFrac: 6 });
 
 const sumOf = (
-  messages: readonly SetupMessage[],
-  pick: (m: SetupMessage) => number
+  messages: readonly WorkspaceMessage[],
+  pick: (m: WorkspaceMessage) => number
 ) => messages.reduce((sum, m) => sum + pick(m), 0);
 
-const spendOf = (messages: readonly SetupMessage[]) =>
+const spendOf = (messages: readonly WorkspaceMessage[]) =>
   sumOf(messages, (m) => m.costUsd);
-const tokensOfAll = (messages: readonly SetupMessage[]) =>
+const tokensOfAll = (messages: readonly WorkspaceMessage[]) =>
   sumOf(messages, tokensOf);
-const inTokensOf = (messages: readonly SetupMessage[]) =>
+const inTokensOf = (messages: readonly WorkspaceMessage[]) =>
   sumOf(messages, (m) => m.inTokens);
-const outTokensOf = (messages: readonly SetupMessage[]) =>
+const outTokensOf = (messages: readonly WorkspaceMessage[]) =>
   sumOf(messages, (m) => m.outTokens);
 /** Gate's compression as a display percentage (14.7 -> "14.7%"), the
  *  `setupCompression` arithmetic over just these messages. */
-const savedPctOf = (messages: readonly SetupMessage[]) => {
+const savedPctOf = (messages: readonly WorkspaceMessage[]) => {
   const inTokens = inTokensOf(messages);
   return inTokens === 0
     ? 0
     : (sumOf(messages, (m) => m.savedTokens) / inTokens) * 100;
 };
-const blockedOf = (messages: readonly SetupMessage[]) =>
+const blockedOf = (messages: readonly WorkspaceMessage[]) =>
   messages.filter((m) => m.guardrail === "block").length;
 
 /* ─── Buckets: Pro's geometry, anchored on the newest send ─────────────── */
@@ -388,17 +390,17 @@ function bucketIndexOf(buckets: Buckets, sentAt: Date): number | null {
 type SetupWindow = {
   buckets: Buckets;
   /** Per bucket, the messages sent in it. */
-  perBucket: SetupMessage[][];
+  perBucket: WorkspaceMessage[][];
   /** Every message in the window. */
-  messages: SetupMessage[];
+  messages: WorkspaceMessage[];
 };
 
 function windowOf(
   buckets: Buckets,
-  messages: readonly SetupMessage[]
+  messages: readonly WorkspaceMessage[]
 ): SetupWindow {
-  const perBucket: SetupMessage[][] = buckets.labels.map(() => []);
-  const inWindow: SetupMessage[] = [];
+  const perBucket: WorkspaceMessage[][] = buckets.labels.map(() => []);
+  const inWindow: WorkspaceMessage[] = [];
   for (const message of messages) {
     const index = bucketIndexOf(buckets, message.sentAt);
     if (index !== null) {
@@ -497,7 +499,21 @@ const fmtPct = (frac: number) => {
 };
 
 /** The one series key: both messages share one model, provider and key. */
-const SERIES_KEY = "setup";
+/** A series' part of one bar. Under Savings: its saved tokens over ALL the
+ *  bar's input tokens, so the stack sums to the bar's rate (Pro's stack). */
+function segmentOf(
+  metric: TrendMetric,
+  own: readonly WorkspaceMessage[],
+  all: readonly WorkspaceMessage[]
+): number {
+  if (metric !== "savings") {
+    return metric === "spend" ? spendOf(own) : tokensOfAll(own);
+  }
+  const inTokens = inTokensOf(all);
+  return inTokens === 0
+    ? 0
+    : (sumOf(own, (m) => m.savedTokens) / inTokens) * 100;
+}
 
 function TrendCard({
   setup,
@@ -506,7 +522,7 @@ function TrendCard({
   customRange,
 }: {
   setup: SetupWindow;
-  traffic: SetupTraffic;
+  traffic: WorkspaceTraffic;
   range: Range;
   customRange: CustomRange | null;
 }) {
@@ -516,17 +532,23 @@ function TrendCard({
   const isSavings = metric === "savings";
   const { buckets } = setup;
 
-  const model = traffic.messages[0]?.model;
-  const seriesLabel =
-    dimension === "model"
-      ? (model?.label ?? "")
-      : dimension === "provider"
-        ? model
-          ? vendorLabel(model.vendor)
-          : ""
-        : traffic.keyLabel;
-  const series: ChartSeries = { key: SERIES_KEY, label: seriesLabel, slot: 1 };
-
+  // A series per model, provider or key, slotted by first use over all the
+  // traffic so a series keeps its colour across ranges.
+  const groups = useMemo(
+    () => workspaceGroups(traffic.messages, dimension),
+    [traffic.messages, dimension]
+  );
+  const seriesList: ChartSeries[] = groups.map((g) => ({
+    key: g.key,
+    label: g.label,
+    slot: g.slot,
+  }));
+  const groupOf = useMemo(
+    () => new Map(groups.flatMap((g) => g.messages.map((m) => [m.id, g.key]))),
+    [groups]
+  );
+  const ofSeries = (key: string, messages: readonly WorkspaceMessage[]) =>
+    messages.filter((m) => groupOf.get(m.id) === key);
   const measure = isSavings ? savedPctOf : isSpend ? spendOf : tokensOfAll;
 
   // TrendCard's density ladder: fold buckets to what the column can draw. A
@@ -538,13 +560,20 @@ function TrendCard({
     const rows: Record<string, number | string>[] = [];
     for (let start = 0; start < buckets.labels.length; start += groupSize) {
       const inGroup = setup.perBucket.slice(start, start + groupSize).flat();
-      rows.push({
+      const row: Record<string, number | string> = {
         date: buckets.labels[start] ?? "",
-        [SERIES_KEY]: measure(inGroup),
-      });
+      };
+      for (const g of groups) {
+        row[g.key] = segmentOf(
+          metric,
+          inGroup.filter((m) => groupOf.get(m.id) === g.key),
+          inGroup
+        );
+      }
+      rows.push(row);
     }
     return rows;
-  }, [buckets, setup, groupSize, measure]);
+  }, [buckets, setup, groupSize, groups, groupOf, metric]);
   const axisTicks = useMemo(
     () => getAxisTicks(data, columnWidth),
     [data, columnWidth]
@@ -553,9 +582,9 @@ function TrendCard({
     () => new Map(buckets.labels.map((l, i) => [l, buckets.tooltips[i] ?? l])),
     [buckets]
   );
-  const chartConfig: ChartConfig = {
-    [SERIES_KEY]: { label: series.label, color: seriesColor(series) },
-  };
+  const chartConfig: ChartConfig = Object.fromEntries(
+    seriesList.map((s) => [s.key, { label: s.label, color: seriesColor(s) }])
+  );
 
   const total = measure(setup.messages);
   const valueFormatter = (v: number) => {
@@ -670,48 +699,61 @@ function TrendCard({
                 }
                 cursor={false}
               />
-              <Bar
-                dataKey={SERIES_KEY}
-                fill={seriesColor(series)}
-                isAnimationActive={false}
-                radius={[1, 1, 0, 0]}
-                stackId="spend"
-              />
+              {seriesList.map((s, i) => (
+                <Bar
+                  dataKey={s.key}
+                  fill={seriesColor(s)}
+                  isAnimationActive={false}
+                  key={s.key}
+                  radius={
+                    i === seriesList.length - 1 ? [1, 1, 0, 0] : undefined
+                  }
+                  stackId="spend"
+                />
+              ))}
             </BarChart>
           </ChartContainer>
         </div>
-        {/* TrendBreakdownPanel: the one series, its value and share (the
+        {/* TrendBreakdownPanel: each series, its value and share (the
             series' own saved rate under Savings). */}
         <div className="@4xl:col-span-4 border-border border-t @4xl:border-t-0 @4xl:border-l @4xl:pt-0 pt-4 @4xl:pl-3">
           <div className="flex flex-col gap-1">
-            <div className="flex min-w-0 items-center gap-2 rounded-xs px-2 py-1">
-              <span
-                aria-hidden
-                className="size-2 shrink-0 rounded-xs"
-                style={{ backgroundColor: seriesColor(series) }}
-              />
-              <span className="type-copy-14 min-w-0 flex-1 truncate text-foreground">
-                {series.label}
-              </span>
-              {isSavings ? (
-                <span className="type-mono-14 shrink-0 text-right text-foreground">
-                  {`${total.toFixed(1)}%`}
-                </span>
-              ) : (
+            {seriesList.map((s) => {
+              const value = measure(ofSeries(s.key, setup.messages));
+              return (
                 <div
-                  className="type-mono-14 grid shrink-0 items-center gap-x-2"
-                  style={{ gridTemplateColumns: "9ch min-content 4ch" }}
+                  className="flex min-w-0 items-center gap-2 rounded-xs px-2 py-1"
+                  key={s.key}
                 >
-                  <span className="text-right text-foreground">
-                    {valueFormatter(total)}
+                  <span
+                    aria-hidden
+                    className="size-2 shrink-0 rounded-xs"
+                    style={{ backgroundColor: seriesColor(s) }}
+                  />
+                  <span className="type-copy-14 min-w-0 flex-1 truncate text-foreground">
+                    {s.label}
                   </span>
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-right text-foreground">
-                    {fmtPct(total > 0 ? 1 : 0)}
-                  </span>
+                  {isSavings ? (
+                    <span className="type-mono-14 shrink-0 text-right text-foreground">
+                      {`${value.toFixed(1)}%`}
+                    </span>
+                  ) : (
+                    <div
+                      className="type-mono-14 grid shrink-0 items-center gap-x-2"
+                      style={{ gridTemplateColumns: "9ch min-content 4ch" }}
+                    >
+                      <span className="text-right text-foreground">
+                        {valueFormatter(value)}
+                      </span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-right text-foreground">
+                        {fmtPct(total > 0 ? value / total : 0)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         </div>
       </CardContent>
@@ -812,7 +854,7 @@ const attackAvatar = (kind: "pii" | "injection" | "credential") => {
 };
 
 /** A Top row's figure on the chosen lens, in TopList's formats. */
-const lensValue = (metric: Metric, messages: readonly SetupMessage[]) =>
+const lensValue = (metric: Metric, messages: readonly WorkspaceMessage[]) =>
   metric === "spend"
     ? fmtSpend(spendOf(messages))
     : fmtTokens(tokensOfAll(messages));
@@ -822,13 +864,7 @@ const lensValue = (metric: Metric, messages: readonly SetupMessage[]) =>
 const OWNER = MEMBER_ROWS.find((member) => member.role === "owner");
 const ownerName = () => OWNER?.name ?? "";
 
-function TopByAxisRow({
-  setup,
-  traffic,
-}: {
-  setup: SetupWindow;
-  traffic: SetupTraffic;
-}) {
+function TopByAxisRow({ setup }: { setup: SetupWindow }) {
   const [modelMetric, setModelMetric] = useState<Metric>("tokens");
   const [keyMetric, setKeyMetric] = useState<Metric>("tokens");
   const [userMetric, setUserMetric] = useState<Metric>("tokens");
@@ -836,27 +872,27 @@ function TopByAxisRow({
   const subtitleFor = (m: Metric) =>
     m === "spend" ? "By total spend" : "By total tokens used";
 
-  const model = traffic.messages[0]?.model;
-  const modelRows: TopRow[] = model
-    ? [
-        {
-          rowKey: model.id,
-          label: model.label,
-          value: lensValue(modelMetric, setup.messages),
-          avatar: <VendorAvatar vendor={model.vendor} />,
-        },
-      ]
-    : [];
+  // A row per model and per key in the window, biggest first on the lens.
+  const byLens = (metric: Metric) => (g: { messages: WorkspaceMessage[] }) =>
+    metric === "spend" ? spendOf(g.messages) : tokensOfAll(g.messages);
+  const modelRows: TopRow[] = workspaceGroups(setup.messages, "model")
+    .toSorted((a, b) => byLens(modelMetric)(b) - byLens(modelMetric)(a))
+    .map((g) => ({
+      rowKey: g.id,
+      label: g.label,
+      value: lensValue(modelMetric, g.messages),
+      avatar: g.vendor ? <VendorAvatar vendor={g.vendor} /> : null,
+    }));
 
-  const keyRows: TopRow[] = [
-    {
-      rowKey: traffic.keyLabel,
-      label: traffic.keyLabel,
+  const keyRows: TopRow[] = workspaceGroups(setup.messages, "apiKey")
+    .toSorted((a, b) => byLens(keyMetric)(b) - byLens(keyMetric)(a))
+    .map((g) => ({
+      rowKey: g.id,
+      label: g.label,
       labelClassName: "font-mono",
-      value: lensValue(keyMetric, setup.messages),
+      value: lensValue(keyMetric, g.messages),
       avatar: KEY_AVATAR,
-    },
-  ];
+    }));
 
   const userName = ownerName();
   const userRows: TopRow[] = [
@@ -975,13 +1011,7 @@ function keySortValue(row: KeyRow, key: string): string | number | null {
   }
 }
 
-function UsageByKey({
-  setup,
-  traffic,
-}: {
-  setup: SetupWindow;
-  traffic: SetupTraffic;
-}) {
+function UsageByKey({ setup }: { setup: SetupWindow }) {
   const { sort, toggle: toggleSort } = useTableSort();
   const [query, setQuery] = useState("");
   const [hideRevoked, setHideRevoked] = useState(true);
@@ -996,24 +1026,24 @@ function UsageByKey({
     setPage(1);
   }
 
-  // The one key both messages used. It is never revoked, so "Hide revoked"
-  // keeps it.
+  // A row per key the messages used (setup's and Gate Chat's caller; one
+  // row when setup ran on Gate Connect). None is ever revoked, so "Hide
+  // revoked" keeps them.
   const rows = useMemo<KeyRow[]>(
-    () => [
-      {
-        key: traffic.keyLabel,
-        label: traffic.keyLabel,
+    () =>
+      workspaceGroups(setup.messages, "apiKey").map((g) => ({
+        key: g.id,
+        label: g.label,
         owner: ownerName(),
         device: "—",
-        requests: setup.messages.length,
-        alerts: blockedOf(setup.messages),
-        tokensIn: inTokensOf(setup.messages),
-        tokensOut: outTokensOf(setup.messages),
-        saved: savedPctOf(setup.messages),
-        spend: spendOf(setup.messages),
-      },
-    ],
-    [traffic.keyLabel, setup.messages]
+        requests: g.messages.length,
+        alerts: blockedOf(g.messages),
+        tokensIn: inTokensOf(g.messages),
+        tokensOut: outTokensOf(g.messages),
+        saved: savedPctOf(g.messages),
+        spend: spendOf(g.messages),
+      })),
+    [setup.messages]
   );
 
   const searchedRows = useMemo(() => {

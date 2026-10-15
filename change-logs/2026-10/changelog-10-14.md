@@ -180,3 +180,25 @@ Prior day: [`changelog-10-13.md`](./changelog-10-13.md)
   inside the section, 12px (the section's gap) under the code card.
 - Start-page card copy was tried and reverted; it is unchanged.
 - Files: `src/pages/onboarding/improved-setup.tsx`.
+
+### Onboarding setup: per-app finishing step, inline Gate Connect download, Routing wording `acdb85a`
+
+- Finishing step per app. Before: a boolean `restart` gave Codex, Claude Code
+  and OpenCode "Quit and reopen the app." and nothing to the rest. After:
+  `IMPROVED_CLIENTS` carries `restartStep: string | null`. Codex: "Start a new
+  conversation." Claude Code, OpenCode and OpenClaw (new): "Quit and reopen
+  the app." Hermes and OpenAI SDK: none. Both step lists (Gate Connect "Sign in
+  and connect" and Manual's steps card) render it.
+- Gate Connect "Sign in and connect". Before: a "Re-download Gate Connect"
+  text link sat beside the primary "I've connected (app)". After: the link is
+  gone, so the row has one action. Step 1 reads "Sign in to Gate Connect."
+  with a muted tail "Not installed? Download"; "Download" opens the same
+  `DownloadGateConnectDialog`. The dialog's `trigger="link"` now inherits the
+  surrounding text voice (dropped `type-label-14`); this inline link is its
+  only caller.
+- 24px above the action. The Gate Connect button row (only once downloaded)
+  and Manual's "I've saved my settings" button get `mt-2`, so the gap is 24px
+  (was 16px under the steps).
+- Step 2 copy. Before: "Toggle Proxy On for (app)." After: "Toggle Routing On
+  for (app)." Gate Connect no longer uses the word proxy.
+- Files: `improved-setup.tsx`, `improved-data.ts`, `DashboardDefault.tsx`.
