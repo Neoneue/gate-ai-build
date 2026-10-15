@@ -70,6 +70,7 @@ import {
   isPhoneDemoChat,
   ONBOARDING_ROUTES,
   rememberChatPath,
+  setupTasksDone,
 } from "@/pages/onboarding/onboarding-routes";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 
@@ -498,10 +499,13 @@ export function OnboardingChat() {
             className="w-full border-r-0"
             collapsed={false}
             // Phone drawer: no logo row and no Sign out (owner 2026-10-11).
-            // Option B ends on "Main", back to its phone start (owner
-            // 2026-10-15); Mobile A's way back is the site menu.
+            // Option B ends on "Get started", back to its phone start,
+            // until setup is over (owner 2026-10-15); Mobile A's way back
+            // is the site menu.
             mainPath={
-              mobileA && !isMobileATab() ? ONBOARDING_ROUTES.start : undefined
+              mobileA && !isMobileATab() && !setupTasksDone(improved)
+                ? ONBOARDING_ROUTES.start
+                : undefined
             }
             onNewChat={() => {
               setMobileRailOpen(false);

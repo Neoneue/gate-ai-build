@@ -85,9 +85,9 @@ export interface OnboardingChatSidebarProps {
   history: readonly ChatConversationGroup[];
   historyError?: string | null;
   historyLoading?: boolean;
-  /** Option B's phone drawer (owner 2026-10-15): a "Main" link at the
-   *  foot, under credits, back to its phone start, the way the shared rail
-   *  ends on "Back to dashboard". */
+  /** Option B's phone drawer (owner 2026-10-15): a "Get started" link at
+   *  the foot, under credits, back to its phone start, the way the shared
+   *  rail ends on "Back to dashboard". */
   mainPath?: string;
   onDeleteConversation?: (conversationId: string) => void;
   onNewChat: () => void;
@@ -457,7 +457,7 @@ export function OnboardingChatSidebar({
                     data-icon="inline-start"
                     strokeWidth={1.75}
                   />
-                  <span className="truncate">Main</span>
+                  <span className="truncate">Get started</span>
                 </Button>
               </div>
             ) : null}
