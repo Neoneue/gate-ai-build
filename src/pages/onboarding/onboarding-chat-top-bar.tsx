@@ -18,11 +18,13 @@ import { chatOverviewUrl } from "@/pages/chat/chat-links";
 import { CHAT_COPY } from "@/pages/chat/copy";
 import {
   chatSignInPath,
+  isMobileATab,
   ONBOARDING_ROUTES,
   PHONE_DEMO_PAGES,
   phoneOverviewPath,
   phoneSiteSections,
 } from "@/pages/onboarding/onboarding-routes";
+import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 
 /**
  * The Onboarding workspace's copy of `pages/chat/chat-top-bar.tsx`. The only
@@ -100,6 +102,7 @@ function OnboardingSiteMenu() {
   // 2026-10-15): empty, then filled by the chat's messages. Option B's
   // phone start is the chat drawer's "Main" link.
   const overviewPath = ONBOARDING_ROUTES.mobileOverview;
+  const { improved } = useOnboarding();
   const isDesktop = useIsDesktop();
   const [open, setOpen] = useState(false);
   // At lg+ the key hides, so an open drawer must not survive the resize.
@@ -130,7 +133,10 @@ function OnboardingSiteMenu() {
             setOpen(false);
           }}
           overviewPath={overviewPath}
-          sections={phoneSiteSections(overviewPath)}
+          sections={phoneSiteSections(
+            overviewPath,
+            isMobileATab() ? null : improved
+          )}
           // Restarts the demo at this version's sign-in (owner 2026-10-14).
           signOutPath={chatSignInPath()}
         />

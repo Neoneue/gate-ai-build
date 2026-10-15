@@ -90,15 +90,19 @@ const METHODS: {
 export function ImprovedStart() {
   const mobile = useIsMobileSetup();
   const preparePhoneChat = usePreparePhoneChat();
+  const { improved } = useOnboarding();
   // Phone: the site menu is the phone demo's (Option B, owner 2026-10-12):
-  // Overview returns here; Activity, Messages, Conversations and Gate Chat
+  // "Get started" is this page and Overview the phone Overview (owner
+  // 2026-10-15); Activity, Messages, Conversations and Gate Chat
   // open the phone demo's pages and its chat. Its Gate Chat row starts the
   // phone chat the way the cards do, so every way into the chat from here
   // is the phone chat.
   return (
     <OnboardingChrome
       mobileSections={
-        mobile ? phoneSiteSections(ONBOARDING_ROUTES.start) : undefined
+        mobile
+          ? phoneSiteSections(ONBOARDING_ROUTES.mobileOverview, improved)
+          : undefined
       }
       onMobileNavigate={
         mobile

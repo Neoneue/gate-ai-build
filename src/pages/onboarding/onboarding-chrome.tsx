@@ -72,7 +72,10 @@ export function OnboardingChrome({
       : null;
   return (
     <OnboardingDashboardChrome
-      activeNavId={setupNav?.activeNavId ?? "overview"}
+      // B's phone start is its "Get started" row (owner 2026-10-15).
+      activeNavId={
+        setupNav?.activeNavId ?? (mobileSections ? SETUP_NAV_ID : "overview")
+      }
       mobileSections={mobileSections}
       onMobileNavigate={onMobileNavigate}
       onNavigate={(path: string) => navigate(path)}

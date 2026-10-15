@@ -215,20 +215,39 @@ export const phoneSignInPath = (): string =>
  *  for them. The Gate Chat row returns to the chat page the demo was last
  *  on, so the conversation is where it was left. Every other row is
  *  unchanged (owner 2026-10-11, 2026-10-12). Used by the chat top bar's menu
- *  (onboarding-chat-top-bar.tsx) and B's phone start menu (`ImprovedStart`). */
-export function phoneSiteSections(overviewPath: string): SidebarSection[] {
+ *  (onboarding-chat-top-bar.tsx) and B's phone start menu (`ImprovedStart`).
+ *  `improved` set (Option B, owner 2026-10-15): "Get started" above
+ *  Overview opens B's phone start, until setup is over by the desktop
+ *  rail's own rule (`setupTasksDone`). */
+export function phoneSiteSections(
+  overviewPath: string,
+  improved?: ImprovedState | null
+): SidebarSection[] {
   const pages: Record<string, string> = {
     ...PHONE_DEMO_PAGES,
     overview: overviewPath,
     chat: lastOnboardingChatPath(),
   };
+  const getStarted =
+    improved && !setupTasksDone(improved)
+      ? [
+          {
+            id: SETUP_NAV_ID,
+            icon: ListChecks,
+            label: "Get started",
+            pageId: ONBOARDING_ROUTES.start,
+            newTab: false,
+          },
+        ]
+      : [];
   return ONBOARDING_SIDEBAR_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.map((item) => {
+    items: section.items.flatMap((item) => {
       const pageId = pages[item.id];
       // The phone chat stays in this tab (the desktop sidebar opens a new
       // one), so Resume finds the conversation.
-      return pageId ? { ...item, pageId, newTab: false } : item;
+      const row = pageId ? { ...item, pageId, newTab: false } : item;
+      return item.id === "overview" ? [...getStarted, row] : [row];
     }),
   }));
 }
