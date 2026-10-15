@@ -6,10 +6,7 @@ import {
   TEST_MESSAGE,
 } from "@/pages/onboarding/improved-data";
 import type { OnboardingDemoTraffic } from "@/pages/onboarding/onboarding-demo-traffic";
-import {
-  GATE_CONNECT_KEY_LABEL,
-  type SetupTraffic,
-} from "@/pages/onboarding/onboarding-setup-traffic";
+import type { SetupTraffic } from "@/pages/onboarding/onboarding-setup-traffic";
 import type { ImprovedBilling } from "@/pages/onboarding/onboarding-state";
 
 /* ─── The desktop workspace's traffic: setup plus Gate Chat ─────────────────
@@ -21,14 +18,18 @@ import type { ImprovedBilling } from "@/pages/onboarding/onboarding-state";
  * history, `onboarding-chat-storage.ts`).
  *
  * ONE source: every tile, chart, count and table on those pages reads this
- * list, so the numbers reconcile. A chat message logs as the live product
- * logs Gate Chat traffic: under Gate Connect's caller
- * (`GATE_CONNECT_KEY_LABEL`), Success and Allow, billed by Gate at the cost
+ * list, so the numbers reconcile. A chat message logs with no API key
+ * (key "—", owner 2026-10-15: keys are made on desktop setup only),
+ * Success and Allow, billed by Gate at the cost
  * the chat reply showed ($0.00 on a free model), and 0 tokens saved (Gate
  * Chat does not compress). Each chat conversation is its own row, beside
  * setup's. Null when neither source has a message, and the pages keep their
  * Default layouts. MOCK: no Gate record exists, so no request id.
  * ───────────────────────────────────────────────────────────────────────── */
+
+/** The key cell for a message or conversation with no API key (Gate
+ *  Chat), the tables' own empty-value mark. */
+export const NO_KEY = "—";
 
 export type WorkspaceMessage = {
   /** "test" or "demo" for setup's two; the reply lane's id for chat. */
@@ -43,8 +44,9 @@ export type WorkspaceMessage = {
   savedTokens: number;
   costUsd: number;
   guardrail: "allow" | "block";
-  /** The key column's caller. */
-  keyLabel: string;
+  /** The key column's caller; null for Gate Chat, which uses no API key
+   *  (owner 2026-10-15), shown as "—". */
+  keyLabel: string | null;
   /** Who bills it: Gate ("payg") or the user's provider ("existing"). Gate
    *  Chat is always Gate-metered. */
   billing: ImprovedBilling;
@@ -56,7 +58,8 @@ export type WorkspaceConversation = {
   id: string;
   /** The first prompt, with a chat rename applied. */
   title: string;
-  keyLabel: string;
+  /** Null for a Gate Chat conversation (no API key). */
+  keyLabel: string | null;
   /** Models it used, in first-use order. */
   models: ImprovedModel[];
   turns: number;
@@ -138,7 +141,7 @@ export function workspaceTraffic(
         savedTokens: 0,
         costUsd: m.costUsd,
         guardrail: "allow",
-        keyLabel: GATE_CONNECT_KEY_LABEL,
+        keyLabel: null,
         billing: "payg",
         conversationId: m.conversationId,
         conversationTitle: titles.get(m.conversationId) ?? m.prompt,
@@ -150,7 +153,7 @@ export function workspaceTraffic(
       conversations.push({
         id: c.id,
         title: c.title,
-        keyLabel: GATE_CONNECT_KEY_LABEL,
+        keyLabel: null,
         models: uniqueModels(own.toReversed()),
         turns: c.turns,
         reqs: c.requests,
@@ -253,6 +256,10 @@ export function workspaceGroups(
         : dimension === "provider"
           ? m.model.vendor
           : m.keyLabel;
+    // A Gate Chat message has no key, so it joins no key group.
+    if (id === null) {
+      continue;
+    }
     const group = groups.get(id);
     if (group) {
       group.messages.unshift(m);
@@ -267,7 +274,7 @@ export function workspaceGroups(
           ? m.model.label
           : dimension === "provider"
             ? vendorLabel(m.model.vendor)
-            : m.keyLabel,
+            : id,
       vendor: dimension === "apiKey" ? null : m.model.vendor,
       slot,
       messages: [m],

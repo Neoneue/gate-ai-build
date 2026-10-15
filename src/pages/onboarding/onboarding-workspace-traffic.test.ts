@@ -9,7 +9,6 @@ import {
 } from "./onboarding-chat-store";
 import { onboardingDemoTraffic } from "./onboarding-demo-traffic";
 import {
-  GATE_CONNECT_KEY_LABEL,
   SETUP_CONVERSATION_ID,
   setupTraffic,
 } from "./onboarding-setup-traffic";
@@ -119,7 +118,7 @@ describe("workspaceTraffic (setup plus Gate Chat, owner 2026-10-14)", () => {
     expect(
       chat.every(
         (m) =>
-          m.keyLabel === GATE_CONNECT_KEY_LABEL &&
+          m.keyLabel === null &&
           m.guardrail === "allow" &&
           m.billing === "payg" &&
           m.savedTokens === 0 &&
@@ -162,16 +161,19 @@ describe("workspaceTraffic (setup plus Gate Chat, owner 2026-10-14)", () => {
     });
     const week = workspaceWeek(view);
     expect(week.days.flat()).toHaveLength(view.messages.length);
-    for (const dimension of ["model", "provider", "apiKey"] as const) {
+    for (const dimension of ["model", "provider"] as const) {
       const groups = workspaceGroups(view.messages, dimension);
       expect(groups.flatMap((g) => g.messages)).toHaveLength(
         view.messages.length
       );
       expect(groups.map((g) => g.slot)).toEqual(groups.map((_, i) => i + 1));
     }
-    expect(
-      workspaceGroups(view.messages, "apiKey").map((g) => g.label)
-    ).toEqual(["my-laptop", GATE_CONNECT_KEY_LABEL]);
+    // Gate Chat uses no API key (owner 2026-10-15): only setup's key groups.
+    const keyGroups = workspaceGroups(view.messages, "apiKey");
+    expect(keyGroups.map((g) => g.label)).toEqual(["my-laptop"]);
+    expect(keyGroups.flatMap((g) => g.messages)).toHaveLength(
+      view.messages.filter((m) => m.source === "setup").length
+    );
     // Savings stay setup's: chat adds input tokens and nothing saved.
     const compression = workspaceCompression(view.messages);
     expect(compression.savedTokens).toBe(

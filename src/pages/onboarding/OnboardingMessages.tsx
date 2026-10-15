@@ -81,9 +81,10 @@ import {
 } from "@/lib/formatters";
 import { keepInOnboarding } from "@/lib/plan";
 import { oldestInWindow, retentionCeilingDays } from "@/lib/retention";
-import type {
-  WorkspaceMessage,
-  WorkspaceTraffic,
+import {
+  NO_KEY,
+  type WorkspaceMessage,
+  type WorkspaceTraffic,
 } from "@/pages/onboarding/onboarding-workspace-traffic";
 import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 import { RequestsDefault } from "@/pages/RequestsDefault";
@@ -799,7 +800,7 @@ function SetupMessagesTable({
       if (!q) {
         return true;
       }
-      return [r.message.model.label, r.message.keyLabel, r.prompt].some(
+      return [r.message.model.label, r.message.keyLabel ?? "", r.prompt].some(
         (field) => field.toLowerCase().includes(q)
       );
     });
@@ -882,13 +883,17 @@ function SetupMessagesTable({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All keys</SelectItem>
-                    {[...new Set(traffic.messages.map((m) => m.keyLabel))].map(
-                      (label) => (
-                        <SelectItem key={label} value={label}>
-                          {label}
-                        </SelectItem>
-                      )
-                    )}
+                    {[
+                      ...new Set(
+                        traffic.messages.flatMap((m) =>
+                          m.keyLabel ? [m.keyLabel] : []
+                        )
+                      ),
+                    ].map((label) => (
+                      <SelectItem key={label} value={label}>
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1235,11 +1240,11 @@ function SetupMessageRow({ row, now }: { row: SetupRow; now: Date }) {
           <TooltipTrigger
             render={(props) => (
               <span {...props} className="block truncate text-foreground">
-                {message.keyLabel}
+                {message.keyLabel ?? NO_KEY}
               </span>
             )}
           />
-          <TooltipContent>{message.keyLabel}</TooltipContent>
+          <TooltipContent>{message.keyLabel ?? NO_KEY}</TooltipContent>
         </Tooltip>
       </TableCell>
       {/* Device name: none is recorded for a setup message, so the Pro

@@ -75,7 +75,10 @@ import {
   RANGE_OPTIONS,
 } from "@/lib/range";
 import { cn } from "@/lib/utils";
-import type { WorkspaceTraffic } from "@/pages/onboarding/onboarding-workspace-traffic";
+import {
+  NO_KEY,
+  type WorkspaceTraffic,
+} from "@/pages/onboarding/onboarding-workspace-traffic";
 import { useWorkspaceTraffic } from "@/pages/onboarding/use-workspace-traffic";
 import { SecurityDefault } from "@/pages/SecurityDefault";
 import {
@@ -140,7 +143,7 @@ function setupEvents(traffic: WorkspaceTraffic): SetupEvent[] {
       sentAt: m.sentAt,
       type: "injection",
       action: "blocked",
-      key: m.keyLabel,
+      key: m.keyLabel ?? NO_KEY,
       conversationId: m.conversationId,
     }));
 }
