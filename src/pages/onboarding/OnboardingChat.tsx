@@ -17,6 +17,7 @@ import {
 import { WORKSPACE_NAME } from "@/data/team-members";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import { cn } from "@/lib/utils";
+import type { ChatPickedFile } from "@/pages/chat/chat-attachment-picker";
 import {
   buildChatCatalog,
   chatConversationTotals,
@@ -404,7 +405,10 @@ export function OnboardingChat() {
   // open conversation or a new one titled by the prompt, one reply per lane
   // (desktop compares two). False keeps the draft while a reply is still
   // writing.
-  const sendScripted = (prompt: string) => {
+  const sendScripted = (
+    prompt: string,
+    attachments: readonly ChatPickedFile[] = []
+  ) => {
     if (paidModelPicked) {
       return false;
     }
@@ -413,7 +417,8 @@ export function OnboardingChat() {
     const id = onboardingChatStore.sendScripted(
       target,
       prompt,
-      models.map((model) => model.id)
+      models.map((model) => model.id),
+      attachments
     );
     if (id === null) {
       return false;

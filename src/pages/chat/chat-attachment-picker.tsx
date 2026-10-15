@@ -47,6 +47,10 @@ const TEXT_ACCEPT = [
 const IMAGE_ACCEPT = CHAT_ATTACHMENT_IMAGE_CONTENT_TYPES.join(",");
 
 export interface ChatPickedFile {
+  /** The file's size and type, for a sent turn's attachment chip (the
+   *  onboarding chat, owner 2026-10-15). */
+  bytes?: number;
+  contentType?: string;
   filename: string;
   id: string;
 }
@@ -86,7 +90,12 @@ export function ChatAttachmentPicker({
     }
     const added = Array.from(files).map((file) => {
       pickSeq += 1;
-      return { id: `att_local_${pickSeq}`, filename: file.name };
+      return {
+        id: `att_local_${pickSeq}`,
+        filename: file.name,
+        bytes: file.size,
+        contentType: file.type,
+      };
     });
     onPick(added);
   }

@@ -10,7 +10,8 @@ import { OnboardingChatComposer } from "./onboarding-chat-composer";
 
 /* The onboarding composer's two modes (owner 2026-10-13): desktop is the real
  * Gate Chat's toolbar (attach, a picker per lane, add a model to compare);
- * the phone demo stays guided (one lane, no attach, no compare). */
+ * the phone demo stays guided (one lane and attach, no compare; attach is
+ * back since owner 2026-10-15). */
 
 afterEach(cleanup);
 
@@ -87,11 +88,11 @@ describe("OnboardingChatComposer", () => {
     ).toBe(true);
   });
 
-  it("the phone demo keeps one lane, no attach and no compare", () => {
+  it("the phone demo keeps one lane and attach, no compare", () => {
     renderComposer({ models: [free], onSelectModel: vi.fn() });
     expect(
-      screen.queryByRole("button", { name: CHAT_COPY.attachFile })
-    ).toBeNull();
+      screen.getByRole("button", { name: CHAT_COPY.attachFile })
+    ).toBeTruthy();
     expect(
       screen.queryByRole("button", { name: CHAT_COPY.addComparisonModel })
     ).toBeNull();

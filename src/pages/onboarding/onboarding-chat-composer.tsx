@@ -57,8 +57,8 @@ const NOTICE_TONE: Record<ChatNoticeTone, string> = {
  *   reversing the fixed desktop model of 2026-10-11): attach and its chips,
  *   one picker per lane, add a second model to compare (two lanes at most)
  *   and remove it, then send.
- * - Phone demo (`onSelectModel`, owner 2026-10-12): guided, one lane, the
- *   picker trigger alone; no attach and no compare.
+ * - Phone demo (`onSelectModel`, owner 2026-10-12): guided, one lane:
+ *   attach (back, owner 2026-10-15) and the picker trigger; no compare.
  *
  * Change it here, never in the shared composer.
  */
@@ -88,8 +88,13 @@ export interface OnboardingChatComposerProps {
   /**
    * Returns whether the send succeeded. The draft is cleared only on `true`;
    * a failed send must leave the user's prompt on screen rather than discard it.
+   * Picked files go with the prompt, which a send always needs (owner
+   * 2026-10-15, as the main composer), and clear with the draft.
    */
-  onSend: (text: string) => boolean | Promise<boolean>;
+  onSend: (
+    text: string,
+    attachments: readonly ChatPickedFile[]
+  ) => boolean | Promise<boolean>;
   onToggleFavorite?: (
     modelId: string,
     favorite: boolean
@@ -152,11 +157,12 @@ export function OnboardingChatComposer({
     if (!text || disabled || refused) {
       return;
     }
-    Promise.resolve(onSend(text)).then((sent) => {
+    Promise.resolve(onSend(text, attachments)).then((sent) => {
       if (!sent) {
         return;
       }
       setDraft("");
+      setAttachments([]);
       setLimitHit(false);
     });
   };
@@ -264,10 +270,9 @@ export function OnboardingChatComposer({
           phone demo the one-lane picker and send. The model group is flex-1,
           so its label truncates first. */}
       <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-1 gap-y-2 sm:gap-x-3">
-        {/* Mobile A: the main composer's one-lane picker trigger
-            (chat-composer.tsx), leading the row. With no attach key before
-            it, pulling back the Button's own 10px icon padding (the
-            sanctioned px-2.5) lands its logo on the prompt's text edge.
+        {/* Phone demo: attach leads the row again (owner 2026-10-15), the
+            desktop toolbar's key and separator, then the main composer's
+            one-lane picker trigger (chat-composer.tsx).
             Large text (200%): the logo, chevron and padding alone fill a
             narrow row, so the group keeps a 6rem floor (`min-w-24`, 96px
             at 100%, where the group is always wider). When the row cannot
@@ -275,6 +280,21 @@ export function OnboardingChatComposer({
             (`ml-auto` keeps it at the right edge) and the name truncates
             instead of vanishing. PRD: the selected model's name is visible
             in the composer before the first send. */}
+        {onSelectModel && !onSelectLaneModel ? (
+          <>
+            <ChatAttachmentPicker
+              className={cn("shrink-0", EDGE_KEY_START)}
+              models={models}
+              onPick={(files) =>
+                setAttachments((current) => [...current, ...files])
+              }
+            />
+            <Separator
+              className="hidden h-5 shrink-0 data-vertical:self-center sm:block"
+              orientation="vertical"
+            />
+          </>
+        ) : null}
         {models.length > 0 && onSelectModel && !onSelectLaneModel ? (
           <div
             aria-label="Models"
@@ -290,7 +310,7 @@ export function OnboardingChatComposer({
                 <Button
                   className={cn(
                     CHAT_TOUCH_TARGET,
-                    "-ml-2.5 min-w-0 shrink sm:max-w-44 sm:flex-1 sm:basis-0",
+                    "min-w-0 shrink sm:max-w-44 sm:flex-1 sm:basis-0",
                     "pointer-coarse:text-sm pointer-coarse:[&_img]:size-5 pointer-coarse:[&_svg]:size-5"
                   )}
                   size="sm"

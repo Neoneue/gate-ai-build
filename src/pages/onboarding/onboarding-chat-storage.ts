@@ -1,4 +1,5 @@
 import type {
+  ChatSeedAttachment,
   ChatSeedConversation,
   ChatSeedLane,
   ChatSeedTurn,
@@ -175,13 +176,37 @@ function turnOf(value: unknown): ChatSeedTurn | null {
   ) {
     return null;
   }
-  // Scripted turns carry no attachments (`sendScripted`).
+  // The files sent with the prompt (owner 2026-10-15); a malformed entry
+  // is dropped, never the turn.
+  const attachments = Array.isArray(value.attachments)
+    ? value.attachments.map(attachmentOf).filter((a) => a !== null)
+    : [];
   return {
     id: value.id,
     prompt: value.prompt,
     sentAt,
-    attachments: [],
+    attachments,
     lanes: lanes as ChatSeedLane[],
+  };
+}
+
+function attachmentOf(value: unknown): ChatSeedAttachment | null {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    typeof value.filename !== "string" ||
+    typeof value.contentType !== "string" ||
+    typeof value.bytes !== "number" ||
+    !Number.isFinite(value.bytes) ||
+    value.bytes < 0
+  ) {
+    return null;
+  }
+  return {
+    id: value.id,
+    filename: value.filename,
+    contentType: value.contentType,
+    bytes: value.bytes,
   };
 }
 

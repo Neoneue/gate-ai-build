@@ -11,6 +11,7 @@ import {
   selectOnboardingReply,
   streamOnboardingReply,
 } from "@/data/onboarding-chat-script";
+import type { ChatPickedFile } from "@/pages/chat/chat-attachment-picker";
 import type { ChatConversationInput } from "@/pages/chat/chat-data";
 import type { ChatMemory } from "@/pages/chat/contract";
 import {
@@ -342,12 +343,15 @@ export const onboardingChatStore = {
    * Module-scoped so leaving the page does not cut the reply off.
    * `modelIds` are the lanes picked in the composer (phone: one, owner
    * 2026-10-12; desktop: one or two, owner 2026-10-13); each lane's card is
-   * drawn as its model. A new chat opens on them.
+   * drawn as its model. A new chat opens on them. `attachments` are the
+   * composer's picked files, shown on the user's turn (owner 2026-10-15);
+   * the reply stays scripted from the prompt.
    */
   sendScripted(
     conversationId: string | null,
     prompt: string,
-    modelIds: string | readonly string[] = SCRIPTED_MODEL_ID
+    modelIds: string | readonly string[] = SCRIPTED_MODEL_ID,
+    attachments: readonly ChatPickedFile[] = []
   ): string | null {
     if (state.live) {
       return null;
@@ -394,7 +398,12 @@ export const onboardingChatStore = {
             id: turnId,
             prompt,
             sentAt: now,
-            attachments: [],
+            attachments: attachments.map((file) => ({
+              id: file.id,
+              filename: file.filename,
+              bytes: file.bytes ?? 0,
+              contentType: file.contentType || "application/octet-stream",
+            })),
             lanes: laneModelIds.map((modelId, index) => ({
               id: laneIds[index],
               answeredAt: now,
