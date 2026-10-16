@@ -78,6 +78,72 @@ Prior day: [`changelog-10-15.md`](./changelog-10-15.md)
   quick-action chips keep `ArrowUpRight` (`improved-parts.tsx`,
   `current-verify.tsx`).
 
+### First answer stays in view after the follow-up cards `496c972`
+
+- Phone Gate Chat (`onboarding-chat-thread.tsx`, `OnboardingChat.tsx`), audit
+  ux-2. Before: when the logged note and email offer appeared after the first
+  reply, the thread followed the cards to the end and the first reply's top sat
+  at -50px, hidden. After: the user's first message pins to the top under the
+  sticky bars (`pinTurnId`; turns wrapped in a `display: contents` div with
+  `data-turn-id`) and follow-latest resumes on the next send.
+
+### Phone start uses the chat's send pattern `496c972`
+
+- `improved-start.tsx`, audit ux-5. Before: "Email me a setup link" / "Sending
+  link..." (3s) / "Email sent!" (2s), no toast. After: "Email me the setup link"
+  / spinner "Sending email" / toast "Setup link sent. Check your email on your
+  computer." / "Re-send email setup link", the chat offer's pattern and strings.
+
+### Paid-model refusal offers a switch to the free model `496c972`
+
+- `OnboardingChat.tsx`, `onboarding-chat-script.ts`, audit ux-7. The refusal
+  helper reads "Paid models need credits to use. Switch to Qwen3.8 Flash"; the
+  second part is an inline TextLink that selects the free default. Compare
+  helper unchanged.
+
+### Model picker opens on Free with no balance `496c972`
+
+- `onboarding-model-selector.tsx`, audit ux-8. Before: always All models. After:
+  a $0 balance opens on the Free tab; with credits, All models.
+
+### Setup-link button 44px on touch `496c972`
+
+- `onboarding-computer-prompt.tsx`, `design.md`, audit ux-9. "Email me the setup
+  link" in the chat offer goes from Button `sm` to `default` (44px on touch).
+  design.md Touch targets gains a "Conversion action" rule.
+
+### Create account validates on submit `496c972`
+
+- `OnboardingSignUp.tsx`, audit ux-15. Create account stays enabled. A submit
+  with gaps shows a FieldError under each unmet field (EULA, full name, work
+  email empty or invalid format, password rules) and focuses the first; errors
+  clear live. Google keeps its EULA gate.
+
+### Billing link opens a new tab `496c972`
+
+- `improved-setup.tsx`, audit ux-12. The "Billing" link in Gate Connect's billing
+  note opens a new tab with the new-tab icon and screen-reader cue (was the same
+  tab).
+
+### Failed connection gets its own icon `496c972`
+
+- `improved-art.tsx`, audit ux-17. Before: a failed connection and a blocked
+  attack both used the slashed circle. After: a failed connection shows the alert
+  icon (`CircleAlert`); the slashed circle means a blocked attack only.
+
+### No Tasks menu on the complete page `496c972`
+
+- `onboarding-chrome.tsx`, audit ux-3. The top-bar Get started / Tasks menu no
+  longer shows on the complete page (`IMPROVED_MENU_ROUTES` is step 2 and step
+  3), so the count and task list appear once.
+
+### Handoff screen retired `496c972`
+
+- `App.tsx`, `onboarding-routes.ts`, `improved-start.tsx`, audit ux-16.
+  `/improved-handoff-onboarding` is gone (route, `ImprovedHandoff`,
+  `HandoffCard`); a typed URL lands on the start page. ux-13 kept as is (the
+  official snippet is the source of truth). Audit: 16 applied, 1 skipped, 0 open.
+
 ### data-model.md: onboarding workspace synced with the code `e33a59e`
 
 - Rows and notes updated: Manual setup row, checkout callers, step 3 timing

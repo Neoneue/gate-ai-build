@@ -11,6 +11,16 @@ tokens; this index exists so nothing has to glob the directory.
 
 ### [2026-10-16](./2026-10/changelog-10-16.md)
 
+- Handoff screen retired
+- No Tasks menu on the complete page
+- Failed connection gets its own icon
+- Billing link opens a new tab
+- Create account validates on submit
+- Setup-link button 44px on touch
+- Model picker opens on Free with no balance
+- Paid-model refusal offers a switch to the free model
+- Phone start uses the chat's send pattern
+- First answer stays in view after the follow-up cards
 - Component canvas: EmptyState size comparison and touch-size note
 - Onboarding Gate Connect setup: routes every app
 - Onboarding phone start: second card reads "Set up Gate access"

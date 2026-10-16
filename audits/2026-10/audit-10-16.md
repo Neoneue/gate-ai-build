@@ -41,7 +41,7 @@ evidence (a measurement taken in this run).
   - Before: `<TextLink className="type-copy-12" to={ONBOARDING_AUTH[version].signUp}>` (and the sign-up footer's `Sign in` link), 16px tall on a touch screen
   - After: add `max-md:relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-1/2 max-md:after:h-9 max-md:after:-translate-y-1/2` (the file's own show-password tap-area recipe, OnboardingSignIn.tsx:102, 36px as the owner set it there)
   - Why: Option B starts at sign-in and a new user's only way forward is this inline link, so the first tap of the demo lands on a 100x16 target, below ux-laws Fitts (44px on touch) and design.md's 24px floor; WCAG 2.5.8 exempts inline links, so this is a Fitts finding, not a WCAG one (getBoundingClientRect: Create an account 100x16, Sign in 37x16, at 390x844 touch).
-- [x] **ux-15 LOW** `flow` pages/onboarding/OnboardingSignUp.tsx:400
+- [x] **ux-15 LOW** `flow` pages/onboarding/OnboardingSignUp.tsx:400 496c972
   - Before: `disabled={!canCreate || pending !== null}` with no line naming what is missing; the EULA checkbox that gates it sits at the top of the card (owner-decided, live product parity 2026-10-12)
   - After: keep `disabled={pending !== null}` only and, on a submit with gaps, mark each unmet field with `FieldError` (components/ui/field.tsx), owner to confirm against the live product
   - Why: a user who fills name, email and a strong password still sees a dead Create account, and the reason (the EULA box) is 485px above it and off screen once the phone keyboard opens, so they cannot tell what to fix (getBoundingClientRect: checkbox y206, Create account y691 at 390x844).
@@ -52,40 +52,40 @@ evidence (a measurement taken in this run).
   - Before: `We'll email{" "}` stays in the future tense after the link is sent, beside the button's "Re-send email"
   - After: a sent-state line once `improved.handoffSent || sentInChat` (string from the copywriter), same place, voice and 8px grouping
   - Why: the only proof of the send is the button's "Email sent!" for 2 seconds, then the card reads "We'll email `user@example.com`." next to "Re-send email", which says the email has not gone yet (measured: label "Email sent!" for 2000ms, then "Re-send email"; line text unchanged; 0 toasts).
-- [x] **ux-5 MEDIUM** `similarity` pages/onboarding/improved-start.tsx:284, pages/onboarding/onboarding-computer-prompt.tsx:199, data/onboarding-chat-script.ts:79
+- [x] **ux-5 MEDIUM** `similarity` pages/onboarding/improved-start.tsx:284, pages/onboarding/onboarding-computer-prompt.tsx:199, data/onboarding-chat-script.ts:79 496c972
   - Before: phone start `Sending link…` 3000ms, `Email sent!` 2000ms, no toast, `Re-send email`; chat offer `Sending email` 2000ms, toast `Setup link sent. Check your email on your computer.`, `Re-send email setup link` (owner-decided per surface, 2026-10-09 and 2026-10-12)
   - After: one send recipe for both surfaces (owner picks which; strings from the copywriter); the chat offer's toast already names the next step
   - Why: it is one action on one object, the same email, reachable twice in one run, yet it reports done two ways with three labels, so the user cannot carry what they learned on one surface to the other (measured: 0 toasts on the start, 1 in the chat; grep: `SEND_MS = 3000`, `emailSend: 2000`).
 
 ### Check your email (phone handoff)
 
-- [x] **ux-16 LOW** `mental-model` pages/onboarding/improved-start.tsx:480, pages/onboarding/improved-start.tsx:567
+- [x] **ux-16 LOW** `mental-model` pages/onboarding/improved-start.tsx:480, pages/onboarding/improved-start.tsx:567 496c972
   - Before: no control opens `/improved-handoff-onboarding`; reached by URL, its 3s auto-open runs the desktop link on the phone, which lands back on the phone start with the toast `Picked up your setup from your phone`
   - After: owner decides: retire the route (the 2026-10-09 decision keeps the phone on its start) or make it the email card's sent state with no auto-open (see Decision needed)
   - Why: the screen the data-model diagram shows after "email a setup link" is never reached, and when it is, the phone tells the user it picked up a setup from their phone, on that phone (grep: 0 `navigate` calls to `ONBOARDING_ROUTES.handoff`; measured: URL back to /overview-onboarding with that toast 3.5s after load at 390x844).
 
 ### Phone Gate Chat
 
-- [x] **ux-2 HIGH** `peak-end` pages/onboarding/onboarding-chat-thread.tsx:92
+- [x] **ux-2 HIGH** `peak-end` pages/onboarding/onboarding-chat-thread.tsx:92 496c972
   - Before: `followPageEnd(target)` on every `contentKey` change, including the two follow-up cards that append after the first reply (owner-decided follow-latest, 2026-10-14)
   - After: when the follow-ups mount after the first reply, scroll the user's first turn to the top of the thread under the top bars instead of to the page end; follow-latest resumes on the next send (the ChatGPT and Claude pattern: the user's turn pins to the top)
   - Why: the logged note and the email offer push the answer to the user's very first question above the fold, so the first reply Gate gives, the peak of the phone path, is never seen without scrolling back (getBoundingClientRect: first reply text top -50px, under 120px of top bars, viewport 844).
-- [x] **ux-9 MEDIUM** `fitts` pages/onboarding/onboarding-computer-prompt.tsx:219
+- [x] **ux-9 MEDIUM** `fitts` pages/onboarding/onboarding-computer-prompt.tsx:219 496c972
   - Before: `size="sm"` on "Email me the setup link", 36px on touch
   - After: `size="default"` (44px on touch), pending the design.md decision below
   - Why: this button is the phone path's conversion (PRD phone step 4) and is 36px on a touch screen, which design.md's touch ladder allows for `sm` but ux-laws Fitts puts at 44px (getBoundingClientRect: 175x36 at 390x844 touch; design.md:613).
-- [x] **ux-7 MEDIUM** `tesler` data/onboarding-chat-script.ts:29
+- [x] **ux-7 MEDIUM** `tesler` data/onboarding-chat-script.ts:29 496c972
   - Before: `PAID_MODEL_HELPER = "Paid models need credits to use."` with send, Enter and all three quick actions off (owner-decided refused send, 2026-10-12)
   - After: the helper line carries one inline action back to the free default (`constellation/qwen3-8-flash-free`), a `TextLink` in the copy voice; string from the copywriter
   - Why: the line names the block but not the way out, so a new user with $0 credits who taps a paid model in the default list has every action dead and must work out to reopen the picker (measured: Send disabled, 3 of 3 quick actions disabled after picking Claude Opus 5; 0 actions in the helper line).
-- [x] **ux-8 MEDIUM** `hicks-law` pages/onboarding/onboarding-model-selector.tsx:108
+- [x] **ux-8 MEDIUM** `hicks-law` pages/onboarding/onboarding-model-selector.tsx:108 496c972
   - Before: `const DEFAULT_MODEL_VIEW: ModelView = "all";`
   - After: open on `"free"` in the phone demo chat while the onboarding balance is 0; All models stays one tap away
   - Why: a brand-new Free user with no credits opens the picker on 421 models where every non-free pick is refused (ux-7), while the Free tab that holds their usable choices sits beside it (measured: "Showing 421 of 421 models", default tab All models, balance $0.00).
 
 ### Set up Gate Connect and Manual setup (desktop step 2)
 
-- [x] **ux-12 LOW** `mental-model` pages/onboarding/improved-setup.tsx:529
+- [x] **ux-12 LOW** `mental-model` pages/onboarding/improved-setup.tsx:529 496c972
   - Before: `<TextLink to="/billing-onboarding">Billing</TextLink>` leaves setup in the same tab
   - After: `TextLink as="a" href="/billing-onboarding" rel="noopener noreferrer" target="_blank"` with the `NEW_TAB_CUE` span (mirror improved-parts.tsx:128-145)
   - Why: every other exit from setup in this flow opens a new tab so setup stays put (Try Gate Chat instead, the four explore rows), so the one same-tab exit breaks the pattern mid-step (grep: `target="_blank"` or `openInNewTab` on 3 setup exits, this link same-tab).
@@ -101,7 +101,7 @@ evidence (a measurement taken in this run).
   - Before: `disabled={checking}` and `disabled={running}` on Check connection, Try again and Send the message, and each button unmounts on a pass
   - After: `aria-disabled={checking}` / `aria-disabled={running}` with `if (checking) return;` / `if (running) return;` at the top of `check` / `runDemo` (mirror improved-start.tsx:266 and :413-414), and on a pass focus the new `StatusRow` given `tabIndex={-1}` (mirror improved-start.tsx:493-497)
   - Why: a disabled button gives up focus to the page, so a keyboard user who presses any of the three lands on the document and Tab restarts at the 20-row rail, and the `StatusRow` mounts with its text already inside, which screen readers often skip (WCAG 2.4.3) (measured: document.activeElement = body after Enter on Check connection, on the pass and on the fail-connection retry).
-- [x] **ux-17 LOW** `similarity` pages/onboarding/improved-setup.tsx:1079, pages/onboarding/improved-art.tsx:572, pages/onboarding/improved-art.tsx:648
+- [x] **ux-17 LOW** `similarity` pages/onboarding/improved-setup.tsx:1079, pages/onboarding/improved-art.tsx:572, pages/onboarding/improved-art.tsx:648 496c972
   - Before: `<StatusRow tone="success">Prompt injection blocked.</StatusRow>` beside the danger `block` badge, and `CircleSlash` in `text-destructive` for both the blocked attack (wire) and the failed connection (Gate tile)
   - After: the failed connection takes `CircleAlert` (the error StatusRow's glyph, improved-parts.tsx:234), so `CircleSlash` means blocked only
   - Why: one red glyph says "Gate stopped an attack" in one state and "your connection failed" in another, so the figure cannot tell success from failure at a glance (grep: `CircleSlash` 2 render sites in improved-art.tsx, states blocked and error).
@@ -112,7 +112,7 @@ evidence (a measurement taken in this run).
 
 ### You're protected and live (complete)
 
-- [x] **ux-3 MEDIUM** `no-duplication` pages/onboarding/onboarding-chrome.tsx:425, pages/onboarding/current-verify.tsx:430
+- [x] **ux-3 MEDIUM** `no-duplication` pages/onboarding/onboarding-chrome.tsx:425, pages/onboarding/current-verify.tsx:430 496c972
   - Before: top bar `Tasks 0/4` with an Optional list of the same four tasks, and the page's `0/4 done`, progress bar and four rows (owner-decided parts, 2026-10-13)
   - After: one home for the count and the list on this page, owner to pick (see Decision needed)
   - Why: the same count and the same four tasks appear twice in one view and move together, against the standing law that every value appears once (gateway-context.md:95) (measured: "Tasks 1/4" and "1/4 done" both after one row click at 1440x1000).
