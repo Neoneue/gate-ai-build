@@ -30,14 +30,14 @@ evidence (a measurement taken in this run).
 
 ### Global
 
-- [x] **ux-14 LOW** `similarity` pages/onboarding/onboarding-chat-landing.tsx:177, pages/onboarding/improved-parts.tsx:138, pages/onboarding/current-verify.tsx:494, pages/onboarding/improved-start.tsx:193
+- [x] **ux-14 LOW** `similarity` pages/onboarding/onboarding-chat-landing.tsx:177, pages/onboarding/improved-parts.tsx:138, pages/onboarding/current-verify.tsx:494, pages/onboarding/improved-start.tsx:193 e33a59e e33a59e
   - Before: `<ArrowUpRight` on the chat quick actions (sends a prompt in place) and on "Try Gate Chat instead" and the four explore rows (opens a new tab), while "Open Gate Chat" marks its new tab with `<ExternalLinkIcon`
   - After: one meaning per glyph across the flow, owner to pick (see Decision needed); the same class as audit-10-5 ux-3
   - Why: one arrow means "send here" on the chips and "new tab" on the setup links, and the new tab has two glyphs, so the icon cannot predict what a tap does (grep: `ArrowUpRight` 4 render sites in the Improved flow, onboarding-chat-landing.tsx:177 and :557, improved-parts.tsx:138, current-verify.tsx:494; `ExternalLinkIcon` 2, improved-start.tsx:193 and improved-setup.tsx:1274).
 
 ### Sign in and sign up (phone)
 
-- [x] **ux-6 MEDIUM** `fitts` pages/onboarding/OnboardingSignIn.tsx:153, pages/onboarding/OnboardingSignUp.tsx:446
+- [x] **ux-6 MEDIUM** `fitts` pages/onboarding/OnboardingSignIn.tsx:153, pages/onboarding/OnboardingSignUp.tsx:446 e33a59e e33a59e
   - Before: `<TextLink className="type-copy-12" to={ONBOARDING_AUTH[version].signUp}>` (and the sign-up footer's `Sign in` link), 16px tall on a touch screen
   - After: add `max-md:relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-1/2 max-md:after:h-9 max-md:after:-translate-y-1/2` (the file's own show-password tap-area recipe, OnboardingSignIn.tsx:102, 36px as the owner set it there)
   - Why: Option B starts at sign-in and a new user's only way forward is this inline link, so the first tap of the demo lands on a 100x16 target, below ux-laws Fitts (44px on touch) and design.md's 24px floor; WCAG 2.5.8 exempts inline links, so this is a Fitts finding, not a WCAG one (getBoundingClientRect: Create an account 100x16, Sign in 37x16, at 390x844 touch).
@@ -48,7 +48,7 @@ evidence (a measurement taken in this run).
 
 ### Phone start (two cards)
 
-- [x] **ux-4 MEDIUM** `mental-model` pages/onboarding/improved-start.tsx:405
+- [x] **ux-4 MEDIUM** `mental-model` pages/onboarding/improved-start.tsx:405 e33a59e e33a59e
   - Before: `We'll email{" "}` stays in the future tense after the link is sent, beside the button's "Re-send email"
   - After: a sent-state line once `improved.handoffSent || sentInChat` (string from the copywriter), same place, voice and 8px grouping
   - Why: the only proof of the send is the button's "Email sent!" for 2 seconds, then the card reads "We'll email `user@example.com`." next to "Re-send email", which says the email has not gone yet (measured: label "Email sent!" for 2000ms, then "Re-send email"; line text unchanged; 0 toasts).
@@ -96,7 +96,7 @@ evidence (a measurement taken in this run).
 
 ### Check connection (desktop step 3)
 
-- [x] **ux-1 HIGH** `focus-order` pages/onboarding/improved-setup.tsx:1039, pages/onboarding/improved-setup.tsx:1116
+- [x] **ux-1 HIGH** `focus-order` pages/onboarding/improved-setup.tsx:1039, pages/onboarding/improved-setup.tsx:1116 e33a59e e33a59e
   - Before: `disabled={checking}` and `disabled={running}` on Check connection, Try again and Send the message, and each button unmounts on a pass
   - After: `aria-disabled={checking}` / `aria-disabled={running}` with `if (checking) return;` / `if (running) return;` at the top of `check` / `runDemo` (mirror improved-start.tsx:266 and :413-414), and on a pass focus the new `StatusRow` given `tabIndex={-1}` (mirror improved-start.tsx:493-497)
   - Why: a disabled button gives up focus to the page, so a keyboard user who presses any of the three lands on the document and Tab restarts at the 20-row rail, and the `StatusRow` mounts with its text already inside, which screen readers often skip (WCAG 2.4.3) (measured: document.activeElement = body after Enter on Check connection, on the pass and on the fail-connection retry).
@@ -104,7 +104,7 @@ evidence (a measurement taken in this run).
   - Before: `<StatusRow tone="success">Prompt injection blocked.</StatusRow>` beside the danger `block` badge, and `CircleSlash` in `text-destructive` for both the blocked attack (wire) and the failed connection (Gate tile)
   - After: the failed connection takes `CircleAlert` (the error StatusRow's glyph, improved-parts.tsx:234), so `CircleSlash` means blocked only
   - Why: one red glyph says "Gate stopped an attack" in one state and "your connection failed" in another, so the figure cannot tell success from failure at a glance (grep: `CircleSlash` 2 render sites in improved-art.tsx, states blocked and error).
-- [x] **ux-10 LOW** `copy` pages/onboarding/improved-setup.tsx:1094
+- [x] **ux-10 LOW** `copy` pages/onboarding/improved-setup.tsx:1094 e33a59e e33a59e
   - Before: `Gate didn’t get a result for that message. Send it again.` above a button reading `Try again`
   - After: one verb in the line and the button (string from the copywriter)
   - Why: the error tells the user to "send it again" and the only action says "Try again", so the instruction and the control disagree (grep: 1 hit each at improved-setup.tsx:1094 and :1130).
@@ -115,7 +115,7 @@ evidence (a measurement taken in this run).
   - Before: top bar `Tasks 0/4` with an Optional list of the same four tasks, and the page's `0/4 done`, progress bar and four rows (owner-decided parts, 2026-10-13)
   - After: one home for the count and the list on this page, owner to pick (see Decision needed)
   - Why: the same count and the same four tasks appear twice in one view and move together, against the standing law that every value appears once (gateway-context.md:95) (measured: "Tasks 1/4" and "1/4 done" both after one row click at 1440x1000).
-- [x] **ux-11 LOW** `copy` pages/onboarding/onboarding-chrome.tsx:106, pages/onboarding/current-verify.tsx:358
+- [x] **ux-11 LOW** `copy` pages/onboarding/onboarding-chrome.tsx:106, pages/onboarding/current-verify.tsx:358 e33a59e e33a59e
   - Before: `See token savings` (Tasks menu) and `See your token savings` (page row) for one task
   - After: one label for the task in both lists (string from the copywriter)
   - Why: the two lists sit in the same view and name the same task two ways, so they read as two tasks (grep: 1 hit each).

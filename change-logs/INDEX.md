@@ -9,6 +9,14 @@ tokens; this index exists so nothing has to glob the directory.
 
 ## October 2026
 
+### [2026-10-16](./2026-10/changelog-10-16.md)
+
+- Component canvas: EmptyState size comparison and touch-size note
+- Onboarding Gate Connect setup: routes every app
+- Onboarding phone start: second card reads "Set up Gate access"
+- Onboarding: audit 2026-10-16 fixes (ux-1, 4, 6, 10, 11, 14)
+- data-model.md: onboarding workspace synced with the code
+
 ### [2026-10-15](./2026-10/changelog-10-15.md)
 
 - Onboarding: B's Get started landing renders after signup; reload once on a stale chunk
