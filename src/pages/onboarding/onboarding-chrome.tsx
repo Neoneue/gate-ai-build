@@ -103,7 +103,11 @@ const EXPLORE_TASKS: { task: ExploreTask; label: string; to: string }[] = [
     to: ONBOARDING_EXITS.policies,
   },
   { task: "limits", label: "Set spend limits", to: ONBOARDING_EXITS.limits },
-  { task: "savings", label: "See token savings", to: ONBOARDING_EXITS.savings },
+  {
+    task: "savings",
+    label: "See your token savings",
+    to: ONBOARDING_EXITS.savings,
+  },
   { task: "models", label: "Browse Gate models", to: ONBOARDING_EXITS.models },
 ];
 

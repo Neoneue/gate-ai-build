@@ -10,12 +10,14 @@ import { useEffect } from "react";
  * `data-motion-no-replay` (the setup route stage, owner 2026-10-09: it
  * replays on its own app and model changes instead). Under reduced motion no
  * root is ever armed, so the art shows its static end state.
- * A root with `data-motion-loop` (the phone start card's chat art) loops:
- * once its sequence settles it holds the end state for LOOP_HOLD_MS, sets
- * `data-motion-reset` (a short beat that clears the art back to the
- * sequence's first frame), then restarts. The hold only counts down while
- * the root is in view on a visible tab; leaving pauses it, returning starts
- * the hold again.
+ * A root with `data-motion-loop` (the phone start card's chat art, the
+ * Gate Connect setup page's orbit art) loops: once its sequence settles it
+ * holds the end state, sets `data-motion-reset` (a short beat that clears
+ * the art back to the sequence's first frame), then restarts. The hold is
+ * the attribute's value in ms, or LOOP_HOLD_MS when it is empty; a root
+ * sets its own so its run, hold and reset add up to its period. The hold
+ * only counts down while the root is in view on a visible tab; leaving
+ * pauses it, returning starts the hold again.
  * A MutationObserver picks up roots that mount later (step changes,
  * selection swaps). Keyframes live in onboarding-motion.css.
  * ───────────────────────────────────────────────────────────────────────── */
@@ -34,6 +36,7 @@ function arm(root: HTMLElement): () => void {
   let phase: "run" | "hold" | "reset" = "run";
   let holdTimer = 0;
   const loop = root.hasAttribute(LOOP);
+  const hold = Number(root.getAttribute(LOOP)) || LOOP_HOLD_MS;
   const set = (value: string) => root.setAttribute(ATTR, value);
   const visible = () => inView && !document.hidden;
   const holdThenReset = () => {
@@ -44,7 +47,7 @@ function arm(root: HTMLElement): () => void {
         holdTimer = 0;
         phase = "reset";
         root.setAttribute(RESET, "");
-      }, LOOP_HOLD_MS);
+      }, hold);
     }
   };
   const sync = () => {

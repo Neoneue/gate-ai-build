@@ -150,8 +150,10 @@ export function OnboardingSignIn({ version }: { version: PhoneDemoVersion }) {
       <CardFooter className="justify-center p-6 pt-2">
         <p className="type-copy-12 text-muted-foreground">
           New to Constellation Gate?{" "}
+          {/* Below md: a 36px-tall tap area on the 16px line, the
+              show-password recipe. */}
           <TextLink
-            className="type-copy-12"
+            className="type-copy-12 max-md:relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-1/2 max-md:after:h-9 max-md:after:-translate-y-1/2"
             to={ONBOARDING_AUTH[version].signUp}
           >
             Create an account

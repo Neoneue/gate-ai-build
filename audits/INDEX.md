@@ -9,6 +9,11 @@ applied. Rules and the alias table: `.claude/skills/ui-audit/audit-file.md`.
 
 ## October 2026
 
+### [2026-10-16](./2026-10/audit-10-16.md)
+
+- `ux` ux-laws, Improved onboarding flow (Option B), phone 390x844 and desktop 1440x1000, browser walk: ux-1 to ux-17, 0/17 applied.
+  Qualified; 2 HIGH (Check connection drops keyboard focus; the phone chat hides the first answer) / 7 MEDIUM / 8 LOW.
+
 ### [2026-10-05](./2026-10/audit-10-5.md)
 
 - `ux` ux-laws, whole site (six review agents, every route twin plus shell and primitives): ux-1 to ux-96 (8 unwired mockup controls removed), 0/88 applied.

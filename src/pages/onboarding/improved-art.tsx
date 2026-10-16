@@ -159,17 +159,32 @@ const orbitPoint = (index: number) => {
   };
 };
 
+/** The Gate Connect setup page loops the orbit so a run starts every 5s
+ *  (owner 2026-10-15): the sequence settles at 3500ms (2500ms x --pace 1.4,
+ *  onboarding-motion.css), then this hold, then the 200ms reset beat:
+ *  3500 + 1300 + 200 = 5000. */
+const CONNECT_LOOP_HOLD_MS = 1300;
+
 /** Gate Connect: five app satellites around the Gate hub, with the signal
  *  dots that travel satellite -> hub (hidden at rest). The dashed orbit is
  *  an SVG so a light-blue run of the same dashes can travel along it,
- *  masked to a short arc the animator moves app to app. */
-export function ConnectArt({ ref }: { ref?: Ref<HTMLSpanElement> }) {
+ *  masked to a short arc the animator moves app to app. The setup page
+ *  passes `loop` so its sequence replays every 5s (use-onboarding-motion.ts);
+ *  the start page's card plays it once. */
+export function ConnectArt({
+  ref,
+  loop = false,
+}: {
+  ref?: Ref<HTMLSpanElement>;
+  loop?: boolean;
+}) {
   const apps = IMPROVED_CLIENTS.slice(0, 5);
   const orbitMask = useId();
   return (
     <span
       aria-hidden
       className="relative block size-54"
+      data-motion-loop={loop ? CONNECT_LOOP_HOLD_MS : undefined}
       data-motion-root="connect-art"
       ref={ref}
     >
