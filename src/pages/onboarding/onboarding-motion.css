@@ -447,6 +447,21 @@
     var(--ease-out) backwards;
 }
 
+/* Loop reset (Gate Connect setup page only; `data-motion-reset`, set by the
+ * hook after the 1300ms hold, owner 2026-10-15): the end frame differs from
+ * the first only in the hub's lit border, so one 200ms beat returns it to
+ * gray and the replay starts from what is on screen with no cut. Run 3500 +
+ * hold 1300 + reset 200 = a new run every 5000ms. */
+@keyframes art-hub-unlit {
+  to {
+    border-color: var(--border);
+  }
+}
+
+[data-motion-root="connect-art"][data-motion-reset] [data-motion="hub"] {
+  animation: art-hub-unlit 200ms var(--ease-out) forwards;
+}
+
 /* ─── Setup route ──────────────────────────────────────────────────────────
  * The setup step's route figure (owner, 2026-10-09) tells the Connect art's
  * story in a line: the same tap, packet and hub keyframes, curves and pace

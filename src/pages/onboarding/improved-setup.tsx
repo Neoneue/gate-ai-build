@@ -1,5 +1,5 @@
 import { ArrowRight, CirclePlus, Info, Loader2, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
 import { BackLink } from "@/components/ui/back-link";
@@ -37,7 +37,7 @@ import { AddCreditsDialog, CreditStatRow } from "@/pages/billing/CreditsCard";
 import { DownloadGateConnectDialog } from "@/pages/DashboardDefault";
 import { StepIndicator } from "@/pages/onboarding/current-parts";
 import { ProtectedAndLive } from "@/pages/onboarding/current-verify";
-import { AppIcon } from "@/pages/onboarding/improved-art";
+import { AppIcon, ConnectArt } from "@/pages/onboarding/improved-art";
 import {
   ATTACK_MESSAGE,
   appNameOf,
@@ -184,9 +184,6 @@ function PrepareSetup() {
   const model = modelOf(improved);
   const keySelected = improved.keys.some(
     (key) => key.id === improved.selectedKeyId
-  );
-  const clients = IMPROVED_CLIENTS.filter(
-    (option) => !connect || option.id !== "openai-sdk"
   );
   // Manual setup's app is the original block's tab; an app it has no tab
   // for (picked earlier on Gate Connect) falls back to its first tab.
@@ -358,18 +355,14 @@ function PrepareSetup() {
     navigate(ONBOARDING_ROUTES.verify);
   };
 
-  // "Select an app" (owner 2026-10-14): Gate Connect's first step; on Manual
-  // it replaces the snippet's tabs and follows the key, billing and credits,
-  // since the app decides which models work and the snippet's shape. Both
-  // methods carry the tip (Manual's added owner 2026-10-14).
+  // "Select an app" (owner 2026-10-14), Manual only since Gate Connect
+  // routes every app (owner 2026-10-15): it replaces the snippet's tabs and
+  // follows the key, billing and credits, since the app decides which
+  // models work and the snippet's shape.
   const appSection = (
     <SetupGroup
       description="Which app do you want to protect?"
-      tip={
-        connect
-          ? "Just a starting point. Gate Connect can route any of your apps, not only this one."
-          : "Just a starting point. Your base URL and key work in any app you choose, not only this one."
-      }
+      tip="Just a starting point. Your base URL and key work in any app you choose, not only this one."
       title="Select an app"
     >
       <Select
@@ -399,7 +392,7 @@ function PrepareSetup() {
         </SelectTrigger>
         <SelectContent>
           {CLIENT_GROUPS.map((group) => {
-            const members = clients.filter(
+            const members = IMPROVED_CLIENTS.filter(
               (option) => option.group === group.id
             );
             return members.length > 0 ? (
@@ -429,32 +422,34 @@ function PrepareSetup() {
         title={connect ? "Set up Gate Connect" : "Manual setup"}
       />
       <div className="grid @4xl:grid-cols-[5fr_6fr] items-start gap-10">
+        {/* The stage is the route figure's motion root only on Manual: the
+            orbit art's parts key on any playing ancestor, so a second root
+            here would drive them too and its loop could not restart. No
+            replay on hover for either art: the route replays on a new
+            route, the orbit on its own 5s clock. */}
         <aside
           className="relative @4xl:sticky @4xl:top-6 grid min-h-75 place-items-center rounded-md border border-border bg-muted p-4"
           data-motion-no-replay=""
-          data-motion-root="route-stage"
+          data-motion-root={connect ? undefined : "route-stage"}
         >
-          {/* Keyed on the route it shows: a new app, billing or model
-              remounts the figure, so its sequence replays from frame one
-              (onboarding-motion.css, Setup route). */}
-          <ImprovedRouteFigure
-            // Gate Connect has one billing, so its figure carries no billing
-            // badge (owner 2026-10-14); Manual keeps it.
-            caption={
-              connect
-                ? undefined
-                : payg
-                  ? "Uses Gate credits"
-                  : "Billed by your provider"
-            }
-            centered
-            improved={improved}
-            key={`${client.id}:${improved.billing}:${model.id}`}
-          />
+          {/* Gate Connect routes every app on the computer (owner
+              2026-10-15), so it shows the start page's orbit art, not one
+              app's route, looping every 5s (owner 2026-10-15). Manual keeps
+              its route figure, keyed on the route it shows: a new app,
+              billing or model remounts the figure, so its sequence replays
+              from frame one (onboarding-motion.css, Setup route). */}
+          {connect ? (
+            <ConnectArt loop />
+          ) : (
+            <ImprovedRouteFigure
+              caption={payg ? "Uses Gate credits" : "Billed by your provider"}
+              centered
+              improved={improved}
+              key={`${client.id}:${improved.billing}:${model.id}`}
+            />
+          )}
         </aside>
         <div className="flex min-w-0 flex-col gap-6">
-          {connect ? appSection : null}
-
           {/* Dimmed and inert until there are credits (owner 2026-10-13:
               hide branches, dim sequences). */}
           {connect ? (
@@ -481,8 +476,11 @@ function PrepareSetup() {
                       <ol className="m-0 flex list-none flex-col gap-3 p-0">
                         {[
                           "Sign in to Gate Connect.",
-                          `Toggle Routing On for ${app}.`,
-                          ...(client.restartStep ? [client.restartStep] : []),
+                          // Gate Connect finds every app and routes it from
+                          // the start (owner 2026-10-15): no toggle, no
+                          // per-app step.
+                          "Apps are routed by default.",
+                          "Quit and reopen any app that was already running.",
                         ].map((text, index) => (
                           <li className="flex items-center gap-3" key={text}>
                             <StepIndicator n={index + 1} state="upcoming" />
@@ -514,7 +512,7 @@ function PrepareSetup() {
                       <p className="type-copy-14 m-0 flex items-start gap-3 text-muted-foreground">
                         {/* An info mark sets the note apart from the
                             numbered steps above (owner 2026-10-14), the same
-                            mark as the "Select an app" tip. */}
+                            mark as Manual's "Select an app" tip. */}
                         {/* The step circles' 24px slot and 12px gap, so the
                             mark centres under the numbers and the text starts
                             where the steps' text does (owner 2026-10-14). */}
@@ -542,7 +540,7 @@ function PrepareSetup() {
                     >
                       {improved.downloaded ? (
                         <Button onClick={acknowledge} size="default">
-                          I've connected {app}
+                          Ready to test connection
                           <ArrowRight aria-hidden data-icon="inline-end" />
                         </Button>
                       ) : (
@@ -903,7 +901,20 @@ function VerifyConnection() {
   const [attempts, setAttempts] = useState({ connection: 0, demo: 0 });
   const [connectionFailed, setConnectionFailed] = useState(false);
   const [demoFailed, setDemoFailed] = useState(false);
-  const app = appNameOf(improved);
+  // A pass unmounts its button, so focus moves to the new result line, not
+  // the page (WCAG 2.4.3). Set only by a check run on this visit.
+  const focusResult = useRef<"received" | "caught" | null>(null);
+  const takeFocus =
+    (step: "received" | "caught") => (node: HTMLDivElement | null) => {
+      if (node && focusResult.current === step) {
+        focusResult.current = null;
+        node.focus();
+      }
+    };
+  // Gate Connect routes every app (owner 2026-10-15), so its lines name no
+  // app; Manual names the one it set up.
+  const app =
+    improved.connection === "gate-connect" ? null : appNameOf(improved);
   const client = clientOf(improved);
   const model = modelOf(improved);
   const testModel = testModelOf(improved);
@@ -934,6 +945,9 @@ function VerifyConnection() {
   // the first message lands (the mockup's received state), or, previewing
   // the failure state, the first check fails.
   const check = async () => {
+    if (checking) {
+      return;
+    }
     const fail = pendingFail.connection && attempts.connection === 0;
     setAttempts((count) => ({ ...count, connection: count.connection + 1 }));
     setConnectionFailed(false);
@@ -944,6 +958,7 @@ function VerifyConnection() {
       setConnectionFailed(true);
       return;
     }
+    focusResult.current = "received";
     updateImproved({
       received: true,
       connected: true,
@@ -952,6 +967,9 @@ function VerifyConnection() {
   };
 
   const runDemo = () => {
+    if (running) {
+      return;
+    }
     const fail = pendingFail.demo && attempts.demo === 0;
     setAttempts((count) => ({ ...count, demo: count.demo + 1 }));
     setDemoFailed(false);
@@ -962,6 +980,7 @@ function VerifyConnection() {
         setDemoFailed(true);
         return;
       }
+      focusResult.current = "caught";
       updateImproved({ caught: true, caughtAt: Date.now() });
     }, ROUTE_CHECK_MS);
   };
@@ -1004,7 +1023,9 @@ function VerifyConnection() {
               <CardContent className="flex flex-col gap-4">
                 {improved.received ? (
                   <>
-                    <StatusRow tone="success">Message received</StatusRow>
+                    <StatusRow ref={takeFocus("received")} tone="success">
+                      Message received
+                    </StatusRow>
                     {/* What Gate saw for the test message (PRD desktop
                         step 3): CreditStatRow's label and value voices,
                         the Messages page's labels. */}
@@ -1019,12 +1040,13 @@ function VerifyConnection() {
                   <>
                     {connectionFailed ? (
                       <StatusRow tone="error">
-                        Gate didn’t receive the test message from {app}. Check
-                        your connection settings, then try again.
+                        Gate didn’t receive the test message
+                        {app ? ` from ${app}` : null}. Check your connection
+                        settings, then try again.
                       </StatusRow>
                     ) : null}
                     <p className="type-copy-14 m-0 text-muted-foreground">
-                      Send this from {app} to check the connection.
+                      Send this from {app ?? "any app"} to check the connection.
                     </p>
                     <div className="flex max-w-full items-center gap-3 rounded-sm border border-border bg-card py-2 pr-2 pl-4 text-left">
                       <span className="type-mono-14 wrap-anywhere min-w-0 flex-1 text-foreground">
@@ -1033,8 +1055,8 @@ function VerifyConnection() {
                       <CopyButton label="test message" value={TEST_MESSAGE} />
                     </div>
                     <Button
+                      aria-disabled={checking || undefined}
                       className="self-start"
-                      disabled={checking}
                       onClick={() => void check()}
                       size="default"
                     >
@@ -1074,7 +1096,7 @@ function VerifyConnection() {
                 <CardContent className="flex flex-col gap-4">
                   {improved.caught ? (
                     <>
-                      <StatusRow tone="success">
+                      <StatusRow ref={takeFocus("caught")} tone="success">
                         Prompt injection blocked.
                       </StatusRow>
                       {/* What Gate saw for the demo message, card 1's rows
@@ -1089,7 +1111,7 @@ function VerifyConnection() {
                   ) : null}
                   {demoFailed ? (
                     <StatusRow tone="error">
-                      Gate didn’t get a result for that message. Send it again.
+                      Gate didn’t get a result for that message. Try again.
                     </StatusRow>
                   ) : null}
                   {/* Card 1's format (owner 2026-10-13): the message in a
@@ -1110,8 +1132,8 @@ function VerifyConnection() {
                   )}
                   {improved.caught ? null : (
                     <Button
+                      aria-disabled={running || undefined}
                       className="self-start"
-                      disabled={running}
                       onClick={runDemo}
                       size="default"
                     >

@@ -1,13 +1,14 @@
 import {
-  ArrowUpRight,
+  AppWindow,
   Box,
   CircleAlert,
   CircleCheck,
   Info,
   Sparkles,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { VendorAvatar } from "@/components/icons/vendor-avatar";
+import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { PageTitle } from "@/components/ui/page-title";
 import { TextLink } from "@/components/ui/text-link";
 import {
@@ -31,8 +32,8 @@ import type { ImprovedState } from "@/pages/onboarding/onboarding-state";
 /* ─── Improved flow: shared parts ───────────────────────────────────────── */
 
 /** The route figure for the current choices: app -> Gate -> target. Manual
- *  shows its app too, the one its snippet tabs have selected (owner
- *  2026-10-14, matching Gate Connect's figure). */
+ *  shows the app it set up (owner 2026-10-14); Gate Connect, which routes
+ *  every app, a generic one (owner 2026-10-15). */
 export function ImprovedRouteFigure({
   improved,
   state,
@@ -55,12 +56,21 @@ export function ImprovedRouteFigure({
   // Gate credits is named; Gate Connect has no pick (the desktop app keeps
   // the tool's own default), so the rest show a generic model.
   const pickedModel = payg && improved.connection === "manual";
+  // Gate Connect routes every app (owner 2026-10-15), so no app is picked
+  // and the figure shows a generic app, as it does a generic model.
+  const anyApp = improved.connection === "gate-connect";
   return (
     <RouteFigure
-      app={appNameOf(improved)}
+      app={anyApp ? "App" : appNameOf(improved)}
       appIcon={
         chat ? (
           <GateMark className="size-6" />
+        ) : anyApp ? (
+          <AppWindow
+            aria-hidden
+            className="size-6 text-foreground"
+            strokeWidth={1.75}
+          />
         ) : (
           <AppIcon className="size-6" src={clientOf(improved).icon} />
         )
@@ -113,8 +123,9 @@ export function ImprovedHeader({
 /** "Try Gate Chat instead" (PRD "Onboarding by device", desktop step 5: it
  *  "stays visible for users who do not want to set up a tool yet"; every
  *  first-run screen shows the other path). A quiet page-level link on the
- *  setup steps' title row; opens Gate Chat in a new tab so setup stays put.
- *  DocsLink's new-tab recipe (current-parts.tsx). */
+ *  setup steps' title row; opens Gate Chat in a new tab so setup stays put,
+ *  with the new-tab icon (owner 2026-10-13), as the Default Overview's
+ *  "Read API docs". */
 export function TryGateChatLink() {
   return (
     <TextLink
@@ -125,11 +136,7 @@ export function TryGateChatLink() {
       target="_blank"
     >
       Try Gate Chat instead
-      <ArrowUpRight
-        aria-hidden
-        className="size-3 shrink-0"
-        strokeWidth={1.75}
-      />
+      <ExternalLinkIcon aria-hidden className="shrink-0" size={12} />
       <span className="sr-only"> {NEW_TAB_CUE}</span>
     </TextLink>
   );
@@ -213,13 +220,16 @@ export function SetupGroup({
  *  2026-10-13): a `rounded-xs` row on the status badge's tone pairing
  *  (badge.tsx `success` / `destructive`: 100 fill and 800 ink, the dark
  *  recipe's wash and 300 ink), a circle glyph, the text in the label voice.
- *  Success is a polite status; failure is an alert. */
+ *  Success is a polite status; failure is an alert. `ref`: the row can
+ *  take focus (`tabIndex -1`), for a result whose action unmounts. */
 export function StatusRow({
   tone,
   children,
+  ref,
 }: {
   tone: "success" | "error";
   children: ReactNode;
+  ref?: Ref<HTMLDivElement>;
 }) {
   const Icon = tone === "success" ? CircleCheck : CircleAlert;
   return (
@@ -230,7 +240,9 @@ export function StatusRow({
           ? "bg-success-100 text-success-800 dark:bg-success-500/15 dark:text-success-300"
           : "bg-danger-100 text-danger-800 dark:bg-destructive/20 dark:text-danger-300"
       )}
+      ref={ref}
       role={tone === "success" ? "status" : "alert"}
+      tabIndex={ref ? -1 : undefined}
     >
       {/* h-5 centers the 16px glyph on the first 20px line (Callout). */}
       <span aria-hidden className="flex h-5 shrink-0 items-center">

@@ -443,8 +443,10 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
       <CardFooter className="justify-center p-6 pt-2">
         <p className="type-copy-12 text-muted-foreground">
           Already have an account?{" "}
+          {/* Below md: a 36px-tall tap area on the 16px line, the
+              show-password recipe. */}
           <TextLink
-            className="type-copy-12"
+            className="type-copy-12 max-md:relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:top-1/2 max-md:after:h-9 max-md:after:-translate-y-1/2"
             to={ONBOARDING_AUTH[version].signIn}
           >
             Sign in

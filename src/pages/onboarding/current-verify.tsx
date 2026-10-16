@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  ArrowUpRight,
   Box,
   CircleCheck,
   Clock,
@@ -21,6 +20,7 @@ import type { LayoutContext } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
+import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { PageTitle } from "@/components/ui/page-title";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { cn } from "@/lib/utils";
@@ -491,10 +491,10 @@ export function ProtectedAndLive({
                       strokeWidth={1.75}
                     />
                   ) : (
-                    <ArrowUpRight
+                    <ExternalLinkIcon
                       aria-hidden
-                      className="size-4 shrink-0 text-muted-foreground"
-                      strokeWidth={1.75}
+                      className="shrink-0 text-muted-foreground"
+                      size={16}
                     />
                   )}
                 </RowActionButton>

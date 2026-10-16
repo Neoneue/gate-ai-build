@@ -383,43 +383,55 @@ function MobileStart() {
             >
               <div className="flex min-w-0 flex-col gap-1">
                 <h2
-                  className="type-heading-16 m-0 flex items-center gap-2 text-foreground"
+                  className="type-heading-20 m-0 flex items-center gap-2 text-foreground"
                   id="mobile-desktop-title"
                 >
                   <Monitor
                     aria-hidden
-                    className="size-4 shrink-0"
+                    className="size-5 shrink-0"
                     strokeWidth={1.75}
                   />
-                  Continue on desktop
+                  Set up Gate access
                 </h2>
                 <p className="type-copy-14 m-0 text-muted-foreground">
-                  Email a setup link to{" "}
+                  Connect AI apps like Claude Code and Codex on your computer to
+                  Gate.
+                  <br />
+                  Start getting prompt protection, token saving options, ways to
+                  track team spend, and more.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="type-copy-14 m-0 text-muted-foreground">
+                  {improved.handoffSent || setupLinkSent
+                    ? "We sent it to"
+                    : "We'll email"}{" "}
                   <span className="wrap-anywhere text-foreground">
                     {OWNER_EMAIL}
                   </span>
+                  .
                 </p>
+                <Button
+                  aria-busy={link.sending}
+                  aria-disabled={link.busy}
+                  className="w-full"
+                  onClick={() => void link.send()}
+                  size="default"
+                  variant="outline"
+                >
+                  {link.sending ? (
+                    <Loader2
+                      aria-hidden
+                      className="animate-spin motion-reduce:animate-none"
+                      data-icon="inline-start"
+                    />
+                  ) : null}
+                  {link.busy ? null : (
+                    <Mail aria-hidden data-icon="inline-start" />
+                  )}
+                  {link.label}
+                </Button>
               </div>
-              <Button
-                aria-busy={link.sending}
-                aria-disabled={link.busy}
-                className="w-full"
-                onClick={() => void link.send()}
-                size="default"
-                variant="outline"
-              >
-                {link.sending ? (
-                  <Loader2
-                    aria-hidden
-                    className="animate-spin motion-reduce:animate-none"
-                    data-icon="inline-start"
-                  />
-                ) : null}
-                {link.busy ? null : (
-                  <Mail aria-hidden data-icon="inline-start" />
-                )}
-                {link.label}
-              </Button>
             </section>
           </div>
         </Card>

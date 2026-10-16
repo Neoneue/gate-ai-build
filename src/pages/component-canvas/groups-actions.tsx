@@ -34,6 +34,12 @@ export const BUTTON_VARIANTS = [
   "lift-ghost",
 ] as const;
 
+/** On a touch screen every size steps up (design.md Touch targets, owner
+ *  2026-10-14: Button 32 / 36 / 44, the icon squares the same; Input,
+ *  InputGroup, Select and SegmentedPill too). The step-up is
+ *  `pointer-coarse:` inside each primitive, so the canvas shows the touch
+ *  sizes only on a touch device or under DevTools touch emulation; a mouse
+ *  sees the sizes below. */
 const BUTTON_TEXT_SIZES = ["xs", "sm", "default"] as const;
 const BUTTON_ICON_SIZES = [
   "icon-xs",
