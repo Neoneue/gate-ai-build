@@ -20,7 +20,6 @@ export const ONBOARDING_ROUTES = {
   attack: "/setup-attack-onboarding",
   complete: "/setup-complete-onboarding",
   /* Improved flow */
-  handoff: "/improved-handoff-onboarding",
   link: "/improved-link-onboarding",
   improvedConnect: "/improved-connect-onboarding",
   verify: "/improved-verify-onboarding",

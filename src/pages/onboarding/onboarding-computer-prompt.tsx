@@ -210,13 +210,15 @@ function SetupLinkButton() {
   // Large text (200%): the label is wider than a phone card, so the button
   // is capped at the card's width and the label ends in an ellipsis instead
   // of pushing the page sideways. At 100% it fits and nothing changes.
+  // `default`, not `sm`: the phone path's conversion action reaches 44px on
+  // a touch screen (design.md Touch targets, audit 2026-10-16 ux-9).
   return (
     <Button
       aria-busy={sending}
       aria-disabled={sending}
       className="max-w-full"
       onClick={send}
-      size="sm"
+      size="default"
       type="button"
       variant="outline"
     >

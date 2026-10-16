@@ -363,11 +363,6 @@ const OnboardingCurrentComplete = lazy(() =>
     default: m.CurrentComplete,
   }))
 );
-const OnboardingImprovedHandoff = lazy(() =>
-  import("@/pages/onboarding/improved-start").then((m) => ({
-    default: m.ImprovedHandoff,
-  }))
-);
 const OnboardingImprovedLink = lazy(() =>
   import("@/pages/onboarding/improved-start").then((m) => ({
     default: m.ImprovedLink,
@@ -800,10 +795,6 @@ export function AppRoutes() {
           <Route
             element={<OnboardingCurrentComplete />}
             path="/setup-complete-onboarding"
-          />
-          <Route
-            element={<OnboardingImprovedHandoff />}
-            path="/improved-handoff-onboarding"
           />
           <Route
             element={<OnboardingImprovedLink />}

@@ -526,7 +526,24 @@ function PrepareSetup() {
                         <span>
                           To use Gate models in Gate Connect, add Gate credits
                           on{" "}
-                          <TextLink to="/billing-onboarding">Billing</TextLink>.
+                          {/* A new tab like every other exit from setup
+                              (audit 2026-10-16 ux-12), so setup stays put. */}
+                          <TextLink
+                            as="a"
+                            className="inline-flex items-center gap-1"
+                            href="/billing-onboarding"
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            Billing
+                            <ExternalLinkIcon
+                              aria-hidden
+                              className="shrink-0"
+                              size={12}
+                            />
+                            <span className="sr-only"> {NEW_TAB_CUE}</span>
+                          </TextLink>
+                          .
                         </span>
                       </p>
                     ) : null}

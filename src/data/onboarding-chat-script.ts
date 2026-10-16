@@ -27,6 +27,10 @@ export const ONBOARDING_STARTER_PROMPTS = [
 export const PAID_MODEL_REFUSAL = "Pick a free model to send a message";
 /** The helper line under the composer in that state, in place of the free line. */
 export const PAID_MODEL_HELPER = "Paid models need credits to use.";
+/** The helper's way out (audit 2026-10-16 ux-7, copywriter): one inline
+ *  action back to the free default, named so the user knows what they get. */
+export const paidModelSwitchLabel = (modelName: string) =>
+  `Switch to ${modelName}`;
 
 /** The desktop chat's compare lines under the composer (owner 2026-10-13,
  *  "Do what the PRD suggests"; copywriter, from the PRD "Onboarding by

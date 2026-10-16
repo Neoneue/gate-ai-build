@@ -1,4 +1,11 @@
-import { Check, CircleSlash, Mail, Send, ShieldCheck } from "lucide-react";
+import {
+  Check,
+  CircleAlert,
+  CircleSlash,
+  Mail,
+  Send,
+  ShieldCheck,
+} from "lucide-react";
 import { type ReactNode, type Ref, useId } from "react";
 import { cn } from "@/lib/utils";
 import { IMPROVED_CLIENTS } from "@/pages/onboarding/improved-data";
@@ -646,7 +653,9 @@ export function RouteFigure({
             {guarded ? (
               <ShieldCheck className="size-5" strokeWidth={1.75} />
             ) : (
-              <CircleSlash className="size-5" strokeWidth={1.75} />
+              // The error StatusRow's glyph (audit 2026-10-16 ux-17): the
+              // slashed circle means a blocked attack only.
+              <CircleAlert className="size-5" strokeWidth={1.75} />
             )}
           </span>
         ) : null}

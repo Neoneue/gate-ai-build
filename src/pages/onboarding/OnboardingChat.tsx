@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { TextLink } from "@/components/ui/text-link";
 import { FREE_MODELS } from "@/data/free-models";
 import {
   FREE_COMPARE_HELPER,
@@ -12,6 +13,7 @@ import {
   PAID_CREDITS_HELPER,
   PAID_MODEL_HELPER,
   PAID_MODEL_REFUSAL,
+  paidModelSwitchLabel,
   selectOnboardingReply,
 } from "@/data/onboarding-chat-script";
 import { WORKSPACE_NAME } from "@/data/team-members";
@@ -390,17 +392,35 @@ export function OnboardingChat() {
   const paidModelPicked = anyPaidLane && balanceUsd <= 0;
   // The line under the composer (PRD phone step 2; desktop compare lines
   // and the paid-with-credits lines, owner 2026-10-13).
-  const helperLine = paidModelPicked
-    ? comparing
-      ? PAID_COMPARE_HELPER
-      : PAID_MODEL_HELPER
-    : anyPaidLane
-      ? comparing
-        ? PAID_CREDITS_COMPARE_HELPER
-        : PAID_CREDITS_HELPER
-      : comparing
-        ? FREE_COMPARE_HELPER
-        : "This model is free. Gate scans every message.";
+  // A single refused lane offers the way back to the free default (audit
+  // 2026-10-16 ux-7); the compare line already names its way out.
+  const freeDefaultModel = resolveChatModel(
+    catalog,
+    ONBOARDING_FREE_DEFAULT_ID
+  );
+  const helperLine = paidModelPicked ? (
+    comparing ? (
+      PAID_COMPARE_HELPER
+    ) : (
+      <>
+        {PAID_MODEL_HELPER}{" "}
+        {/* Mid-sentence, so it inherits the line's copy voice. */}
+        <TextLink onClick={() => selectModel(freeDefaultModel.id)}>
+          {paidModelSwitchLabel(freeDefaultModel.label)}
+        </TextLink>
+      </>
+    )
+  ) : anyPaidLane ? (
+    comparing ? (
+      PAID_CREDITS_COMPARE_HELPER
+    ) : (
+      PAID_CREDITS_HELPER
+    )
+  ) : comparing ? (
+    FREE_COMPARE_HELPER
+  ) : (
+    "This model is free. Gate scans every message."
+  );
 
   // Returning true clears the draft (the composer's contract for a send that
   // went out); false keeps it on screen.
@@ -602,6 +622,7 @@ export function OnboardingChat() {
           ) : conversation.turns.length > 0 ? (
             mobileA ? (
               <OnboardingChatThread
+                pinTurnId={followUpTurnId}
                 renderTurn={renderMobileATurn}
                 turns={conversation.turns}
               />
