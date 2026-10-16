@@ -455,22 +455,28 @@ const heroNumeric: CanvasGroup = {
   ],
 };
 
+const EMPTY_STATE_SIZES = ["page", "card"] as const;
+
 const emptyState: CanvasGroup = {
   id: "empty-state",
   title: "EmptyState",
   files: ["empty-state.tsx"],
   columns: 2,
   examples: [
-    {
-      label: "title + body",
+    // Title size (design.md TableEmptyState, owner 2026-10-13): `page` is
+    // the 20px foreground block heading, `card` the 16px muted card-title
+    // heading, so an empty state inside a card never outranks its title.
+    ...EMPTY_STATE_SIZES.map((size) => ({
+      label: `size="${size}"`,
       render: () => (
         <EmptyState
           body="Keys you create show up here."
           className="w-full"
+          size={size}
           title="No API keys"
         />
       ),
-    },
+    })),
     {
       label: "icon + action + footnote",
       render: () => (
