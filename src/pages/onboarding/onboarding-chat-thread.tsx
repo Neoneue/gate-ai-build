@@ -1,5 +1,4 @@
 import {
-  Fragment,
   type ReactNode,
   useEffect,
   useLayoutEffect,
@@ -27,6 +26,12 @@ export interface OnboardingChatThreadProps {
   className?: string;
   onRetry?: (messageId: string) => void;
   onStop?: (messageId: string) => void;
+  /** The turn whose follow-up cards just appeared (audit 2026-10-16 ux-2).
+   *  When it changes to a new id, that turn pins to the top of the thread
+   *  instead of the thread following the cards to its end, so the reader's
+   *  first question and its answer stay in view; following resumes on the
+   *  next send. An id already set on mount never pins. */
+  pinTurnId?: string | null;
   /** Draws one turn in place of the shared `ChatMessage`; keyed by the
    *  thread. Unset: every turn is a `ChatMessage`. */
   renderTurn?: (turn: ChatTurn) => ReactNode;
@@ -67,6 +72,19 @@ const pageGapBelow = (page: Element) => {
   return page.scrollHeight - room - visibleBottom;
 };
 
+/** Below lg: the bottom edge of the sticky bars over the page (the chat top
+ *  bar and the conversation header), so a pinned turn lands just under
+ *  them. */
+const stickyBarsBottom = () =>
+  Math.max(
+    0,
+    ...Array.from(document.querySelectorAll("header"), (bar) =>
+      getComputedStyle(bar).position === "sticky"
+        ? bar.getBoundingClientRect().bottom
+        : 0
+    )
+  );
+
 /** Below lg: brings the thread's end to the bottom of what can be seen. */
 const followPageEnd = (page: Element) => {
   page.scrollTop += pageGapBelow(page);
@@ -77,12 +95,15 @@ export function OnboardingChatThread({
   onRetry,
   onStop,
   renderTurn,
+  pinTurnId = null,
   className,
 }: OnboardingChatThreadProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isDesktop = useIsDesktop();
   const followLatestRef = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
+  const pinnedRef = useRef(pinTurnId);
+  const turnCountRef = useRef(turns.length);
   const latestTurn = turns.at(-1);
   const contentKey = latestTurn
     ? `${turns.length}:${latestTurn.id}:${latestTurn.prompt.length}:${latestTurn.lanes.map((lane) => `${lane.id}:${lane.state}:${lane.body.length}`).join(",")}`
@@ -91,7 +112,40 @@ export function OnboardingChatThread({
   // biome-ignore lint/correctness/useExhaustiveDependencies: contentKey is the trigger; the effect reads the DOM, not the key
   useLayoutEffect(() => {
     const target = scrollportFor(isDesktop, scrollRef.current);
-    if (!(target && followLatestRef.current)) {
+    if (!target) {
+      return;
+    }
+    // A new send resumes following after a pin.
+    if (turns.length > turnCountRef.current) {
+      followLatestRef.current = true;
+    }
+    turnCountRef.current = turns.length;
+    if (pinTurnId && pinTurnId !== pinnedRef.current) {
+      pinnedRef.current = pinTurnId;
+      followLatestRef.current = false;
+      const pinFrame = requestAnimationFrame(() => {
+        const turn = Array.from(
+          scrollRef.current?.querySelectorAll<HTMLElement>("[data-turn-id]") ??
+            []
+        ).find((node) => node.dataset.turnId === pinTurnId);
+        // The wrapper is `display: contents`, so its first child carries
+        // the turn's box: the reader's message, then the reply.
+        const top = turn?.firstElementChild?.getBoundingClientRect().top;
+        if (top === undefined) {
+          return;
+        }
+        target.scrollTop += isDesktop
+          ? top - target.getBoundingClientRect().top
+          : top - stickyBarsBottom();
+        setShowLatest(
+          isDesktop
+            ? awayFromBottom(target)
+            : pageGapBelow(target) > FOLLOW_SLACK_PX
+        );
+      });
+      return () => cancelAnimationFrame(pinFrame);
+    }
+    if (!followLatestRef.current) {
       return;
     }
     const frame = requestAnimationFrame(() => {
@@ -103,7 +157,7 @@ export function OnboardingChatThread({
       setShowLatest(false);
     });
     return () => cancelAnimationFrame(frame);
-  }, [contentKey, isDesktop]);
+  }, [contentKey, isDesktop, pinTurnId, turns.length]);
 
   const handleScroll = () => {
     const target = scrollportFor(isDesktop, scrollRef.current);
@@ -197,7 +251,11 @@ export function OnboardingChatThread({
         >
           {turns.map((turn) =>
             renderTurn ? (
-              <Fragment key={turn.id}>{renderTurn(turn)}</Fragment>
+              // `contents` keeps the turn's parts as the log's own flex
+              // children (its 8px gaps); the id lets a turn pin (ux-2).
+              <div className="contents" data-turn-id={turn.id} key={turn.id}>
+                {renderTurn(turn)}
+              </div>
             ) : (
               <ChatMessage
                 key={turn.id}

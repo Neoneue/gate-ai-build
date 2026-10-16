@@ -38,7 +38,6 @@ import { CHAT_TOUCH_TARGET } from "@/pages/chat/chat-layout";
 import { ChatModelLogo } from "@/pages/chat/chat-model-logo";
 import { CHAT_COPY, modelCountLabel } from "@/pages/chat/copy";
 import type { ChatModel } from "@/pages/chat/types";
-
 /* ─────────────────────────────────────────────────────────────────────────
  * The Mobile A onboarding chat's copy of `pages/chat/chat-model-selector.tsx`
  * (owner 2026-10-12), so the onboarding picker can change without touching
@@ -51,6 +50,7 @@ import type { ChatModel } from "@/pages/chat/types";
  * scrolled into view. Change it here, never in the shared picker.
  * ───────────────────────────────────────────────────────────────────────── */
 import { CapabilityStrip } from "@/pages/Models";
+import { useOnboardingBalance } from "@/pages/onboarding/onboarding-credits";
 
 /**
  * Favourites first, then most recently used, then alphabetical. Unavailable
@@ -104,8 +104,11 @@ const VISIBLE_MODEL_VIEWS = MODEL_VIEWS.filter(
 );
 
 /** All models, because it is the only category search can never come up empty
- *  in for a model the catalog has. */
+ *  in for a model the catalog has. With no balance the picker opens on Free
+ *  instead (audit 2026-10-16 ux-8): every other pick would be refused, so the
+ *  usable choices lead and All models stays one tap away. */
 const DEFAULT_MODEL_VIEW: ModelView = "all";
+const NO_BALANCE_MODEL_VIEW: ModelView = "free";
 
 /** Recent is a shortcut back to what you just used, not a history. */
 const RECENT_MODEL_LIMIT = 5;
@@ -161,7 +164,10 @@ export function OnboardingModelSelector({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [provider, setProvider] = useState<string>(ALL_PROVIDERS);
-  const [view, setView] = useState<ModelView>(DEFAULT_MODEL_VIEW);
+  const balanceUsd = useOnboardingBalance();
+  const openingView =
+    balanceUsd <= 0 ? NO_BALANCE_MODEL_VIEW : DEFAULT_MODEL_VIEW;
+  const [view, setView] = useState<ModelView>(openingView);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const tabsListRef = useRef<HTMLDivElement>(null);
@@ -300,7 +306,7 @@ export function OnboardingModelSelector({
     if (!nextOpen) {
       setQuery("");
       setProvider(ALL_PROVIDERS);
-      setView(DEFAULT_MODEL_VIEW);
+      setView(openingView);
       setMutationError(null);
     }
   };

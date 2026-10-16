@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldContent,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
@@ -44,10 +45,13 @@ import {
  * untouched (`.claude/rules/no-thrash.md`). Mounted under
  * `OnboardingAuthLayout`, which draws the logo and the copyright line.
  *
- * Gates (demo): the EULA checkbox enables Continue with Google; Create
- * account also needs a full name, a work email (any text) and all five
- * password criteria. Pressing either disables both and shows "Creating
- * account" with a spinner on the pressed one; after CREATE_ACCOUNT_DELAY_MS
+ * Gates (demo): the EULA checkbox enables Continue with Google. Create
+ * account stays enabled (audit 2026-10-16 ux-15): a submit with gaps marks
+ * each unmet field (EULA, full name, a valid work email, all five password
+ * criteria) with a FieldError under it and focuses the first; the errors
+ * then clear live as each is fixed. Pressing either with nothing missing
+ * disables both and shows "Creating account" with a spinner on the pressed
+ * one; after CREATE_ACCOUNT_DELAY_MS
  * signup finishes the way SignUp.tsx does on the onboarding route: mark the
  * Mobile A tab, then open Gate Chat. Mobile B (`/sign-up-onboarding/b`,
  * owner 2026-10-13) skips the mark and opens the 2-card phone start.
@@ -105,6 +109,19 @@ const CRITERIA = [
   },
 ] as const;
 
+/* The product's own format check (gate DW/pages/Signup.tsx:231). */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Submit errors (audit 2026-10-16 ux-15, copywriter). The password line
+ *  points at the checklist, which already marks the unmet rules. */
+const SIGNUP_ERRORS = {
+  eula: "Agree to the End User License Agreement to continue.",
+  name: "Enter your full name.",
+  emailEmpty: "Enter your work email.",
+  emailInvalid: "Enter a valid email address.",
+  password: "Your password needs to meet every rule in the checklist.",
+} as const;
+
 /* Meter fill by criteria met, per design.md "Data bars & meters": a status
  * family runs its 500 step to its 400 step. 1-2 danger, 3-4 warning, 5
  * success; at 0 the fill is scaled to nothing, so its family is moot. */
@@ -131,17 +148,30 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // Set by the first submit with gaps; from then on the errors track the
+  // fields live, so each clears as it is fixed.
+  const [submitted, setSubmitted] = useState(false);
 
   const results = CRITERIA.map((criterion) => ({
     ...criterion,
     met: criterion.test(password),
   }));
   const metCount = results.filter((r) => r.met).length;
-  const canCreate =
-    agreed &&
-    name.trim() !== "" &&
-    email.trim() !== "" &&
-    metCount === CRITERIA.length;
+  const emailValid = EMAIL_RE.test(email.trim());
+  const passwordMet = metCount === CRITERIA.length;
+  const canCreate = agreed && name.trim() !== "" && emailValid && passwordMet;
+  const errors = {
+    eula: submitted && !agreed ? SIGNUP_ERRORS.eula : null,
+    name: submitted && name.trim() === "" ? SIGNUP_ERRORS.name : null,
+    email: submitted
+      ? email.trim() === ""
+        ? SIGNUP_ERRORS.emailEmpty
+        : emailValid
+          ? null
+          : SIGNUP_ERRORS.emailInvalid
+      : null,
+    password: submitted && !passwordMet ? SIGNUP_ERRORS.password : null,
+  };
 
   // Which path is creating the account; null at rest. While set, both
   // buttons are disabled and the pressed one shows the spinner.
@@ -175,9 +205,24 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (canCreate && pending === null) {
-      startSignup("email");
+    if (pending !== null) {
+      return;
     }
+    if (canCreate) {
+      startSignup("email");
+      return;
+    }
+    setSubmitted(true);
+    // Focus the first gap, in form order (better-accessibility: validate on
+    // submit and focus the first invalid field).
+    const firstGap = agreed
+      ? name.trim() === ""
+        ? "onboarding-signup-name"
+        : emailValid
+          ? "onboarding-signup-password"
+          : "onboarding-signup-email"
+      : "onboarding-signup-eula";
+    document.getElementById(firstGap)?.focus();
   }
 
   return (
@@ -199,6 +244,10 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                 (ApiKeys.tsx): it enables both signup paths below. */}
             <Field orientation="horizontal">
               <Checkbox
+                aria-describedby={
+                  errors.eula ? "onboarding-signup-eula-error" : undefined
+                }
+                aria-invalid={errors.eula ? true : undefined}
                 checked={agreed}
                 id="onboarding-signup-eula"
                 onCheckedChange={(next) => setAgreed(next === true)}
@@ -218,6 +267,11 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                     .
                   </span>
                 </FieldLabel>
+                {errors.eula ? (
+                  <FieldError id="onboarding-signup-eula-error">
+                    {errors.eula}
+                  </FieldError>
+                ) : null}
               </FieldContent>
             </Field>
 
@@ -257,6 +311,10 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                 Full name
               </FieldLabel>
               <Input
+                aria-describedby={
+                  errors.name ? "onboarding-signup-name-error" : undefined
+                }
+                aria-invalid={errors.name ? true : undefined}
                 autoComplete="name"
                 id="onboarding-signup-name"
                 onChange={(e) => setName(e.target.value)}
@@ -264,6 +322,11 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                 type="text"
                 value={name}
               />
+              {errors.name ? (
+                <FieldError id="onboarding-signup-name-error">
+                  {errors.name}
+                </FieldError>
+              ) : null}
             </Field>
 
             <Field>
@@ -274,6 +337,10 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                 Work email
               </FieldLabel>
               <Input
+                aria-describedby={
+                  errors.email ? "onboarding-signup-email-error" : undefined
+                }
+                aria-invalid={errors.email ? true : undefined}
                 autoComplete="email"
                 id="onboarding-signup-email"
                 onChange={(e) => setEmail(e.target.value)}
@@ -282,6 +349,11 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                 type="email"
                 value={email}
               />
+              {errors.email ? (
+                <FieldError id="onboarding-signup-email-error">
+                  {errors.email}
+                </FieldError>
+              ) : null}
             </Field>
 
             <Field>
@@ -297,7 +369,12 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                     group on focus. The group draws the one focus ring, so
                     drop the offset here (combobox.tsx precedent). */}
                 <InputGroupInput
-                  aria-describedby="onboarding-signup-criteria"
+                  aria-describedby={
+                    errors.password
+                      ? "onboarding-signup-password-error onboarding-signup-criteria"
+                      : "onboarding-signup-criteria"
+                  }
+                  aria-invalid={errors.password ? true : undefined}
                   autoComplete="new-password"
                   className="focus-visible:ring-offset-0"
                   id="onboarding-signup-password"
@@ -327,6 +404,11 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
                   </InputGroupButton>
                 </InputGroupAddon>
               </InputGroup>
+              {errors.password ? (
+                <FieldError id="onboarding-signup-password-error">
+                  {errors.password}
+                </FieldError>
+              ) : null}
 
               {/* 16px under the input to the meter, 12px to the list (Field's
                   own 8px gap plus mt-2). */}
@@ -397,7 +479,7 @@ export function OnboardingSignUp({ version }: { version: PhoneDemoVersion }) {
             <Button
               aria-busy={pending === "email"}
               className="relative w-full"
-              disabled={!canCreate || pending !== null}
+              disabled={pending !== null}
               size="default"
               type="submit"
             >

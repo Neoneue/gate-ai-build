@@ -366,12 +366,12 @@ const IMPROVED_PATH_STEPS: Record<
   ],
 };
 
-/** The pages that show the Improved flow's menu: step 2, step 3 and the
- *  final page. */
+/** The pages that show the Improved flow's menu: step 2 and step 3. Not the
+ *  final page (audit 2026-10-16 ux-3): it is the task checklist itself, so
+ *  the menu's count and list would repeat it. */
 const IMPROVED_MENU_ROUTES: readonly string[] = [
   ONBOARDING_ROUTES.improvedConnect,
   ONBOARDING_ROUTES.verify,
-  ONBOARDING_ROUTES.improvedComplete,
 ];
 
 /** The Improved flow's menu: the Current flow's popover (owner 2026-10-13)

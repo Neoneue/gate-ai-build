@@ -14,13 +14,12 @@ import { Card } from "@/components/ui/card";
 import { ExternalLinkIcon } from "@/components/ui/external-link";
 import { PageTitle } from "@/components/ui/page-title";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { cn } from "@/lib/utils";
 import {
-  ChatArt,
-  CodeArt,
-  ConnectArt,
-  HandoffArt,
-} from "@/pages/onboarding/improved-art";
+  COMPUTER_PROMPT,
+  ONBOARDING_TIMING,
+} from "@/data/onboarding-chat-script";
+import { cn } from "@/lib/utils";
+import { ChatArt, CodeArt, ConnectArt } from "@/pages/onboarding/improved-art";
 import {
   LINK_VALIDITY,
   LINK_WORKSPACE,
@@ -48,17 +47,17 @@ import {
 import {
   DEFAULT_PAYG_MODEL,
   type ImprovedConnection,
-  initialImprovedState,
   snapshotDesktopSetup,
 } from "@/pages/onboarding/onboarding-state";
 import { useIsMobileSetup } from "@/pages/onboarding/use-is-mobile-setup";
 import { useOnboarding } from "@/pages/onboarding/use-onboarding";
 
-/* ─── Improved flow: start, handoff and setup link ──────────────────────────
+/* ─── Improved flow: start and setup link ───────────────────────────────────
  * Step 1 of the mockup's Improved flow. On a desktop it is a three-way
  * picker (Gate Chat, Gate Connect, Manual setup) with one Continue action;
- * on a phone it is "Gate Chat here, or email yourself a setup link", which
- * leads to the handoff screen and, on the desktop, to the setup-link screen.
+ * on a phone it is "Gate Chat here, or email yourself a setup link", sent in
+ * place (the phone stays on its start); the setup-link screen is the
+ * desktop side.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** Picker order (owner 2026-10-13): the two tool setups first, Gate Connect
@@ -245,30 +244,24 @@ function MethodCard({
   );
 }
 
-/** The setup-link button's two beats (owner 2026-10-09): "Sending link…"
- *  for SEND_MS, then "Email sent!" for SENT_HOLD_MS, then "Re-send
- *  email". */
-const SEND_MS = 3000;
-const SENT_HOLD_MS = 2000;
-
-/** Email a setup link from the phone (the mockup's `ue`, simulated). The
- *  button reports it in place: "Sending link…", then "Email sent!", then
- *  "Re-send email". The phone never leaves the page
- *  (owner 2026-10-09: sending must not lead into setup on the phone).
- *  Shared by the mobile start and the handoff screen. `sentInChat`: the
- *  link was already sent from the chat's computer offer, so the button
- *  offers a re-send (owner 2026-10-12); it never sets `handoffSent`, which
- *  drives the handoff screen's simulated desktop open. */
+/** Email a setup link from the phone start (the mockup's `ue`, simulated),
+ *  with the chat offer's pattern so one action reads one way on both
+ *  surfaces (audit 2026-10-16 ux-5): a spinner and "Sending email", then
+ *  the toast, then "Re-send email setup link" (COMPUTER_PROMPT). The phone
+ *  never leaves the page (owner 2026-10-09: sending must not lead into
+ *  setup on the phone). `sentInChat`: the link was already sent from the
+ *  chat's computer offer, so the button offers a re-send (owner
+ *  2026-10-12); the chat never sets `handoffSent`. */
 function useSendSetupLink({ sentInChat = false } = {}) {
   const { improved, updateImproved, readImproved } = useOnboarding();
-  const [phase, setPhase] = useState<"idle" | "sending" | "sent">("idle");
+  const [sending, setSending] = useState(false);
 
   const send = async () => {
-    if (phase !== "idle") {
+    if (sending) {
       return;
     }
-    setPhase("sending");
-    await wait(SEND_MS);
+    setSending(true);
+    await wait(ONBOARDING_TIMING.emailSend);
     const state = readImproved();
     updateImproved({
       handoffSent: true,
@@ -276,27 +269,17 @@ function useSendSetupLink({ sentInChat = false } = {}) {
       handoffAttempt: "sent",
       handoffSetup: snapshotDesktopSetup(state),
     });
-    setPhase("sent");
-    await wait(SENT_HOLD_MS);
-    setPhase("idle");
+    setSending(false);
+    toast.success(COMPUTER_PROMPT.toast);
   };
 
-  const label =
-    phase === "sending"
-      ? "Sending link…"
-      : phase === "sent"
-        ? "Email sent!"
-        : improved.handoffSent || sentInChat
-          ? "Re-send email"
-          : "Email me a setup link";
+  const label = sending
+    ? COMPUTER_PROMPT.sending
+    : improved.handoffSent || sentInChat
+      ? COMPUTER_PROMPT.resend
+      : COMPUTER_PROMPT.button;
 
-  return {
-    send,
-    sending: phase === "sending",
-    busy: phase !== "idle",
-    sent: phase === "sent",
-    label,
-  };
+  return { send, sending, busy: sending, label };
 }
 
 /** Phone: choose Gate Chat here, or continue on the desktop. The chat opens
@@ -436,107 +419,6 @@ function MobileStart() {
           </div>
         </Card>
       </div>
-    </div>
-  );
-}
-
-/** `/improved-handoff-onboarding`: the phone's "check your email" card. */
-export function ImprovedHandoff() {
-  const mobile = useIsMobileSetup();
-  return (
-    <OnboardingChrome>
-      {mobile ? <HandoffCard /> : <DesktopPicker />}
-    </OnboardingChrome>
-  );
-}
-
-/** After the link is sent, the desktop "opens" it on its own: a short pause
- *  on "Check your email", then the setup-link step (owner direction
- *  2026-10-08, replacing the demo "Open here" control). */
-const LINK_OPEN_MS = 3000;
-
-function HandoffCard() {
-  const navigate = useNavigate();
-  const { improved, updateImproved } = useOnboarding();
-  const link = useSendSetupLink();
-  const openChat = useOpenChatOnPhone();
-  const sent = improved.handoffSent;
-  const sending = link.sending;
-  useEffect(() => {
-    if (!sent || sending) {
-      return;
-    }
-    const timer = window.setTimeout(() => {
-      // A fresh desktop session: only what the emailed link holds carries
-      // over from the phone.
-      updateImproved((state) => ({
-        ...initialImprovedState(),
-        handoffSetup: state.handoffSetup,
-        handoffSends: state.handoffSends,
-        linkRedemption: {
-          scenario: "valid",
-          resent: false,
-          setup: state.handoffSetup,
-        },
-      }));
-      navigate(ONBOARDING_ROUTES.link);
-    }, LINK_OPEN_MS);
-    return () => window.clearTimeout(timer);
-  }, [sent, sending, navigate, updateImproved]);
-  return (
-    <div className="mx-auto flex w-full max-w-140 flex-col">
-      <Card density="flush">
-        <div className="flex flex-col items-center gap-6 p-2 pb-4 text-center">
-          <div className="grid min-h-40 w-full place-items-center rounded-xs bg-card-muted px-4 py-6">
-            <HandoffArt
-              state={link.sending ? "sending" : sent ? "sent" : "idle"}
-            />
-          </div>
-          <div
-            className="flex min-w-0 flex-col items-center gap-2 px-3"
-            role="status"
-            tabIndex={-1}
-          >
-            <PageTitle as="h1">
-              {sent ? "Check your email" : "Continue on desktop"}
-            </PageTitle>
-            <p className="type-label-14 m-0 inline-flex max-w-full items-center gap-2 rounded-full bg-muted px-3 py-1 text-foreground">
-              <Mail
-                aria-hidden
-                className="size-3.5 shrink-0"
-                strokeWidth={1.75}
-              />
-              <span className="wrap-anywhere min-w-0">{OWNER_EMAIL}</span>
-            </p>
-            <p className="type-copy-16 m-0 text-pretty text-muted-foreground">
-              {sent
-                ? `Open the link on your computer to pick up your setup. ${LINK_VALIDITY}`
-                : "We'll email you a link to finish setup on your computer."}
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-2 px-2">
-            <Button
-              aria-busy={link.sending}
-              aria-disabled={link.busy}
-              className="w-full"
-              onClick={() => void link.send()}
-              size="default"
-              variant={sent ? "outline" : "default"}
-            >
-              {link.label}
-            </Button>
-            <Button
-              className="w-full"
-              onClick={openChat}
-              size="default"
-              variant="ghost"
-            >
-              <MessageSquare aria-hidden data-icon="inline-start" />
-              {sent ? "Try Gate Chat while you wait" : "Use Gate Chat instead"}
-            </Button>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }

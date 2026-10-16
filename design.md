@@ -612,6 +612,7 @@ panel internals and the outer margins.
 - **Pointer**: controls are 24px minimum (WCAG 2.5.8 AA); dense chrome is 32px and default controls 36px.
 - **Touch screen** (`pointer-coarse:`, owner 2026-10-14): every Button, Input, InputGroup and Select size steps up, inside the primitive, as a `min-h` floor (Button 32 / 36 / 44, icon squares the same, Input 44, Select 36 / 44 / 44; 44 is Apple's minimum hit area; SegmentedPill items 32 / 36). Picked by the input device, never the width (Adobe Spectrum's mobile scale; Tailwind's `pointer-coarse:`), so a mouse at any width keeps the sizes above. Chat surfaces keep their 44px floor; every text field renders at 16px.
 - **Small controls** (checkbox, radio, icon actions): a 16px or 24px visual with an invisible hit area that reaches at least 24px.
+- **Conversion action** (owner 2026-10-16, audit 10-16 ux-9): the one action a flow exists to get (the phone chat's "Email me the setup link") is Button `size="default"`, so it reaches 44px on a touch screen (ux-laws Fitts), never `sm`.
 
 ## Elevation & Depth
 
